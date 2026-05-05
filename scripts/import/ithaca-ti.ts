@@ -22,8 +22,9 @@ import {
   finishImportRun,
   loadSpecies,
   matchSpecies,
-  upsertImportedPin,
+  bulkUpsertImportedPins,
   type ImportRecord,
+  type ImportRow,
   type ImportRunSummary
 } from './lib/upsert';
 
@@ -36,7 +37,9 @@ const SOURCE_URL = 'https://www.cityofithacany.gov/253/Tree-Inventory-GIS';
 
 interface GeoJsonFeature {
   type: 'Feature';
-  geometry: { type: 'Point'; coordinates: [number, number] };
+  geometry:
+    | { type: 'Point'; coordinates: [number, number] }
+    | { type: 'MultiPoint'; coordinates: [number, number][] };
   properties: Record<string, unknown>;
 }
 
@@ -58,8 +61,16 @@ function pickStr(props: Record<string, unknown>, keys: string[]): string | undef
   return undefined;
 }
 
+function firstPoint(g: GeoJsonFeature['geometry']): [number, number] | null {
+  if (g.type === 'Point') return g.coordinates;
+  if (g.type === 'MultiPoint' && g.coordinates.length > 0) return g.coordinates[0];
+  return null;
+}
+
 function mapFeature(f: GeoJsonFeature): ImportRecord | null {
-  const [lng, lat] = f.geometry.coordinates;
+  const point = firstPoint(f.geometry);
+  if (!point) return null;
+  const [lng, lat] = point;
   if (typeof lng !== 'number' || typeof lat !== 'number') return null;
 
   const props = f.properties ?? {};
@@ -137,33 +148,41 @@ async function main() {
     };
 
     const species = await loadSpecies(sql);
+    const matched: ImportRow[] = [];
 
     for (const feature of collection.features) {
       const rec = mapFeature(feature);
       if (!rec) continue;
-
       const sp = matchSpecies(species, rec);
       if (!sp) {
         summary.pinsSkippedUnmatched++;
         continue;
       }
+      matched.push({
+        externalId: rec.externalId,
+        speciesId: sp.id,
+        lng: rec.lng,
+        lat: rec.lat,
+        raw: rec.raw
+      });
+    }
 
+    const BATCH = 500;
+    for (let i = 0; i < matched.length; i += BATCH) {
+      const slice = matched.slice(i, i + BATCH);
       try {
-        const result = await upsertImportedPin(sql, {
+        const r = await bulkUpsertImportedPins(sql, {
           regionId,
           sourceId: SOURCE_ID,
-          externalId: rec.externalId,
-          speciesId: sp.id,
-          lng: rec.lng,
-          lat: rec.lat,
-          raw: rec.raw,
-          userId
+          userId,
+          rows: slice
         });
-        if (result.created) summary.pinsCreated++;
-        else summary.pinsUpdated++;
+        summary.pinsCreated += r.created;
+        summary.pinsUpdated += r.updated;
+        process.stdout.write(`  batch ${Math.floor(i / BATCH) + 1}: +${r.created} new, ${r.updated} updated\n`);
       } catch (err) {
         summary.errors.push({
-          externalId: rec.externalId,
+          externalId: `batch-${i}`,
           message: err instanceof Error ? err.message : String(err)
         });
       }

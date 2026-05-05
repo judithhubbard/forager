@@ -20,8 +20,9 @@ import {
   finishImportRun,
   loadSpecies,
   matchSpecies,
-  upsertImportedPin,
+  bulkUpsertImportedPins,
   type ImportRecord,
+  type ImportRow,
   type ImportRunSummary
 } from './lib/upsert';
 
@@ -34,7 +35,11 @@ const SOURCE_URL = 'https://cugir.library.cornell.edu/catalog/cugir-009100';
 
 interface GeoJsonFeature {
   type: 'Feature';
-  geometry: { type: 'Point'; coordinates: [number, number] };
+  // Cornell WFS returns MultiPoint with a single point per feature.
+  // We accept either shape.
+  geometry:
+    | { type: 'Point'; coordinates: [number, number] }
+    | { type: 'MultiPoint'; coordinates: [number, number][] };
   properties: Record<string, unknown>;
 }
 
@@ -58,29 +63,34 @@ function pickStr(props: Record<string, unknown>, keys: string[]): string | undef
 
 /** Map a Cornell feature to our generic ImportRecord. Field names are
  *  best-effort; CUGIR data may use different casings. */
+function firstPoint(g: GeoJsonFeature['geometry']): [number, number] | null {
+  if (g.type === 'Point') return g.coordinates;
+  if (g.type === 'MultiPoint' && g.coordinates.length > 0) return g.coordinates[0];
+  return null;
+}
+
 function mapFeature(f: GeoJsonFeature): ImportRecord | null {
-  const [lng, lat] = f.geometry.coordinates;
+  const point = firstPoint(f.geometry);
+  if (!point) return null;
+  const [lng, lat] = point;
   if (typeof lng !== 'number' || typeof lat !== 'number') return null;
 
   const props = f.properties ?? {};
+  // Cornell CTI fields (verified against the WFS GeoJSON):
+  //   treeid (int), botanic (sci name), common (common name), genus,
+  //   spcode, plus DBH series. Lots of nulls for older trees.
+  const treeIdRaw = props['treeid'];
   const externalId =
-    pickStr(props, ['tree_id', 'TREE_ID', 'TreeID', 'OBJECTID', 'objectid']) ??
-    `${lng.toFixed(6)},${lat.toFixed(6)}`;
+    typeof treeIdRaw === 'number' || typeof treeIdRaw === 'string'
+      ? String(treeIdRaw)
+      : `${lng.toFixed(6)},${lat.toFixed(6)}`;
 
-  const scientificName = pickStr(props, [
-    'sci_name',
-    'SCI_NAME',
-    'scientific_name',
-    'ScientificName',
-    'BOTANICAL'
-  ]);
-  const commonName = pickStr(props, [
-    'common_name',
-    'COMMON_NAME',
-    'CommonName',
-    'COMMON',
-    'name'
-  ]);
+  let scientificName = pickStr(props, ['botanic']);
+  // Fall back to genus when botanic is missing — matchSpecies has a
+  // genus-only fallback that handles "Quercus" → first matching Quercus.
+  if (!scientificName) scientificName = pickStr(props, ['genus']);
+
+  const commonName = pickStr(props, ['common']);
 
   return {
     externalId,
@@ -139,33 +149,42 @@ async function main() {
     };
 
     const species = await loadSpecies(sql);
+    const matched: ImportRow[] = [];
 
     for (const feature of collection.features) {
       const rec = mapFeature(feature);
       if (!rec) continue;
-
       const sp = matchSpecies(species, rec);
       if (!sp) {
         summary.pinsSkippedUnmatched++;
         continue;
       }
+      matched.push({
+        externalId: rec.externalId,
+        speciesId: sp.id,
+        lng: rec.lng,
+        lat: rec.lat,
+        raw: rec.raw
+      });
+    }
 
+    // Process in batches; each batch is one round-trip.
+    const BATCH = 500;
+    for (let i = 0; i < matched.length; i += BATCH) {
+      const slice = matched.slice(i, i + BATCH);
       try {
-        const result = await upsertImportedPin(sql, {
+        const r = await bulkUpsertImportedPins(sql, {
           regionId,
           sourceId: SOURCE_ID,
-          externalId: rec.externalId,
-          speciesId: sp.id,
-          lng: rec.lng,
-          lat: rec.lat,
-          raw: rec.raw,
-          userId
+          userId,
+          rows: slice
         });
-        if (result.created) summary.pinsCreated++;
-        else summary.pinsUpdated++;
+        summary.pinsCreated += r.created;
+        summary.pinsUpdated += r.updated;
+        process.stdout.write(`  batch ${Math.floor(i / BATCH) + 1}: +${r.created} new, ${r.updated} updated\n`);
       } catch (err) {
         summary.errors.push({
-          externalId: rec.externalId,
+          externalId: `batch-${i}`,
           message: err instanceof Error ? err.message : String(err)
         });
       }

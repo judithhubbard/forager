@@ -144,72 +144,75 @@ export function matchSpecies(
   return null;
 }
 
-export interface UpsertResult {
-  created: boolean;
-  updated: boolean;
-  pinId: string;
+export interface ImportRow {
+  externalId: string;
+  speciesId: string;
+  lng: number;
+  lat: number;
+  raw: unknown;
 }
 
 /**
- * Idempotent upsert: keyed by (region_id, import_source, import_external_id).
- * - If pin doesn't exist: insert with location, status=active.
- * - If pin exists: refresh import_raw, refresh location IFF user hasn't moved it
- *   (location_modified_by_user_at is null), never touch user-edited fields.
+ * Bulk upsert of imported pins. Single round-trip per batch via INSERT ...
+ * ON CONFLICT ... DO UPDATE. Idempotent re-runs:
+ *   - new external IDs: inserted.
+ *   - existing: refresh import_raw, refresh location IFF the user has not
+ *     manually moved the pin (location_modified_by_user_at is null).
+ *     User-edited fields (species_id, display_name, notes, status) are
+ *     never touched.
+ *
+ * Uses RETURNING (xmax = 0) to distinguish inserts from updates.
  */
-export async function upsertImportedPin(
+export async function bulkUpsertImportedPins(
   sql: Sql,
   args: {
     regionId: string;
     sourceId: string;
-    externalId: string;
-    speciesId: string;
-    lng: number;
-    lat: number;
-    raw: unknown;
     userId: string;
+    rows: ImportRow[];
   }
-): Promise<UpsertResult> {
-  const existing = await sql<{ id: string; location_modified_by_user_at: Date | null }[]>`
-    select id, location_modified_by_user_at
-      from pins
-     where region_id = ${args.regionId}
-       and import_source = ${args.sourceId}
-       and import_external_id = ${args.externalId}
-     limit 1
+): Promise<{ created: number; updated: number }> {
+  if (args.rows.length === 0) return { created: 0, updated: 0 };
+
+  const externalIds = args.rows.map((r) => r.externalId);
+  const speciesIds = args.rows.map((r) => r.speciesId);
+  const lngs = args.rows.map((r) => r.lng);
+  const lats = args.rows.map((r) => r.lat);
+  const raws = args.rows.map((r) => JSON.stringify(r.raw ?? {}));
+
+  const rows = await sql<{ id: string; inserted: boolean }[]>`
+    insert into public.pins (
+      region_id, created_by, species_id,
+      location, status,
+      import_source, import_external_id, import_raw
+    )
+    select
+      ${args.regionId}::uuid,
+      ${args.userId}::uuid,
+      t.species_id::uuid,
+      ST_SetSRID(ST_MakePoint(t.lng, t.lat), 4326)::geography,
+      'active'::pin_status,
+      ${args.sourceId},
+      t.external_id,
+      t.raw::jsonb
+    from unnest(
+      ${speciesIds}::uuid[],
+      ${lngs}::float8[],
+      ${lats}::float8[],
+      ${externalIds}::text[],
+      ${raws}::text[]
+    ) as t(species_id, lng, lat, external_id, raw)
+    on conflict (region_id, import_source, import_external_id) do update set
+      import_raw = excluded.import_raw,
+      location = case
+        when public.pins.location_modified_by_user_at is null
+          then excluded.location
+        else public.pins.location
+      end,
+      updated_at = now()
+    returning id, (xmax = 0) as inserted
   `;
 
-  if (existing.length === 0) {
-    const inserted = await sql<{ id: string }[]>`
-      insert into pins (
-        region_id, created_by, species_id,
-        location, status,
-        import_source, import_external_id, import_raw
-      ) values (
-        ${args.regionId}, ${args.userId}, ${args.speciesId},
-        ST_SetSRID(ST_MakePoint(${args.lng}, ${args.lat}), 4326)::geography,
-        'active',
-        ${args.sourceId}, ${args.externalId}, ${sql.json(args.raw as object)}
-      )
-      returning id
-    `;
-    return { created: true, updated: false, pinId: inserted[0].id };
-  }
-
-  const userMoved = existing[0].location_modified_by_user_at !== null;
-  if (userMoved) {
-    // User edited location; only refresh import_raw.
-    await sql`
-      update pins set
-        import_raw = ${sql.json(args.raw as object)}
-       where id = ${existing[0].id}
-    `;
-  } else {
-    await sql`
-      update pins set
-        import_raw = ${sql.json(args.raw as object)},
-        location = ST_SetSRID(ST_MakePoint(${args.lng}, ${args.lat}), 4326)::geography
-       where id = ${existing[0].id}
-    `;
-  }
-  return { created: false, updated: true, pinId: existing[0].id };
+  const created = rows.filter((r) => r.inserted).length;
+  return { created, updated: rows.length - created };
 }
