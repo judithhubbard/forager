@@ -1,12 +1,14 @@
+/// <reference types="@sveltejs/kit" />
 /// <reference lib="webworker" />
 
 // PLAN §B12: build-time version stamp drives cache invalidation.
-// On activate we purge any cache whose name doesn't match the current build.
+// SvelteKit gives us `version` via $service-worker (a hash of the build).
 
-declare const __BUILD_VERSION__: string;
+import { version } from '$service-worker';
+
 declare const self: ServiceWorkerGlobalScope;
 
-const CACHE_NAME = `forager-${__BUILD_VERSION__}`;
+const CACHE_NAME = `forager-${version}`;
 
 self.addEventListener('install', (event) => {
   // Skip waiting so a new service worker takes over on the next page load.

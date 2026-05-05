@@ -20,7 +20,10 @@ export async function listMyRegions(): Promise<RegionWithRole[]> {
     .select('role, region:regions(*)')
     .order('joined_at', { ascending: true });
 
-  if (error) throw error;
+  if (error) {
+    console.error('[regionService] listMyRegions error:', error);
+    throw error;
+  }
   if (!data) return [];
 
   return data

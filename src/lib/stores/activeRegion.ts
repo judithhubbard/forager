@@ -50,6 +50,10 @@ if (browser) {
       } else {
         _activeId.set(null);
       }
+    } catch (err) {
+      console.error('[activeRegion] failed to load regions:', err);
+      _regions.set([]);
+      _activeId.set(null);
     } finally {
       _loading.set(false);
     }
