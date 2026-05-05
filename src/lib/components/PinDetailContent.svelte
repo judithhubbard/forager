@@ -71,13 +71,21 @@
   let formStage: Stage = 'ripe';
   let formQuality: number | null = null;
   let formNotes = '';
-  let formDate: string = todayIso();
   let formPrecision: ObservationPrecision = 'day';
-  // For year/month precision modes:
+  // Year/month/day form fields — three selects avoids the native date
+  // input's flaky keyboard handling on Chrome/Mac (the dd kept resetting).
   const NOW = new Date();
   let formYear: number = NOW.getFullYear();
   let formMonth: number = NOW.getMonth() + 1; // 1-12
+  let formDay: number = NOW.getDate(); // 1-31
   let formSubmitting = false;
+
+  // Cap day choices at the days-in-month to prevent invalid combos like Feb 30.
+  $: maxDay = new Date(formYear, formMonth, 0).getDate();
+  $: dayOptions = Array.from({ length: maxDay }, (_, i) => i + 1);
+  // If the day exceeds the new max (e.g. switching from Jan to Feb on the 31st),
+  // clamp it down.
+  $: if (formDay > maxDay) formDay = maxDay;
 
   // Short shareable id (first 8 chars of UUID) for talking about the pin.
   $: shortId = pinId ? pinId.slice(0, 8) : '';
@@ -234,7 +242,7 @@
       // Build the timestamp from whichever precision the user chose.
       let observedAt: Date;
       if (formPrecision === 'day') {
-        observedAt = new Date(formDate + 'T12:00:00');
+        observedAt = new Date(formYear, formMonth - 1, formDay, 12, 0, 0);
       } else if (formPrecision === 'month') {
         observedAt = new Date(formYear, formMonth - 1, 1, 12, 0, 0);
       } else {
@@ -251,9 +259,15 @@
       formOpen = false;
       formNotes = '';
       formQuality = null;
-      formDate = todayIso();
+      formYear = NOW.getFullYear();
+      formMonth = NOW.getMonth() + 1;
+      formDay = NOW.getDate();
       formPrecision = 'day';
       observations = await listByPin(pinId);
+      // Refresh the pin so is_ripe_now / has_ripe_observation_* update,
+      // then notify the parent to refetch its filtered pins.
+      pin = await getEffective(pinId);
+      dispatch('statusChanged');
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Save failed.';
     } finally {
@@ -268,7 +282,10 @@
     formStage = 'ripe';
     formQuality = null;
     formNotes = '';
-    formDate = todayIso();
+    formPrecision = 'day';
+    formYear = NOW.getFullYear();
+    formMonth = NOW.getMonth() + 1;
+    formDay = NOW.getDate();
     formOpen = true;
   }
 
@@ -411,9 +428,21 @@
               {/each}
             </div>
             {#if formPrecision === 'day'}
-              <input type="date" bind:value={formDate} max={todayIso()} required />
+              <div class="ymd-row">
+                <select bind:value={formMonth} required>
+                  {#each MONTH_NAMES as m, i}
+                    <option value={i + 1}>{m}</option>
+                  {/each}
+                </select>
+                <select bind:value={formDay} required>
+                  {#each dayOptions as d}<option value={d}>{d}</option>{/each}
+                </select>
+                <select bind:value={formYear} required>
+                  {#each YEAR_OPTIONS as y}<option value={y}>{y}</option>{/each}
+                </select>
+              </div>
             {:else if formPrecision === 'month'}
-              <div class="ym-row">
+              <div class="ymd-row">
                 <select bind:value={formMonth} required>
                   {#each MONTH_NAMES as m, i}
                     <option value={i + 1}>{m}</option>
@@ -592,26 +621,33 @@
 {/if}
 
 <style>
-  .content { padding: 1rem 1.25rem 3rem; }
-  .hint { color: #6b7a6b; }
-  .error { color: #b03030; font-size: 0.9rem; }
+  .content { padding: 0.75rem 1rem 2rem; font-size: 0.9rem; }
+  .hint { color: #6b7a6b; font-size: 0.85rem; margin: 0.25rem 0; }
+  .error { color: #b03030; font-size: 0.85rem; margin: 0.25rem 0; }
   .muted { color: #8a948a; }
-  section { margin-bottom: 1.75rem; }
-  h2 { margin: 0 0 0.25rem; color: #1f2a1f; }
-  .sci { margin: 0 0 1rem; font-size: 0.9rem; color: #4a554a; }
-  ul.meta { list-style: none; padding: 0; margin: 0 0 1rem; font-size: 0.9rem; color: #4a554a; }
-  ul.meta li { margin-bottom: 0.25rem; }
+  section { margin-bottom: 1rem; }
+  h2 { margin: 0 0 0.1rem; color: #1f2a1f; font-size: 1rem; }
+  .sci { margin: 0 0 0.4rem; font-size: 0.8rem; color: #4a554a; }
+  ul.meta { list-style: none; padding: 0; margin: 0 0 0.5rem; font-size: 0.85rem; color: #4a554a; }
+  ul.meta li { margin-bottom: 0.15rem; line-height: 1.3; }
   .ripe { color: #d57100; font-weight: 600; }
-  .notes { background: #f5f8f5; padding: 0.75rem 1rem; border-radius: 0.4rem; margin: 0; color: #1f2a1f; font-size: 0.95rem; }
+  .notes { background: #f5f8f5; padding: 0.5rem 0.7rem; border-radius: 0.35rem; margin: 0.5rem 0 0; color: #1f2a1f; font-size: 0.85rem; }
 
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-  .section-header h3 { margin: 0; color: #3a5a3a; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+  .section-header h3 {
+    margin: 0;
+    color: #3a5a3a;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
 
   .obs-form, .haz-form {
-    border: 1px solid #d0d8d0; border-radius: 0.4rem; padding: 1rem; margin-bottom: 1.25rem;
-    background: #fafcf6; display: flex; flex-direction: column; gap: 0.6rem;
+    border: 1px solid #d0d8d0; border-radius: 0.4rem; padding: 0.75rem; margin-bottom: 0.75rem;
+    background: #fafcf6; display: flex; flex-direction: column; gap: 0.45rem;
   }
-  label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: #4a554a; }
+  label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.8rem; color: #4a554a; }
   select, textarea, input[type='text'] {
     padding: 0.5rem 0.75rem; font-size: 0.95rem; border: 1px solid #c7d0c7;
     border-radius: 0.4rem; font-family: inherit;
@@ -634,12 +670,13 @@
     color: white;
   }
 
-  .year { margin: 1.25rem 0 0.5rem; color: #6b7a6b; font-size: 0.85rem;
-          font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+  .year { margin: 0.65rem 0 0.2rem; color: #6b7a6b; font-size: 0.7rem;
+          font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   ul.obs-list { list-style: none; padding: 0; margin: 0; }
   ul.obs-list li {
-    padding: 0.6rem 0; border-bottom: 1px solid #ebefeb;
-    display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+    padding: 0.35rem 0; border-bottom: 1px solid #ebefeb;
+    display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;
+    font-size: 0.85rem;
   }
   .stage { color: white; padding: 0.15rem 0.6rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600; }
   .date { color: #4a554a; font-size: 0.9rem; }
@@ -684,18 +721,18 @@
     color: white;
     border-color: #3a5a3a;
   }
-  .ym-row {
+  .ymd-row {
     display: flex;
     gap: 0.4rem;
   }
-  .ym-row select {
+  .ymd-row select {
     flex: 1;
   }
   .obs-delete:hover { color: #ff5050; }
 
   .tree-id {
-    margin: 0.5rem 0 1rem;
-    font-size: 0.85rem;
+    margin: 0.25rem 0 0.5rem;
+    font-size: 0.78rem;
     color: #4a554a;
   }
   .tree-id code, .source code {
@@ -708,16 +745,18 @@
 
   .source {
     border-top: 1px solid #ebefeb;
-    padding-top: 1rem;
-    margin-top: 2rem;
+    padding-top: 0.5rem;
+    margin-top: 0.75rem;
   }
   .source h3 {
-    margin: 0 0 0.6rem;
-    color: #6b7a6b;
-    font-size: 0.85rem;
+    margin: 0 0 0.35rem;
+    color: #8a948a;
+    font-size: 0.7rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
   }
+  .source ul.meta { font-size: 0.78rem; }
 
   .status-edit { margin-left: 0.5rem; display: inline-flex; gap: 0.4rem; align-items: center; }
   .status-edit select { padding: 0.2rem 0.4rem; font-size: 0.85rem; }
