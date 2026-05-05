@@ -169,19 +169,27 @@
   }
   .locate {
     position: absolute;
-    bottom: 1rem;
-    right: 1rem;
-    z-index: 500;
-    width: 2.75rem;
-    height: 2.75rem;
+    top: 0.75rem;
+    right: 0.75rem;
+    /* Above the pin-detail side panel (z-index 700). */
+    z-index: 1100;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 50%;
-    border: 0;
+    border: 1px solid #c7d0c7;
     background: white;
-    font-size: 1.25rem;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 1.1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
     cursor: pointer;
   }
   .locate:active {
     background: #f0f0f0;
+  }
+  @media (max-width: 640px) {
+    .locate {
+      width: 2.85rem;
+      height: 2.85rem;
+      font-size: 1.25rem;
+    }
   }
 </style>
