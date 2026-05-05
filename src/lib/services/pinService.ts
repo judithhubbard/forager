@@ -91,3 +91,20 @@ export async function getEffective(id: string): Promise<PinEffective | null> {
   }
   return data;
 }
+
+/** Update the stored status of a pin. */
+export async function updateStatus(pinId: string, status: PinStatus): Promise<void> {
+  await enqueue({
+    id: pinId,
+    entityType: 'pin',
+    op: 'update',
+    payload: { status },
+    exec: async () => {
+      const { error } = await supabase.from('pins').update({ status }).eq('id', pinId);
+      if (error) {
+        console.error('[pinService] updateStatus error:', error);
+        throw error;
+      }
+    }
+  });
+}

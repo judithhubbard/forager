@@ -2,7 +2,22 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { getEffective, type PinEffective } from '$lib/services/pinService';
+  import {
+    getEffective,
+    updateStatus,
+    type PinEffective,
+    type PinStatus
+  } from '$lib/services/pinService';
+  import {
+    listByPin as listHazards,
+    create as createHazard,
+    remove as removeHazard,
+    HAZARD_TYPES,
+    HAZARD_LABELS,
+    HAZARD_EMOJI,
+    type Hazard,
+    type HazardType
+  } from '$lib/services/hazardService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import {
     listByPin,
@@ -40,6 +55,18 @@
   // Lightbox
   let lightboxPhoto: Photo | null = null;
 
+  // Hazards
+  let hazards: Hazard[] = [];
+  let showHazardForm = false;
+  let hazardType: HazardType = 'poison_ivy';
+  let hazardNotes = '';
+  let hazardSubmitting = false;
+
+  // Status edit
+  let pendingStatus: PinStatus | null = null;
+  let statusSaving = false;
+  const STATUSES: PinStatus[] = ['active', 'gone', 'dormant', 'needs_verification'];
+
   // Observation form state.
   let formOpen = false;
   let formStage: Stage = 'ripe';
@@ -60,11 +87,54 @@
         species = allSpecies.find((s) => s.id === pin?.species_id) ?? null;
       }
       observations = await listByPin(pinId);
+      [hazards] = await Promise.all([listHazards(pinId)]);
       await loadPhotos();
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Failed to load pin.';
     } finally {
       loading = false;
+    }
+  }
+
+  async function addHazard() {
+    if (!pin) return;
+    hazardSubmitting = true;
+    try {
+      await createHazard({
+        pinId,
+        hazardType,
+        notes: hazardNotes.trim() || null
+      });
+      hazards = await listHazards(pinId);
+      hazardNotes = '';
+      showHazardForm = false;
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Could not add hazard.';
+    } finally {
+      hazardSubmitting = false;
+    }
+  }
+
+  async function deleteHazard(h: Hazard) {
+    try {
+      await removeHazard(h.id);
+      hazards = hazards.filter((x) => x.id !== h.id);
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Could not remove hazard.';
+    }
+  }
+
+  async function saveStatus() {
+    if (!pendingStatus || !pin) return;
+    statusSaving = true;
+    try {
+      await updateStatus(pinId, pendingStatus);
+      pin = await getEffective(pinId);
+      pendingStatus = null;
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Could not update status.';
+    } finally {
+      statusSaving = false;
     }
   }
 
@@ -192,6 +262,21 @@
           {#if pin.effective_status !== pin.status}
             <span class="muted">(stored: {pin.status})</span>
           {/if}
+          <span class="status-edit">
+            <select bind:value={pendingStatus}>
+              <option value={null}>change…</option>
+              {#each STATUSES as s}
+                {#if s !== pin.status}
+                  <option value={s}>{s}</option>
+                {/if}
+              {/each}
+            </select>
+            {#if pendingStatus}
+              <button class="inline" on:click={saveStatus} disabled={statusSaving}>
+                {statusSaving ? 'Saving…' : `Set ${pendingStatus}`}
+              </button>
+            {/if}
+          </span>
         </li>
         <li>
           <strong>Location:</strong>
@@ -209,6 +294,55 @@
       </ul>
       {#if pin.notes}
         <p class="notes">{pin.notes}</p>
+      {/if}
+    </section>
+
+    <section class="hazards">
+      <div class="section-header">
+        <h3>Hazards</h3>
+        <button on:click={() => (showHazardForm = !showHazardForm)}>
+          {showHazardForm ? 'Cancel' : 'Add hazard'}
+        </button>
+      </div>
+
+      {#if showHazardForm}
+        <form class="haz-form" on:submit|preventDefault={addHazard}>
+          <label>
+            Type
+            <select bind:value={hazardType}>
+              {#each HAZARD_TYPES as t}
+                <option value={t}>{HAZARD_EMOJI[t]} {HAZARD_LABELS[t]}</option>
+              {/each}
+            </select>
+          </label>
+          <label>
+            Notes (optional)
+            <input
+              type="text"
+              bind:value={hazardNotes}
+              placeholder="e.g. concentrated near the south side"
+            />
+          </label>
+          <button type="submit" disabled={hazardSubmitting}>
+            {hazardSubmitting ? 'Saving…' : 'Save hazard'}
+          </button>
+        </form>
+      {/if}
+
+      {#if hazards.length === 0}
+        <p class="hint">No hazards reported.</p>
+      {:else}
+        <ul class="hazard-chips">
+          {#each hazards as h}
+            <li>
+              <span class="chip">
+                {HAZARD_EMOJI[h.hazard_type]} {HAZARD_LABELS[h.hazard_type]}
+                {#if h.notes}<span class="muted"> — {h.notes}</span>{/if}
+                <button class="x" on:click={() => deleteHazard(h)} aria-label="Remove">×</button>
+              </span>
+            </li>
+          {/each}
+        </ul>
       {/if}
     </section>
 
@@ -544,6 +678,61 @@
     color: #4a554a;
     font-size: 0.85rem;
     padding-left: 0.5rem;
+  }
+
+  /* Status edit inline */
+  .status-edit {
+    margin-left: 0.5rem;
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+  .status-edit select {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.85rem;
+  }
+  button.inline {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  /* Hazards */
+  .haz-form {
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    padding: 0.85rem;
+    margin-bottom: 1rem;
+    background: #fafcf6;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .hazard-chips {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.6rem;
+    background: #fce8c4;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    color: #5a4014;
+  }
+  .chip .x {
+    background: transparent;
+    border: 0;
+    color: #5a4014;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 0 0 0.3rem;
+    line-height: 1;
   }
 
   /* Photos */
