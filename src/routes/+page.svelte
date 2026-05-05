@@ -158,9 +158,9 @@
     return true;
   });
 
-  function isSelected(id: string): boolean {
-    return selectedSpeciesIds === null || selectedSpeciesIds.has(id);
-  }
+  // Reactive function so checkboxes re-render when selectedSpeciesIds changes.
+  $: isSelected = (id: string) =>
+    selectedSpeciesIds === null || selectedSpeciesIds.has(id);
 
   function toggleSpecies(id: string) {
     let next: Set<string>;
