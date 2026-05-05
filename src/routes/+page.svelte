@@ -605,31 +605,35 @@
   .species-panel ul {
     list-style: none;
     margin: 0;
-    padding: 0.25rem 0;
+    padding: 0.15rem 0;
     overflow-y: auto;
   }
   .species-panel li {
-    padding: 0.15rem 0.5rem;
+    padding: 0 0.5rem;
   }
   .species-panel li.group-header {
-    padding: 0.45rem 0.5rem 0.15rem;
-    font-size: 0.78rem;
+    padding: 0.35rem 0.5rem 0.05rem;
+    font-size: 0.74rem;
     font-weight: 600;
     color: #3a5a3a;
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
+  .species-panel li.group-header:first-child {
+    padding-top: 0.1rem;
+  }
   .species-panel li.indented {
-    padding-left: 1.5rem;
+    padding-left: 1.4rem;
   }
   .species-panel label {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    line-height: 1.2;
     cursor: pointer;
-    padding: 0.15rem 0.25rem;
-    border-radius: 0.25rem;
+    padding: 0.1rem 0.2rem;
+    border-radius: 0.2rem;
   }
   .species-panel label:hover {
     background: #f5f8f5;
@@ -637,11 +641,16 @@
   .species-panel .count {
     color: #8a948a;
     margin-left: auto;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+  }
+  .species-panel input[type='checkbox'] {
+    margin: 0;
+    width: 0.85rem;
+    height: 0.85rem;
   }
   .cat-dot {
-    width: 0.6rem;
-    height: 0.6rem;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 50%;
     background: #6b7a6b;
     flex: 0 0 auto;
