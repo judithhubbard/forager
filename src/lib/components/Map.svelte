@@ -3,7 +3,7 @@
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
 
-  type ForageCategory = 'fruit' | 'nut' | 'mushroom' | 'greens' | 'other' | 'unknown';
+  type ForageCategory = 'fruit' | 'nut' | 'mushroom' | 'other' | 'unknown';
 
   /** Optional category resolver, normally computed in +page.svelte from
    *  the species' forage_parts. If omitted, all pins get color 'unknown'. */
@@ -73,27 +73,49 @@
       for (const pin of currentPins) {
         if (pin.lat == null || pin.lng == null) continue;
         const fill = colorFor(pin);
-        const isRipe = pin.is_ripe_now === true;
+        const isStrictRipe = pin.is_ripe_strict === true;
+        const isPossibly = pin.is_ripe_now === true; // already widened by the buffer
         const muted =
           pin.effective_status === 'gone' || pin.effective_status === 'dormant';
         const inaccessible = pin.is_inaccessible === true;
-        // Transparent if inaccessible; faded if dormant/gone; full opacity otherwise.
         const fillOpacity = inaccessible ? 0.2 : muted ? 0.45 : 0.9;
         const strokeOpacity = inaccessible ? 0.6 : muted ? 0.8 : 1.0;
-        // White outline for legibility against any map background.
-        // Ripe-now overrides with an orange outline + larger size.
-        const stroke = isRipe ? '#d57100' : '#ffffff';
-        const baseR = isTouch ? 7 : 4.5;
-        const ripeR = isTouch ? 10 : 7;
+        const baseR = isTouch ? 6 : 4.5;
+
+        // Add ripeness rings BEFORE the main marker (so they render
+        // beneath it). One ring = strict ripe; two rings = possibly
+        // ripe (within the ±10 day buffer but not strictly).
+        if (isPossibly) {
+          // Inner ring (drawn for both strict and possibly).
+          L.circleMarker([pin.lat, pin.lng], {
+            radius: baseR + 3.5,
+            color: '#d57100',
+            fill: false,
+            weight: 1.8,
+            opacity: 0.85,
+            interactive: false
+          }).addTo(markerLayer);
+        }
+        if (isPossibly && !isStrictRipe) {
+          // Outer ring only when in the buffer zone (not strictly ripe).
+          L.circleMarker([pin.lat, pin.lng], {
+            radius: baseR + 7,
+            color: '#d57100',
+            fill: false,
+            weight: 1.4,
+            opacity: 0.45,
+            interactive: false
+          }).addTo(markerLayer);
+        }
+
+        // Main pin marker (white outline for legibility on any map).
         const marker = L.circleMarker([pin.lat, pin.lng], {
-          radius: isRipe ? ripeR : baseR,
-          color: stroke,
+          radius: baseR,
+          color: '#ffffff',
           fillColor: fill,
           fillOpacity,
           opacity: strokeOpacity,
-          weight: isRipe ? 2.5 : 1.5,
-          // Stop click events from bubbling to the underlying map (which
-          // would otherwise fire mapTap and open the drop-pin modal).
+          weight: 1.5,
           bubblingMouseEvents: false
         });
         marker.on('click', () => {
@@ -116,8 +138,7 @@
       case 'fruit':    return '#c14a3a'; // red-orange (cherries, mulberries, brambles)
       case 'nut':      return '#7a5230'; // brown (hickories, hazelnuts, chestnuts)
       case 'mushroom': return '#8a4ea0'; // purple (morels, chanterelles)
-      case 'greens':   return '#6ba040'; // green (ramps, asparagus, mint)
-      case 'other':    return '#5a7a3a'; // muted green (sassafras, spicebush)
+      case 'other':    return '#6ba040'; // green (ramps, asparagus, mint, anything else)
       default:         return '#6b7a6b'; // unknown / no species
     }
   }

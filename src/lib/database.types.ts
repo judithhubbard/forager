@@ -856,6 +856,7 @@ export type Database = {
           import_source: string | null
           is_inaccessible: boolean | null
           is_ripe_now: boolean | null
+          is_ripe_strict: boolean | null
           last_observed_at: string | null
           last_observed_stage: Database["public"]["Enums"]["stage"] | null
           lat: number | null
@@ -1189,15 +1190,26 @@ export type Database = {
       is_region_member: { Args: { rid: string; uid: string }; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
       photo_id_from_name: { Args: { object_name: string }; Returns: string }
-      pin_in_window: {
-        Args: {
-          p_pin_id: string
-          p_stage: Database["public"]["Enums"]["stage"]
-          p_target_date?: string
-          p_user_id?: string
-        }
-        Returns: boolean
-      }
+      pin_in_window:
+        | {
+            Args: {
+              p_pin_id: string
+              p_stage: Database["public"]["Enums"]["stage"]
+              p_target_date?: string
+              p_user_id?: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_buffer_days?: number
+              p_pin_id: string
+              p_stage: Database["public"]["Enums"]["stage"]
+              p_target_date?: string
+              p_user_id?: string
+            }
+            Returns: boolean
+          }
       pin_region: { Args: { p_pin_id: string }; Returns: string }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }

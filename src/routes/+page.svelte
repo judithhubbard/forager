@@ -23,14 +23,13 @@
   let speciesPanelOpen = false;
   /** Tab in the species panel — filters which species are LISTED (not which
    *  are selected). Selection persists across tab switches. */
-  type SpeciesTab = 'all' | 'fruit' | 'nut' | 'mushroom' | 'greens' | 'other';
+  type SpeciesTab = 'all' | 'fruit' | 'nut' | 'mushroom' | 'other';
   let speciesTab: SpeciesTab = 'all';
   const SPECIES_TABS: { k: SpeciesTab; label: string }[] = [
     { k: 'all',      label: 'All' },
     { k: 'fruit',    label: 'Fruit' },
     { k: 'nut',      label: 'Nut' },
     { k: 'mushroom', label: 'Mushroom' },
-    { k: 'greens',   label: 'Greens' },
     { k: 'other',    label: 'Other' }
   ];
 
@@ -97,8 +96,9 @@
   let showLegend = true;
 
   let selectedPinId: string | null = null;
+  let toolsOpen = false;
 
-  type Cat = 'fruit' | 'nut' | 'mushroom' | 'greens' | 'other' | 'unknown';
+  type Cat = 'fruit' | 'nut' | 'mushroom' | 'other' | 'unknown';
   type CatMap = Record<string, Cat>;
 
   function buildCategoryMap(speciesList: Species[]): CatMap {
@@ -109,7 +109,7 @@
       if (parts.includes('mushroom')) cat = 'mushroom';
       else if (parts.includes('nut')) cat = 'nut';
       else if (parts.includes('fruit')) cat = 'fruit';
-      else if (parts.includes('leaf') || parts.includes('shoot') || parts.includes('bulb')) cat = 'greens';
+      // everything else (leaf, shoot, bulb, root, spice, bark, …) → 'other'
       m[s.id] = cat;
     }
     return m;
@@ -248,12 +248,6 @@
     showDropPin = true;
   }
 
-  function openFab() {
-    dropPinLng = null;
-    dropPinLat = null;
-    showDropPin = true;
-  }
-
   function handlePinSaved(_e: CustomEvent<{ id: string }>) {
     showDropPin = false;
     dropPinLng = null;
@@ -278,8 +272,19 @@
       <span class="hint">Loading…</span>
     {/if}
     <a class="link ripe-link" href="/ripe">Ripe now</a>
-    <a class="link" href="/activity">Activity</a>
-    <button class="signout" on:click={handleSignOut}>Sign out</button>
+    <div class="tools-wrap">
+      <button class="tools-button" on:click={() => (toolsOpen = !toolsOpen)} aria-label="Tools menu">≡</button>
+      {#if toolsOpen}
+        <div class="tools-menu" role="menu">
+          <a href="/activity" on:click={() => (toolsOpen = false)}>Activity</a>
+          <a href="/windows" on:click={() => (toolsOpen = false)}>Edit harvest windows</a>
+          <a href="/how-to-use" on:click={() => (toolsOpen = false)}>How to use</a>
+          <a href="/about" on:click={() => (toolsOpen = false)}>About</a>
+          <hr />
+          <button on:click={() => { toolsOpen = false; handleSignOut(); }}>Sign out</button>
+        </div>
+      {/if}
+    </div>
   </div>
 </header>
 
@@ -338,7 +343,7 @@
                     <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
                       class:nut={categoryBySpecies[s.id] === 'nut'}
                       class:mushroom={categoryBySpecies[s.id] === 'mushroom'}
-                      class:greens={categoryBySpecies[s.id] === 'greens'}></span>
+                      class:other={categoryBySpecies[s.id] === 'other'}></span>
                     {s.common_name}
                     <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
                   </label>
@@ -384,16 +389,15 @@
           <li><span class="dot" style="background:#c14a3a"></span> Fruit</li>
           <li><span class="dot" style="background:#7a5230"></span> Nut</li>
           <li><span class="dot" style="background:#8a4ea0"></span> Mushroom</li>
-          <li><span class="dot" style="background:#6ba040"></span> Greens (ramps, asparagus, mint)</li>
-          <li><span class="dot" style="background:#5a7a3a"></span> Other (root, spice, bark)</li>
-          <li><span class="dot ring" style="background:#c14a3a; outline-color:#d57100"></span> Ripe now (any color)</li>
-          <li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant (faded)</li>
+          <li><span class="dot" style="background:#6ba040"></span> Other (greens, ramps, mint, …)</li>
+          <li><span class="ring1"></span> Ripe (in window)</li>
+          <li><span class="ring2"></span> Possibly ripe (within ±10 days)</li>
+          <li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant</li>
         </ul>
       </div>
     {:else}
       <button class="legend-show" on:click={() => (showLegend = true)}>Legend</button>
     {/if}
-    <button class="fab" on:click={openFab} aria-label="Drop a pin at my location">+</button>
   {/if}
 {:else if $regionsLoading}
   <main class="loading"><p>Loading…</p></main>
@@ -467,6 +471,56 @@
   .ripe-link {
     color: #d57100;
     font-weight: 600;
+  }
+
+  /* Tools menu */
+  .tools-wrap {
+    position: relative;
+  }
+  .tools-button {
+    background: transparent;
+    border: 1px solid #c7d0c7;
+    color: #3a5a3a;
+    border-radius: 0.3rem;
+    width: 2rem;
+    height: 1.85rem;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .tools-menu {
+    position: absolute;
+    top: calc(100% + 0.3rem);
+    right: 0;
+    min-width: 11rem;
+    background: white;
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    z-index: 1200;
+    padding: 0.25rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .tools-menu a, .tools-menu button {
+    display: block;
+    padding: 0.45rem 0.7rem;
+    text-decoration: none;
+    color: #1f2a1f;
+    font-size: 0.88rem;
+    border-radius: 0.3rem;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+  .tools-menu a:hover, .tools-menu button:hover {
+    background: #f0f5ef;
+  }
+  .tools-menu hr {
+    margin: 0.25rem 0;
+    border: 0;
+    border-top: 1px solid #ebefeb;
   }
   main.loading {
     padding: 2rem;
@@ -654,7 +708,7 @@
   .cat-dot.fruit { background: #c14a3a; }
   .cat-dot.nut { background: #7a5230; }
   .cat-dot.mushroom { background: #8a4ea0; }
-  .cat-dot.greens { background: #6ba040; }
+  .cat-dot.other { background: #6ba040; }
 
   /* Pin detail side panel */
   .pin-panel {
@@ -761,12 +815,22 @@
     margin-right: 0.4rem;
     vertical-align: middle;
   }
-  .legend .dot.ring {
-    outline: 2px solid;
-    outline-offset: 1px;
+  .legend .dot.faded { opacity: 0.4; }
+  .legend .ring1, .legend .ring2 {
+    display: inline-block;
+    width: 0.95rem; height: 0.95rem;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+    background: #c14a3a;
+    border-radius: 50%;
+    border: 1.5px solid white;
+    box-shadow: 0 0 0 1.6px #d57100;
   }
-  .legend .dot.faded {
-    opacity: 0.4;
+  .legend .ring2 {
+    box-shadow:
+      0 0 0 1.6px #d57100,
+      0 0 0 2.4px white,
+      0 0 0 3.4px rgba(213, 113, 0, 0.45);
   }
   .legend-show {
     position: fixed;
