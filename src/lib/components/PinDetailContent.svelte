@@ -299,9 +299,9 @@
 
     <section class="hazards">
       <div class="section-header">
-        <h3>Hazards</h3>
+        <h3>Hazards &amp; access</h3>
         <button on:click={() => (showHazardForm = !showHazardForm)}>
-          {showHazardForm ? 'Cancel' : 'Add hazard'}
+          {showHazardForm ? 'Cancel' : 'Add'}
         </button>
       </div>
       {#if showHazardForm}
@@ -324,7 +324,7 @@
         </form>
       {/if}
       {#if hazards.length === 0}
-        <p class="hint">No hazards reported.</p>
+        <p class="hint">No hazards or access notes.</p>
       {:else}
         <ul class="hazard-chips">
           {#each hazards as h}

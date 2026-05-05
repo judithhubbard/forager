@@ -1835,6 +1835,9 @@ export type Database = {
         | "water_crossing"
         | "traffic"
         | "other"
+        | "out_of_reach"
+        | "inaccessible"
+        | "fenced"
       pin_status: "active" | "gone" | "dormant" | "needs_verification"
       region_role: "admin" | "member"
       stage:
@@ -1991,6 +1994,9 @@ export const Constants = {
         "water_crossing",
         "traffic",
         "other",
+        "out_of_reach",
+        "inaccessible",
+        "fenced",
       ],
       pin_status: ["active", "gone", "dormant", "needs_verification"],
       region_role: ["admin", "member"],

@@ -9,32 +9,44 @@ export type Hazard = Database['public']['Tables']['hazards']['Row'];
 export type HazardType = Database['public']['Enums']['hazard_type'];
 
 export const HAZARD_TYPES: HazardType[] = [
+  // Safety
   'poison_ivy',
   'ticks',
-  'private_property',
   'unstable_terrain',
   'water_crossing',
   'traffic',
+  // Access
+  'out_of_reach',
+  'inaccessible',
+  'fenced',
+  'private_property',
+  // Catch-all
   'other'
 ];
 
 export const HAZARD_LABELS: Record<HazardType, string> = {
   poison_ivy: 'Poison ivy',
   ticks: 'Ticks',
-  private_property: 'Private property — ask first',
   unstable_terrain: 'Unstable terrain',
   water_crossing: 'Water crossing',
   traffic: 'Traffic',
+  out_of_reach: 'Out of reach (too tall)',
+  inaccessible: 'Inaccessible',
+  fenced: 'Fenced / gated',
+  private_property: 'Private property — ask first',
   other: 'Other'
 };
 
 export const HAZARD_EMOJI: Record<HazardType, string> = {
   poison_ivy: '🌿',
   ticks: '🕷',
-  private_property: '🚷',
   unstable_terrain: '⛰',
   water_crossing: '💧',
   traffic: '🚗',
+  out_of_reach: '📏',
+  inaccessible: '🚧',
+  fenced: '🔒',
+  private_property: '🚷',
   other: '⚠'
 };
 

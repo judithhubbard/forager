@@ -105,11 +105,16 @@ export async function loadSpecies(sql: Sql): Promise<SpeciesRow[]> {
 
 const norm = (s: string) => s.toLowerCase().trim().replace(/\s+/g, ' ');
 
-/** Genus-only fuzzy match: "Amelanchier" matches any A. species in our list. */
-function startsWithGenus(scientific: string, target: string): boolean {
-  const a = norm(scientific).split(' ');
-  const b = norm(target).split(' ');
-  return a[0] === b[0];
+const GENUS_ONLY_PLACEHOLDERS = new Set(['species', 'spp', 'spp.', 'sp', 'sp.']);
+
+/** True iff `target` is an unspecific genus reference (bare genus, "Genus
+ *  species", "Genus sp", "Genus spp", etc). Specific species names like
+ *  "Cornus kousa" return false — we never use the genus fallback for them. */
+function isGenusOnly(target: string): boolean {
+  const parts = norm(target).split(/\s+/);
+  if (parts.length === 1) return true;
+  if (parts.length === 2 && GENUS_ONLY_PLACEHOLDERS.has(parts[1])) return true;
+  return false;
 }
 
 export function matchSpecies(
@@ -136,9 +141,15 @@ export function matchSpecies(
     );
     if (hit) return hit;
   }
-  // 4) genus-only fall-through (Amelanchier sp. → first matching genus)
-  if (sciq) {
-    const hit = species.find((s) => startsWithGenus(s.scientific_name, sciq));
+  // 4) genus-only fall-through — ONLY when the source explicitly indicates
+  //    "any species in this genus" (e.g. "Amelanchier species"). Specific
+  //    other species in the same genus (e.g. "Cornus kousa") are skipped
+  //    rather than mis-matched to our species in the same genus.
+  if (sciq && isGenusOnly(sciq)) {
+    const targetGenus = sciq.split(/\s+/)[0];
+    const hit = species.find(
+      (s) => norm(s.scientific_name).split(/\s+/)[0] === targetGenus
+    );
     if (hit) return hit;
   }
   return null;
