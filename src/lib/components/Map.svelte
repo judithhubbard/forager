@@ -160,7 +160,16 @@
 
 <div class="map-wrap">
   <div bind:this={mapEl} class="map" />
-  <button class="locate" on:click={locateMe} aria-label="Find my location">📍</button>
+  <button class="locate" on:click={locateMe} aria-label="Center map on my location">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+      <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.6" />
+      <line x1="12" y1="1.5" x2="12" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      <line x1="12" y1="20" x2="12" y2="22.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      <line x1="1.5" y1="12" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      <line x1="20" y1="12" x2="22.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    </svg>
+  </button>
 </div>
 
 <style>
@@ -185,12 +194,16 @@
     border-radius: 50%;
     border: 1px solid #c7d0c7;
     background: white;
-    font-size: 1.1rem;
+    color: #3a5a3a;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
   .locate:active {
-    background: #f0f0f0;
+    background: #eaf2ea;
   }
   @media (max-width: 640px) {
     .locate {
