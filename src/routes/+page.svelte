@@ -45,6 +45,21 @@
   $: categoryOf = (p: PinEffective): Cat =>
     p.species_id ? categoryBySpecies[p.species_id] ?? 'unknown' : 'unknown';
 
+  $: speciesById = (() => {
+    const m: Record<string, Species> = {};
+    for (const s of species) m[s.id] = s;
+    return m;
+  })();
+
+  function labelOf(p: PinEffective): string {
+    const s = p.species_id ? speciesById[p.species_id] : null;
+    const name = p.display_name ?? s?.common_name ?? '(unnamed pin)';
+    const status =
+      p.effective_status === 'active' ? '' : ` [${p.effective_status}]`;
+    const ripe = p.is_ripe_now ? '  · 🍒 ripe now' : '';
+    return `${name}${status}${ripe}`;
+  }
+
   $: filteredPins = pins.filter((p) => {
     if (selectedSpeciesIds.size > 0) {
       if (!p.species_id || !selectedSpeciesIds.has(p.species_id)) return false;
@@ -213,6 +228,7 @@
   <Map
     pins={filteredPins}
     {categoryOf}
+    {labelOf}
     on:pinClick={handlePinClick}
     on:mapTap={handleMapTap}
   />
@@ -381,7 +397,8 @@
     position: absolute;
     top: calc(100% + 0.25rem);
     left: 0;
-    z-index: 700;
+    /* Above Leaflet's zoom controls (z-index ~1000). */
+    z-index: 1100;
     background: white;
     border: 1px solid #d0d8d0;
     border-radius: 0.4rem;

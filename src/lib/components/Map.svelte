@@ -9,6 +9,10 @@
    *  the species' forage_parts. If omitted, all pins get color 'unknown'. */
   export let categoryOf: (pin: PinEffective) => ForageCategory = () => 'unknown';
 
+  /** Optional hover-tooltip resolver. Returns plain text shown on mouseover. */
+  export let labelOf: (pin: PinEffective) => string = (p) =>
+    p.display_name ?? '(unnamed pin)';
+
   export let pins: PinEffective[] = [];
   export let center: [number, number] = [42.4534, -76.4836]; // Cornell campus default
   export let zoom: number = 14;
@@ -82,6 +86,10 @@
         marker.on('click', () => {
           if (pin.id) dispatch('pinClick', { pinId: pin.id });
         });
+        const label = labelOf(pin);
+        if (label) {
+          marker.bindTooltip(label, { direction: 'top', offset: [0, -2], sticky: true });
+        }
         marker.addTo(markerLayer);
       }
     });

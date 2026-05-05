@@ -170,6 +170,97 @@
       "safety_notes": "Smaller cousin of chestnut; sweet, edible nuts in spiny burrs."
     },
     {
+      "scientific_name": "Carya illinoinensis",
+      "common_name": "Pecan",
+      "aliases": ["Carya illinoensis"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Native to the southern US; trees in Ithaca are at the northern edge of their range."
+    },
+    {
+      "scientific_name": "Carya laciniosa",
+      "common_name": "Shellbark hickory",
+      "aliases": ["kingnut hickory"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Largest hickory nut; thick shell."
+    },
+    {
+      "scientific_name": "Juglans regia",
+      "common_name": "English walnut",
+      "aliases": ["Persian walnut", "common walnut"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Thinner shell than black walnut; much easier to crack."
+    },
+    {
+      "scientific_name": "Juglans ailantifolia",
+      "common_name": "Japanese walnut",
+      "aliases": ["heartnut", "Japanese heartnut", "Juglans ailantifolia var. cordiformis"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Heartnut variety has a heart-shaped shell that splits cleanly."
+    },
+    {
+      "scientific_name": "Cornus officinalis",
+      "common_name": "Japanese cornelian cherry",
+      "aliases": ["Asian cornelian cherry", "Asiatic dogwood"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Edible like Cornus mas — tart-sweet drupes used fresh or in preserves."
+    },
+    {
+      "scientific_name": "Vaccinium corymbosum",
+      "common_name": "Highbush blueberry",
+      "aliases": ["northern highbush blueberry"],
+      "forage_parts": ["fruit"],
+      "safety_notes": ""
+    },
+    {
+      "scientific_name": "Vaccinium angustifolium",
+      "common_name": "Lowbush blueberry",
+      "aliases": ["wild blueberry"],
+      "forage_parts": ["fruit"],
+      "safety_notes": ""
+    },
+    {
+      "scientific_name": "Prunus pumila",
+      "common_name": "Sand cherry",
+      "aliases": ["dwarf cherry"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Pits contain cyanogenic compounds; do not consume."
+    },
+    {
+      "scientific_name": "Prunus dulcis",
+      "common_name": "Almond",
+      "aliases": ["Prunus amygdalus", "sweet almond"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Edible cultivars only. Wild/bitter almond contains amygdalin which produces cyanide; do not eat from unknown trees."
+    },
+    {
+      "scientific_name": "Ribes rubrum",
+      "common_name": "Red currant",
+      "aliases": ["redcurrant"],
+      "forage_parts": ["fruit"],
+      "safety_notes": ""
+    },
+    {
+      "scientific_name": "Ribes nigrum",
+      "common_name": "Black currant",
+      "aliases": ["blackcurrant"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Strong-flavored; usually cooked into preserves or syrups."
+    },
+    {
+      "scientific_name": "Pyrus communis",
+      "common_name": "European pear",
+      "aliases": ["common pear", "wild pear"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Many feral / abandoned cultivar trees in the area."
+    },
+    {
+      "scientific_name": "Pyrus ussuriensis",
+      "common_name": "Ussurian pear",
+      "aliases": ["Asian pear", "Chinese pear", "Manchurian pear"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Hardy Asian pear; tart, often used for cooking or cider."
+    },
+    {
       "scientific_name": "Rubus occidentalis",
       "common_name": "Black raspberry",
       "aliases": ["blackcap", "thimbleberry"],

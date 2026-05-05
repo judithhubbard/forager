@@ -116,7 +116,10 @@ const NO_FALLBACK_GENERA = new Set([
   'cornus',    // many ornamental dogwoods
   'prunus',    // many ornamental cherries
   'carya',     // many bitter / pignut / mockernut hickories
-  'juglans'    // includes Juglans nigra which the user removed
+  'juglans',   // includes Juglans nigra which the user removed
+  'pyrus',     // Pyrus calleryana (Bradford pear) is the dominant ornamental — inedible
+  'vaccinium', // many cultivars and ornamental species
+  'ribes'      // many cultivars; we want explicit species matches
 ]);
 
 /** True iff `target` is an unspecific genus reference (bare genus, "Genus
@@ -153,7 +156,23 @@ export function matchSpecies(
     );
     if (hit) return hit;
   }
-  // 4) genus-only fall-through — ONLY when the source explicitly indicates
+  // 4) binomial fallback: source has "Genus species 'Cultivar'" or
+  //    "Genus species var. xyz" — strip everything after the first two
+  //    words and try an exact match against our list.
+  //    e.g. "Carya laciniosa 'Daulton'" → "Carya laciniosa".
+  //    Skipped if the 2nd word looks like a cultivar marker
+  //    (starts with quote / paren / digit) since "Malus 'Bob White'"
+  //    has no real species epithet.
+  if (sciq) {
+    const parts = sciq.split(/\s+/);
+    if (parts.length >= 2 && /^[a-z]+$/i.test(parts[1])) {
+      const binomial = `${parts[0]} ${parts[1]}`;
+      const hit = species.find((s) => norm(s.scientific_name) === binomial);
+      if (hit) return hit;
+    }
+  }
+
+  // 5) genus-only fall-through — ONLY when the source explicitly indicates
   //    "any species in this genus" (e.g. "Amelanchier species"), and only
   //    for genera where this is semantically safe (see NO_FALLBACK_GENERA).
   if (sciq && isGenusOnly(sciq)) {

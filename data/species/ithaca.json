@@ -180,6 +180,97 @@
       }
     },
     {
+      "scientific_name": "Carya illinoinensis",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 155 }],
+        "ripe":      [{ "start_doy": 280, "end_doy": 315 }]
+      }
+    },
+    {
+      "scientific_name": "Carya laciniosa",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 150 }],
+        "ripe":      [{ "start_doy": 275, "end_doy": 310 }]
+      }
+    },
+    {
+      "scientific_name": "Juglans regia",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 155 }],
+        "ripe":      [{ "start_doy": 270, "end_doy": 300 }]
+      }
+    },
+    {
+      "scientific_name": "Juglans ailantifolia",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 155 }],
+        "ripe":      [{ "start_doy": 270, "end_doy": 300 }]
+      }
+    },
+    {
+      "scientific_name": "Cornus officinalis",
+      "stages": {
+        "flowering": [{ "start_doy": 75, "end_doy": 100 }],
+        "ripe":      [{ "start_doy": 230, "end_doy": 260 }]
+      }
+    },
+    {
+      "scientific_name": "Vaccinium corymbosum",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 155 }],
+        "ripe":      [{ "start_doy": 195, "end_doy": 240 }]
+      }
+    },
+    {
+      "scientific_name": "Vaccinium angustifolium",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 155 }],
+        "ripe":      [{ "start_doy": 195, "end_doy": 235 }]
+      }
+    },
+    {
+      "scientific_name": "Prunus pumila",
+      "stages": {
+        "flowering": [{ "start_doy": 120, "end_doy": 145 }],
+        "ripe":      [{ "start_doy": 200, "end_doy": 240 }]
+      }
+    },
+    {
+      "scientific_name": "Prunus dulcis",
+      "stages": {
+        "flowering": [{ "start_doy": 90, "end_doy": 115 }],
+        "ripe":      [{ "start_doy": 230, "end_doy": 270 }]
+      }
+    },
+    {
+      "scientific_name": "Ribes rubrum",
+      "stages": {
+        "flowering": [{ "start_doy": 110, "end_doy": 135 }],
+        "ripe":      [{ "start_doy": 175, "end_doy": 215 }]
+      }
+    },
+    {
+      "scientific_name": "Ribes nigrum",
+      "stages": {
+        "flowering": [{ "start_doy": 110, "end_doy": 135 }],
+        "ripe":      [{ "start_doy": 195, "end_doy": 230 }]
+      }
+    },
+    {
+      "scientific_name": "Pyrus communis",
+      "stages": {
+        "flowering": [{ "start_doy": 120, "end_doy": 145 }],
+        "ripe":      [{ "start_doy": 235, "end_doy": 285 }]
+      }
+    },
+    {
+      "scientific_name": "Pyrus ussuriensis",
+      "stages": {
+        "flowering": [{ "start_doy": 115, "end_doy": 140 }],
+        "ripe":      [{ "start_doy": 245, "end_doy": 290 }]
+      }
+    },
+    {
       "scientific_name": "Rubus occidentalis",
       "stages": {
         "flowering": [{ "start_doy": 130, "end_doy": 155 }],
