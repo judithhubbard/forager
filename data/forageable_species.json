@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "species": [
+    {
+      "scientific_name": "Amelanchier laevis",
+      "common_name": "Allegheny serviceberry",
+      "aliases": ["serviceberry", "Juneberry", "shadbush", "shadblow"],
+      "forage_parts": ["fruit"],
+      "safety_notes": ""
+    },
+    {
+      "scientific_name": "Amelanchier arborea",
+      "common_name": "Downy serviceberry",
+      "aliases": ["serviceberry", "Juneberry", "shadbush"],
+      "forage_parts": ["fruit"],
+      "safety_notes": ""
+    },
+    {
+      "scientific_name": "Amelanchier canadensis",
+      "common_name": "Eastern serviceberry",
+      "aliases": ["serviceberry", "Juneberry", "shadbush"],
+      "forage_parts": ["fruit"],
+      "safety_notes": ""
+    },
+    {
+      "scientific_name": "Cornus mas",
+      "common_name": "Cornelian cherry",
+      "aliases": ["cornel"],
+      "forage_parts": ["fruit"],
+      "safety_notes": ""
+    },
+    {
+      "scientific_name": "Asimina triloba",
+      "common_name": "Pawpaw",
+      "aliases": ["paw paw", "American custard apple"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Skin and seeds contain compounds; eat flesh only."
+    },
+    {
+      "scientific_name": "Diospyros virginiana",
+      "common_name": "American persimmon",
+      "aliases": ["common persimmon"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Astringent until fully ripe (often after frost)."
+    },
+    {
+      "scientific_name": "Morus alba",
+      "common_name": "White mulberry",
+      "aliases": ["mulberry"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Unripe fruit and other parts can cause stomach upset."
+    },
+    {
+      "scientific_name": "Morus rubra",
+      "common_name": "Red mulberry",
+      "aliases": ["mulberry"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Unripe fruit and other parts can cause stomach upset."
+    },
+    {
+      "scientific_name": "Juglans nigra",
+      "common_name": "Black walnut",
+      "aliases": ["walnut"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Hulls stain heavily. Juglone is toxic to many plants."
+    },
+    {
+      "scientific_name": "Juglans cinerea",
+      "common_name": "Butternut",
+      "aliases": ["white walnut"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Increasingly rare due to butternut canker; report locations."
+    },
+    {
+      "scientific_name": "Carya ovata",
+      "common_name": "Shagbark hickory",
+      "aliases": ["hickory"],
+      "forage_parts": ["nut"],
+      "safety_notes": ""
+    },
+    {
+      "scientific_name": "Carya cordiformis",
+      "common_name": "Bitternut hickory",
+      "aliases": ["hickory"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Nuts are very bitter; mainly for novelty / oil pressing."
+    },
+    {
+      "scientific_name": "Malus coronaria",
+      "common_name": "Sweet crabapple",
+      "aliases": ["crabapple", "wild crabapple"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Seeds contain trace cyanogenic compounds; do not consume."
+    },
+    {
+      "scientific_name": "Malus domestica",
+      "common_name": "Apple",
+      "aliases": ["wild apple", "feral apple"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Seeds contain trace cyanogenic compounds; do not consume."
+    },
+    {
+      "scientific_name": "Elaeagnus umbellata",
+      "common_name": "Autumn olive",
+      "aliases": ["autumnberry"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Invasive species in NY; harvesting helps control spread."
+    },
+    {
+      "scientific_name": "Sorbus americana",
+      "common_name": "American mountain ash",
+      "aliases": ["mountain ash", "rowan"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Raw fruit is harsh; cook or freeze before use. Seeds contain cyanogenic compounds."
+    },
+    {
+      "scientific_name": "Corylus americana",
+      "common_name": "American hazelnut",
+      "aliases": ["hazel", "filbert"],
+      "forage_parts": ["nut"],
+      "safety_notes": ""
+    },
+    {
+      "scientific_name": "Corylus cornuta",
+      "common_name": "Beaked hazelnut",
+      "aliases": ["hazel"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Husk has irritating bristles; wear gloves when collecting."
+    },
+    {
+      "scientific_name": "Sambucus canadensis",
+      "common_name": "American elderberry",
+      "aliases": ["elderberry", "elder"],
+      "forage_parts": ["fruit", "flower"],
+      "safety_notes": "Unripe berries, leaves, bark, and roots are toxic. Cook ripe berries; do not eat raw."
+    },
+    {
+      "scientific_name": "Sassafras albidum",
+      "common_name": "Sassafras",
+      "aliases": [],
+      "forage_parts": ["leaf", "root"],
+      "safety_notes": "Safrole in roots is restricted in commercial food; small personal use historically common but consult current guidance."
+    },
+    {
+      "scientific_name": "Lindera benzoin",
+      "common_name": "Spicebush",
+      "aliases": ["wild allspice"],
+      "forage_parts": ["fruit", "leaf"],
+      "safety_notes": "Berries used as spice; not for bulk consumption."
+    },
+    {
+      "scientific_name": "Prunus serotina",
+      "common_name": "Black cherry",
+      "aliases": ["wild cherry"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Pits, leaves, and bark contain cyanogenic compounds. Use flesh only; do not crush pits."
+    },
+    {
+      "scientific_name": "Prunus virginiana",
+      "common_name": "Chokecherry",
+      "aliases": [],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Pits and other parts toxic. Strain before use."
+    },
+    {
+      "scientific_name": "Prunus americana",
+      "common_name": "American plum",
+      "aliases": ["wild plum"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Pits contain cyanogenic compounds; do not consume."
+    },
+    {
+      "scientific_name": "Crataegus",
+      "common_name": "Hawthorn",
+      "aliases": ["thorn apple"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Many Crataegus species; identification to species can be difficult. Pits contain cyanogenic compounds; do not consume."
+    },
+    {
+      "scientific_name": "Vitis riparia",
+      "common_name": "Riverbank grape",
+      "aliases": ["wild grape", "frost grape"],
+      "forage_parts": ["fruit", "leaf"],
+      "safety_notes": "Confirm identification — Canada moonseed (Menispermum canadense) is a toxic look-alike. Moonseed has half-moon-shaped seeds; grapes have multiple round seeds."
+    },
+    {
+      "scientific_name": "Cercis canadensis",
+      "common_name": "Eastern redbud",
+      "aliases": ["redbud"],
+      "forage_parts": ["flower"],
+      "safety_notes": "Flowers and young pods edible; seeds within mature pods are not."
+    },
+    {
+      "scientific_name": "Robinia pseudoacacia",
+      "common_name": "Black locust",
+      "aliases": [],
+      "forage_parts": ["flower"],
+      "safety_notes": "FLOWERS ONLY are edible. Bark, leaves, seeds, and pods are toxic."
+    },
+    {
+      "scientific_name": "Quercus alba",
+      "common_name": "White oak",
+      "aliases": ["oak"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Acorns must be leached of tannins before eating."
+    },
+    {
+      "scientific_name": "Castanea dentata",
+      "common_name": "American chestnut",
+      "aliases": ["chestnut"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Critically endangered due to chestnut blight; report locations to local conservation orgs."
+    }
+  ]
+}

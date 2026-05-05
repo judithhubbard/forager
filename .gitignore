@@ -1,0 +1,18 @@
+node_modules/
+.svelte-kit/
+build/
+dist/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# Claude Code local config (machine-specific permissions, etc.)
+.claude/
+
+# Supabase CLI artifacts
+supabase/.temp/
+supabase/.branches/

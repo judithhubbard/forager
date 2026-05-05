@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "region": "ithaca",
+  "climate_zone": "5b",
+  "timezone": "America/New_York",
+  "notes": "Approximate windows for USDA zones 5b/6a in Ithaca, NY. Compiled from USDA, USA-NPN, Cornell Cooperative Extension, and foraging field guides. Refine with observations.",
+  "windows": [
+    {
+      "scientific_name": "Amelanchier laevis",
+      "stages": {
+        "flowering": [{ "start_doy": 110, "end_doy": 130 }],
+        "green":     [{ "start_doy": 125, "end_doy": 165 }],
+        "ripening":  [{ "start_doy": 160, "end_doy": 175 }],
+        "ripe":      [{ "start_doy": 170, "end_doy": 195 }]
+      }
+    },
+    {
+      "scientific_name": "Amelanchier arborea",
+      "stages": {
+        "flowering": [{ "start_doy": 105, "end_doy": 125 }],
+        "ripe":      [{ "start_doy": 165, "end_doy": 190 }]
+      }
+    },
+    {
+      "scientific_name": "Amelanchier canadensis",
+      "stages": {
+        "flowering": [{ "start_doy": 110, "end_doy": 130 }],
+        "ripe":      [{ "start_doy": 170, "end_doy": 195 }]
+      }
+    },
+    {
+      "scientific_name": "Cornus mas",
+      "stages": {
+        "flowering": [{ "start_doy": 80, "end_doy": 105 }],
+        "ripe":      [{ "start_doy": 230, "end_doy": 260 }]
+      }
+    },
+    {
+      "scientific_name": "Asimina triloba",
+      "stages": {
+        "flowering": [{ "start_doy": 115, "end_doy": 140 }],
+        "ripening":  [{ "start_doy": 250, "end_doy": 270 }],
+        "ripe":      [{ "start_doy": 265, "end_doy": 295 }]
+      }
+    },
+    {
+      "scientific_name": "Diospyros virginiana",
+      "stages": {
+        "flowering": [{ "start_doy": 150, "end_doy": 170 }],
+        "ripening":  [{ "start_doy": 260, "end_doy": 285 }],
+        "ripe":      [{ "start_doy": 280, "end_doy": 315 }]
+      }
+    },
+    {
+      "scientific_name": "Morus alba",
+      "stages": {
+        "flowering": [{ "start_doy": 125, "end_doy": 145 }],
+        "ripening":  [{ "start_doy": 155, "end_doy": 170 }],
+        "ripe":      [{ "start_doy": 165, "end_doy": 200 }]
+      }
+    },
+    {
+      "scientific_name": "Morus rubra",
+      "stages": {
+        "flowering": [{ "start_doy": 125, "end_doy": 145 }],
+        "ripe":      [{ "start_doy": 170, "end_doy": 205 }]
+      }
+    },
+    {
+      "scientific_name": "Juglans nigra",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 150 }],
+        "ripe":      [{ "start_doy": 270, "end_doy": 305 }]
+      }
+    },
+    {
+      "scientific_name": "Juglans cinerea",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 150 }],
+        "ripe":      [{ "start_doy": 275, "end_doy": 305 }]
+      }
+    },
+    {
+      "scientific_name": "Carya ovata",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 150 }],
+        "ripe":      [{ "start_doy": 275, "end_doy": 310 }]
+      }
+    },
+    {
+      "scientific_name": "Carya cordiformis",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 150 }],
+        "ripe":      [{ "start_doy": 275, "end_doy": 310 }]
+      }
+    },
+    {
+      "scientific_name": "Malus coronaria",
+      "stages": {
+        "flowering": [{ "start_doy": 125, "end_doy": 145 }],
+        "ripe":      [{ "start_doy": 245, "end_doy": 285 }]
+      }
+    },
+    {
+      "scientific_name": "Malus domestica",
+      "stages": {
+        "flowering": [{ "start_doy": 120, "end_doy": 145 }],
+        "ripening":  [{ "start_doy": 230, "end_doy": 270 }],
+        "ripe":      [{ "start_doy": 250, "end_doy": 305 }]
+      }
+    },
+    {
+      "scientific_name": "Elaeagnus umbellata",
+      "stages": {
+        "flowering": [{ "start_doy": 125, "end_doy": 150 }],
+        "ripe":      [{ "start_doy": 250, "end_doy": 300 }]
+      }
+    },
+    {
+      "scientific_name": "Sorbus americana",
+      "stages": {
+        "flowering": [{ "start_doy": 145, "end_doy": 165 }],
+        "ripe":      [{ "start_doy": 235, "end_doy": 305 }]
+      }
+    },
+    {
+      "scientific_name": "Corylus americana",
+      "stages": {
+        "flowering": [{ "start_doy": 65, "end_doy": 95 }],
+        "ripe":      [{ "start_doy": 215, "end_doy": 260 }]
+      }
+    },
+    {
+      "scientific_name": "Corylus cornuta",
+      "stages": {
+        "flowering": [{ "start_doy": 70, "end_doy": 100 }],
+        "ripe":      [{ "start_doy": 215, "end_doy": 260 }]
+      }
+    },
+    {
+      "scientific_name": "Sambucus canadensis",
+      "stages": {
+        "flowering": [{ "start_doy": 165, "end_doy": 190 }],
+        "ripe":      [{ "start_doy": 215, "end_doy": 250 }]
+      }
+    },
+    {
+      "scientific_name": "Sassafras albidum",
+      "stages": {
+        "flowering": [{ "start_doy": 110, "end_doy": 135 }],
+        "ripe":      [{ "start_doy": 240, "end_doy": 275 }]
+      }
+    },
+    {
+      "scientific_name": "Lindera benzoin",
+      "stages": {
+        "flowering": [{ "start_doy": 95, "end_doy": 120 }],
+        "ripe":      [{ "start_doy": 245, "end_doy": 290 }]
+      }
+    },
+    {
+      "scientific_name": "Prunus serotina",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 155 }],
+        "ripe":      [{ "start_doy": 215, "end_doy": 250 }]
+      }
+    },
+    {
+      "scientific_name": "Prunus virginiana",
+      "stages": {
+        "flowering": [{ "start_doy": 125, "end_doy": 150 }],
+        "ripe":      [{ "start_doy": 215, "end_doy": 250 }]
+      }
+    },
+    {
+      "scientific_name": "Prunus americana",
+      "stages": {
+        "flowering": [{ "start_doy": 110, "end_doy": 135 }],
+        "ripe":      [{ "start_doy": 220, "end_doy": 255 }]
+      }
+    },
+    {
+      "scientific_name": "Crataegus",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 155 }],
+        "ripe":      [{ "start_doy": 250, "end_doy": 305 }]
+      }
+    },
+    {
+      "scientific_name": "Vitis riparia",
+      "stages": {
+        "flowering": [{ "start_doy": 145, "end_doy": 170 }],
+        "ripe":      [{ "start_doy": 245, "end_doy": 295 }]
+      }
+    },
+    {
+      "scientific_name": "Cercis canadensis",
+      "stages": {
+        "flowering": [{ "start_doy": 110, "end_doy": 135 }]
+      }
+    },
+    {
+      "scientific_name": "Robinia pseudoacacia",
+      "stages": {
+        "flowering": [{ "start_doy": 140, "end_doy": 165 }]
+      }
+    },
+    {
+      "scientific_name": "Quercus alba",
+      "stages": {
+        "flowering": [{ "start_doy": 120, "end_doy": 140 }],
+        "ripe":      [{ "start_doy": 250, "end_doy": 295 }]
+      }
+    },
+    {
+      "scientific_name": "Castanea dentata",
+      "stages": {
+        "flowering": [{ "start_doy": 165, "end_doy": 185 }],
+        "ripe":      [{ "start_doy": 255, "end_doy": 295 }]
+      }
+    }
+  ]
+}
