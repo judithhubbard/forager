@@ -12,6 +12,13 @@
     type Observation,
     type Stage
   } from '$lib/services/observationService';
+  import {
+    listByPin as listPhotos,
+    signUrls,
+    upload as uploadPhoto,
+    capturePhotoLocation,
+    type Photo
+  } from '$lib/services/photoService';
 
   $: pinId = $page.params.id as string;
 
@@ -19,8 +26,19 @@
   let species: Species | null = null;
   let observations: Observation[] = [];
   let allSpecies: Species[] = [];
+  let photos: Photo[] = [];
+  let thumbUrls = new Map<string, string>();
+  let fullUrls = new Map<string, string>();
   let loading = true;
   let errorMessage = '';
+
+  // Photo upload state
+  let fileInput: HTMLInputElement;
+  let uploading = false;
+  let uploadError = '';
+
+  // Lightbox
+  let lightboxPhoto: Photo | null = null;
 
   // Observation form state.
   let formOpen = false;
@@ -42,11 +60,61 @@
         species = allSpecies.find((s) => s.id === pin?.species_id) ?? null;
       }
       observations = await listByPin(pinId);
+      await loadPhotos();
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Failed to load pin.';
     } finally {
       loading = false;
     }
+  }
+
+  async function loadPhotos() {
+    photos = await listPhotos(pinId);
+    if (photos.length === 0) {
+      thumbUrls = new Map();
+      return;
+    }
+    const paths = photos.map((p) => p.thumbnail_path);
+    thumbUrls = await signUrls(paths, 3600);
+  }
+
+  async function handleFileChange(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !pin || pin.lng == null || pin.lat == null) return;
+    uploading = true;
+    uploadError = '';
+    try {
+      const loc = await capturePhotoLocation({
+        lng: pin.lng,
+        lat: pin.lat,
+        accuracyM: pin.location_accuracy_m
+      });
+      await uploadPhoto({
+        pinId,
+        file,
+        capturedLat: loc.lat,
+        capturedLng: loc.lng,
+        capturedAccuracyM: loc.accuracyM
+      });
+      await loadPhotos();
+      input.value = '';
+    } catch (err) {
+      uploadError = err instanceof Error ? err.message : 'Upload failed.';
+    } finally {
+      uploading = false;
+    }
+  }
+
+  async function openLightbox(p: Photo) {
+    lightboxPhoto = p;
+    if (!fullUrls.has(p.storage_path)) {
+      const map = await signUrls([p.storage_path], 3600);
+      fullUrls = new Map([...fullUrls, ...map]);
+    }
+  }
+  function closeLightbox() {
+    lightboxPhoto = null;
   }
 
   async function submitObservation() {
@@ -144,6 +212,49 @@
       {/if}
     </section>
 
+    <section class="photos">
+      <div class="section-header">
+        <h3>Photos</h3>
+        <button on:click={() => fileInput?.click()} disabled={uploading}>
+          {uploading ? 'Uploading…' : 'Add photo'}
+        </button>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          bind:this={fileInput}
+          on:change={handleFileChange}
+          style="display: none"
+        />
+      </div>
+      {#if uploadError}
+        <p class="error">{uploadError}</p>
+      {/if}
+      {#if photos.length === 0}
+        <p class="hint">No photos yet.</p>
+      {:else}
+        <div class="thumb-grid">
+          {#each photos as p}
+            <button
+              class="thumb"
+              on:click={() => openLightbox(p)}
+              aria-label="Open photo"
+            >
+              {#if thumbUrls.get(p.thumbnail_path)}
+                <img
+                  src={thumbUrls.get(p.thumbnail_path)}
+                  alt={p.caption ?? 'Photo'}
+                  loading="lazy"
+                />
+              {:else}
+                <span class="thumb-loading">…</span>
+              {/if}
+            </button>
+          {/each}
+        </div>
+      {/if}
+    </section>
+
     <section class="observations">
       <div class="section-header">
         <h3>Observations</h3>
@@ -225,6 +336,25 @@
     </section>
   {/if}
 </main>
+
+{#if lightboxPhoto}
+  <div
+    class="lightbox"
+    on:click|self={closeLightbox}
+    on:keydown|self={(e) => e.key === 'Escape' && closeLightbox()}
+    role="presentation"
+  >
+    <button class="lightbox-close" on:click={closeLightbox} aria-label="Close">×</button>
+    {#if fullUrls.get(lightboxPhoto.storage_path)}
+      <img
+        src={fullUrls.get(lightboxPhoto.storage_path)}
+        alt={lightboxPhoto.caption ?? 'Photo'}
+      />
+    {:else}
+      <p>Loading…</p>
+    {/if}
+  </div>
+{/if}
 
 <style>
   header {
@@ -414,5 +544,60 @@
     color: #4a554a;
     font-size: 0.85rem;
     padding-left: 0.5rem;
+  }
+
+  /* Photos */
+  .thumb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+  .thumb {
+    aspect-ratio: 1;
+    border: 0;
+    padding: 0;
+    background: #ebefeb;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .thumb-loading {
+    color: #8a948a;
+  }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    background: transparent;
+    border: 0;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
   }
 </style>
