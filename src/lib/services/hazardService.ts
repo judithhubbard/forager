@@ -9,6 +9,8 @@ export type Hazard = Database['public']['Tables']['hazards']['Row'];
 export type HazardType = Database['public']['Enums']['hazard_type'];
 
 export const HAZARD_TYPES: HazardType[] = [
+  // Plant condition
+  'sick',
   // Safety
   'poison_ivy',
   'ticks',
@@ -25,6 +27,7 @@ export const HAZARD_TYPES: HazardType[] = [
 ];
 
 export const HAZARD_LABELS: Record<HazardType, string> = {
+  sick: 'Sick / diseased (rust, canker, blight)',
   poison_ivy: 'Poison ivy',
   ticks: 'Ticks',
   unstable_terrain: 'Unstable terrain',
@@ -38,6 +41,7 @@ export const HAZARD_LABELS: Record<HazardType, string> = {
 };
 
 export const HAZARD_EMOJI: Record<HazardType, string> = {
+  sick: '🩹',
   poison_ivy: '🌿',
   ticks: '🕷',
   unstable_terrain: '⛰',

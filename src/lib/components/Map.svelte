@@ -64,12 +64,17 @@
         const isRipe = pin.is_ripe_now === true;
         const muted =
           pin.effective_status === 'gone' || pin.effective_status === 'dormant';
+        const inaccessible = pin.is_inaccessible === true;
+        // Transparent if inaccessible; faded if dormant/gone; full opacity otherwise.
+        const fillOpacity = inaccessible ? 0.2 : muted ? 0.45 : 0.9;
+        const strokeOpacity = inaccessible ? 0.5 : muted ? 0.7 : 1.0;
         const marker = L.circleMarker([pin.lat, pin.lng], {
-          radius: isRipe ? 9 : 6,
+          radius: isRipe ? 7 : 4,
           color: isRipe ? '#d57100' : fill,
           fillColor: fill,
-          fillOpacity: muted ? 0.4 : 0.9,
-          weight: isRipe ? 3 : 1,
+          fillOpacity,
+          opacity: strokeOpacity,
+          weight: isRipe ? 2.5 : 1,
           // Stop click events from bubbling to the underlying map (which
           // would otherwise fire mapTap and open the drop-pin modal).
           bubblingMouseEvents: false

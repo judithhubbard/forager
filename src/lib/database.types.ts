@@ -848,6 +848,7 @@ export type Database = {
           import_external_id: string | null
           import_raw: Json | null
           import_source: string | null
+          is_inaccessible: boolean | null
           is_ripe_now: boolean | null
           last_observed_at: string | null
           last_observed_stage: Database["public"]["Enums"]["stage"] | null
@@ -1838,6 +1839,7 @@ export type Database = {
         | "out_of_reach"
         | "inaccessible"
         | "fenced"
+        | "sick"
       pin_status: "active" | "gone" | "dormant" | "needs_verification"
       region_role: "admin" | "member"
       stage:
@@ -1997,6 +1999,7 @@ export const Constants = {
         "out_of_reach",
         "inaccessible",
         "fenced",
+        "sick",
       ],
       pin_status: ["active", "gone", "dormant", "needs_verification"],
       region_role: ["admin", "member"],

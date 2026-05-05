@@ -117,13 +117,6 @@
       }
     },
     {
-      "scientific_name": "Sassafras albidum",
-      "stages": {
-        "flowering": [{ "start_doy": 110, "end_doy": 135 }],
-        "ripe":      [{ "start_doy": 240, "end_doy": 275 }]
-      }
-    },
-    {
       "scientific_name": "Lindera benzoin",
       "stages": {
         "flowering": [{ "start_doy": 95, "end_doy": 120 }],

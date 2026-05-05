@@ -16,7 +16,9 @@
   let dropPinLat: number | null = null;
 
   let species: Species[] = [];
-  let filterSpeciesId: string | null = null;
+  /** Species ids the user has explicitly selected. Empty set means "all". */
+  let selectedSpeciesIds = new Set<string>();
+  let speciesPanelOpen = false;
   let filterStatus: 'active' | 'all' = 'all';
   let showLegend = true;
 
@@ -44,10 +46,23 @@
     p.species_id ? categoryBySpecies[p.species_id] ?? 'unknown' : 'unknown';
 
   $: filteredPins = pins.filter((p) => {
-    if (filterSpeciesId && p.species_id !== filterSpeciesId) return false;
+    if (selectedSpeciesIds.size > 0) {
+      if (!p.species_id || !selectedSpeciesIds.has(p.species_id)) return false;
+    }
     if (filterStatus === 'active' && p.effective_status !== 'active') return false;
     return true;
   });
+
+  function toggleSpecies(id: string) {
+    const next = new Set(selectedSpeciesIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    selectedSpeciesIds = next;
+  }
+  function clearSpecies() { selectedSpeciesIds = new Set(); }
+  function selectAllSpecies() {
+    selectedSpeciesIds = new Set(speciesInRegion.map((s) => s.id));
+  }
 
   // Sort species by common name; only include species that have at least
   // one pin in the active region for compactness.
@@ -143,18 +158,49 @@
 
 {#if $activeRegion}
   <div class="filterbar">
-    <label>
-      Species:
-      <select bind:value={filterSpeciesId}>
-        <option value={null}>All ({speciesInRegion.length})</option>
-        {#each speciesInRegion as s}
-          <option value={s.id}>
-            {s.common_name}
-            ({pins.filter((p) => p.species_id === s.id).length})
-          </option>
-        {/each}
-      </select>
-    </label>
+    <div class="species-filter">
+      <button
+        class="species-toggle"
+        on:click={() => (speciesPanelOpen = !speciesPanelOpen)}
+      >
+        Species:
+        {#if selectedSpeciesIds.size === 0}
+          All ({speciesInRegion.length})
+        {:else}
+          {selectedSpeciesIds.size} selected
+        {/if}
+        <span class="caret">{speciesPanelOpen ? '▴' : '▾'}</span>
+      </button>
+
+      {#if speciesPanelOpen}
+        <div class="species-panel">
+          <div class="species-panel-actions">
+            <button on:click={selectAllSpecies}>Select all</button>
+            <button on:click={clearSpecies}>Clear</button>
+            <button on:click={() => (speciesPanelOpen = false)}>Done</button>
+          </div>
+          <ul>
+            {#each speciesInRegion as s}
+              <li>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={selectedSpeciesIds.has(s.id)}
+                    on:change={() => toggleSpecies(s.id)}
+                  />
+                  <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
+                    class:nut={categoryBySpecies[s.id] === 'nut'}
+                    class:mushroom={categoryBySpecies[s.id] === 'mushroom'}
+                    class:greens={categoryBySpecies[s.id] === 'greens'}></span>
+                  {s.common_name}
+                  <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
+                </label>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+    </div>
     <label>
       Show:
       <select bind:value={filterStatus}>
@@ -310,6 +356,93 @@
     background: white;
     max-width: 16rem;
   }
+
+  /* Multi-select species filter */
+  .species-filter {
+    position: relative;
+  }
+  .species-toggle {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.3rem;
+    background: white;
+    color: #1f2a1f;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .caret {
+    color: #6b7a6b;
+    font-size: 0.7rem;
+  }
+  .species-panel {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    z-index: 700;
+    background: white;
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    width: 18rem;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .species-panel-actions {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid #ebefeb;
+  }
+  .species-panel-actions button {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.3rem;
+    background: white;
+    cursor: pointer;
+  }
+  .species-panel ul {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0;
+    overflow-y: auto;
+  }
+  .species-panel li {
+    padding: 0.15rem 0.5rem;
+  }
+  .species-panel label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0.15rem 0.25rem;
+    border-radius: 0.25rem;
+  }
+  .species-panel label:hover {
+    background: #f5f8f5;
+  }
+  .species-panel .count {
+    color: #8a948a;
+    margin-left: auto;
+    font-size: 0.8rem;
+  }
+  .cat-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: #6b7a6b;
+    flex: 0 0 auto;
+  }
+  .cat-dot.fruit { background: #c14a3a; }
+  .cat-dot.nut { background: #7a5230; }
+  .cat-dot.mushroom { background: #8a4ea0; }
+  .cat-dot.greens { background: #6ba040; }
 
   /* Pin detail side panel */
   .pin-panel {
