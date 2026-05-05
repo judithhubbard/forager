@@ -782,7 +782,8 @@ export type Database = {
           is_ripe_now: boolean | null
           last_observed_at: string | null
           last_observed_stage: Database["public"]["Enums"]["stage"] | null
-          location: unknown
+          lat: number | null
+          lng: number | null
           location_accuracy_m: number | null
           location_modified_by_user_at: string | null
           notes: string | null
