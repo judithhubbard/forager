@@ -21,7 +21,7 @@
    *   Set([…]) → show only listed species (empty set = show none) */
   let selectedSpeciesIds: Set<string> | null = null;
   let speciesPanelOpen = false;
-  let filterStatus: 'all' | 'active' | 'possibly_ripe' | 'confirmed_ripe' | 'confirmed_harvest' = 'all';
+  let filterStatus: 'all' | 'active' | 'possibly_ripe' | 'confirmed_ripe' | 'confirmed_harvest' = 'active';
   let showLegend = true;
 
   let selectedPinId: string | null = null;
@@ -70,8 +70,10 @@
     // Status filter — progressively narrower
     if (filterStatus === 'all') return true;
 
-    // 'active' = exists, accessible
-    const isActive = p.effective_status === 'active' && !p.is_inaccessible;
+    // 'active' = exists, hasn't been marked gone/dormant/needs_verification.
+    // Accessibility (out_of_reach, inaccessible, fenced, private_property) is
+    // a hazard tag, not a status — those pins still count as active.
+    const isActive = p.effective_status === 'active';
     if (!isActive) return false;
     if (filterStatus === 'active') return true;
 
@@ -260,8 +262,8 @@
     <label>
       Show:
       <select bind:value={filterStatus}>
-        <option value="all">All (incl. gone/dormant/inaccessible)</option>
-        <option value="active">Active (exists, accessible)</option>
+        <option value="all">All (incl. gone/dormant)</option>
+        <option value="active">Active (exists)</option>
         <option value="possibly_ripe">Possibly ripe today</option>
         <option value="confirmed_ripe">Confirmed ripe this year</option>
         <option value="confirmed_harvest">Has confirmed harvest history</option>
