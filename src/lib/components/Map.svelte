@@ -83,7 +83,10 @@
 
     map = L.map(mapEl, {
       zoomControl: true,
-      attributionControl: true
+      attributionControl: true,
+      // Render vector layers (CircleMarker etc) on a single canvas instead
+      // of as individual SVG nodes. Big speedup with thousands of markers.
+      preferCanvas: true
     }).setView(center, zoom);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

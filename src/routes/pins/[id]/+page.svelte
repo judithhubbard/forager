@@ -82,13 +82,24 @@
   async function load() {
     loading = true;
     try {
-      [pin, allSpecies] = await Promise.all([getEffective(pinId), listSpecies()]);
+      // Fan out: pin + species + observations + hazards + photos in parallel.
+      // Photos are slow (storage list + signed URL batch), but we no longer
+      // serialize them after the others.
+      const [pinResult, speciesResult, obsResult, hazResult] = await Promise.all([
+        getEffective(pinId),
+        listSpecies(),
+        listByPin(pinId),
+        listHazards(pinId)
+      ]);
+      pin = pinResult;
+      allSpecies = speciesResult;
+      observations = obsResult;
+      hazards = hazResult;
       if (pin?.species_id) {
         species = allSpecies.find((s) => s.id === pin?.species_id) ?? null;
       }
-      observations = await listByPin(pinId);
-      [hazards] = await Promise.all([listHazards(pinId)]);
-      await loadPhotos();
+      // Photos are non-blocking for first paint.
+      loadPhotos();
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Failed to load pin.';
     } finally {

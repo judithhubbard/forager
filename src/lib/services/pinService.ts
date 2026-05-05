@@ -63,12 +63,15 @@ export async function create(input: CreatePinInput): Promise<string> {
   return id;
 }
 
-/** Pins in a region, with computed effective status, ripe-now, and lng/lat. */
+/** Pins in a region, with computed effective status, ripe-now, and lng/lat.
+ *  PostgREST's default page size is 1000; bump the limit so all pins load.
+ *  TODO(Phase 3): switch to bounding-box-based pagination when this gets large. */
 export async function listByRegion(regionId: string): Promise<PinEffective[]> {
   const { data, error } = await supabase
     .from('v_pin_effective')
     .select('*')
-    .eq('region_id', regionId);
+    .eq('region_id', regionId)
+    .limit(50_000);
 
   if (error) {
     console.error('[pinService] listByRegion error:', error);
