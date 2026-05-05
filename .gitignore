@@ -2,6 +2,9 @@ node_modules/
 .svelte-kit/
 build/
 dist/
+
+# Downloaded raw data (regenerable from public sources; large)
+data/raw/
 .env
 .env.local
 .env.*.local

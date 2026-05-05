@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "lint": "prettier --check .",
     "seed": "tsx scripts/seed.ts",
-    "seed:dev": "tsx scripts/seed-dev.ts"
+    "seed:dev": "tsx scripts/seed-dev.ts",
+    "import:cornell": "tsx scripts/import/cornell-cti.ts",
+    "import:ithaca": "tsx scripts/import/ithaca-ti.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.0",
