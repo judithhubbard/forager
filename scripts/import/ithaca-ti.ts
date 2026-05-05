@@ -74,24 +74,21 @@ function mapFeature(f: GeoJsonFeature): ImportRecord | null {
   if (typeof lng !== 'number' || typeof lat !== 'number') return null;
 
   const props = f.properties ?? {};
+  // Ithaca City Managed Trees fields (verified from the live GeoJSON):
+  //   OBJECTID, SPP_bot (sci name, UPPERCASE), SPP_com (common, "GENUS, NAME"),
+  //   SPName (friendly common, e.g. "Silver Maple"), Cultivar, Area, DBH, etc.
+  const objId = props['OBJECTID'];
   const externalId =
-    pickStr(props, ['OBJECTID', 'objectid', 'TREE_ID', 'tree_id', 'GlobalID', 'globalid']) ??
-    `${lng.toFixed(6)},${lat.toFixed(6)}`;
+    typeof objId === 'number' || typeof objId === 'string'
+      ? String(objId)
+      : `${lng.toFixed(6)},${lat.toFixed(6)}`;
 
-  const scientificName = pickStr(props, [
-    'BOTANICAL',
-    'BotanicalName',
-    'SCIENTIFIC',
-    'sci_name',
-    'scientific_name'
-  ]);
-  const commonName = pickStr(props, [
-    'COMMON',
-    'CommonName',
-    'COMMON_NAME',
-    'SPECIES',
-    'common_name'
-  ]);
+  // SPP_bot is uppercase ("ACER SACCHARINUM") — matchSpecies's normalizer
+  // lowercases for comparison, so this still matches our seed.
+  const scientificName = pickStr(props, ['SPP_bot']);
+  // Prefer the friendly SPName ("Silver Maple") over the inverted SPP_com
+  // ("MAPLE, SILVER"). SPP_com is the alias-able fallback.
+  const commonName = pickStr(props, ['SPName', 'SPP_com']);
 
   return {
     externalId,
