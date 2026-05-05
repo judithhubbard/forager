@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/public';
+import type { Database } from './database.types';
 
 // The single Supabase client instance for the app.
 // IMPORTANT: per PLAN §10 C18, this is the ONLY module that exports a raw
@@ -7,11 +8,9 @@ import { env } from '$env/dynamic/public';
 // which provide domain-typed wrappers. Components must not import this file
 // directly — they import the relevant service.
 //
-// Database<T> typing will be added in Phase 1 once `supabase gen types` runs.
-//
-// We use $env/dynamic/public (not /static/) so the scaffold type-checks even
-// without a committed .env file. Real values come from .env.local in dev and
-// GitHub Actions secrets in prod.
+// Types come from `src/lib/database.types.ts`, generated from the live
+// schema by `supabase gen types typescript --linked`. Re-run that whenever
+// the schema changes.
 
 const url = env.PUBLIC_SUPABASE_URL;
 const anonKey = env.PUBLIC_SUPABASE_ANON_KEY;
@@ -22,7 +21,9 @@ if (!url || !anonKey) {
   );
 }
 
-export const supabase: SupabaseClient = createClient(url, anonKey, {
+export type Db = Database;
+
+export const supabase: SupabaseClient<Database> = createClient<Database>(url, anonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
