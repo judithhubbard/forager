@@ -465,11 +465,18 @@
             </select>
           </label>
           <label>
-            Quality (1–5)
+            Quality
             <div class="rating">
+              <button
+                type="button"
+                class="zero"
+                class:active={formQuality === 0}
+                on:click={() => (formQuality = formQuality === 0 ? null : 0)}
+                aria-label="No harvest"
+              >🚫 No harvest</button>
               {#each [1, 2, 3, 4, 5] as n}
                 <button type="button" class="star"
-                        class:active={formQuality !== null && formQuality >= n}
+                        class:active={formQuality !== null && formQuality > 0 && formQuality >= n}
                         on:click={() => (formQuality = formQuality === n ? null : n)}
                         aria-label="{n} star">★</button>
               {/each}
@@ -498,7 +505,11 @@
               <li>
                 <span class="stage" style="background: {stageColor(o.stage)}">{o.stage}</span>
                 <span class="date">{fmtObservation(o)}</span>
-                {#if o.quality_rating}<span class="quality">{'★'.repeat(o.quality_rating)}</span>{/if}
+                {#if o.quality_rating === 0}
+                  <span class="no-harvest">🚫 no harvest</span>
+                {:else if o.quality_rating}
+                  <span class="quality">{'★'.repeat(o.quality_rating)}</span>
+                {/if}
                 <button class="obs-delete" on:click={() => deleteObservation(o)} aria-label="Delete observation">×</button>
                 {#if o.quality_notes}<p class="obs-notes">{o.quality_notes}</p>{/if}
               </li>
@@ -681,6 +692,25 @@
   .stage { color: white; padding: 0.15rem 0.6rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600; }
   .date { color: #4a554a; font-size: 0.9rem; }
   .quality { color: #d57100; font-size: 0.85rem; }
+  .no-harvest {
+    color: #6b7a6b;
+    font-size: 0.78rem;
+    font-style: italic;
+  }
+  .rating button.zero {
+    background: transparent;
+    border: 1px solid #c7d0c7;
+    color: #6b7a6b;
+    font-size: 0.78rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 1rem;
+    cursor: pointer;
+  }
+  .rating button.zero.active {
+    background: #6b7a6b;
+    color: white;
+    border-color: #6b7a6b;
+  }
   .obs-notes { flex-basis: 100%; margin: 0; color: #4a554a; font-size: 0.85rem; padding-left: 0.5rem; }
   .obs-delete {
     background: transparent; border: 0; color: #b03030; cursor: pointer;
