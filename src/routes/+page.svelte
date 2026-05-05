@@ -85,7 +85,15 @@
     (s) => speciesTab === 'all' || (categoryBySpecies[s.id] ?? 'other') === speciesTab
   );
   $: groupedSpecies = groupSpecies(filteredSpeciesList);
-  let filterStatus: 'all' | 'active' | 'possibly_ripe' | 'confirmed_ripe' | 'confirmed_harvest' = 'active';
+  let filterStatus:
+    | 'all'
+    | 'active'
+    | 'possibly_ripe'
+    | 'confirmed_ripe'
+    | 'confirmed_harvest'
+    | 'best_2_plus'
+    | 'best_3_plus'
+    | 'best_4_plus' = 'active';
   let showLegend = true;
 
   let selectedPinId: string | null = null;
@@ -144,6 +152,9 @@
     if (filterStatus === 'possibly_ripe') return p.is_ripe_now === true;
     if (filterStatus === 'confirmed_ripe') return p.has_ripe_observation_this_year === true;
     if (filterStatus === 'confirmed_harvest') return p.has_ripe_observation_ever === true;
+    if (filterStatus === 'best_2_plus') return (p.best_harvest_quality ?? 0) >= 2;
+    if (filterStatus === 'best_3_plus') return (p.best_harvest_quality ?? 0) >= 3;
+    if (filterStatus === 'best_4_plus') return (p.best_harvest_quality ?? 0) >= 4;
     return true;
   });
 
@@ -349,7 +360,10 @@
         <option value="active">Active</option>
         <option value="possibly_ripe">Possibly ripe today</option>
         <option value="confirmed_ripe">Confirmed ripe this year</option>
-        <option value="confirmed_harvest">Has confirmed harvest history</option>
+        <option value="confirmed_harvest">Confirmed harvest history</option>
+        <option value="best_2_plus">Best harvest ≥ 2★</option>
+        <option value="best_3_plus">Best harvest ≥ 3★</option>
+        <option value="best_4_plus">Best harvest ≥ 4★</option>
       </select>
     </label>
   </div>

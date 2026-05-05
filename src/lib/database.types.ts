@@ -843,6 +843,7 @@ export type Database = {
       }
       v_pin_effective: {
         Row: {
+          best_harvest_quality: number | null
           created_at: string | null
           created_by: string | null
           display_name: string | null
