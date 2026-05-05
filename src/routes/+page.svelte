@@ -47,7 +47,6 @@
     Corylus: 'Hazelnut',
     Diospyros: 'Persimmon',
     Juglans: 'Walnut',
-    Lindera: 'Spicebush',
     Malus: 'Apple / Pear',
     Pyrus: 'Apple / Pear',
     Mentha: 'Mint',
@@ -320,44 +319,24 @@
           </div>
           <ul class="species-list">
             {#each groupedSpecies as [groupName, list]}
-              {#if list.length > 1}
-                <li class="group-header">{groupName}</li>
-                {#each list as s}
-                  <li class="indented">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={isSelected(s.id)}
-                        on:change={() => toggleSpecies(s.id)}
-                      />
-                      <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
-                        class:nut={categoryBySpecies[s.id] === 'nut'}
-                        class:mushroom={categoryBySpecies[s.id] === 'mushroom'}
-                        class:greens={categoryBySpecies[s.id] === 'greens'}></span>
-                      {s.common_name}
-                      <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
-                    </label>
-                  </li>
-                {/each}
-              {:else}
-                {#each list as s}
-                  <li>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={isSelected(s.id)}
-                        on:change={() => toggleSpecies(s.id)}
-                      />
-                      <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
-                        class:nut={categoryBySpecies[s.id] === 'nut'}
-                        class:mushroom={categoryBySpecies[s.id] === 'mushroom'}
-                        class:greens={categoryBySpecies[s.id] === 'greens'}></span>
-                      {s.common_name}
-                      <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
-                    </label>
-                  </li>
-                {/each}
-              {/if}
+              <li class="group-header">{groupName}</li>
+              {#each list as s}
+                <li class="indented">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={isSelected(s.id)}
+                      on:change={() => toggleSpecies(s.id)}
+                    />
+                    <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
+                      class:nut={categoryBySpecies[s.id] === 'nut'}
+                      class:mushroom={categoryBySpecies[s.id] === 'mushroom'}
+                      class:greens={categoryBySpecies[s.id] === 'greens'}></span>
+                    {s.common_name}
+                    <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
+                  </label>
+                </li>
+              {/each}
             {/each}
           </ul>
         </div>
