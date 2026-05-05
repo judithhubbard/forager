@@ -7,6 +7,7 @@
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import Map from '$lib/components/Map.svelte';
   import DropPinModal from '$lib/components/DropPinModal.svelte';
+  import PinDetailContent from '$lib/components/PinDetailContent.svelte';
 
   let pins: PinEffective[] = [];
   let pinsLoading = false;
@@ -16,7 +17,9 @@
 
   let species: Species[] = [];
   let filterSpeciesId: string | null = null;
-  let filterStatus: 'active' | 'all' = 'active'; // hide gone/dormant by default
+  let filterStatus: 'active' | 'all' = 'all';
+
+  let selectedPinId: string | null = null;
 
   $: filteredPins = pins.filter((p) => {
     if (filterSpeciesId && p.species_id !== filterSpeciesId) return false;
@@ -59,7 +62,16 @@
   }
 
   function handlePinClick(e: CustomEvent<{ pinId: string }>) {
-    goto(`/pins/${e.detail.pinId}`);
+    selectedPinId = e.detail.pinId;
+  }
+
+  function closePanel() {
+    selectedPinId = null;
+  }
+
+  function onPanelStatusChanged() {
+    // A status change in the open pin should refresh the map.
+    if ($activeRegion) loadAll($activeRegion.id);
   }
 
   function handleMapTap(e: CustomEvent<{ lng: number; lat: number }>) {
@@ -145,6 +157,19 @@
     on:close={handleClose}
     on:saved={handlePinSaved}
   />
+{/if}
+
+{#if selectedPinId}
+  <aside class="pin-panel" role="dialog" aria-label="Pin detail">
+    <header class="panel-header">
+      <h2>Pin</h2>
+      <div class="panel-actions">
+        <a class="link" href={`/pins/${selectedPinId}`} title="Open in full page">↗</a>
+        <button class="close" on:click={closePanel} aria-label="Close">×</button>
+      </div>
+    </header>
+    <PinDetailContent pinId={selectedPinId} on:statusChanged={onPanelStatusChanged} />
+  </aside>
 {/if}
 
 <style>
@@ -251,5 +276,64 @@
     border-radius: 0.3rem;
     background: white;
     max-width: 16rem;
+  }
+
+  /* Pin detail side panel */
+  .pin-panel {
+    position: fixed;
+    top: 100px; /* below header (56) + filter bar (~44) */
+    right: 0;
+    bottom: 0;
+    width: min(28rem, 100%);
+    background: white;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+    z-index: 700;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (max-width: 640px) {
+    .pin-panel {
+      top: auto;
+      height: 70vh;
+    }
+  }
+  .panel-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem 0.5rem 1rem;
+    background: #fafcf6;
+    border-bottom: 1px solid #e1e8e1;
+  }
+  .panel-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    color: #3a5a3a;
+  }
+  .panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .panel-actions .link {
+    font-size: 1.05rem;
+    text-decoration: none;
+    color: #3a5a3a;
+    padding: 0.2rem 0.4rem;
+  }
+  .panel-actions .close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    color: #6b7a6b;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 0.25rem;
+  }
+  .pin-panel :global(.content) {
+    flex: 1;
+    overflow-y: auto;
   }
 </style>

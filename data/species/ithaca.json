@@ -67,13 +67,6 @@
       }
     },
     {
-      "scientific_name": "Juglans nigra",
-      "stages": {
-        "flowering": [{ "start_doy": 130, "end_doy": 150 }],
-        "ripe":      [{ "start_doy": 270, "end_doy": 305 }]
-      }
-    },
-    {
       "scientific_name": "Juglans cinerea",
       "stages": {
         "flowering": [{ "start_doy": 130, "end_doy": 150 }],
@@ -95,13 +88,6 @@
       }
     },
     {
-      "scientific_name": "Malus coronaria",
-      "stages": {
-        "flowering": [{ "start_doy": 125, "end_doy": 145 }],
-        "ripe":      [{ "start_doy": 245, "end_doy": 285 }]
-      }
-    },
-    {
       "scientific_name": "Malus domestica",
       "stages": {
         "flowering": [{ "start_doy": 120, "end_doy": 145 }],
@@ -114,13 +100,6 @@
       "stages": {
         "flowering": [{ "start_doy": 125, "end_doy": 150 }],
         "ripe":      [{ "start_doy": 250, "end_doy": 300 }]
-      }
-    },
-    {
-      "scientific_name": "Sorbus americana",
-      "stages": {
-        "flowering": [{ "start_doy": 145, "end_doy": 165 }],
-        "ripe":      [{ "start_doy": 235, "end_doy": 305 }]
       }
     },
     {
@@ -180,29 +159,10 @@
       }
     },
     {
-      "scientific_name": "Crataegus",
-      "stages": {
-        "flowering": [{ "start_doy": 130, "end_doy": 155 }],
-        "ripe":      [{ "start_doy": 250, "end_doy": 305 }]
-      }
-    },
-    {
       "scientific_name": "Vitis riparia",
       "stages": {
         "flowering": [{ "start_doy": 145, "end_doy": 170 }],
         "ripe":      [{ "start_doy": 245, "end_doy": 295 }]
-      }
-    },
-    {
-      "scientific_name": "Cercis canadensis",
-      "stages": {
-        "flowering": [{ "start_doy": 110, "end_doy": 135 }]
-      }
-    },
-    {
-      "scientific_name": "Robinia pseudoacacia",
-      "stages": {
-        "flowering": [{ "start_doy": 140, "end_doy": 165 }]
       }
     },
     {

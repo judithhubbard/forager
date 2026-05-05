@@ -58,13 +58,6 @@
       "safety_notes": "Unripe fruit and other parts can cause stomach upset."
     },
     {
-      "scientific_name": "Juglans nigra",
-      "common_name": "Black walnut",
-      "aliases": ["walnut"],
-      "forage_parts": ["nut"],
-      "safety_notes": "Hulls stain heavily. Juglone is toxic to many plants."
-    },
-    {
       "scientific_name": "Juglans cinerea",
       "common_name": "Butternut",
       "aliases": ["white walnut"],
@@ -86,13 +79,6 @@
       "safety_notes": "Nuts are very bitter; mainly for novelty / oil pressing."
     },
     {
-      "scientific_name": "Malus coronaria",
-      "common_name": "Sweet crabapple",
-      "aliases": ["crabapple", "wild crabapple"],
-      "forage_parts": ["fruit"],
-      "safety_notes": "Seeds contain trace cyanogenic compounds; do not consume."
-    },
-    {
       "scientific_name": "Malus domestica",
       "common_name": "Apple",
       "aliases": ["wild apple", "feral apple"],
@@ -105,13 +91,6 @@
       "aliases": ["autumnberry"],
       "forage_parts": ["fruit"],
       "safety_notes": "Invasive species in NY; harvesting helps control spread."
-    },
-    {
-      "scientific_name": "Sorbus americana",
-      "common_name": "American mountain ash",
-      "aliases": ["mountain ash", "rowan"],
-      "forage_parts": ["fruit"],
-      "safety_notes": "Raw fruit is harsh; cook or freeze before use. Seeds contain cyanogenic compounds."
     },
     {
       "scientific_name": "Corylus americana",
@@ -170,32 +149,11 @@
       "safety_notes": "Pits contain cyanogenic compounds; do not consume."
     },
     {
-      "scientific_name": "Crataegus",
-      "common_name": "Hawthorn",
-      "aliases": ["thorn apple"],
-      "forage_parts": ["fruit"],
-      "safety_notes": "Many Crataegus species; identification to species can be difficult. Pits contain cyanogenic compounds; do not consume."
-    },
-    {
       "scientific_name": "Vitis riparia",
       "common_name": "Riverbank grape",
       "aliases": ["wild grape", "frost grape"],
       "forage_parts": ["fruit", "leaf"],
       "safety_notes": "Confirm identification — Canada moonseed (Menispermum canadense) is a toxic look-alike. Moonseed has half-moon-shaped seeds; grapes have multiple round seeds."
-    },
-    {
-      "scientific_name": "Cercis canadensis",
-      "common_name": "Eastern redbud",
-      "aliases": ["redbud"],
-      "forage_parts": ["flower"],
-      "safety_notes": "Flowers and young pods edible; seeds within mature pods are not."
-    },
-    {
-      "scientific_name": "Robinia pseudoacacia",
-      "common_name": "Black locust",
-      "aliases": [],
-      "forage_parts": ["flower"],
-      "safety_notes": "FLOWERS ONLY are edible. Bark, leaves, seeds, and pods are toxic."
     },
     {
       "scientific_name": "Castanea dentata",
