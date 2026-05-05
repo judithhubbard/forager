@@ -27,6 +27,10 @@
   let markerLayer: import('leaflet').LayerGroup | undefined;
   let userMarker: import('leaflet').CircleMarker | undefined;
 
+  // Coarse pointer (touch device) gets larger hit target.
+  const isTouch =
+    typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+
   // Reactive update of markers when `pins` changes.
   $: if (map && markerLayer) renderPins(pins);
 
@@ -75,8 +79,10 @@
         // White outline for legibility against any map background.
         // Ripe-now overrides with an orange outline + larger size.
         const stroke = isRipe ? '#d57100' : '#ffffff';
+        const baseR = isTouch ? 7 : 4.5;
+        const ripeR = isTouch ? 10 : 7;
         const marker = L.circleMarker([pin.lat, pin.lng], {
-          radius: isRipe ? 7 : 4.5,
+          radius: isRipe ? ripeR : baseR,
           color: stroke,
           fillColor: fill,
           fillOpacity,
@@ -131,10 +137,11 @@
     markerLayer = L.layerGroup().addTo(map);
     renderPins(pins);
 
-    // Tap on empty map area: emit mapTap. Tapping a pin marker does NOT
-    // bubble here (Leaflet handles marker clicks separately), so this
-    // only fires for "open" map clicks.
-    map.on('click', (e) => {
+    // Long-press (or right-click on desktop) on empty map area: emit
+    // mapTap. Marker clicks still don't bubble here. Using contextmenu
+    // instead of click avoids accidentally dropping pins on phones
+    // where regular taps are too easy to fire.
+    map.on('contextmenu', (e) => {
       dispatch('mapTap', { lng: e.latlng.lng, lat: e.latlng.lat });
     });
   });
