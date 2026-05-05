@@ -4,17 +4,20 @@
   import { create as createPin } from '$lib/services/pinService';
 
   export let regionId: string;
+  /** If provided (e.g. from a map tap), skip GPS capture entirely. */
+  export let initialLng: number | null = null;
+  export let initialLat: number | null = null;
 
   const dispatch = createEventDispatcher<{ close: void; saved: { id: string } }>();
 
   type Stage = 'capturing' | 'form' | 'saving' | 'error';
 
-  let stage: Stage = 'capturing';
+  let stage: Stage = initialLng != null && initialLat != null ? 'form' : 'capturing';
   let errorMessage = '';
 
-  // GPS capture
-  let lng: number | null = null;
-  let lat: number | null = null;
+  // Location capture
+  let lng: number | null = initialLng;
+  let lat: number | null = initialLat;
   let accuracy: number | null = null;
 
   // Form fields
@@ -28,7 +31,7 @@
 
   onMount(async () => {
     species = await listAll();
-    captureGps();
+    if (stage === 'capturing') captureGps();
   });
 
   function captureGps() {

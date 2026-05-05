@@ -10,6 +10,8 @@
   let pins: PinEffective[] = [];
   let pinsLoading = false;
   let showDropPin = false;
+  let dropPinLng: number | null = null;
+  let dropPinLat: number | null = null;
 
   $: if (!$regionsLoading && $session && $myRegions.length === 0) {
     goto('/no-regions', { replaceState: true });
@@ -39,9 +41,29 @@
     goto(`/pins/${e.detail.pinId}`);
   }
 
-  function handlePinSaved(e: CustomEvent<{ id: string }>) {
+  function handleMapTap(e: CustomEvent<{ lng: number; lat: number }>) {
+    dropPinLng = e.detail.lng;
+    dropPinLat = e.detail.lat;
+    showDropPin = true;
+  }
+
+  function openFab() {
+    dropPinLng = null;
+    dropPinLat = null;
+    showDropPin = true;
+  }
+
+  function handlePinSaved(_e: CustomEvent<{ id: string }>) {
     showDropPin = false;
+    dropPinLng = null;
+    dropPinLat = null;
     if ($activeRegion) loadPins($activeRegion.id);
+  }
+
+  function handleClose() {
+    showDropPin = false;
+    dropPinLng = null;
+    dropPinLat = null;
   }
 </script>
 
@@ -62,8 +84,9 @@
 </header>
 
 {#if $activeRegion}
-  <Map {pins} on:pinClick={handlePinClick} />
-  <button class="fab" on:click={() => (showDropPin = true)} aria-label="Drop a pin">+</button>
+  <Map {pins} on:pinClick={handlePinClick} on:mapTap={handleMapTap} />
+  <button class="fab" on:click={openFab} aria-label="Drop a pin at my location">+</button>
+  <p class="hint-banner">Tap an empty area on the map to drop a pin there.</p>
 {:else if $regionsLoading}
   <main class="loading"><p>Loading…</p></main>
 {/if}
@@ -71,7 +94,9 @@
 {#if showDropPin && $activeRegion}
   <DropPinModal
     regionId={$activeRegion.id}
-    on:close={() => (showDropPin = false)}
+    initialLng={dropPinLng}
+    initialLat={dropPinLat}
+    on:close={handleClose}
     on:saved={handlePinSaved}
   />
 {/if}
@@ -140,5 +165,18 @@
   }
   .fab:active {
     background: #2a4a2a;
+  }
+  .hint-banner {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1rem;
+    margin: 0;
+    padding: 0.4rem 0.75rem;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 0.4rem;
+    font-size: 0.8rem;
+    color: #4a554a;
+    z-index: 500;
+    pointer-events: none;
   }
 </style>

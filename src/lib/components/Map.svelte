@@ -7,7 +7,10 @@
   export let center: [number, number] = [42.4534, -76.4836]; // Cornell campus default
   export let zoom: number = 14;
 
-  const dispatch = createEventDispatcher<{ pinClick: { pinId: string } }>();
+  const dispatch = createEventDispatcher<{
+    pinClick: { pinId: string };
+    mapTap: { lng: number; lat: number };
+  }>();
 
   let mapEl: HTMLDivElement;
   let map: import('leaflet').Map | undefined;
@@ -90,6 +93,13 @@
 
     markerLayer = L.layerGroup().addTo(map);
     renderPins(pins);
+
+    // Tap on empty map area: emit mapTap. Tapping a pin marker does NOT
+    // bubble here (Leaflet handles marker clicks separately), so this
+    // only fires for "open" map clicks.
+    map.on('click', (e) => {
+      dispatch('mapTap', { lng: e.latlng.lng, lat: e.latlng.lat });
+    });
   });
 
   onDestroy(() => {
