@@ -376,26 +376,28 @@
     on:mapTap={handleMapTap}
   />
 
-  {#if showLegend}
-    <div class="legend">
-      <div class="legend-header">
-        <strong>Legend</strong>
-        <button class="legend-toggle" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
+  {#if !selectedPinId}
+    {#if showLegend}
+      <div class="legend">
+        <div class="legend-header">
+          <strong>Legend</strong>
+          <button class="legend-toggle" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
+        </div>
+        <ul>
+          <li><span class="dot" style="background:#c14a3a"></span> Fruit</li>
+          <li><span class="dot" style="background:#7a5230"></span> Nut</li>
+          <li><span class="dot" style="background:#8a4ea0"></span> Mushroom</li>
+          <li><span class="dot" style="background:#6ba040"></span> Greens (ramps, asparagus, mint)</li>
+          <li><span class="dot" style="background:#5a7a3a"></span> Other (root, spice, bark)</li>
+          <li><span class="dot ring" style="background:#c14a3a; outline-color:#d57100"></span> Ripe now (any color)</li>
+          <li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant (faded)</li>
+        </ul>
       </div>
-      <ul>
-        <li><span class="dot" style="background:#c14a3a"></span> Fruit</li>
-        <li><span class="dot" style="background:#7a5230"></span> Nut</li>
-        <li><span class="dot" style="background:#8a4ea0"></span> Mushroom</li>
-        <li><span class="dot" style="background:#6ba040"></span> Greens (ramps, asparagus, mint)</li>
-        <li><span class="dot" style="background:#5a7a3a"></span> Other (root, spice, bark)</li>
-        <li><span class="dot ring" style="background:#c14a3a; outline-color:#d57100"></span> Ripe now (any color)</li>
-        <li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant (faded)</li>
-      </ul>
-    </div>
-  {:else}
-    <button class="legend-show" on:click={() => (showLegend = true)}>Legend</button>
+    {:else}
+      <button class="legend-show" on:click={() => (showLegend = true)}>Legend</button>
+    {/if}
+    <button class="fab" on:click={openFab} aria-label="Drop a pin at my location">+</button>
   {/if}
-  <button class="fab" on:click={openFab} aria-label="Drop a pin at my location">+</button>
 {:else if $regionsLoading}
   <main class="loading"><p>Loading…</p></main>
 {/if}

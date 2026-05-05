@@ -144,6 +144,13 @@
     map.on('contextmenu', (e) => {
       dispatch('mapTap', { lng: e.latlng.lng, lat: e.latlng.lat });
     });
+
+    // Auto-locate on first map load (best-effort, browser will silently
+    // refuse if permission is already denied or context is non-secure).
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      // Defer so the map has time to settle before we pan it.
+      setTimeout(() => locateMe(), 250);
+    }
   });
 
   onDestroy(() => {
