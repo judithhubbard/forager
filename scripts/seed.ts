@@ -15,7 +15,12 @@
 import postgres from 'postgres';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import 'dotenv/config';
+import { config as loadEnv } from 'dotenv';
+
+// Load .env.local first (preferred), then .env as fallback. SvelteKit and
+// most local-dev workflows put real secrets in .env.local.
+loadEnv({ path: resolve(process.cwd(), '.env.local') });
+loadEnv({ path: resolve(process.cwd(), '.env') });
 
 type SpeciesSeed = {
   scientific_name: string;

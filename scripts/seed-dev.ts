@@ -17,7 +17,11 @@
 //     (region, species, display_name).
 
 import postgres from 'postgres';
-import 'dotenv/config';
+import { resolve } from 'node:path';
+import { config as loadEnv } from 'dotenv';
+
+loadEnv({ path: resolve(process.cwd(), '.env.local') });
+loadEnv({ path: resolve(process.cwd(), '.env') });
 
 const FAKE_PINS: Array<{
   scientific_name: string;

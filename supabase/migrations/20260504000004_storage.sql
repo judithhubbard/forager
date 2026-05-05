@@ -14,9 +14,11 @@ on conflict (id) do nothing;
 -- Helper: extract a photo's UUID from a storage object name.
 --   Object names are '<uuid>.jpg' or '<uuid>-thumb.jpg'.
 --   Returns null if the name doesn't begin with a UUID.
+--   Lives in `public` (not `storage`) because Supabase managed projects
+--   don't grant CREATE on the storage schema to the migration role.
 -- ============================================================
 
-create or replace function storage.photo_id_from_name(object_name text)
+create or replace function public.photo_id_from_name(object_name text)
 returns uuid
 language sql
 immutable
@@ -42,7 +44,7 @@ create policy photos_select_member on storage.objects
       select 1
         from public.photos ph
         join public.pins p on p.id = ph.pin_id
-       where ph.id = storage.photo_id_from_name(name)
+       where ph.id = public.photo_id_from_name(name)
          and public.is_region_member(auth.uid(), p.region_id)
     )
   );
@@ -70,7 +72,7 @@ create policy photos_delete_owner_or_admin on storage.objects
         select 1
           from public.photos ph
           join public.pins p on p.id = ph.pin_id
-         where ph.id = storage.photo_id_from_name(name)
+         where ph.id = public.photo_id_from_name(name)
            and public.is_region_admin(auth.uid(), p.region_id)
       )
     )
