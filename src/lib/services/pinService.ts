@@ -64,20 +64,27 @@ export async function create(input: CreatePinInput): Promise<string> {
 }
 
 /** Pins in a region, with computed effective status, ripe-now, and lng/lat.
- *  PostgREST's default page size is 1000; bump the limit so all pins load.
+ *  Supabase's PostgREST caps responses at db-max-rows (default 1000) and
+ *  .limit() can't override the cap. Paginate via .range() until empty.
  *  TODO(Phase 3): switch to bounding-box-based pagination when this gets large. */
 export async function listByRegion(regionId: string): Promise<PinEffective[]> {
-  const { data, error } = await supabase
-    .from('v_pin_effective')
-    .select('*')
-    .eq('region_id', regionId)
-    .limit(50_000);
-
-  if (error) {
-    console.error('[pinService] listByRegion error:', error);
-    throw error;
+  const all: PinEffective[] = [];
+  const PAGE = 1000;
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await supabase
+      .from('v_pin_effective')
+      .select('*')
+      .eq('region_id', regionId)
+      .range(offset, offset + PAGE - 1);
+    if (error) {
+      console.error('[pinService] listByRegion error:', error);
+      throw error;
+    }
+    if (!data || data.length === 0) break;
+    all.push(...(data as PinEffective[]));
+    if (data.length < PAGE) break;
   }
-  return data ?? [];
+  return all;
 }
 
 /** Pins currently in their ripe window (and not gone/dormant). */

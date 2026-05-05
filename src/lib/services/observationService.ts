@@ -88,6 +88,23 @@ export async function create(input: CreateObservationInput): Promise<string> {
   return id;
 }
 
+/** Delete an observation by id. RLS allows owners to delete their own. */
+export async function remove(id: string): Promise<void> {
+  await enqueue({
+    id,
+    entityType: 'observation',
+    op: 'delete',
+    payload: { id },
+    exec: async () => {
+      const { error } = await supabase.from('observations').delete().eq('id', id);
+      if (error) {
+        console.error('[observationService] remove error:', error);
+        throw error;
+      }
+    }
+  });
+}
+
 /** Group observations by year for the year-over-year UI (PLAN §3.4). */
 export function groupByYear(obs: Observation[]): Map<number, Observation[]> {
   const out = new Map<number, Observation[]>();

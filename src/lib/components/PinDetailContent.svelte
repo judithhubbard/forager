@@ -20,6 +20,7 @@
   import {
     listByPin,
     create as createObservation,
+    remove as removeObservation,
     groupByYear,
     STAGES,
     type Observation,
@@ -61,7 +62,9 @@
 
   let pendingStatus: PinStatus | null = null;
   let statusSaving = false;
-  const STATUSES: PinStatus[] = ['active', 'gone', 'dormant', 'needs_verification'];
+  // needs_verification is set automatically by the 4-year auto-degrade rule;
+  // not a manual choice. active = exists; gone = removed; dormant = unproductive.
+  const STATUSES: PinStatus[] = ['active', 'gone', 'dormant'];
 
   let formOpen = false;
   let formStage: Stage = 'ripe';
@@ -69,7 +72,19 @@
   let formNotes = '';
   let formDate: string = todayIso();
   let formSubmitting = false;
-  let verifying = false;
+
+  // Short shareable id (first 8 chars of UUID) for talking about the pin.
+  $: shortId = pinId ? pinId.slice(0, 8) : '';
+
+  // Try to extract a human-readable accession / external id from the raw
+  // import payload, regardless of which source produced it.
+  function extractAccession(raw: unknown): string | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const obj = raw as { [key: string]: unknown };
+    const v = obj.accession ?? obj.Accession ?? obj.ACCESSION;
+    return typeof v === 'string' ? v : null;
+  }
+  $: accession = pin ? extractAccession(pin.import_raw) : null;
 
   function todayIso(): string {
     const d = new Date();
@@ -230,25 +245,26 @@
     }
   }
 
-  /** Quick-verify: log a 'ripe' observation for today. Confirms the pin is
-   *  still here and producing — refreshes effective_status and is_ripe_now. */
-  async function verifyHarvest() {
-    verifying = true;
-    errorMessage = '';
+  /** Open the observation form pre-filled to 'ripe' so the user can rate
+   *  the harvest 1-5 stars and pick a date (incl. a past year). Submitting
+   *  the form is what actually verifies. */
+  function startVerifyHarvest() {
+    formStage = 'ripe';
+    formQuality = null;
+    formNotes = '';
+    formDate = todayIso();
+    formOpen = true;
+  }
+
+  async function deleteObservation(o: Observation) {
+    if (!confirm('Delete this observation?')) return;
     try {
-      await createObservation({
-        pinId,
-        stage: 'ripe',
-        qualityRating: null,
-        qualityNotes: 'Verified harvest.'
-      });
+      await removeObservation(o.id);
       observations = await listByPin(pinId);
       pin = await getEffective(pinId);
       dispatch('statusChanged');
     } catch (err) {
-      errorMessage = err instanceof Error ? err.message : 'Verify failed.';
-    } finally {
-      verifying = false;
+      errorMessage = err instanceof Error ? err.message : 'Delete failed.';
     }
   }
 
@@ -287,6 +303,11 @@
           <span class="muted">• {species.common_name}</span>
         </p>
       {/if}
+      <p class="tree-id">
+        <strong>Tree ID:</strong>
+        <code>{shortId}</code>
+        <span class="muted">share this code to identify the pin</span>
+      </p>
       <ul class="meta">
         <li>
           <strong>Status:</strong>
@@ -320,12 +341,77 @@
         {#if pin.is_ripe_now}
           <li class="ripe">🍒 In ripe window today</li>
         {/if}
-        {#if pin.import_source}
-          <li class="muted">Imported from {pin.import_source}</li>
-        {/if}
       </ul>
       {#if pin.notes}
         <p class="notes">{pin.notes}</p>
+      {/if}
+    </section>
+
+    <section class="observations">
+      <div class="section-header">
+        <h3>Observations</h3>
+        <div class="header-actions">
+          <button class="verify" on:click={startVerifyHarvest}>
+            ✓ Verify harvest
+          </button>
+          <button on:click={() => (formOpen = !formOpen)}>
+            {formOpen ? 'Cancel' : 'Log observation'}
+          </button>
+        </div>
+      </div>
+      {#if formOpen}
+        <form class="obs-form" on:submit|preventDefault={submitObservation}>
+          <label>
+            Date observed (any past year is OK)
+            <input type="date" bind:value={formDate} max={todayIso()} required />
+          </label>
+          <label>
+            Stage
+            <select bind:value={formStage} required>
+              {#each STAGES as s}<option value={s}>{s}</option>{/each}
+            </select>
+          </label>
+          <label>
+            Quality (1–5)
+            <div class="rating">
+              {#each [1, 2, 3, 4, 5] as n}
+                <button type="button" class="star"
+                        class:active={formQuality !== null && formQuality >= n}
+                        on:click={() => (formQuality = formQuality === n ? null : n)}
+                        aria-label="{n} star">★</button>
+              {/each}
+              {#if formQuality !== null}
+                <button type="button" class="clear" on:click={() => (formQuality = null)}>clear</button>
+              {/if}
+            </div>
+          </label>
+          <label>
+            Notes (optional)
+            <textarea rows="3" bind:value={formNotes} placeholder="Tartness, abundance, …"></textarea>
+          </label>
+          {#if errorMessage}<p class="error">{errorMessage}</p>{/if}
+          <button type="submit" disabled={formSubmitting}>
+            {formSubmitting ? 'Saving…' : 'Save observation'}
+          </button>
+        </form>
+      {/if}
+      {#if observations.length === 0}
+        <p class="hint">No observations yet.</p>
+      {:else}
+        {#each years as yr}
+          <h4 class="year">{yr}</h4>
+          <ul class="obs-list">
+            {#each byYear.get(yr) ?? [] as o}
+              <li>
+                <span class="stage" style="background: {stageColor(o.stage)}">{o.stage}</span>
+                <span class="date">{fmtDate(o.observed_at)}</span>
+                {#if o.quality_rating}<span class="quality">{'★'.repeat(o.quality_rating)}</span>{/if}
+                <button class="obs-delete" on:click={() => deleteObservation(o)} aria-label="Delete observation">×</button>
+                {#if o.quality_notes}<p class="obs-notes">{o.quality_notes}</p>{/if}
+              </li>
+            {/each}
+          </ul>
+        {/each}
       {/if}
     </section>
 
@@ -399,71 +485,32 @@
       {/if}
     </section>
 
-    <section class="observations">
-      <div class="section-header">
-        <h3>Observations</h3>
-        <div class="header-actions">
-          <button class="verify" on:click={verifyHarvest} disabled={verifying}>
-            {verifying ? 'Verifying…' : '✓ Verify harvest'}
-          </button>
-          <button on:click={() => (formOpen = !formOpen)}>
-            {formOpen ? 'Cancel' : 'Log observation'}
-          </button>
-        </div>
-      </div>
-      {#if formOpen}
-        <form class="obs-form" on:submit|preventDefault={submitObservation}>
-          <label>
-            Date observed
-            <input type="date" bind:value={formDate} max={todayIso()} required />
-          </label>
-          <label>
-            Stage
-            <select bind:value={formStage} required>
-              {#each STAGES as s}<option value={s}>{s}</option>{/each}
-            </select>
-          </label>
-          <label>
-            Quality (1–5, optional)
-            <div class="rating">
-              {#each [1, 2, 3, 4, 5] as n}
-                <button type="button" class="star"
-                        class:active={formQuality !== null && formQuality >= n}
-                        on:click={() => (formQuality = formQuality === n ? null : n)}
-                        aria-label="{n} star">★</button>
-              {/each}
-              {#if formQuality !== null}
-                <button type="button" class="clear" on:click={() => (formQuality = null)}>clear</button>
-              {/if}
-            </div>
-          </label>
-          <label>
-            Notes (optional)
-            <textarea rows="3" bind:value={formNotes} placeholder="Tartness, abundance, …"></textarea>
-          </label>
-          {#if errorMessage}<p class="error">{errorMessage}</p>{/if}
-          <button type="submit" disabled={formSubmitting}>
-            {formSubmitting ? 'Saving…' : 'Save observation'}
-          </button>
-        </form>
-      {/if}
-      {#if observations.length === 0}
-        <p class="hint">No observations yet.</p>
-      {:else}
-        {#each years as yr}
-          <h4 class="year">{yr}</h4>
-          <ul class="obs-list">
-            {#each byYear.get(yr) ?? [] as o}
-              <li>
-                <span class="stage" style="background: {stageColor(o.stage)}">{o.stage}</span>
-                <span class="date">{fmtDate(o.observed_at)}</span>
-                {#if o.quality_rating}<span class="quality">{'★'.repeat(o.quality_rating)}</span>{/if}
-                {#if o.quality_notes}<p class="obs-notes">{o.quality_notes}</p>{/if}
-              </li>
-            {/each}
-          </ul>
-        {/each}
-      {/if}
+    <section class="source">
+      <h3>Reference</h3>
+      <ul class="meta">
+        <li>
+          <strong>Tree ID:</strong> <code>{shortId}</code>
+        </li>
+        {#if pin.import_source}
+          <li>
+            <strong>Source:</strong>
+            {pin.import_source}
+            {#if pin.import_external_id}
+              <span class="muted">·</span> external id: <code>{pin.import_external_id}</code>
+            {/if}
+          </li>
+          {#if accession}
+            <li>
+              <strong>Accession:</strong> <code>{accession}</code>
+            </li>
+          {/if}
+        {:else}
+          <li class="muted">Manually added.</li>
+        {/if}
+        {#if pin.created_at}
+          <li class="muted">Pin created {fmtDate(pin.created_at)}.</li>
+        {/if}
+      </ul>
     </section>
   {/if}
 </div>
@@ -534,6 +581,37 @@
   .date { color: #4a554a; font-size: 0.9rem; }
   .quality { color: #d57100; font-size: 0.85rem; }
   .obs-notes { flex-basis: 100%; margin: 0; color: #4a554a; font-size: 0.85rem; padding-left: 0.5rem; }
+  .obs-delete {
+    background: transparent; border: 0; color: #b03030; cursor: pointer;
+    font-size: 1.1rem; padding: 0 0.25rem; line-height: 1; margin-left: auto;
+  }
+  .obs-delete:hover { color: #ff5050; }
+
+  .tree-id {
+    margin: 0.5rem 0 1rem;
+    font-size: 0.85rem;
+    color: #4a554a;
+  }
+  .tree-id code, .source code {
+    background: #ebefeb;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.85em;
+    color: #1f2a1f;
+  }
+
+  .source {
+    border-top: 1px solid #ebefeb;
+    padding-top: 1rem;
+    margin-top: 2rem;
+  }
+  .source h3 {
+    margin: 0 0 0.6rem;
+    color: #6b7a6b;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
 
   .status-edit { margin-left: 0.5rem; display: inline-flex; gap: 0.4rem; align-items: center; }
   .status-edit select { padding: 0.2rem 0.4rem; font-size: 0.85rem; }
