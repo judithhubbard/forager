@@ -81,13 +81,6 @@
       }
     },
     {
-      "scientific_name": "Carya cordiformis",
-      "stages": {
-        "flowering": [{ "start_doy": 130, "end_doy": 150 }],
-        "ripe":      [{ "start_doy": 275, "end_doy": 310 }]
-      }
-    },
-    {
       "scientific_name": "Malus domestica",
       "stages": {
         "flowering": [{ "start_doy": 120, "end_doy": 145 }],

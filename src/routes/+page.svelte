@@ -18,8 +18,28 @@
   let species: Species[] = [];
   let filterSpeciesId: string | null = null;
   let filterStatus: 'active' | 'all' = 'all';
+  let showLegend = true;
 
   let selectedPinId: string | null = null;
+
+  type Cat = 'fruit' | 'nut' | 'other' | 'unknown';
+  type CatMap = Record<string, Cat>;
+
+  function buildCategoryMap(speciesList: Species[]): CatMap {
+    const m: CatMap = {};
+    for (const s of speciesList) {
+      const parts = s.forage_parts ?? [];
+      let cat: Cat = 'other';
+      if (parts.includes('nut')) cat = 'nut';
+      else if (parts.includes('fruit')) cat = 'fruit';
+      m[s.id] = cat;
+    }
+    return m;
+  }
+
+  $: categoryBySpecies = buildCategoryMap(species);
+  $: categoryOf = (p: PinEffective): Cat =>
+    p.species_id ? categoryBySpecies[p.species_id] ?? 'unknown' : 'unknown';
 
   $: filteredPins = pins.filter((p) => {
     if (filterSpeciesId && p.species_id !== filterSpeciesId) return false;
@@ -142,9 +162,31 @@
     </label>
   </div>
 
-  <Map pins={filteredPins} on:pinClick={handlePinClick} on:mapTap={handleMapTap} />
+  <Map
+    pins={filteredPins}
+    {categoryOf}
+    on:pinClick={handlePinClick}
+    on:mapTap={handleMapTap}
+  />
+
+  {#if showLegend}
+    <div class="legend">
+      <div class="legend-header">
+        <strong>Legend</strong>
+        <button class="legend-toggle" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
+      </div>
+      <ul>
+        <li><span class="dot" style="background:#c14a3a"></span> Fruit</li>
+        <li><span class="dot" style="background:#7a5230"></span> Nut</li>
+        <li><span class="dot" style="background:#5a7a3a"></span> Other (leaf, root, spice)</li>
+        <li><span class="dot ring" style="background:#c14a3a; outline-color:#d57100"></span> Ripe now (any color)</li>
+        <li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant (faded)</li>
+      </ul>
+    </div>
+  {:else}
+    <button class="legend-show" on:click={() => (showLegend = true)}>Legend</button>
+  {/if}
   <button class="fab" on:click={openFab} aria-label="Drop a pin at my location">+</button>
-  <p class="hint-banner">Tap an empty area on the map to drop a pin there.</p>
 {:else if $regionsLoading}
   <main class="loading"><p>Loading…</p></main>
 {/if}
@@ -241,19 +283,6 @@
   .fab:active {
     background: #2a4a2a;
   }
-  .hint-banner {
-    position: fixed;
-    bottom: 1.5rem;
-    left: 1rem;
-    margin: 0;
-    padding: 0.4rem 0.75rem;
-    background: rgba(255, 255, 255, 0.92);
-    border-radius: 0.4rem;
-    font-size: 0.8rem;
-    color: #4a554a;
-    z-index: 500;
-    pointer-events: none;
-  }
   .filterbar {
     display: flex;
     flex-wrap: wrap;
@@ -335,5 +364,73 @@
   .pin-panel :global(.content) {
     flex: 1;
     overflow-y: auto;
+  }
+
+  /* Legend */
+  .legend {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 600;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: #1f2a1f;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    max-width: 14rem;
+  }
+  .legend-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+  }
+  .legend-toggle {
+    background: transparent;
+    border: 0;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #6b7a6b;
+    padding: 0 0.25rem;
+    line-height: 1;
+  }
+  .legend ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .legend .dot {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+  .legend .dot.ring {
+    outline: 2px solid;
+    outline-offset: 1px;
+  }
+  .legend .dot.faded {
+    opacity: 0.4;
+  }
+  .legend-show {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 600;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    color: #3a5a3a;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   }
 </style>

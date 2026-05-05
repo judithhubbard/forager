@@ -3,6 +3,12 @@
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
 
+  type ForageCategory = 'fruit' | 'nut' | 'other' | 'unknown';
+
+  /** Optional category resolver, normally computed in +page.svelte from
+   *  the species' forage_parts. If omitted, all pins get color 'unknown'. */
+  export let categoryOf: (pin: PinEffective) => ForageCategory = () => 'unknown';
+
   export let pins: PinEffective[] = [];
   export let center: [number, number] = [42.4534, -76.4836]; // Cornell campus default
   export let zoom: number = 14;
@@ -54,13 +60,19 @@
       if (!markerLayer) return;
       for (const pin of currentPins) {
         if (pin.lat == null || pin.lng == null) continue;
-        const color = colorFor(pin);
+        const fill = colorFor(pin);
+        const isRipe = pin.is_ripe_now === true;
+        const muted =
+          pin.effective_status === 'gone' || pin.effective_status === 'dormant';
         const marker = L.circleMarker([pin.lat, pin.lng], {
-          radius: 7,
-          color,
-          fillColor: color,
-          fillOpacity: 0.9,
-          weight: 2
+          radius: isRipe ? 9 : 6,
+          color: isRipe ? '#d57100' : fill,
+          fillColor: fill,
+          fillOpacity: muted ? 0.4 : 0.9,
+          weight: isRipe ? 3 : 1,
+          // Stop click events from bubbling to the underlying map (which
+          // would otherwise fire mapTap and open the drop-pin modal).
+          bubblingMouseEvents: false
         });
         marker.on('click', () => {
           if (pin.id) dispatch('pinClick', { pinId: pin.id });
@@ -70,12 +82,16 @@
     });
   }
 
+  /** Color is by forage category (fruit/nut/other). Status overlays handled
+   *  via opacity + ripe-now overlays in renderPins. */
   function colorFor(pin: PinEffective): string {
-    if (pin.is_ripe_now) return '#d57100'; // ripe = burnt orange
-    if (pin.effective_status === 'gone') return '#9a9a9a';
-    if (pin.effective_status === 'dormant') return '#7a7a40';
-    if (pin.effective_status === 'needs_verification') return '#a070b0';
-    return '#3a5a3a'; // active default
+    const cat = categoryOf(pin);
+    switch (cat) {
+      case 'fruit':   return '#c14a3a'; // red-orange (apples, cherries, mulberries)
+      case 'nut':     return '#7a5230'; // brown (hickories, hazelnuts, butternut, chestnut)
+      case 'other':   return '#5a7a3a'; // muted green (sassafras, spicebush)
+      default:        return '#6b7a6b'; // unknown / no species
+    }
   }
 
   onMount(async () => {
