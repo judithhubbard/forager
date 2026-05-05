@@ -275,11 +275,7 @@
       <span class="region">{$activeRegion.name}</span>
     {/if}
     {#if pinsLoading}
-      <span class="hint">Loading pins…</span>
-    {:else if $activeRegion}
-      <span class="hint">
-        {filteredPins.length}{filteredPins.length !== pins.length ? `/${pins.length}` : ''} pins
-      </span>
+      <span class="hint">Loading…</span>
     {/if}
     <a class="link ripe-link" href="/ripe">Ripe now</a>
     <a class="link" href="/activity">Activity</a>
