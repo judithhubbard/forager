@@ -67,7 +67,14 @@
   let formStage: Stage = 'ripe';
   let formQuality: number | null = null;
   let formNotes = '';
+  let formDate: string = todayIso();
   let formSubmitting = false;
+  let verifying = false;
+
+  function todayIso(): string {
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
 
   $: byYear = groupByYear(observations);
   $: years = [...byYear.keys()].sort((a, b) => b - a);
@@ -203,20 +210,45 @@
     formSubmitting = true;
     errorMessage = '';
     try {
+      const observedAt = new Date(formDate + 'T12:00:00');
       await createObservation({
         pinId,
         stage: formStage,
         qualityRating: formQuality,
-        qualityNotes: formNotes.trim() || null
+        qualityNotes: formNotes.trim() || null,
+        observedAt
       });
       formOpen = false;
       formNotes = '';
       formQuality = null;
+      formDate = todayIso();
       observations = await listByPin(pinId);
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Save failed.';
     } finally {
       formSubmitting = false;
+    }
+  }
+
+  /** Quick-verify: log a 'ripe' observation for today. Confirms the pin is
+   *  still here and producing — refreshes effective_status and is_ripe_now. */
+  async function verifyHarvest() {
+    verifying = true;
+    errorMessage = '';
+    try {
+      await createObservation({
+        pinId,
+        stage: 'ripe',
+        qualityRating: null,
+        qualityNotes: 'Verified harvest.'
+      });
+      observations = await listByPin(pinId);
+      pin = await getEffective(pinId);
+      dispatch('statusChanged');
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Verify failed.';
+    } finally {
+      verifying = false;
     }
   }
 
@@ -370,12 +402,21 @@
     <section class="observations">
       <div class="section-header">
         <h3>Observations</h3>
-        <button on:click={() => (formOpen = !formOpen)}>
-          {formOpen ? 'Cancel' : 'Log observation'}
-        </button>
+        <div class="header-actions">
+          <button class="verify" on:click={verifyHarvest} disabled={verifying}>
+            {verifying ? 'Verifying…' : '✓ Verify harvest'}
+          </button>
+          <button on:click={() => (formOpen = !formOpen)}>
+            {formOpen ? 'Cancel' : 'Log observation'}
+          </button>
+        </div>
       </div>
       {#if formOpen}
         <form class="obs-form" on:submit|preventDefault={submitObservation}>
+          <label>
+            Date observed
+            <input type="date" bind:value={formDate} max={todayIso()} required />
+          </label>
           <label>
             Stage
             <select bind:value={formStage} required>
@@ -475,7 +516,12 @@
     background: #3a5a3a; color: white; border: 0; padding: 0.5rem 1rem;
     border-radius: 0.4rem; cursor: pointer; font-size: 0.9rem;
   }
-  button[type='submit']:disabled { opacity: 0.6; cursor: not-allowed; }
+  button[type='submit']:disabled, .section-header button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .header-actions { display: flex; gap: 0.5rem; }
+  .verify {
+    background: #d57100;
+    color: white;
+  }
 
   .year { margin: 1.25rem 0 0.5rem; color: #6b7a6b; font-size: 0.85rem;
           font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
