@@ -368,6 +368,7 @@
     pins={filteredPins}
     {categoryOf}
     {labelOf}
+    hideLocate={!!selectedPinId}
     on:pinClick={handlePinClick}
     on:mapTap={handleMapTap}
   />
