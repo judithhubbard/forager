@@ -33,6 +33,55 @@
     { k: 'greens',   label: 'Greens' },
     { k: 'other',    label: 'Other' }
   ];
+
+  /** Friendly group label per genus. Falls back to the genus itself if not
+   *  in the mapping. Drives the indented sub-list in the species panel. */
+  const GROUP_LABELS: Record<string, string> = {
+    Amelanchier: 'Serviceberry',
+    Asimina: 'Pawpaw',
+    Carya: 'Hickory',
+    Castanea: 'Chestnut',
+    Cornus: 'Cornelian cherry',
+    Corylus: 'Hazelnut',
+    Diospyros: 'Persimmon',
+    Juglans: 'Walnut',
+    Lindera: 'Spicebush',
+    Malus: 'Apple',
+    Mentha: 'Mint',
+    Morus: 'Mulberry',
+    Prunus: 'Cherry / Plum / Almond',
+    Pyrus: 'Pear',
+    Ribes: 'Currant',
+    Rubus: 'Bramble',
+    Sambucus: 'Elderberry',
+    Vaccinium: 'Blueberry',
+    Elaeagnus: 'Autumn olive',
+    Allium: 'Ramps / wild leek',
+    Asparagus: 'Asparagus',
+    Vitis: 'Grape',
+    Cantharellus: 'Chanterelle',
+    Morchella: 'Morel'
+  };
+  function groupOf(s: Species): string {
+    const genus = s.scientific_name.split(/\s+/)[0];
+    return GROUP_LABELS[genus] ?? genus;
+  }
+
+  /** Group a flat species list by genus label, sorted alphabetically. */
+  function groupSpecies(list: Species[]): [string, Species[]][] {
+    const m: Record<string, Species[]> = {};
+    for (const s of list) {
+      const g = groupOf(s);
+      if (!m[g]) m[g] = [];
+      m[g].push(s);
+    }
+    return Object.entries(m).sort((a, b) => a[0].localeCompare(b[0]));
+  }
+
+  $: filteredSpeciesList = speciesInRegion.filter(
+    (s) => speciesTab === 'all' || (categoryBySpecies[s.id] ?? 'other') === speciesTab
+  );
+  $: groupedSpecies = groupSpecies(filteredSpeciesList);
   let filterStatus: 'all' | 'active' | 'possibly_ripe' | 'confirmed_ripe' | 'confirmed_harvest' = 'active';
   let showLegend = true;
 
@@ -265,23 +314,46 @@
               {/if}
             {/each}
           </div>
-          <ul>
-            {#each speciesInRegion.filter((s) => speciesTab === 'all' || (categoryBySpecies[s.id] ?? 'other') === speciesTab) as s}
-              <li>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isSelected(s.id)}
-                    on:change={() => toggleSpecies(s.id)}
-                  />
-                  <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
-                    class:nut={categoryBySpecies[s.id] === 'nut'}
-                    class:mushroom={categoryBySpecies[s.id] === 'mushroom'}
-                    class:greens={categoryBySpecies[s.id] === 'greens'}></span>
-                  {s.common_name}
-                  <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
-                </label>
-              </li>
+          <ul class="species-list">
+            {#each groupedSpecies as [groupName, list]}
+              {#if list.length > 1}
+                <li class="group-header">{groupName}</li>
+                {#each list as s}
+                  <li class="indented">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={isSelected(s.id)}
+                        on:change={() => toggleSpecies(s.id)}
+                      />
+                      <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
+                        class:nut={categoryBySpecies[s.id] === 'nut'}
+                        class:mushroom={categoryBySpecies[s.id] === 'mushroom'}
+                        class:greens={categoryBySpecies[s.id] === 'greens'}></span>
+                      {s.common_name}
+                      <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
+                    </label>
+                  </li>
+                {/each}
+              {:else}
+                {#each list as s}
+                  <li>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={isSelected(s.id)}
+                        on:change={() => toggleSpecies(s.id)}
+                      />
+                      <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
+                        class:nut={categoryBySpecies[s.id] === 'nut'}
+                        class:mushroom={categoryBySpecies[s.id] === 'mushroom'}
+                        class:greens={categoryBySpecies[s.id] === 'greens'}></span>
+                      {s.common_name}
+                      <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
+                    </label>
+                  </li>
+                {/each}
+              {/if}
             {/each}
           </ul>
         </div>
@@ -538,6 +610,17 @@
   }
   .species-panel li {
     padding: 0.15rem 0.5rem;
+  }
+  .species-panel li.group-header {
+    padding: 0.45rem 0.5rem 0.15rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #3a5a3a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .species-panel li.indented {
+    padding-left: 1.5rem;
   }
   .species-panel label {
     display: flex;
