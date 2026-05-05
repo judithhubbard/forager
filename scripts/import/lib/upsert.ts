@@ -107,6 +107,18 @@ const norm = (s: string) => s.toLowerCase().trim().replace(/\s+/g, ' ');
 
 const GENUS_ONLY_PLACEHOLDERS = new Set(['species', 'spp', 'spp.', 'sp', 'sp.']);
 
+/** Genera where "Genus species" generics (e.g. street ornamental crabapples)
+ *  are usually NOT what foragers want. Disable the genus-only fallback for
+ *  these. Specific aliases on the species entry can still match
+ *  (e.g. "Malus pumila" is aliased to Malus domestica). */
+const NO_FALLBACK_GENERA = new Set([
+  'malus',     // many ornamental crabapples
+  'cornus',    // many ornamental dogwoods
+  'prunus',    // many ornamental cherries
+  'carya',     // many bitter / pignut / mockernut hickories
+  'juglans'    // includes Juglans nigra which the user removed
+]);
+
 /** True iff `target` is an unspecific genus reference (bare genus, "Genus
  *  species", "Genus sp", "Genus spp", etc). Specific species names like
  *  "Cornus kousa" return false — we never use the genus fallback for them. */
@@ -142,15 +154,16 @@ export function matchSpecies(
     if (hit) return hit;
   }
   // 4) genus-only fall-through — ONLY when the source explicitly indicates
-  //    "any species in this genus" (e.g. "Amelanchier species"). Specific
-  //    other species in the same genus (e.g. "Cornus kousa") are skipped
-  //    rather than mis-matched to our species in the same genus.
+  //    "any species in this genus" (e.g. "Amelanchier species"), and only
+  //    for genera where this is semantically safe (see NO_FALLBACK_GENERA).
   if (sciq && isGenusOnly(sciq)) {
     const targetGenus = sciq.split(/\s+/)[0];
-    const hit = species.find(
-      (s) => norm(s.scientific_name).split(/\s+/)[0] === targetGenus
-    );
-    if (hit) return hit;
+    if (!NO_FALLBACK_GENERA.has(targetGenus)) {
+      const hit = species.find(
+        (s) => norm(s.scientific_name).split(/\s+/)[0] === targetGenus
+      );
+      if (hit) return hit;
+    }
   }
   return null;
 }

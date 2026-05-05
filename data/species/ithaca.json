@@ -164,6 +164,20 @@
         "flowering": [{ "start_doy": 165, "end_doy": 185 }],
         "ripe":      [{ "start_doy": 255, "end_doy": 295 }]
       }
+    },
+    {
+      "scientific_name": "Castanea mollissima",
+      "stages": {
+        "flowering": [{ "start_doy": 165, "end_doy": 185 }],
+        "ripe":      [{ "start_doy": 255, "end_doy": 295 }]
+      }
+    },
+    {
+      "scientific_name": "Castanea sativa",
+      "stages": {
+        "flowering": [{ "start_doy": 165, "end_doy": 185 }],
+        "ripe":      [{ "start_doy": 255, "end_doy": 295 }]
+      }
     }
   ]
 }

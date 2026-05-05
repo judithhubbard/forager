@@ -74,7 +74,7 @@
     {
       "scientific_name": "Malus domestica",
       "common_name": "Apple",
-      "aliases": ["wild apple", "feral apple"],
+      "aliases": ["wild apple", "feral apple", "Malus pumila"],
       "forage_parts": ["fruit"],
       "safety_notes": "Seeds contain trace cyanogenic compounds; do not consume."
     },
@@ -154,6 +154,20 @@
       "aliases": ["chestnut"],
       "forage_parts": ["nut"],
       "safety_notes": "Critically endangered due to chestnut blight; report locations to local conservation orgs."
+    },
+    {
+      "scientific_name": "Castanea mollissima",
+      "common_name": "Chinese chestnut",
+      "aliases": ["chestnut"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Burrs have sharp spines — wear gloves. Chestnuts are safe; do not confuse with toxic horse chestnut (Aesculus)."
+    },
+    {
+      "scientific_name": "Castanea sativa",
+      "common_name": "Sweet chestnut",
+      "aliases": ["European chestnut", "Spanish chestnut"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Same caution as Chinese chestnut: spiny burrs, do not confuse with horse chestnut."
     }
   ]
 }
