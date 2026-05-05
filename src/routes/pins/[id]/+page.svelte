@@ -1,0 +1,418 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
+  import { getEffective, type PinEffective } from '$lib/services/pinService';
+  import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
+  import {
+    listByPin,
+    create as createObservation,
+    groupByYear,
+    STAGES,
+    type Observation,
+    type Stage
+  } from '$lib/services/observationService';
+
+  $: pinId = $page.params.id as string;
+
+  let pin: PinEffective | null = null;
+  let species: Species | null = null;
+  let observations: Observation[] = [];
+  let allSpecies: Species[] = [];
+  let loading = true;
+  let errorMessage = '';
+
+  // Observation form state.
+  let formOpen = false;
+  let formStage: Stage = 'ripe';
+  let formQuality: number | null = null;
+  let formNotes = '';
+  let formSubmitting = false;
+
+  $: byYear = groupByYear(observations);
+  $: years = [...byYear.keys()].sort((a, b) => b - a);
+
+  onMount(load);
+
+  async function load() {
+    loading = true;
+    try {
+      [pin, allSpecies] = await Promise.all([getEffective(pinId), listSpecies()]);
+      if (pin?.species_id) {
+        species = allSpecies.find((s) => s.id === pin?.species_id) ?? null;
+      }
+      observations = await listByPin(pinId);
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Failed to load pin.';
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function submitObservation() {
+    formSubmitting = true;
+    errorMessage = '';
+    try {
+      await createObservation({
+        pinId,
+        stage: formStage,
+        qualityRating: formQuality,
+        qualityNotes: formNotes.trim() || null
+      });
+      formOpen = false;
+      formNotes = '';
+      formQuality = null;
+      observations = await listByPin(pinId);
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Save failed.';
+    } finally {
+      formSubmitting = false;
+    }
+  }
+
+  function fmtDate(s: string): string {
+    return new Date(s).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  function stageColor(s: Stage): string {
+    switch (s) {
+      case 'flowering':
+        return '#d691b3';
+      case 'green':
+        return '#789a4a';
+      case 'ripening':
+        return '#c79a3c';
+      case 'ripe':
+        return '#d57100';
+      case 'past':
+        return '#7a6a5a';
+      case 'bare':
+        return '#a0a0a0';
+      default:
+        return '#9090a0';
+    }
+  }
+</script>
+
+<header>
+  <button class="back" on:click={() => goto('/')}>← Back</button>
+  <h1>Pin detail</h1>
+</header>
+
+<main>
+  {#if loading}
+    <p class="hint">Loading…</p>
+  {:else if !pin}
+    <p class="error">Pin not found.</p>
+  {:else}
+    <section class="summary">
+      <h2>{pin.display_name ?? species?.common_name ?? 'Unnamed'}</h2>
+      {#if species}
+        <p class="sci">
+          <em>{species.scientific_name}</em>
+          <span class="muted">• {species.common_name}</span>
+        </p>
+      {/if}
+      <ul class="meta">
+        <li>
+          <strong>Status:</strong>
+          {pin.effective_status}
+          {#if pin.effective_status !== pin.status}
+            <span class="muted">(stored: {pin.status})</span>
+          {/if}
+        </li>
+        <li>
+          <strong>Location:</strong>
+          {pin.lat?.toFixed(5)}, {pin.lng?.toFixed(5)}
+          {#if pin.location_accuracy_m}
+            <span class="muted">±{pin.location_accuracy_m}m</span>
+          {/if}
+        </li>
+        {#if pin.is_ripe_now}
+          <li class="ripe">🍒 In ripe window today</li>
+        {/if}
+        {#if pin.import_source}
+          <li class="muted">Imported from {pin.import_source}</li>
+        {/if}
+      </ul>
+      {#if pin.notes}
+        <p class="notes">{pin.notes}</p>
+      {/if}
+    </section>
+
+    <section class="observations">
+      <div class="section-header">
+        <h3>Observations</h3>
+        <button on:click={() => (formOpen = !formOpen)}>
+          {formOpen ? 'Cancel' : 'Log observation'}
+        </button>
+      </div>
+
+      {#if formOpen}
+        <form class="obs-form" on:submit|preventDefault={submitObservation}>
+          <label>
+            Stage
+            <select bind:value={formStage} required>
+              {#each STAGES as s}
+                <option value={s}>{s}</option>
+              {/each}
+            </select>
+          </label>
+
+          <label>
+            Quality (1–5, optional)
+            <div class="rating">
+              {#each [1, 2, 3, 4, 5] as n}
+                <button
+                  type="button"
+                  class="star"
+                  class:active={formQuality !== null && formQuality >= n}
+                  on:click={() => (formQuality = formQuality === n ? null : n)}
+                  aria-label="{n} star"
+                >
+                  ★
+                </button>
+              {/each}
+              {#if formQuality !== null}
+                <button type="button" class="clear" on:click={() => (formQuality = null)}
+                  >clear</button
+                >
+              {/if}
+            </div>
+          </label>
+
+          <label>
+            Notes (optional)
+            <textarea rows="3" bind:value={formNotes} placeholder="Tartness, abundance, …"
+            ></textarea>
+          </label>
+
+          {#if errorMessage}
+            <p class="error">{errorMessage}</p>
+          {/if}
+
+          <button type="submit" disabled={formSubmitting}>
+            {formSubmitting ? 'Saving…' : 'Save observation'}
+          </button>
+        </form>
+      {/if}
+
+      {#if observations.length === 0}
+        <p class="hint">No observations yet.</p>
+      {:else}
+        {#each years as yr}
+          <h4 class="year">{yr}</h4>
+          <ul class="obs-list">
+            {#each byYear.get(yr) ?? [] as o}
+              <li>
+                <span class="stage" style="background: {stageColor(o.stage)}">{o.stage}</span>
+                <span class="date">{fmtDate(o.observed_at)}</span>
+                {#if o.quality_rating}
+                  <span class="quality">{'★'.repeat(o.quality_rating)}</span>
+                {/if}
+                {#if o.quality_notes}
+                  <p class="obs-notes">{o.quality_notes}</p>
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        {/each}
+      {/if}
+    </section>
+  {/if}
+</main>
+
+<style>
+  header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border-bottom: 1px solid #e1e8e1;
+    height: 56px;
+    box-sizing: border-box;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #3a5a3a;
+  }
+  .back {
+    background: transparent;
+    border: 0;
+    color: #3a5a3a;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  main {
+    padding: 1.5rem 1.25rem;
+    max-width: 36rem;
+    margin: 0 auto;
+  }
+  .hint {
+    color: #6b7a6b;
+  }
+  .error {
+    color: #b03030;
+    font-size: 0.9rem;
+  }
+  .muted {
+    color: #8a948a;
+  }
+  section {
+    margin-bottom: 2rem;
+  }
+  h2 {
+    margin: 0 0 0.25rem;
+    color: #1f2a1f;
+  }
+  .sci {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: #4a554a;
+  }
+  ul.meta {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: #4a554a;
+  }
+  ul.meta li {
+    margin-bottom: 0.25rem;
+  }
+  .ripe {
+    color: #d57100;
+    font-weight: 600;
+  }
+  .notes {
+    background: #f5f8f5;
+    padding: 0.75rem 1rem;
+    border-radius: 0.4rem;
+    margin: 0;
+    color: #1f2a1f;
+    font-size: 0.95rem;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .section-header h3 {
+    margin: 0;
+    color: #3a5a3a;
+  }
+  .obs-form {
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    background: #fafcf6;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+    color: #4a554a;
+  }
+  select,
+  textarea {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.4rem;
+    font-family: inherit;
+  }
+  .rating {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+  }
+  .star {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    color: #d0d8d0;
+    cursor: pointer;
+    padding: 0;
+  }
+  .star.active {
+    color: #d57100;
+  }
+  .clear {
+    background: transparent;
+    border: 0;
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    color: #6b7a6b;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  button[type='submit'],
+  .section-header button {
+    background: #3a5a3a;
+    color: white;
+    border: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  button[type='submit']:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .year {
+    margin: 1.25rem 0 0.5rem;
+    color: #6b7a6b;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  ul.obs-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  ul.obs-list li {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #ebefeb;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .stage {
+    color: white;
+    padding: 0.15rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .date {
+    color: #4a554a;
+    font-size: 0.9rem;
+  }
+  .quality {
+    color: #d57100;
+    font-size: 0.85rem;
+  }
+  .obs-notes {
+    flex-basis: 100%;
+    margin: 0;
+    color: #4a554a;
+    font-size: 0.85rem;
+    padding-left: 0.5rem;
+  }
+</style>

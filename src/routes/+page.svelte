@@ -36,8 +36,7 @@
   }
 
   function handlePinClick(e: CustomEvent<{ pinId: string }>) {
-    // Phase 1.6 will route to /pins/[id]; for now, just log.
-    console.log('Pin clicked:', e.detail.pinId);
+    goto(`/pins/${e.detail.pinId}`);
   }
 
   function handlePinSaved(e: CustomEvent<{ id: string }>) {
