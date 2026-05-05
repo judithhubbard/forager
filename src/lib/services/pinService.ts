@@ -77,6 +77,39 @@ export async function listByRegion(regionId: string): Promise<PinEffective[]> {
   return data ?? [];
 }
 
+/** Pins currently in their ripe window (and not gone/dormant). */
+export async function listRipeNow(regionId: string): Promise<PinEffective[]> {
+  const { data, error } = await supabase
+    .from('v_pin_effective')
+    .select('*')
+    .eq('region_id', regionId)
+    .eq('is_ripe_now', true);
+
+  if (error) {
+    console.error('[pinService] listRipeNow error:', error);
+    throw error;
+  }
+  return (data ?? []).filter(
+    (p) => p.effective_status !== 'gone' && p.effective_status !== 'dormant'
+  );
+}
+
+/** Haversine distance between two lng/lat points in meters. */
+export function haversineMeters(
+  a: { lng: number; lat: number },
+  b: { lng: number; lat: number }
+): number {
+  const R = 6371000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
 /** A single pin via the effective view. */
 export async function getEffective(id: string): Promise<PinEffective | null> {
   const { data, error } = await supabase

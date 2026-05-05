@@ -78,6 +78,7 @@
     {:else if $activeRegion}
       <span class="hint">{pins.length} pins</span>
     {/if}
+    <a class="link ripe-link" href="/ripe">Ripe now</a>
     <a class="link" href="/activity">Activity</a>
     <button class="signout" on:click={handleSignOut}>Sign out</button>
   </div>
@@ -142,6 +143,10 @@
   }
   .link {
     color: #3a5a3a;
+  }
+  .ripe-link {
+    color: #d57100;
+    font-weight: 600;
   }
   main.loading {
     padding: 2rem;
