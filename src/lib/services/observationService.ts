@@ -6,6 +6,7 @@ import { enqueue } from './outbox';
 import type { Database } from '$lib/database.types';
 
 export type Observation = Database['public']['Tables']['observations']['Row'];
+export type ObservationWithPin = Database['public']['Views']['v_observation_with_pin']['Row'];
 export type Stage = Database['public']['Enums']['stage'];
 
 export const STAGES: Stage[] = [
@@ -34,6 +35,24 @@ export async function listByPin(pinId: string): Promise<Observation[]> {
     .order('observed_at', { ascending: false });
   if (error) {
     console.error('[observationService] listByPin error:', error);
+    throw error;
+  }
+  return data ?? [];
+}
+
+/** Recent observations across a region, newest first. For the activity feed. */
+export async function listRecentInRegion(
+  regionId: string,
+  limit = 100
+): Promise<ObservationWithPin[]> {
+  const { data, error } = await supabase
+    .from('v_observation_with_pin')
+    .select('*')
+    .eq('pin_region_id', regionId)
+    .order('observed_at', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error('[observationService] listRecentInRegion error:', error);
     throw error;
   }
   return data ?? [];

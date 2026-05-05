@@ -56,6 +56,7 @@
     {:else if $activeRegion}
       <span class="hint">{pins.length} pins</span>
     {/if}
+    <a class="link" href="/activity">Activity</a>
     <button class="signout" on:click={handleSignOut}>Sign out</button>
   </div>
 </header>
@@ -106,13 +107,16 @@
   .hint {
     color: #6b7a6b;
   }
-  .signout {
+  .signout, .link {
     background: transparent;
     color: #6b7a6b;
     border: 0;
     cursor: pointer;
     text-decoration: underline;
     font-size: 0.85rem;
+  }
+  .link {
+    color: #3a5a3a;
   }
   main.loading {
     padding: 2rem;

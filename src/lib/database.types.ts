@@ -349,6 +349,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "photos_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "v_observation_with_pin"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "photos_pin_id_fkey"
             columns: ["pin_id"]
             isOneToOne: false
@@ -436,6 +443,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "species"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pins_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "v_observation_with_pin"
+            referencedColumns: ["species_id"]
           },
         ]
       }
@@ -672,6 +686,13 @@ export type Database = {
             referencedRelation: "species"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "species_fruiting_windows_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "v_observation_with_pin"
+            referencedColumns: ["species_id"]
+          },
         ]
       }
       user_fruiting_window_overrides: {
@@ -723,6 +744,13 @@ export type Database = {
             referencedRelation: "species"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_fruiting_window_overrides_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "v_observation_with_pin"
+            referencedColumns: ["species_id"]
+          },
         ]
       }
     }
@@ -769,6 +797,47 @@ export type Database = {
         }
         Relationships: []
       }
+      v_observation_with_pin: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          observed_at: string | null
+          pin_display_name: string | null
+          pin_id: string | null
+          pin_region_id: string | null
+          pin_status: Database["public"]["Enums"]["pin_status"] | null
+          quality_notes: string | null
+          quality_rating: number | null
+          species_common_name: string | null
+          species_id: string | null
+          species_scientific_name: string | null
+          stage: Database["public"]["Enums"]["stage"] | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "observations_pin_id_fkey"
+            columns: ["pin_id"]
+            isOneToOne: false
+            referencedRelation: "pins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observations_pin_id_fkey"
+            columns: ["pin_id"]
+            isOneToOne: false
+            referencedRelation: "v_pin_effective"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pins_region_id_fkey"
+            columns: ["pin_region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_pin_effective: {
         Row: {
           created_at: string | null
@@ -807,6 +876,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "species"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pins_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "v_observation_with_pin"
+            referencedColumns: ["species_id"]
           },
         ]
       }
