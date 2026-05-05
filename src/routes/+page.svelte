@@ -16,10 +16,12 @@
   let dropPinLat: number | null = null;
 
   let species: Species[] = [];
-  /** Species ids the user has explicitly selected. Empty set means "all". */
-  let selectedSpeciesIds = new Set<string>();
+  /** Species filter:
+   *   null     → no filter, show all species
+   *   Set([…]) → show only listed species (empty set = show none) */
+  let selectedSpeciesIds: Set<string> | null = null;
   let speciesPanelOpen = false;
-  let filterStatus: 'active' | 'all' = 'all';
+  let filterStatus: 'all' | 'active' | 'possibly_ripe' | 'confirmed_ripe' | 'confirmed_harvest' = 'all';
   let showLegend = true;
 
   let selectedPinId: string | null = null;
@@ -61,31 +63,68 @@
   }
 
   $: filteredPins = pins.filter((p) => {
-    if (selectedSpeciesIds.size > 0) {
+    // Species filter
+    if (selectedSpeciesIds !== null) {
       if (!p.species_id || !selectedSpeciesIds.has(p.species_id)) return false;
     }
-    if (filterStatus === 'active' && p.effective_status !== 'active') return false;
+    // Status filter — progressively narrower
+    if (filterStatus === 'all') return true;
+
+    // 'active' = exists, accessible
+    const isActive = p.effective_status === 'active' && !p.is_inaccessible;
+    if (!isActive) return false;
+    if (filterStatus === 'active') return true;
+
+    if (filterStatus === 'possibly_ripe') return p.is_ripe_now === true;
+    if (filterStatus === 'confirmed_ripe') return p.has_ripe_observation_this_year === true;
+    if (filterStatus === 'confirmed_harvest') return p.has_ripe_observation_ever === true;
     return true;
   });
 
+  function isSelected(id: string): boolean {
+    return selectedSpeciesIds === null || selectedSpeciesIds.has(id);
+  }
+
   function toggleSpecies(id: string) {
-    const next = new Set(selectedSpeciesIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
+    let next: Set<string>;
+    if (selectedSpeciesIds === null) {
+      // Currently "all"; un-checking one means "all except this one".
+      next = new Set(speciesInRegion.map((s) => s.id));
+      next.delete(id);
+    } else {
+      next = new Set(selectedSpeciesIds);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+    }
     selectedSpeciesIds = next;
   }
-  function clearSpecies() { selectedSpeciesIds = new Set(); }
+  function clearSpecies() {
+    // Explicit empty: show no species.
+    selectedSpeciesIds = new Set();
+  }
   function selectAllSpecies() {
-    selectedSpeciesIds = new Set(speciesInRegion.map((s) => s.id));
+    // Back to "all" (no filter).
+    selectedSpeciesIds = null;
   }
 
   // Sort species by common name; only include species that have at least
   // one pin in the active region for compactness.
+  // Order categories so the panel groups fruits, then nuts, then mushrooms,
+  // then greens, then other. Within a category, sort by scientific name so
+  // same-genus species cluster (all Amelanchier together, etc).
+  const CATEGORY_ORDER: Record<string, number> = {
+    fruit: 0, nut: 1, mushroom: 2, greens: 3, other: 4, unknown: 5
+  };
   $: speciesInRegion = (() => {
     const ids = new Set(pins.map((p) => p.species_id).filter(Boolean));
     return species
       .filter((s) => ids.has(s.id))
-      .sort((a, b) => a.common_name.localeCompare(b.common_name));
+      .sort((a, b) => {
+        const ca = CATEGORY_ORDER[categoryBySpecies[a.id] ?? 'unknown'] ?? 9;
+        const cb = CATEGORY_ORDER[categoryBySpecies[b.id] ?? 'unknown'] ?? 9;
+        if (ca !== cb) return ca - cb;
+        return a.scientific_name.localeCompare(b.scientific_name);
+      });
   })();
 
   $: if (!$regionsLoading && $session && $myRegions.length === 0) {
@@ -179,8 +218,10 @@
         on:click={() => (speciesPanelOpen = !speciesPanelOpen)}
       >
         Species:
-        {#if selectedSpeciesIds.size === 0}
+        {#if selectedSpeciesIds === null}
           All ({speciesInRegion.length})
+        {:else if selectedSpeciesIds.size === 0}
+          None
         {:else}
           {selectedSpeciesIds.size} selected
         {/if}
@@ -200,7 +241,7 @@
                 <label>
                   <input
                     type="checkbox"
-                    checked={selectedSpeciesIds.has(s.id)}
+                    checked={isSelected(s.id)}
                     on:change={() => toggleSpecies(s.id)}
                   />
                   <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
@@ -219,8 +260,11 @@
     <label>
       Show:
       <select bind:value={filterStatus}>
-        <option value="active">Active only</option>
-        <option value="all">All (incl. gone/dormant)</option>
+        <option value="all">All (incl. gone/dormant/inaccessible)</option>
+        <option value="active">Active (exists, accessible)</option>
+        <option value="possibly_ripe">Possibly ripe today</option>
+        <option value="confirmed_ripe">Confirmed ripe this year</option>
+        <option value="confirmed_harvest">Has confirmed harvest history</option>
       </select>
     </label>
   </div>

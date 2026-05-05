@@ -844,6 +844,8 @@ export type Database = {
           created_by: string | null
           display_name: string | null
           effective_status: Database["public"]["Enums"]["pin_status"] | null
+          has_ripe_observation_ever: boolean | null
+          has_ripe_observation_this_year: boolean | null
           id: string | null
           import_external_id: string | null
           import_raw: Json | null
