@@ -4,6 +4,7 @@
   import { signOut } from '$lib/services/authService';
   import { session } from '$lib/stores/auth';
   import { listByRegion, type PinEffective } from '$lib/services/pinService';
+  import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import Map from '$lib/components/Map.svelte';
   import DropPinModal from '$lib/components/DropPinModal.svelte';
 
@@ -13,20 +14,40 @@
   let dropPinLng: number | null = null;
   let dropPinLat: number | null = null;
 
+  let species: Species[] = [];
+  let filterSpeciesId: string | null = null;
+  let filterStatus: 'active' | 'all' = 'active'; // hide gone/dormant by default
+
+  $: filteredPins = pins.filter((p) => {
+    if (filterSpeciesId && p.species_id !== filterSpeciesId) return false;
+    if (filterStatus === 'active' && p.effective_status !== 'active') return false;
+    return true;
+  });
+
+  // Sort species by common name; only include species that have at least
+  // one pin in the active region for compactness.
+  $: speciesInRegion = (() => {
+    const ids = new Set(pins.map((p) => p.species_id).filter(Boolean));
+    return species
+      .filter((s) => ids.has(s.id))
+      .sort((a, b) => a.common_name.localeCompare(b.common_name));
+  })();
+
   $: if (!$regionsLoading && $session && $myRegions.length === 0) {
     goto('/no-regions', { replaceState: true });
   }
 
-  // Reload pins when active region changes.
-  $: if ($activeRegion) loadPins($activeRegion.id);
+  // Reload pins + species when active region changes.
+  $: if ($activeRegion) loadAll($activeRegion.id);
 
-  async function loadPins(regionId: string) {
+  async function loadAll(regionId: string) {
     pinsLoading = true;
     try {
-      pins = await listByRegion(regionId);
+      [pins, species] = await Promise.all([listByRegion(regionId), listSpecies()]);
     } catch (err) {
-      console.error('[+page] loadPins error', err);
+      console.error('[+page] loadAll error', err);
       pins = [];
+      species = [];
     } finally {
       pinsLoading = false;
     }
@@ -57,7 +78,7 @@
     showDropPin = false;
     dropPinLng = null;
     dropPinLat = null;
-    if ($activeRegion) loadPins($activeRegion.id);
+    if ($activeRegion) loadAll($activeRegion.id);
   }
 
   function handleClose() {
@@ -76,7 +97,9 @@
     {#if pinsLoading}
       <span class="hint">Loading pins…</span>
     {:else if $activeRegion}
-      <span class="hint">{pins.length} pins</span>
+      <span class="hint">
+        {filteredPins.length}{filteredPins.length !== pins.length ? `/${pins.length}` : ''} pins
+      </span>
     {/if}
     <a class="link ripe-link" href="/ripe">Ripe now</a>
     <a class="link" href="/activity">Activity</a>
@@ -85,7 +108,29 @@
 </header>
 
 {#if $activeRegion}
-  <Map {pins} on:pinClick={handlePinClick} on:mapTap={handleMapTap} />
+  <div class="filterbar">
+    <label>
+      Species:
+      <select bind:value={filterSpeciesId}>
+        <option value={null}>All ({speciesInRegion.length})</option>
+        {#each speciesInRegion as s}
+          <option value={s.id}>
+            {s.common_name}
+            ({pins.filter((p) => p.species_id === s.id).length})
+          </option>
+        {/each}
+      </select>
+    </label>
+    <label>
+      Show:
+      <select bind:value={filterStatus}>
+        <option value="active">Active only</option>
+        <option value="all">All (incl. gone/dormant)</option>
+      </select>
+    </label>
+  </div>
+
+  <Map pins={filteredPins} on:pinClick={handlePinClick} on:mapTap={handleMapTap} />
   <button class="fab" on:click={openFab} aria-label="Drop a pin at my location">+</button>
   <p class="hint-banner">Tap an empty area on the map to drop a pin there.</p>
 {:else if $regionsLoading}
@@ -183,5 +228,28 @@
     color: #4a554a;
     z-index: 500;
     pointer-events: none;
+  }
+  .filterbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    background: #f5f8f5;
+    border-bottom: 1px solid #e1e8e1;
+    font-size: 0.85rem;
+    color: #4a554a;
+  }
+  .filterbar label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .filterbar select {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.3rem;
+    background: white;
+    max-width: 16rem;
   }
 </style>

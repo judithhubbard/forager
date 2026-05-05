@@ -119,7 +119,8 @@
   .map-wrap {
     position: relative;
     width: 100%;
-    height: calc(100vh - 56px);
+    /* Header (56) + filter bar (~44) ≈ 100. Use flex-fill if more bars get added. */
+    height: calc(100vh - 100px);
   }
   .map {
     width: 100%;

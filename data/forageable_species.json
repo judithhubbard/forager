@@ -198,13 +198,6 @@
       "safety_notes": "FLOWERS ONLY are edible. Bark, leaves, seeds, and pods are toxic."
     },
     {
-      "scientific_name": "Quercus alba",
-      "common_name": "White oak",
-      "aliases": ["oak"],
-      "forage_parts": ["nut"],
-      "safety_notes": "Acorns must be leached of tannins before eating."
-    },
-    {
       "scientific_name": "Castanea dentata",
       "common_name": "American chestnut",
       "aliases": ["chestnut"],
