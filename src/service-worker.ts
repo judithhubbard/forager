@@ -28,12 +28,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Phase 3 will add fetch-handling for app-shell and tile caching with a
-// cache-first-with-network-fallback strategy. For now we install only the
-// version-stamp + purge-old-caches behavior so Phase 1 deploys don't leave
-// stale caches behind.
-
-self.addEventListener('fetch', () => {
-  // Pass through to network. Real strategy in Phase 3.
-});
+// cache-first-with-network-fallback strategy. For now we register no
+// fetch handler so the browser does not warn about a no-op handler.
 
 export {};

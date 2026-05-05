@@ -1,14 +1,15 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
   import { activeRegion, regionsLoading, myRegions } from '$lib/stores/activeRegion';
   import { signOut } from '$lib/services/authService';
   import { session } from '$lib/stores/auth';
   import { listByRegion, type PinEffective } from '$lib/services/pinService';
   import Map from '$lib/components/Map.svelte';
+  import DropPinModal from '$lib/components/DropPinModal.svelte';
 
   let pins: PinEffective[] = [];
   let pinsLoading = false;
+  let showDropPin = false;
 
   $: if (!$regionsLoading && $session && $myRegions.length === 0) {
     goto('/no-regions', { replaceState: true });
@@ -38,6 +39,11 @@
     // Phase 1.6 will route to /pins/[id]; for now, just log.
     console.log('Pin clicked:', e.detail.pinId);
   }
+
+  function handlePinSaved(e: CustomEvent<{ id: string }>) {
+    showDropPin = false;
+    if ($activeRegion) loadPins($activeRegion.id);
+  }
 </script>
 
 <header>
@@ -57,8 +63,17 @@
 
 {#if $activeRegion}
   <Map {pins} on:pinClick={handlePinClick} />
+  <button class="fab" on:click={() => (showDropPin = true)} aria-label="Drop a pin">+</button>
 {:else if $regionsLoading}
   <main class="loading"><p>Loading…</p></main>
+{/if}
+
+{#if showDropPin && $activeRegion}
+  <DropPinModal
+    regionId={$activeRegion.id}
+    on:close={() => (showDropPin = false)}
+    on:saved={handlePinSaved}
+  />
 {/if}
 
 <style>
@@ -103,5 +118,24 @@
   main.loading {
     padding: 2rem;
     color: #6b7a6b;
+  }
+  .fab {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    border: 0;
+    background: #3a5a3a;
+    color: white;
+    font-size: 2rem;
+    line-height: 1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 600;
+  }
+  .fab:active {
+    background: #2a4a2a;
   }
 </style>

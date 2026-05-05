@@ -1088,6 +1088,20 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
+      insert_pin: {
+        Args: {
+          p_display_name?: string
+          p_id: string
+          p_lat: number
+          p_lng: number
+          p_location_accuracy_m?: number
+          p_notes?: string
+          p_region_id: string
+          p_species_id: string
+          p_status?: Database["public"]["Enums"]["pin_status"]
+        }
+        Returns: string
+      }
       is_region_admin: { Args: { rid: string; uid: string }; Returns: boolean }
       is_region_member: { Args: { rid: string; uid: string }; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
