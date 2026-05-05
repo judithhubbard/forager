@@ -35,7 +35,9 @@
   ];
 
   /** Friendly group label per genus. Falls back to the genus itself if not
-   *  in the mapping. Drives the indented sub-list in the species panel. */
+   *  in the mapping. Drives the indented sub-list in the species panel.
+   *  Apple + Pear share a group; Almond is split out from the rest of
+   *  Prunus because foragers treat it differently from cherries / plums. */
   const GROUP_LABELS: Record<string, string> = {
     Amelanchier: 'Serviceberry',
     Asimina: 'Pawpaw',
@@ -46,11 +48,11 @@
     Diospyros: 'Persimmon',
     Juglans: 'Walnut',
     Lindera: 'Spicebush',
-    Malus: 'Apple',
+    Malus: 'Apple / Pear',
+    Pyrus: 'Apple / Pear',
     Mentha: 'Mint',
     Morus: 'Mulberry',
-    Prunus: 'Cherry / Plum / Almond',
-    Pyrus: 'Pear',
+    Prunus: 'Cherry / Plum',
     Ribes: 'Currant',
     Rubus: 'Bramble',
     Sambucus: 'Elderberry',
@@ -63,6 +65,8 @@
     Morchella: 'Morel'
   };
   function groupOf(s: Species): string {
+    // Specific species overrides (almond split out from other Prunus).
+    if (s.scientific_name === 'Prunus dulcis') return 'Almond';
     const genus = s.scientific_name.split(/\s+/)[0];
     return GROUP_LABELS[genus] ?? genus;
   }
