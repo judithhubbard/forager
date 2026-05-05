@@ -3,7 +3,7 @@
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
 
-  type ForageCategory = 'fruit' | 'nut' | 'other' | 'unknown';
+  type ForageCategory = 'fruit' | 'nut' | 'mushroom' | 'greens' | 'other' | 'unknown';
 
   /** Optional category resolver, normally computed in +page.svelte from
    *  the species' forage_parts. If omitted, all pins get color 'unknown'. */
@@ -82,15 +82,17 @@
     });
   }
 
-  /** Color is by forage category (fruit/nut/other). Status overlays handled
-   *  via opacity + ripe-now overlays in renderPins. */
+  /** Color is by forage category. Status overlays handled via opacity +
+   *  ripe-now overlays in renderPins. */
   function colorFor(pin: PinEffective): string {
     const cat = categoryOf(pin);
     switch (cat) {
-      case 'fruit':   return '#c14a3a'; // red-orange (apples, cherries, mulberries)
-      case 'nut':     return '#7a5230'; // brown (hickories, hazelnuts, butternut, chestnut)
-      case 'other':   return '#5a7a3a'; // muted green (sassafras, spicebush)
-      default:        return '#6b7a6b'; // unknown / no species
+      case 'fruit':    return '#c14a3a'; // red-orange (cherries, mulberries, brambles)
+      case 'nut':      return '#7a5230'; // brown (hickories, hazelnuts, chestnuts)
+      case 'mushroom': return '#8a4ea0'; // purple (morels, chanterelles)
+      case 'greens':   return '#6ba040'; // green (ramps, asparagus, mint)
+      case 'other':    return '#5a7a3a'; // muted green (sassafras, spicebush)
+      default:         return '#6b7a6b'; // unknown / no species
     }
   }
 

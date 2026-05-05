@@ -22,7 +22,7 @@
 
   let selectedPinId: string | null = null;
 
-  type Cat = 'fruit' | 'nut' | 'other' | 'unknown';
+  type Cat = 'fruit' | 'nut' | 'mushroom' | 'greens' | 'other' | 'unknown';
   type CatMap = Record<string, Cat>;
 
   function buildCategoryMap(speciesList: Species[]): CatMap {
@@ -30,8 +30,10 @@
     for (const s of speciesList) {
       const parts = s.forage_parts ?? [];
       let cat: Cat = 'other';
-      if (parts.includes('nut')) cat = 'nut';
+      if (parts.includes('mushroom')) cat = 'mushroom';
+      else if (parts.includes('nut')) cat = 'nut';
       else if (parts.includes('fruit')) cat = 'fruit';
+      else if (parts.includes('leaf') || parts.includes('shoot') || parts.includes('bulb')) cat = 'greens';
       m[s.id] = cat;
     }
     return m;
@@ -178,7 +180,9 @@
       <ul>
         <li><span class="dot" style="background:#c14a3a"></span> Fruit</li>
         <li><span class="dot" style="background:#7a5230"></span> Nut</li>
-        <li><span class="dot" style="background:#5a7a3a"></span> Other (leaf, root, spice)</li>
+        <li><span class="dot" style="background:#8a4ea0"></span> Mushroom</li>
+        <li><span class="dot" style="background:#6ba040"></span> Greens (ramps, asparagus, mint)</li>
+        <li><span class="dot" style="background:#5a7a3a"></span> Other (root, spice, bark)</li>
         <li><span class="dot ring" style="background:#c14a3a; outline-color:#d57100"></span> Ripe now (any color)</li>
         <li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant (faded)</li>
       </ul>

@@ -168,6 +168,76 @@
       "aliases": ["European chestnut", "Spanish chestnut"],
       "forage_parts": ["nut"],
       "safety_notes": "Same caution as Chinese chestnut: spiny burrs, do not confuse with horse chestnut."
+    },
+    {
+      "scientific_name": "Castanea pumila",
+      "common_name": "Allegheny chinkapin",
+      "aliases": ["chinkapin", "chinquapin"],
+      "forage_parts": ["nut"],
+      "safety_notes": "Smaller cousin of chestnut; sweet, edible nuts in spiny burrs."
+    },
+    {
+      "scientific_name": "Rubus occidentalis",
+      "common_name": "Black raspberry",
+      "aliases": ["blackcap", "thimbleberry"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Watch for thorns. Distinguish from blackberry: black raspberries pull cleanly off the receptacle (hollow), blackberries do not."
+    },
+    {
+      "scientific_name": "Rubus idaeus",
+      "common_name": "Red raspberry",
+      "aliases": ["wild raspberry"],
+      "forage_parts": ["fruit", "leaf"],
+      "safety_notes": "Watch for thorns. Leaves used for tea (let dry before brewing — fresh wilted leaves can cause stomach upset)."
+    },
+    {
+      "scientific_name": "Rubus phoenicolasius",
+      "common_name": "Wineberry",
+      "aliases": [],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Invasive species in NY; harvesting helps control spread. Distinctive red bristly canes."
+    },
+    {
+      "scientific_name": "Rubus allegheniensis",
+      "common_name": "Allegheny blackberry",
+      "aliases": ["blackberry", "wild blackberry"],
+      "forage_parts": ["fruit"],
+      "safety_notes": "Watch for thorns. Many Rubus species look similar; all are edible."
+    },
+    {
+      "scientific_name": "Allium tricoccum",
+      "common_name": "Ramps",
+      "aliases": ["wild leek", "wild ramp"],
+      "forage_parts": ["leaf", "bulb"],
+      "safety_notes": "Slow-growing; harvest sustainably (one leaf per plant, leave the bulb). Heavily over-harvested in some regions."
+    },
+    {
+      "scientific_name": "Asparagus officinalis",
+      "common_name": "Wild asparagus",
+      "aliases": ["asparagus"],
+      "forage_parts": ["shoot"],
+      "safety_notes": "Escaped from cultivation, often along roadsides and railroad rights-of-way. Easy to identify when in fern phase."
+    },
+    {
+      "scientific_name": "Mentha",
+      "common_name": "Wild mint",
+      "aliases": ["mint", "Mentha species", "spearmint", "peppermint", "Mentha spicata", "Mentha piperita", "Mentha arvensis"],
+      "forage_parts": ["leaf"],
+      "safety_notes": "Many escaped Mentha species in the Northeast, all edible. Confirm by smell — true mints are unmistakably aromatic."
+    },
+    {
+      "scientific_name": "Morchella esculenta",
+      "common_name": "Yellow morel",
+      "aliases": ["morel", "common morel", "Morchella"],
+      "forage_parts": ["mushroom"],
+      "safety_notes": "Confirm true morel: hollow inside (single cavity), cap fully attached to stem, honeycomb pattern. False morels (Gyromitra) are TOXIC; they have wrinkled, brain-like caps and are not hollow."
+    },
+    {
+      "scientific_name": "Cantharellus cibarius",
+      "common_name": "Golden chanterelle",
+      "aliases": ["chanterelle", "Cantharellus"],
+      "forage_parts": ["mushroom"],
+      "safety_notes": "Confirm true chanterelle: false gills (forked ridges, not true gills), egg-yolk yellow, fruity apricot smell. Toxic look-alike: Jack-O-Lantern (Omphalotus olearius) — it has true gills and grows on dead wood (chanterelles grow from soil)."
     }
   ]
 }

@@ -178,6 +178,71 @@
         "flowering": [{ "start_doy": 165, "end_doy": 185 }],
         "ripe":      [{ "start_doy": 255, "end_doy": 295 }]
       }
+    },
+    {
+      "scientific_name": "Castanea pumila",
+      "stages": {
+        "flowering": [{ "start_doy": 165, "end_doy": 185 }],
+        "ripe":      [{ "start_doy": 245, "end_doy": 290 }]
+      }
+    },
+    {
+      "scientific_name": "Rubus occidentalis",
+      "stages": {
+        "flowering": [{ "start_doy": 130, "end_doy": 155 }],
+        "ripe":      [{ "start_doy": 175, "end_doy": 200 }]
+      }
+    },
+    {
+      "scientific_name": "Rubus idaeus",
+      "stages": {
+        "flowering": [{ "start_doy": 140, "end_doy": 165 }],
+        "ripe":      [{ "start_doy": 185, "end_doy": 220 }]
+      }
+    },
+    {
+      "scientific_name": "Rubus phoenicolasius",
+      "stages": {
+        "flowering": [{ "start_doy": 135, "end_doy": 160 }],
+        "ripe":      [{ "start_doy": 165, "end_doy": 200 }]
+      }
+    },
+    {
+      "scientific_name": "Rubus allegheniensis",
+      "stages": {
+        "flowering": [{ "start_doy": 135, "end_doy": 160 }],
+        "ripe":      [{ "start_doy": 195, "end_doy": 235 }]
+      }
+    },
+    {
+      "scientific_name": "Allium tricoccum",
+      "stages": {
+        "ripe":      [{ "start_doy": 90, "end_doy": 130 }]
+      }
+    },
+    {
+      "scientific_name": "Asparagus officinalis",
+      "stages": {
+        "ripe":      [{ "start_doy": 105, "end_doy": 160 }]
+      }
+    },
+    {
+      "scientific_name": "Mentha",
+      "stages": {
+        "ripe":      [{ "start_doy": 130, "end_doy": 270 }]
+      }
+    },
+    {
+      "scientific_name": "Morchella esculenta",
+      "stages": {
+        "ripe":      [{ "start_doy": 105, "end_doy": 145 }]
+      }
+    },
+    {
+      "scientific_name": "Cantharellus cibarius",
+      "stages": {
+        "ripe":      [{ "start_doy": 195, "end_doy": 260 }]
+      }
     }
   ]
 }
