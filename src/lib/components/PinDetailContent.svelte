@@ -90,6 +90,11 @@
   // Short shareable id (first 8 chars of UUID) for talking about the pin.
   $: shortId = pinId ? pinId.slice(0, 8) : '';
 
+  // Title and whether to also show the species common name beneath
+  // (skipped if the title already IS the common name).
+  $: title = pin?.display_name ?? species?.common_name ?? 'Unnamed';
+  $: showCommonNameBelow = !!pin?.display_name && !!species && species.common_name !== title;
+
   // Try to extract a human-readable accession / external id from the raw
   // import payload, regardless of which source produced it.
   function extractAccession(raw: unknown): string | null {
@@ -352,52 +357,36 @@
     <p class="error">Pin not found.</p>
   {:else}
     <section class="summary">
-      <h2>{pin.display_name ?? species?.common_name ?? 'Unnamed'}</h2>
+      <div class="title-row">
+        <h2>{title}</h2>
+        <span class="status-chip status-{pin.effective_status ?? 'active'}">
+          {(pin.effective_status ?? 'active').replace('_', ' ')}
+          {#if pin.is_ripe_now}<span class="ripe-dot" title="In ripe window">🍒</span>{/if}
+        </span>
+      </div>
       {#if species}
-        <p class="sci">
+        <p class="sub">
           <em>{species.scientific_name}</em>
-          <span class="muted">• {species.common_name}</span>
+          {#if showCommonNameBelow}<span class="muted"> · {species.common_name}</span>{/if}
+          <span class="loc">
+            {pin.lat?.toFixed(5)}, {pin.lng?.toFixed(5)}
+            {#if pin.location_accuracy_m}<span class="muted">±{pin.location_accuracy_m}m</span>{/if}
+          </span>
         </p>
       {/if}
-      <p class="tree-id">
-        <strong>Tree ID:</strong>
-        <code>{shortId}</code>
-        <span class="muted">share this code to identify the pin</span>
-      </p>
-      <ul class="meta">
-        <li>
-          <strong>Status:</strong>
-          {pin.effective_status}
-          {#if pin.effective_status !== pin.status}
-            <span class="muted">(stored: {pin.status})</span>
-          {/if}
-          <span class="status-edit">
-            <select bind:value={pendingStatus}>
-              <option value={null}>change…</option>
-              {#each STATUSES as s}
-                {#if s !== pin.status}
-                  <option value={s}>{s}</option>
-                {/if}
-              {/each}
-            </select>
-            {#if pendingStatus}
-              <button class="inline" on:click={saveStatus} disabled={statusSaving}>
-                {statusSaving ? 'Saving…' : `Set ${pendingStatus}`}
-              </button>
-            {/if}
-          </span>
-        </li>
-        <li>
-          <strong>Location:</strong>
-          {pin.lat?.toFixed(5)}, {pin.lng?.toFixed(5)}
-          {#if pin.location_accuracy_m}
-            <span class="muted">±{pin.location_accuracy_m}m</span>
-          {/if}
-        </li>
-        {#if pin.is_ripe_now}
-          <li class="ripe">🍒 In ripe window today</li>
+      <div class="status-edit-row">
+        <select bind:value={pendingStatus}>
+          <option value={null}>change status…</option>
+          {#each STATUSES as s}
+            {#if s !== pin.status}<option value={s}>{s}</option>{/if}
+          {/each}
+        </select>
+        {#if pendingStatus}
+          <button class="inline" on:click={saveStatus} disabled={statusSaving}>
+            {statusSaving ? '…' : `Set ${pendingStatus}`}
+          </button>
         {/if}
-      </ul>
+      </div>
       {#if pin.notes}
         <p class="notes">{pin.notes}</p>
       {/if}
@@ -592,27 +581,20 @@
     <section class="source">
       <h3>Reference</h3>
       <ul class="meta">
-        <li>
-          <strong>Tree ID:</strong> <code>{shortId}</code>
-        </li>
+        <li><strong>ID:</strong> <code>{shortId}</code> <span class="muted">share to identify this pin</span></li>
         {#if pin.import_source}
           <li>
-            <strong>Source:</strong>
-            {pin.import_source}
-            {#if pin.import_external_id}
-              <span class="muted">·</span> external id: <code>{pin.import_external_id}</code>
-            {/if}
+            <strong>Source:</strong> {pin.import_source}
+            {#if pin.import_external_id} · <code>{pin.import_external_id}</code>{/if}
           </li>
           {#if accession}
-            <li>
-              <strong>Accession:</strong> <code>{accession}</code>
-            </li>
+            <li><strong>Accession:</strong> <code>{accession}</code></li>
           {/if}
         {:else}
-          <li class="muted">Manually added.</li>
+          <li class="muted">Manually added</li>
         {/if}
         {#if pin.created_at}
-          <li class="muted">Pin created {fmtDate(pin.created_at)}.</li>
+          <li class="muted">Pin created {fmtDate(pin.created_at)}</li>
         {/if}
       </ul>
     </section>
@@ -632,27 +614,79 @@
 {/if}
 
 <style>
-  .content { padding: 0.75rem 1rem 2rem; font-size: 0.9rem; }
+  .content { padding: 0.6rem 0.9rem 2rem; font-size: 0.9rem; }
   .hint { color: #6b7a6b; font-size: 0.85rem; margin: 0.25rem 0; }
   .error { color: #b03030; font-size: 0.85rem; margin: 0.25rem 0; }
   .muted { color: #8a948a; }
-  section { margin-bottom: 1rem; }
-  h2 { margin: 0 0 0.1rem; color: #1f2a1f; font-size: 1rem; }
-  .sci { margin: 0 0 0.4rem; font-size: 0.8rem; color: #4a554a; }
-  ul.meta { list-style: none; padding: 0; margin: 0 0 0.5rem; font-size: 0.85rem; color: #4a554a; }
+  section { margin-bottom: 0.85rem; }
+  h2 { margin: 0; color: #1f2a1f; font-size: 1rem; line-height: 1.25; }
+  .sub {
+    margin: 0.1rem 0 0.4rem;
+    font-size: 0.8rem;
+    color: #4a554a;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: baseline;
+  }
+  .sub em { font-style: italic; }
+  .sub .loc {
+    margin-left: auto;
+    font-style: italic;
+    color: #6b7a6b;
+    white-space: nowrap;
+  }
+  ul.meta { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #4a554a; }
   ul.meta li { margin-bottom: 0.15rem; line-height: 1.3; }
-  .ripe { color: #d57100; font-weight: 600; }
-  .notes { background: #f5f8f5; padding: 0.5rem 0.7rem; border-radius: 0.35rem; margin: 0.5rem 0 0; color: #1f2a1f; font-size: 0.85rem; }
+  .notes { background: #f5f8f5; padding: 0.5rem 0.7rem; border-radius: 0.35rem; margin: 0.4rem 0 0; color: #1f2a1f; font-size: 0.85rem; }
 
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+  /* Title row + status chip */
+  .title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.12rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 1rem;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .status-chip.status-active            { background: #e1f1de; color: #2a4a2a; border-color: #b9d8b3; }
+  .status-chip.status-gone              { background: #ececec; color: #555;    border-color: #c7c7c7; }
+  .status-chip.status-dormant           { background: #f5e8c4; color: #6a4a14; border-color: #e0c98a; }
+  .status-chip.status-needs_verification { background: #ecdcef; color: #6a3a78; border-color: #d3b9d8; }
+
+  .ripe-dot { font-size: 0.85em; }
+
+  .status-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.15rem 0 0.4rem;
+    font-size: 0.78rem;
+  }
+  .status-edit-row select { font-size: 0.78rem; padding: 0.15rem 0.35rem; }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
   .section-header h3 {
     margin: 0;
     color: #3a5a3a;
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
+  .header-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 
   .obs-form, .haz-form {
     border: 1px solid #d0d8d0; border-radius: 0.4rem; padding: 0.75rem; margin-bottom: 0.75rem;
@@ -670,15 +704,29 @@
     background: transparent; border: 0; margin-left: 0.5rem; font-size: 0.8rem;
     color: #6b7a6b; cursor: pointer; text-decoration: underline;
   }
-  button[type='submit'], .section-header button {
-    background: #3a5a3a; color: white; border: 0; padding: 0.5rem 1rem;
-    border-radius: 0.4rem; cursor: pointer; font-size: 0.9rem;
+  button[type='submit'] {
+    background: #3a5a3a; color: white; border: 0; padding: 0.5rem 0.9rem;
+    border-radius: 0.4rem; cursor: pointer; font-size: 0.85rem;
+  }
+  .section-header button {
+    background: #3a5a3a; color: white; border: 0;
+    padding: 0.28rem 0.6rem;
+    min-height: 1.85rem; /* still tappable on touch */
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-size: 0.78rem;
+    line-height: 1.1;
   }
   button[type='submit']:disabled, .section-header button:disabled { opacity: 0.6; cursor: not-allowed; }
-  .header-actions { display: flex; gap: 0.5rem; }
   .verify {
-    background: #d57100;
-    color: white;
+    background: #d57100 !important;
+  }
+  /* Slightly larger touch targets on small screens. */
+  @media (max-width: 640px) {
+    .section-header button {
+      min-height: 2.1rem;
+      padding: 0.35rem 0.7rem;
+    }
   }
 
   .year { margin: 0.65rem 0 0.2rem; color: #6b7a6b; font-size: 0.7rem;
@@ -714,7 +762,11 @@
   .obs-notes { flex-basis: 100%; margin: 0; color: #4a554a; font-size: 0.85rem; padding-left: 0.5rem; }
   .obs-delete {
     background: transparent; border: 0; color: #b03030; cursor: pointer;
-    font-size: 1.1rem; padding: 0 0.25rem; line-height: 1; margin-left: auto;
+    font-size: 1.05rem; padding: 0.2rem 0.4rem; line-height: 1; margin-left: auto;
+    min-height: 1.6rem; min-width: 1.6rem;
+  }
+  @media (max-width: 640px) {
+    .obs-delete { min-height: 2rem; min-width: 2rem; padding: 0.35rem 0.55rem; }
   }
 
   fieldset.date-precision {
@@ -760,12 +812,7 @@
   }
   .obs-delete:hover { color: #ff5050; }
 
-  .tree-id {
-    margin: 0.25rem 0 0.5rem;
-    font-size: 0.78rem;
-    color: #4a554a;
-  }
-  .tree-id code, .source code {
+  .source code {
     background: #ebefeb;
     padding: 0.1rem 0.4rem;
     border-radius: 0.25rem;
@@ -788,9 +835,11 @@
   }
   .source ul.meta { font-size: 0.78rem; }
 
-  .status-edit { margin-left: 0.5rem; display: inline-flex; gap: 0.4rem; align-items: center; }
-  .status-edit select { padding: 0.2rem 0.4rem; font-size: 0.85rem; }
-  button.inline { padding: 0.25rem 0.6rem; font-size: 0.85rem; }
+  button.inline {
+    padding: 0.2rem 0.55rem; font-size: 0.78rem;
+    background: #3a5a3a; color: white; border: 0;
+    border-radius: 0.3rem; cursor: pointer;
+  }
 
   .hazard-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .chip {
