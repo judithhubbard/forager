@@ -24,7 +24,8 @@
     groupByYear,
     STAGES,
     type Observation,
-    type Stage
+    type Stage,
+    type ObservationPrecision
   } from '$lib/services/observationService';
   import {
     listByPin as listPhotos,
@@ -71,6 +72,11 @@
   let formQuality: number | null = null;
   let formNotes = '';
   let formDate: string = todayIso();
+  let formPrecision: ObservationPrecision = 'day';
+  // For year/month precision modes:
+  const NOW = new Date();
+  let formYear: number = NOW.getFullYear();
+  let formMonth: number = NOW.getMonth() + 1; // 1-12
   let formSubmitting = false;
 
   // Short shareable id (first 8 chars of UUID) for talking about the pin.
@@ -225,18 +231,28 @@
     formSubmitting = true;
     errorMessage = '';
     try {
-      const observedAt = new Date(formDate + 'T12:00:00');
+      // Build the timestamp from whichever precision the user chose.
+      let observedAt: Date;
+      if (formPrecision === 'day') {
+        observedAt = new Date(formDate + 'T12:00:00');
+      } else if (formPrecision === 'month') {
+        observedAt = new Date(formYear, formMonth - 1, 1, 12, 0, 0);
+      } else {
+        observedAt = new Date(formYear, 0, 1, 12, 0, 0);
+      }
       await createObservation({
         pinId,
         stage: formStage,
         qualityRating: formQuality,
         qualityNotes: formNotes.trim() || null,
-        observedAt
+        observedAt,
+        observedPrecision: formPrecision
       });
       formOpen = false;
       formNotes = '';
       formQuality = null;
       formDate = todayIso();
+      formPrecision = 'day';
       observations = await listByPin(pinId);
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Save failed.';
@@ -275,6 +291,29 @@
       day: 'numeric'
     });
   }
+
+  function fmtObservation(o: Observation): string {
+    const d = new Date(o.observed_at);
+    const precision = (o as Observation & { observed_precision?: ObservationPrecision })
+      .observed_precision ?? 'day';
+    if (precision === 'year') return d.toLocaleDateString(undefined, { year: 'numeric' });
+    if (precision === 'month') {
+      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
+    }
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  // For the year/month form fields.
+  const YEAR_OPTIONS = (() => {
+    const ys: number[] = [];
+    const cy = new Date().getFullYear();
+    for (let y = cy; y >= cy - 30; y--) ys.push(y);
+    return ys;
+  })();
+  const MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   function stageColor(s: Stage): string {
     switch (s) {
@@ -361,10 +400,35 @@
       </div>
       {#if formOpen}
         <form class="obs-form" on:submit|preventDefault={submitObservation}>
-          <label>
-            Date observed (any past year is OK)
-            <input type="date" bind:value={formDate} max={todayIso()} required />
-          </label>
+          <fieldset class="date-precision">
+            <legend>Date observed</legend>
+            <div class="precision-tabs">
+              {#each [['day','Day/Month/Year'], ['month','Month/Year'], ['year','Year']] as [k, label]}
+                <label class="precision-tab" class:active={formPrecision === k}>
+                  <input type="radio" bind:group={formPrecision} value={k} />
+                  {label}
+                </label>
+              {/each}
+            </div>
+            {#if formPrecision === 'day'}
+              <input type="date" bind:value={formDate} max={todayIso()} required />
+            {:else if formPrecision === 'month'}
+              <div class="ym-row">
+                <select bind:value={formMonth} required>
+                  {#each MONTH_NAMES as m, i}
+                    <option value={i + 1}>{m}</option>
+                  {/each}
+                </select>
+                <select bind:value={formYear} required>
+                  {#each YEAR_OPTIONS as y}<option value={y}>{y}</option>{/each}
+                </select>
+              </div>
+            {:else}
+              <select bind:value={formYear} required>
+                {#each YEAR_OPTIONS as y}<option value={y}>{y}</option>{/each}
+              </select>
+            {/if}
+          </fieldset>
           <label>
             Stage
             <select bind:value={formStage} required>
@@ -404,7 +468,7 @@
             {#each byYear.get(yr) ?? [] as o}
               <li>
                 <span class="stage" style="background: {stageColor(o.stage)}">{o.stage}</span>
-                <span class="date">{fmtDate(o.observed_at)}</span>
+                <span class="date">{fmtObservation(o)}</span>
                 {#if o.quality_rating}<span class="quality">{'★'.repeat(o.quality_rating)}</span>{/if}
                 <button class="obs-delete" on:click={() => deleteObservation(o)} aria-label="Delete observation">×</button>
                 {#if o.quality_notes}<p class="obs-notes">{o.quality_notes}</p>{/if}
@@ -584,6 +648,48 @@
   .obs-delete {
     background: transparent; border: 0; color: #b03030; cursor: pointer;
     font-size: 1.1rem; padding: 0 0.25rem; line-height: 1; margin-left: auto;
+  }
+
+  fieldset.date-precision {
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    padding: 0.5rem 0.75rem 0.6rem;
+    margin: 0;
+  }
+  fieldset.date-precision legend {
+    padding: 0 0.4rem;
+    font-size: 0.8rem;
+    color: #4a554a;
+  }
+  .precision-tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.55rem;
+    flex-wrap: wrap;
+  }
+  .precision-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.78rem;
+    color: #4a554a;
+    padding: 0.18rem 0.5rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 1rem;
+    cursor: pointer;
+  }
+  .precision-tab input { display: none; }
+  .precision-tab.active {
+    background: #3a5a3a;
+    color: white;
+    border-color: #3a5a3a;
+  }
+  .ym-row {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .ym-row select {
+    flex: 1;
   }
   .obs-delete:hover { color: #ff5050; }
 

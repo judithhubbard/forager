@@ -254,6 +254,7 @@ export type Database = {
           created_at: string
           id: string
           observed_at: string
+          observed_precision: string
           pin_id: string
           quality_notes: string | null
           quality_rating: number | null
@@ -264,6 +265,7 @@ export type Database = {
           created_at?: string
           id?: string
           observed_at?: string
+          observed_precision?: string
           pin_id: string
           quality_notes?: string | null
           quality_rating?: number | null
@@ -274,6 +276,7 @@ export type Database = {
           created_at?: string
           id?: string
           observed_at?: string
+          observed_precision?: string
           pin_id?: string
           quality_notes?: string | null
           quality_rating?: number | null

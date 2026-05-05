@@ -19,12 +19,15 @@ export const STAGES: Stage[] = [
   'unknown'
 ];
 
+export type ObservationPrecision = 'year' | 'month' | 'day';
+
 export interface CreateObservationInput {
   pinId: string;
   stage: Stage;
   qualityRating?: number | null;
   qualityNotes?: string | null;
   observedAt?: Date;
+  observedPrecision?: ObservationPrecision;
 }
 
 export async function listByPin(pinId: string): Promise<Observation[]> {
@@ -77,7 +80,8 @@ export async function create(input: CreateObservationInput): Promise<string> {
         stage: input.stage,
         quality_rating: input.qualityRating ?? null,
         quality_notes: input.qualityNotes ?? null,
-        observed_at: (input.observedAt ?? new Date()).toISOString()
+        observed_at: (input.observedAt ?? new Date()).toISOString(),
+        observed_precision: input.observedPrecision ?? 'day'
       });
       if (error) {
         console.error('[observationService] create error:', error);
