@@ -21,6 +21,18 @@
    *   Set([…]) → show only listed species (empty set = show none) */
   let selectedSpeciesIds: Set<string> | null = null;
   let speciesPanelOpen = false;
+  /** Tab in the species panel — filters which species are LISTED (not which
+   *  are selected). Selection persists across tab switches. */
+  type SpeciesTab = 'all' | 'fruit' | 'nut' | 'mushroom' | 'greens' | 'other';
+  let speciesTab: SpeciesTab = 'all';
+  const SPECIES_TABS: { k: SpeciesTab; label: string }[] = [
+    { k: 'all',      label: 'All' },
+    { k: 'fruit',    label: 'Fruit' },
+    { k: 'nut',      label: 'Nut' },
+    { k: 'mushroom', label: 'Mushroom' },
+    { k: 'greens',   label: 'Greens' },
+    { k: 'other',    label: 'Other' }
+  ];
   let filterStatus: 'all' | 'active' | 'possibly_ripe' | 'confirmed_ripe' | 'confirmed_harvest' = 'active';
   let showLegend = true;
 
@@ -237,8 +249,24 @@
             <button on:click={clearSpecies}>Clear</button>
             <button on:click={() => (speciesPanelOpen = false)}>Done</button>
           </div>
+          <div class="species-tabs" role="tablist">
+            {#each SPECIES_TABS as tab}
+              {@const count = speciesInRegion.filter(
+                (s) => tab.k === 'all' || (categoryBySpecies[s.id] ?? 'other') === tab.k
+              ).length}
+              {#if tab.k === 'all' || count > 0}
+                <button
+                  class="species-tab"
+                  class:active={speciesTab === tab.k}
+                  on:click={() => (speciesTab = tab.k)}
+                >
+                  {tab.label} <span class="count">{count}</span>
+                </button>
+              {/if}
+            {/each}
+          </div>
           <ul>
-            {#each speciesInRegion as s}
+            {#each speciesInRegion.filter((s) => speciesTab === 'all' || (categoryBySpecies[s.id] ?? 'other') === speciesTab) as s}
               <li>
                 <label>
                   <input
@@ -263,7 +291,7 @@
       Show:
       <select bind:value={filterStatus}>
         <option value="all">All (incl. gone/dormant)</option>
-        <option value="active">Active (exists)</option>
+        <option value="active">Active</option>
         <option value="possibly_ripe">Possibly ripe today</option>
         <option value="confirmed_ripe">Confirmed ripe this year</option>
         <option value="confirmed_harvest">Has confirmed harvest history</option>
@@ -468,6 +496,39 @@
     border-radius: 0.3rem;
     background: white;
     cursor: pointer;
+  }
+  .species-tabs {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 0.15rem;
+    padding: 0.35rem 0.4rem;
+    border-bottom: 1px solid #ebefeb;
+    overflow-x: auto;
+  }
+  .species-tab {
+    padding: 0.25rem 0.55rem;
+    font-size: 0.78rem;
+    border: 0;
+    background: transparent;
+    color: #4a554a;
+    cursor: pointer;
+    border-radius: 0.3rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .species-tab .count {
+    color: #8a948a;
+    margin-left: 0;
+    font-size: 0.72rem;
+  }
+  .species-tab.active {
+    background: #3a5a3a;
+    color: white;
+  }
+  .species-tab.active .count {
+    color: rgba(255,255,255,0.8);
   }
   .species-panel ul {
     list-style: none;
