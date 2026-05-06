@@ -81,11 +81,14 @@
     regionName: string
   ): Promise<RegionTimeline> {
     const [obsRows, winRows, regionPins] = await Promise.all([
+      // SELECT * so the query keeps working whether or not migration
+      // 20260506000023 (which adds observed_precision to the view)
+      // has been applied yet. If the column is missing, the
+      // precision filter falls through to the null path and all
+      // observations are kept.
       supabase
         .from('v_observation_with_pin')
-        .select(
-          'id, observed_at, observed_precision, stage, species_id, species_common_name, pin_id, pin_display_name, quality_rating'
-        )
+        .select('*')
         .eq('pin_region_id', regionId)
         .order('observed_at', { ascending: false })
         .limit(5000),
@@ -125,8 +128,8 @@
             .filter((o) => o.observed_at)
             .map((o) => new Date(o.observed_at).getFullYear())
         )
-      : currentYear - 2;
-    const earliest = Math.min(earliestObsYear, currentYear - 2);
+      : currentYear - MIN_HISTORY_YEARS;
+    const earliest = Math.min(earliestObsYear, currentYear - MIN_HISTORY_YEARS);
     try {
       const w = await historicalWeather(
         rt.center.lng, rt.center.lat,
@@ -239,9 +242,15 @@
   const MONTH_STARTS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
   const MONTH_LETTERS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 
+  /** Number of historical years to always include even when the
+   *  user has no observations that far back — useful for seeing
+   *  weather context from previous seasons. */
+  const MIN_HISTORY_YEARS = 4;
+
   function yearsFor(rt: RegionTimeline): number[] {
     const y = new Set<number>();
-    y.add(new Date().getFullYear());
+    const cur = new Date().getFullYear();
+    for (let i = 0; i <= MIN_HISTORY_YEARS; i++) y.add(cur - i);
     for (const o of rt.observations) {
       if (!o.observed_at) continue;
       const yr = new Date(o.observed_at).getFullYear();
