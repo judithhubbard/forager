@@ -77,6 +77,20 @@
   export let center: [number, number] = [42.4534, -76.4836]; // Cornell campus default
   export let zoom: number = 14;
 
+  /** Aggregated cluster points (Phase 2 anon view). Rendered as
+   *  count-labeled circles. When a cluster is clicked the map zooms
+   *  in by 2 levels onto the centroid — repeat clicks drill down to
+   *  individual pins. Type lives in pinService; redeclared minimally
+   *  here so the prop typechecks without circular import shape. */
+  type ClusterPoint = {
+    cluster_id: number | null;
+    count_pins: number;
+    centroid_lng: number;
+    centroid_lat: number;
+    representative_species_id: string | null;
+  };
+  export let clusters: ClusterPoint[] = [];
+
   /** Setting this prop animates the map to the given location. Parent
    *  passes a fresh object on each desired fly (e.g. after a geocode
    *  result is picked); we never null it back out — Svelte fires the
@@ -91,11 +105,16 @@
   const dispatch = createEventDispatcher<{
     pinClick: { pinId: string };
     mapTap: { lng: number; lat: number };
+    /** Fired (debounced ~300ms) after the user finishes panning or
+     *  zooming. The parent uses this to refetch the public-pin
+     *  layer for the new viewport. bbox is [west, south, east, north]. */
+    viewportChange: { bbox: [number, number, number, number]; zoom: number };
   }>();
 
   let mapEl: HTMLDivElement;
   let map: import('leaflet').Map | undefined;
   let markerLayer: import('leaflet').LayerGroup | undefined;
+  let clusterLayer: import('leaflet').LayerGroup | undefined;
   let userMarker: import('leaflet').CircleMarker | undefined;
   /** Cached leaflet module — set once in onMount so renderPins can
    *  run fully synchronously. Without this, every render had to
@@ -122,6 +141,12 @@
   $: if (map && markerLayer && LCache) {
     void colorOf; // keep colorOf in the dependency set
     renderPins(pins, selectedPinId);
+  }
+  // Same atomic-swap pattern for the cluster layer so cluster count
+  // dots update in sync with whatever the parent fetched for the
+  // current viewport.
+  $: if (map && clusterLayer && LCache) {
+    renderClusters(clusters);
   }
 
   async function locateMe() {
@@ -307,6 +332,47 @@
     next.eachLayer((layer) => layer.addTo(markerLayer!));
   }
 
+  /** Render aggregated cluster points: a labeled circle per cluster,
+   *  sized roughly logarithmically by count_pins so 5 vs 5000 reads
+   *  immediately. Click → fly to centroid + zoom in by 2 levels;
+   *  the parent hears the resulting moveend and refetches at the
+   *  finer-grained zoom (clusters break apart into individual pins
+   *  once we cross the threshold in clusterEpsForZoom). */
+  function renderClusters(currentClusters: ClusterPoint[]) {
+    if (!clusterLayer || !map || !LCache) return;
+    const L = LCache;
+    const next = L.layerGroup();
+    for (const c of currentClusters) {
+      // Single-pin "cluster" = render as a real pin, not a count
+      // dot (less visual noise at borderline zooms).
+      if (c.count_pins <= 1) continue;
+      // log-scaled radius: 2 → 12px, 10 → 18px, 100 → 24px,
+      // 1000 → 30px, 10000 → 36px.
+      const r = Math.min(36, 12 + Math.log10(c.count_pins) * 6);
+      const html = `
+        <div class="forager-cluster" style="width:${r * 2}px;height:${r * 2}px;line-height:${r * 2}px;">
+          ${c.count_pins.toLocaleString()}
+        </div>`;
+      const m = L.marker([c.centroid_lat, c.centroid_lng], {
+        icon: L.divIcon({
+          className: 'forager-cluster-icon',
+          html,
+          iconSize: [r * 2, r * 2],
+          iconAnchor: [r, r]
+        }),
+        keyboard: false
+      });
+      m.on('click', () => {
+        if (!map) return;
+        const targetZoom = Math.min(map.getMaxZoom(), map.getZoom() + 2);
+        map.flyTo([c.centroid_lat, c.centroid_lng], targetZoom, { duration: 0.6 });
+      });
+      m.addTo(next);
+    }
+    clusterLayer.clearLayers();
+    next.eachLayer((layer) => layer.addTo(clusterLayer!));
+  }
+
   /** SVG-as-HTML body for the "shape" style: circle/square/triangle/diamond
    *  per category, all sized to fit the same bounding box as the circle
    *  marker so ripeness rings still surround the centroid cleanly.
@@ -409,7 +475,33 @@
     // `map` exists, so no need for a hardcoded layer here.
 
     markerLayer = L.layerGroup().addTo(map);
+    clusterLayer = L.layerGroup().addTo(map);
     renderPins(pins, selectedPinId);
+    renderClusters(clusters);
+
+    // Debounced viewport-change emission. The parent listens to this
+    // and refetches the public-pin layer for the new bbox + zoom.
+    // 300ms is long enough to absorb a continuous pan but short
+    // enough that a deliberate move-and-stop feels responsive.
+    let viewportTimer: ReturnType<typeof setTimeout> | null = null;
+    const fireViewportChange = () => {
+      if (!map) return;
+      const b = map.getBounds();
+      const bbox: [number, number, number, number] = [
+        b.getWest(),
+        b.getSouth(),
+        b.getEast(),
+        b.getNorth()
+      ];
+      dispatch('viewportChange', { bbox, zoom: map.getZoom() });
+    };
+    map.on('moveend zoomend', () => {
+      if (viewportTimer) clearTimeout(viewportTimer);
+      viewportTimer = setTimeout(fireViewportChange, 300);
+    });
+    // Fire once after first render so the parent gets the initial
+    // viewport without waiting for a user pan.
+    setTimeout(fireViewportChange, 100);
 
     // Long-press (or right-click on desktop) on empty map area: emit
     // mapTap. Marker clicks still don't bubble here. Using contextmenu
@@ -544,6 +636,25 @@
     pointer-events: none;
     background: transparent;
     border: 0;
+  }
+  :global(.forager-cluster-icon) {
+    background: transparent;
+    border: 0;
+  }
+  :global(.forager-cluster) {
+    border-radius: 50%;
+    background: rgba(58, 90, 58, 0.85);
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    font-size: 0.78rem;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    user-select: none;
+  }
+  :global(.forager-cluster:hover) {
+    background: rgba(58, 90, 58, 1);
   }
   .loc-error {
     position: absolute;

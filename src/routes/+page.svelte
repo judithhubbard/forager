@@ -7,9 +7,12 @@
   import {
     listByRegion,
     listPublicPins,
+    listPublicPinClusters,
+    clusterEpsForZoom,
     updateLocation as updatePinLocation,
     type PinEffective,
-    type Bbox
+    type Bbox,
+    type PinCluster
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import Map from '$lib/components/Map.svelte';
@@ -29,7 +32,16 @@
   import { colorForGroup, colorForCategoryFallback } from '$lib/utils/symbology';
 
   let pins: PinEffective[] = [];
+  let clusters: PinCluster[] = [];
   let pinsLoading = false;
+  // Track the last requested viewport so a stale in-flight load that
+  // resolves after a newer one doesn't clobber the visible layer.
+  let viewportSeq = 0;
+  // Zoom threshold below which we render aggregate cluster dots
+  // instead of individual pins. Matches the eps schedule in
+  // clusterEpsForZoom: at zoom < 11 a single cluster covers ~5km, so
+  // individual marker rendering would be hopeless anyway.
+  const CLUSTER_BELOW_ZOOM = 11;
   let showDropPin = false;
   let dropPinLng: number | null = null;
   let dropPinLat: number | null = null;
@@ -415,13 +427,15 @@
   // mutation elsewhere in the app (e.g., adding an observation in
   // the pin panel updates ripeness on the map).
   // Anonymous (signed-out) viewers go down a separate code path:
-  // there's no region, just the public dataset fetched by bbox.
+  // there's no region, just the public dataset fetched by viewport
+  // bbox via the moveend → handleViewportChange handler below.
   $: if ($activeRegion) {
     void $dataChange;
     loadAll($activeRegion.id);
   } else if (!$session && !$regionsLoading) {
     void $dataChange;
-    loadPublicLayer();
+    // Initial species fetch (the viewport-driven loader fetches pins).
+    loadAnonSpecies();
   }
 
   // Deep-link: /?pin=ID opens that pin's detail panel on load. Used by
@@ -444,28 +458,50 @@
     }
   }
 
-  /** Anonymous-tier load: pull the public dataset for a generous
-   *  starting bbox so the map has visible content immediately. The
-   *  user can then pan / search to refine. v1 ships without
-   *  pan-driven refetch — that gets bolted on once the public
-   *  dataset is large enough to warrant it. */
-  async function loadPublicLayer() {
-    pinsLoading = true;
+  /** Anon: just the species catalog, fetched once. The pin layer is
+   *  driven by viewport-change events from Map.svelte. */
+  async function loadAnonSpecies() {
     try {
-      // Continental US default bbox until the user pans or geocodes.
-      // Caps the response at 500 rows server-side so a 50-state view
-      // never spams the client.
-      const bbox: Bbox = [-125, 24, -66, 50];
-      [pins, species] = await Promise.all([
-        listPublicPins(bbox, 500),
-        listSpecies()
-      ]);
+      species = await listSpecies();
     } catch (err) {
-      console.error('[+page] loadPublicLayer error', err);
-      pins = [];
+      console.error('[+page] loadAnonSpecies error', err);
       species = [];
+    }
+  }
+
+  /** Anon viewport-driven fetch. At zoom >= CLUSTER_BELOW_ZOOM we ask
+   *  for individual pins; below that we ask for cluster aggregates so
+   *  a continental viewport never tries to render thousands of dots.
+   *  The viewportSeq guard discards stale in-flight responses (e.g.
+   *  user pans fast, three requests in flight, only the freshest
+   *  result should win). */
+  async function handleViewportChange(
+    e: CustomEvent<{ bbox: Bbox; zoom: number }>
+  ) {
+    if ($session && $activeRegion) return; // authed users use region path
+    const seq = ++viewportSeq;
+    pinsLoading = true;
+    const { bbox, zoom } = e.detail;
+    try {
+      if (zoom < CLUSTER_BELOW_ZOOM) {
+        const c = await listPublicPinClusters(bbox, clusterEpsForZoom(zoom));
+        if (seq !== viewportSeq) return;
+        clusters = c;
+        pins = [];
+      } else {
+        const p = await listPublicPins(bbox, 500);
+        if (seq !== viewportSeq) return;
+        pins = p;
+        clusters = [];
+      }
+    } catch (err) {
+      console.error('[+page] handleViewportChange error', err);
+      if (seq === viewportSeq) {
+        pins = [];
+        clusters = [];
+      }
     } finally {
-      pinsLoading = false;
+      if (seq === viewportSeq) pinsLoading = false;
     }
   }
 
@@ -659,17 +695,20 @@
 
   <Map
     pins={filteredPins}
+    {clusters}
     {categoryOf}
     colorOf={colorOfPin}
     {labelOf}
     {selectedPinId}
     basemap={$settings.basemap}
+    zoom={$session ? 14 : 5}
     placing={placingPin || !!movingPinId}
     placingHint={movingPinId ? 'Click on the map to set the new location · Esc to cancel' : 'Click on the map to place the pin · Esc to cancel'}
     hideLocate={!!selectedPinId}
     flyTo={mapFlyTo}
     on:pinClick={handlePinClick}
     on:mapTap={handleMapTap}
+    on:viewportChange={handleViewportChange}
   />
 
   {#if !selectedPinId}
