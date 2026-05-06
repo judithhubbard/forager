@@ -328,38 +328,55 @@
     return yStart + TEMP_H - ((clipped - TEMP_LO_C) / TEMP_RANGE_C) * TEMP_H;
   }
 
-  /** Polygon spanning the daily min→max temperature range across the
-   *  year. Rendered three times with different clip-paths: cool
-   *  (below freezing), warm (32–80°F), hot (above 80°F). The
-   *  polygon outline is the daily-max line on top and the daily-min
-   *  line on the bottom, traced left-to-right then right-to-left.
+  /** One rect per day per temperature zone the day's range touches.
+   *  Each rect is independent — no polygon connecting points across
+   *  gaps in the data, so out-of-order rows or missing days can't
+   *  produce zigzag artifacts. Days are split into up to three
+   *  colored bands: cool (below 32°F), warm (32–80°F), hot (above
+   *  80°F).
    *
-   *  Sorts the input by date defensively — out-of-order rows would
-   *  send the polygon zigzagging across the year.
-   *
-   *  Also clamps min ≤ max per day so a glitched API row (where the
-   *  archive returned higher min than max) doesn't invert that day's
-   *  band. */
-  function tempRangePolygon(rows: DailyWeather[], yStart: number): string {
-    const sorted = rows
-      .filter((d) => d.temp_max_c != null && d.temp_min_c != null)
-      .slice()
-      .sort((a, b) => a.date.localeCompare(b.date));
-    if (sorted.length === 0) return '';
-    const top: string[] = [];
-    const bot: string[] = [];
-    for (const d of sorted) {
-      const max = d.temp_max_c as number;
-      const min = d.temp_min_c as number;
-      const hi = Math.max(max, min);
-      const lo = Math.min(max, min);
-      const x = doyToX(dateToDoy(d.date));
-      top.push(`${x.toFixed(1)},${tempToY(hi, yStart).toFixed(1)}`);
-      bot.push(`${x.toFixed(1)},${tempToY(lo, yStart).toFixed(1)}`);
+   *  Returns shape: { x, y, w, h, zone } per rect. */
+  type TempRect = { x: number; y: number; w: number; h: number; zone: 'cool' | 'warm' | 'hot' };
+  function tempDayRects(rows: DailyWeather[], yStart: number): TempRect[] {
+    const out: TempRect[] = [];
+    const yHotEdge = tempToY(HOT_C, yStart);
+    const yFreezeEdge = tempToY(FREEZE_C, yStart);
+    const dayW = PLOT_W / 365 + 0.6;
+    for (const d of rows) {
+      if (d.temp_max_c == null || d.temp_min_c == null) continue;
+      const hi = Math.max(d.temp_max_c, d.temp_min_c);
+      const lo = Math.min(d.temp_max_c, d.temp_min_c);
+      const yTop = tempToY(hi, yStart);
+      const yBot = tempToY(lo, yStart);
+      if (yBot - yTop < 0.2) continue;
+      const xCenter = doyToX(dateToDoy(d.date));
+      const x = xCenter - dayW / 2;
+      // Hot zone: y between yTop and yHotEdge (smaller y = higher temp)
+      if (hi > HOT_C) {
+        const top = yTop;
+        const bot = Math.min(yHotEdge, yBot);
+        if (bot > top) out.push({ x, y: top, w: dayW, h: bot - top, zone: 'hot' });
+      }
+      // Warm zone: between yHotEdge and yFreezeEdge
+      if (hi > FREEZE_C && lo < HOT_C) {
+        const top = Math.max(yHotEdge, yTop);
+        const bot = Math.min(yFreezeEdge, yBot);
+        if (bot > top) out.push({ x, y: top, w: dayW, h: bot - top, zone: 'warm' });
+      }
+      // Cool zone: y between yFreezeEdge and yBot
+      if (lo < FREEZE_C) {
+        const top = Math.max(yFreezeEdge, yTop);
+        const bot = yBot;
+        if (bot > top) out.push({ x, y: top, w: dayW, h: bot - top, zone: 'cool' });
+      }
     }
-    bot.reverse();
-    return [...top, ...bot].join(' ');
+    return out;
   }
+  const ZONE_COLOR: Record<TempRect['zone'], string> = {
+    cool: '#3a6b8b',
+    warm: '#e8a560',
+    hot: '#d04a3a'
+  };
 
   /** Format temperature in °F (US convention) with one decimal. */
   function fmtTempF(c: number): string {
@@ -456,7 +473,7 @@
         {@const y80 = tempToY(HOT_C, tempY)}
         {@const y32 = tempToY(FREEZE_C, tempY)}
         {@const yLo = tempToY(TEMP_LO_C, tempY)}
-        {@const tempPoly = tempRangePolygon(yWeather, tempY)}
+        {@const tempRects = tempDayRects(yWeather, tempY)}
         <section class="year-row" class:current={year === currentYear}>
           <div class="year-label">
             {year}
@@ -517,24 +534,17 @@
               x={PAD_L} y={tempY} width={PLOT_W} height={TEMP_H}
               fill="#fbf9f3" stroke="#e8e3d4" stroke-width="0.5"
             />
-            {#if tempPoly}
-              <defs>
-                <clipPath id={`hot-${rt.regionId}-${year}`}>
-                  <rect x={PAD_L} y={yHi} width={PLOT_W} height={Math.max(0, y80 - yHi)} />
-                </clipPath>
-                <clipPath id={`warm-${rt.regionId}-${year}`}>
-                  <rect x={PAD_L} y={y80} width={PLOT_W} height={Math.max(0, y32 - y80)} />
-                </clipPath>
-                <clipPath id={`cool-${rt.regionId}-${year}`}>
-                  <rect x={PAD_L} y={y32} width={PLOT_W} height={Math.max(0, yLo - y32)} />
-                </clipPath>
-              </defs>
-              <polygon points={tempPoly} fill="#3a6b8b" opacity="0.85" clip-path="url(#cool-{rt.regionId}-{year})" />
-              <polygon points={tempPoly} fill="#e8a560" opacity="0.85" clip-path="url(#warm-{rt.regionId}-{year})" />
-              <polygon points={tempPoly} fill="#d04a3a" opacity="0.85" clip-path="url(#hot-{rt.regionId}-{year})" />
-              <!-- Threshold reference lines -->
-              <line x1={PAD_L} y1={y32} x2={W - PAD_R} y2={y32} stroke="#5e7a8b" stroke-width="0.6" stroke-dasharray="3,2" opacity="0.55" />
-              <line x1={PAD_L} y1={y80} x2={W - PAD_R} y2={y80} stroke="#a04030" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.4" />
+            {#if tempRects.length > 0}
+              {#each tempRects as r}
+                <rect
+                  x={r.x} y={r.y} width={r.w} height={r.h}
+                  fill={ZONE_COLOR[r.zone]}
+                  opacity="0.85"
+                />
+              {/each}
+              <!-- Threshold reference lines on top of the bars -->
+              <line x1={PAD_L} y1={y32} x2={W - PAD_R} y2={y32} stroke="#5e7a8b" stroke-width="0.6" stroke-dasharray="3,2" opacity="0.6" />
+              <line x1={PAD_L} y1={y80} x2={W - PAD_R} y2={y80} stroke="#a04030" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.45" />
             {/if}
             <!-- Track-name "temp" rotated 90°; numeric scale labels
                  right-aligned to its right -->
