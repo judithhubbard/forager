@@ -156,32 +156,30 @@
     return m;
   })();
 
-  /** Curated palette assigning a distinct color to each species group.
-   *  Color is loosely tied to category so palettes don't clash, but
-   *  every group is visually distinct: berries lean red/pink/purple,
-   *  pomes amber, nuts brown family, etc. Unmapped groups fall back to
-   *  the existing per-category color. */
+  /** 20 visually distinct colors covering the hue wheel — each group
+   *  gets its own. The shape already encodes category, so color is
+   *  free to range across the whole spectrum without clashing. */
   const GROUP_COLORS: Record<string, string> = {
-    Serviceberry: '#8a4f72',
-    Pawpaw: '#bba74a',
-    'Cornelian cherry': '#c4513a',
-    Persimmon: '#d68330',
-    'Apple / Pear': '#a83838',
-    Mulberry: '#5e2a4f',
-    'Cherry / Plum': '#b3315c',
-    Almond: '#b89878',
-    Currant: '#7a1f3a',
-    Bramble: '#3a2440',
-    Elderberry: '#2a1538',
-    Blueberry: '#3f5a9c',
-    'Autumn olive': '#9aa84a',
-    Grape: '#4a2872',
-    Hickory: '#5c3a1f',
-    Chestnut: '#7d4a28',
-    Hazelnut: '#a47654',
-    Walnut: '#3d2812',
-    Mushroom: '#7a429a',
-    Other: '#6ba040'
+    Serviceberry:        '#4363d8', // blue
+    Pawpaw:              '#ffb800', // gold
+    'Cornelian cherry':  '#e60026', // cherry red
+    Persimmon:           '#f58231', // bright orange
+    'Apple / Pear':      '#3cb44b', // apple green
+    Mulberry:            '#800020', // mulberry maroon
+    'Cherry / Plum':     '#d63384', // hot pink
+    Almond:              '#f3c5d5', // almond-blossom pink
+    Currant:             '#b30049', // deep raspberry
+    Bramble:             '#1f1f3a', // near-black indigo
+    Elderberry:          '#4a1166', // deep purple
+    Blueberry:           '#1170aa', // deep teal-blue
+    'Autumn olive':      '#b6b54a', // dusty olive yellow
+    Grape:               '#6a0dad', // royal purple
+    Hickory:             '#4a2e18', // dark brown
+    Chestnut:            '#b8651b', // chestnut
+    Hazelnut:            '#d4a574', // hazel tan
+    Walnut:              '#2b1810', // walnut black-brown
+    Mushroom:            '#469990', // teal
+    Other:               '#7f8c8d'  // neutral gray-green
   };
   function groupOfPin(p: PinEffective): string {
     const s = p.species_id ? speciesById[p.species_id] : null;
@@ -510,10 +508,20 @@
           <button class="legend-toggle" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
         </div>
         <ul>
-          {#if legendShows.fruit}<li><span class="dot" style="background:#c14a3a"></span> Fruit</li>{/if}
-          {#if legendShows.nut}<li><span class="dot" style="background:#7a5230"></span> Nut</li>{/if}
-          {#if legendShows.mushroom}<li><span class="dot" style="background:#8a4ea0"></span> Mushroom</li>{/if}
-          {#if legendShows.other}<li><span class="dot" style="background:#6ba040"></span> Other</li>{/if}
+          <!-- Shape per category (color varies per group, see species
+               panel for the full list of group colors). -->
+          {#if legendShows.fruit}
+            <li><span class="legend-shape circle"></span> Fruit</li>
+          {/if}
+          {#if legendShows.nut}
+            <li><span class="legend-shape square"></span> Nut</li>
+          {/if}
+          {#if legendShows.mushroom}
+            <li><span class="legend-shape triangle"></span> Mushroom</li>
+          {/if}
+          {#if legendShows.other}
+            <li><span class="legend-shape diamond"></span> Other</li>
+          {/if}
           {#if legendShows.ripe}<li><span class="ring1"></span> Ripe</li>{/if}
           {#if legendShows.possibly}<li><span class="ring2"></span> Possibly ripe</li>{/if}
           {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant</li>{/if}
@@ -949,6 +957,32 @@
     vertical-align: middle;
   }
   .legend .dot.faded { opacity: 0.4; }
+  /* Shape glyphs in the legend match the map's category shapes. Using
+     a near-black fill since color encodes group, not category — these
+     are abstract shape markers, not literal pin colors. */
+  .legend .legend-shape {
+    display: inline-block;
+    width: 0.8rem;
+    height: 0.8rem;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+    background: #1f2a1f;
+  }
+  .legend .legend-shape.circle { border-radius: 50%; }
+  .legend .legend-shape.square { border-radius: 1px; }
+  .legend .legend-shape.triangle {
+    width: 0; height: 0;
+    background: transparent;
+    border-left: 0.45rem solid transparent;
+    border-right: 0.45rem solid transparent;
+    border-bottom: 0.78rem solid #1f2a1f;
+  }
+  .legend .legend-shape.diamond {
+    transform: rotate(45deg);
+    width: 0.6rem;
+    height: 0.6rem;
+    margin: 0 0.5rem 0 0.1rem;
+  }
   .legend .ring1, .legend .ring2 {
     display: inline-block;
     width: 0.95rem; height: 0.95rem;

@@ -40,30 +40,26 @@
   export let selectedPinId: string | null = null;
 
   /** Which tile layer to render. Picker lives in the tools menu. */
-  type Basemap = 'osm' | 'osm-hot' | 'topo' | 'satellite';
-  export let basemap: Basemap = 'osm';
+  type Basemap = 'osm-hot' | 'satellite';
+  export let basemap: Basemap = 'osm-hot';
   const BASEMAPS: Record<
     Basemap,
     { url: string; attribution: string; maxZoom: number }
   > = {
-    osm: {
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    },
     'osm-hot': {
       url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
       attribution: '© OpenStreetMap, Humanitarian OSM Team',
       maxZoom: 19
     },
-    topo: {
-      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      attribution: '© OpenTopoMap (CC-BY-SA), © OpenStreetMap contributors',
-      maxZoom: 17
-    },
+    // USGS imagery for the US is sourced largely from NAIP, which is
+    // flown during the summer growing season — i.e., leaf-on. Much
+    // better for foraging than the Esri default which can be winter
+    // for many tiles. (Outside the US it falls back to lower-res
+    // imagery; if you ship to non-US regions later, swap or layer in
+    // Sentinel-2 cloudless.)
     satellite: {
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, USDA',
+      url: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
+      attribution: 'Imagery © U.S. Geological Survey (NAIP)',
       maxZoom: 19
     }
   };
