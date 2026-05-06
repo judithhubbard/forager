@@ -61,6 +61,13 @@
   let observations: ObservationWithUser[] = [];
   let allSpecies: Species[] = [];
   let windows: WindowRow[] = [];
+
+  type OtherObs = {
+    stage: string | null;
+    observed_at: string | null;
+    pin_id: string | null;
+  };
+  let otherSpeciesObs: OtherObs[] = [];
   let photos: Photo[] = [];
   let thumbUrls = new Map<string, string>();
   let fullUrls = new Map<string, string>();
@@ -178,16 +185,29 @@
         species = allSpecies.find((s) => s.id === pin?.species_id) ?? null;
       }
       // Fetch the species' fruiting windows for this pin's region so the
-      // mini-timeline in the summary can show when this plant flowers / ripens.
+      // mini-timeline in the summary can show when this plant flowers /
+      // ripens. Also fetch observations from OTHER pins of the same
+      // species in the region so they can show as faded ticks alongside
+      // this pin's own (more prominent) observations.
       if (pin?.species_id && pin?.region_id) {
-        const { data: winData } = await supabase
-          .from('species_fruiting_windows')
-          .select('stage, start_doy, end_doy')
-          .eq('species_id', pin.species_id)
-          .eq('region_id', pin.region_id);
-        windows = winData ?? [];
+        const [winRes, otherObsRes] = await Promise.all([
+          supabase
+            .from('species_fruiting_windows')
+            .select('stage, start_doy, end_doy')
+            .eq('species_id', pin.species_id)
+            .eq('region_id', pin.region_id),
+          supabase
+            .from('v_observation_with_pin')
+            .select('stage, observed_at, pin_id')
+            .eq('species_id', pin.species_id)
+            .eq('pin_region_id', pin.region_id)
+            .neq('pin_id', pin.id)
+        ]);
+        windows = winRes.data ?? [];
+        otherSpeciesObs = (otherObsRes.data ?? []) as OtherObs[];
       } else {
         windows = [];
+        otherSpeciesObs = [];
       }
       loadPhotos();
     } catch (err) {
@@ -458,6 +478,46 @@
   $: sortedWindows = [...windows].sort(
     (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage)
   );
+
+  /** Convert any ISO date string into 1–366 DOY in local time. NaN
+   *  for unparseable dates so callers can drop them. */
+  function isoToDoy(iso: string): number {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return NaN;
+    const start = new Date(d.getFullYear(), 0, 0);
+    return Math.floor((d.getTime() - start.getTime()) / 86_400_000);
+  }
+
+  /** Observations made on THIS pin → bold prominent ticks on the
+   *  mini-timeline. Excludes 'bare' / 'unknown' which don't map to a
+   *  stage color. */
+  $: thisPinTicks = (() => {
+    const out: { stage: string; doy: number }[] = [];
+    for (const o of observations) {
+      if (!o.stage || !o.observed_at) continue;
+      if (o.stage === 'bare' || o.stage === 'unknown') continue;
+      const doy = isoToDoy(o.observed_at);
+      if (!Number.isFinite(doy)) continue;
+      if (doy < miniRange.start || doy > miniRange.end) continue;
+      out.push({ stage: o.stage, doy });
+    }
+    return out;
+  })();
+
+  /** Observations on OTHER pins of the same species → faded background
+   *  ticks for context. */
+  $: otherPinTicks = (() => {
+    const out: { stage: string; doy: number }[] = [];
+    for (const o of otherSpeciesObs) {
+      if (!o.stage || !o.observed_at) continue;
+      if (o.stage === 'bare' || o.stage === 'unknown') continue;
+      const doy = isoToDoy(o.observed_at);
+      if (!Number.isFinite(doy)) continue;
+      if (doy < miniRange.start || doy > miniRange.end) continue;
+      out.push({ stage: o.stage, doy });
+    }
+    return out;
+  })();
 </script>
 
 <div class="content">
@@ -499,6 +559,23 @@
                 style={`left: ${miniPct(w.start_doy)}%; width: ${miniPct(w.end_doy) - miniPct(w.start_doy)}%; background: ${STAGE_COLORS[w.stage] ?? '#888'};`}
                 title="{w.stage}: DOY {w.start_doy}–{w.end_doy}"
               ></div>
+            {/each}
+            <!-- Faded ticks for observations on OTHER pins of the same
+                 species — gives context without competing visually. -->
+            {#each otherPinTicks as t}
+              <span
+                class="mini-other"
+                style={`left: ${miniPct(t.doy)}%; background: ${STAGE_COLORS[t.stage] ?? '#888'};`}
+                title="Observation on another pin: {t.stage}"
+              ></span>
+            {/each}
+            <!-- Bold ticks for THIS pin's own observations — most prominent. -->
+            {#each thisPinTicks as t}
+              <span
+                class="mini-tick"
+                style={`left: ${miniPct(t.doy)}%; background: ${STAGE_COLORS[t.stage] ?? '#888'};`}
+                title="This pin: {t.stage}"
+              ></span>
             {/each}
             {#if todayInRange}
               <div class="mini-today" style={`left: ${miniPct(todayDoy)}%`}></div>
@@ -831,6 +908,31 @@
     top: 0;
     bottom: 0;
     border-radius: 1px;
+  }
+  /* Other pins' observations — small, faded, drawn behind this pin's
+     ticks so they don't draw the eye away. */
+  .mini-other {
+    position: absolute;
+    top: 50%;
+    width: 0.32rem;
+    height: 0.32rem;
+    transform: translate(-50%, -50%) rotate(45deg);
+    opacity: 0.45;
+    border-radius: 1px;
+    pointer-events: none;
+  }
+  /* This pin's own observations — bold, white-ringed, larger so they
+     pop against bars and against any other-pin ticks at the same DOY. */
+  .mini-tick {
+    position: absolute;
+    top: 50%;
+    width: 0.55rem;
+    height: 0.55rem;
+    transform: translate(-50%, -50%) rotate(45deg);
+    border: 1.5px solid white;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+    box-sizing: border-box;
+    pointer-events: none;
   }
   .mini-today {
     position: absolute;
