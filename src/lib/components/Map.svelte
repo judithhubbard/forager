@@ -192,14 +192,11 @@
   $: if (map && clusterLayer && LCache) {
     renderClusters(clusters);
   }
-  // Heatmap: build/replace the leaflet.heat layer whenever the
-  // points prop changes. Empty array means "no layer." Gated on
-  // heatPluginReady so a heatPoints payload that arrives before
-  // the plugin finishes its dynamic import doesn't trigger a
-  // ReferenceError to L.
-  $: if (map && LCache && heatPluginReady) {
-    renderHeat(heatPoints);
-  }
+  // Heatmap reactive disabled — rendering is a no-op until we
+  // resolve the dynamic-import hydration issue. The heatPoints
+  // prop still ships across; the layer just doesn't paint.
+  $: void heatPluginReady;
+  $: void heatPoints;
 
   function renderHeat(points: Array<[number, number]>) {
     if (!map || !LCache) return;
@@ -544,17 +541,9 @@
   onMount(async () => {
     const L = await import('leaflet');
     LCache = L; // unblocks renderPins so it can run synchronously
-    // Expose leaflet on the global so leaflet.heat (which reads
-    // from a global L on import) can extend it. Then load the
-    // plugin dynamically. Order matters here: globalThis assign
-    // BEFORE the import.
-    (globalThis as unknown as { L: typeof L }).L = L;
-    try {
-      await import('leaflet.heat');
-      heatPluginReady = true;
-    } catch (e) {
-      console.warn('[Map] leaflet.heat load failed', e);
-    }
+    // Heatmap plugin disabled while we investigate a hydration
+    // issue introduced by the dynamic import. The toggle in the
+    // tools menu still flips, but rendering is a no-op for now.
 
     map = L.map(mapEl, {
       zoomControl: true,
