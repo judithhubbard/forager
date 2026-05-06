@@ -8,7 +8,15 @@
     myRegions,
     setActiveRegionId
   } from '$lib/stores/activeRegion';
-  import { settings, setBasemap, setColorBy, type Basemap, type ColorBy } from '$lib/stores/settings';
+  import {
+    settings,
+    setBasemap,
+    setColorBy,
+    setDefaultPhotoLicense,
+    type Basemap,
+    type ColorBy,
+    type PhotoLicense
+  } from '$lib/stores/settings';
 
   let open = false;
   $: isAdmin = $activeRegion?.role === 'admin';
@@ -22,6 +30,14 @@
   const COLOR_BY_OPTIONS: { value: ColorBy; label: string }[] = [
     { value: 'group',    label: 'Per species group' },
     { value: 'category', label: 'By category only' }
+  ];
+
+  const PHOTO_LICENSE_OPTIONS: { value: PhotoLicense; label: string }[] = [
+    { value: 'CC-BY-SA-4.0',      label: 'CC BY-SA 4.0 (share-alike, default)' },
+    { value: 'CC-BY-4.0',         label: 'CC BY 4.0 (attribution)' },
+    { value: 'CC-BY-NC-SA-4.0',   label: 'CC BY-NC-SA 4.0 (non-commercial)' },
+    { value: 'CC0',               label: 'CC0 (public domain)' },
+    { value: 'all-rights-reserved', label: 'All rights reserved' }
   ];
 
   async function handleSignOut() {
@@ -41,6 +57,9 @@
   }
   function onColorByChange(e: Event) {
     setColorBy((e.currentTarget as HTMLSelectElement).value as ColorBy);
+  }
+  function onPhotoLicenseChange(e: Event) {
+    setDefaultPhotoLicense((e.currentTarget as HTMLSelectElement).value as PhotoLicense);
   }
   function onRegionChange(e: Event) {
     setActiveRegionId((e.currentTarget as HTMLSelectElement).value);
@@ -91,6 +110,16 @@
           Marker color
           <select value={$settings.colorBy} on:change={onColorByChange}>
             {#each COLOR_BY_OPTIONS as o}
+              <option value={o.value}>{o.label}</option>
+            {/each}
+          </select>
+        </label>
+      </div>
+      <div class="settings-block">
+        <label>
+          Photo license
+          <select value={$settings.defaultPhotoLicense} on:change={onPhotoLicenseChange}>
+            {#each PHOTO_LICENSE_OPTIONS as o}
               <option value={o.value}>{o.label}</option>
             {/each}
           </select>

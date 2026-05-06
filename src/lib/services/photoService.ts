@@ -6,7 +6,24 @@ import { enqueue } from './outbox';
 import { resizeImage } from '$lib/utils/imageResize';
 import type { Database } from '$lib/database.types';
 
-export type Photo = Database['public']['Tables']['photos']['Row'];
+export type PhotoBase = Database['public']['Tables']['photos']['Row'];
+/** Photo augmented with the uploader's username — fetched via a
+ *  PostgREST embed in listByPin. Used for the "Photo by @<username>"
+ *  attribution in the lightbox. */
+export type Photo = PhotoBase & {
+  uploader_username?: string | null;
+};
+
+/** Allowed license codes per the 20260506000010_photo_attribution.sql
+ *  CHECK constraint. Keep this in sync with the SQL. */
+export type PhotoLicense =
+  | 'CC-BY-SA-4.0'
+  | 'CC-BY-4.0'
+  | 'CC-BY-NC-SA-4.0'
+  | 'CC0'
+  | 'all-rights-reserved';
+
+export const DEFAULT_PHOTO_LICENSE: PhotoLicense = 'CC-BY-SA-4.0';
 
 export interface UploadPhotoInput {
   pinId: string;
@@ -19,6 +36,13 @@ export interface UploadPhotoInput {
   capturedLng: number | null;
   capturedAccuracyM?: number | null;
   caption?: string | null;
+  /** Override "Photo by @<username>" for this image (e.g. a friend's
+   *  photo). Owner is still the uploader; only the displayed credit
+   *  changes. Null/empty → use the uploader's username. */
+  photographerCredit?: string | null;
+  /** License under which the photo is shared. Defaults to CC BY-SA 4.0
+   *  (the default for the foraging commons). */
+  license?: PhotoLicense;
 }
 
 export async function listByPin(pinId: string): Promise<Photo[]> {
@@ -31,7 +55,25 @@ export async function listByPin(pinId: string): Promise<Photo[]> {
     console.error('[photoService] listByPin error:', error);
     throw error;
   }
-  return data ?? [];
+  const rows = (data ?? []) as PhotoBase[];
+  if (rows.length === 0) return [];
+  // Second query for the uploader usernames. profiles.user_id ->
+  // auth.users.id is a real FK so this is a clean lookup; embedding
+  // it on photos doesn't work because photos.user_id also points at
+  // auth.users (PostgREST can't choose between two indirect paths).
+  const ids = Array.from(new Set(rows.map((r) => r.user_id)));
+  // profiles.id == auth.users.id (1:1 with the user). Same shape as
+  // photos.user_id, so the lookup is direct.
+  const { data: profs } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('id', ids);
+  const usernameById = new Map<string, string | null>();
+  for (const p of profs ?? []) usernameById.set(p.id, p.username);
+  return rows.map((r) => ({
+    ...r,
+    uploader_username: usernameById.get(r.user_id) ?? null
+  }));
 }
 
 /** Get signed URLs for an array of object paths in one call. */
@@ -98,7 +140,9 @@ export async function upload(input: UploadPhotoInput): Promise<string> {
         captured_accuracy_m: input.capturedAccuracyM ?? null,
         storage_path: mainPath,
         thumbnail_path: thumbPath,
-        caption: input.caption ?? null
+        caption: input.caption ?? null,
+        photographer_credit: input.photographerCredit ?? null,
+        license: input.license ?? DEFAULT_PHOTO_LICENSE
       });
       if (e3) {
         await supabase.storage.from('photos').remove([mainPath, thumbPath]).catch(() => {});

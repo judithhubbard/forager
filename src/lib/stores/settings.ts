@@ -5,6 +5,14 @@ import { browser } from '$app/environment';
 
 export type Basemap = 'osm-hot' | 'satellite';
 export type ColorBy = 'group' | 'category';
+/** Mirrors the photos_license_check constraint (see
+ *  20260506000010_photo_attribution.sql). */
+export type PhotoLicense =
+  | 'CC-BY-SA-4.0'
+  | 'CC-BY-4.0'
+  | 'CC-BY-NC-SA-4.0'
+  | 'CC0'
+  | 'all-rights-reserved';
 
 const KEY = 'forager.settings.v1';
 
@@ -18,18 +26,40 @@ interface Settings {
    *   'group'    → per-group hue (default; uses curated overrides + golden-angle generator)
    *   'category' → 5 category colors only (less varied; useful when many active species) */
   colorBy: ColorBy;
+  /** Default license stamped on every uploaded photo. Picker lives in
+   *  the tools menu; the value sticks across uploads so the user
+   *  doesn't have to reselect each time. */
+  defaultPhotoLicense: PhotoLicense;
 }
-const DEFAULT: Settings = { basemap: 'osm-hot', disclaimerAcceptedAt: null, colorBy: 'group' };
+const DEFAULT: Settings = {
+  basemap: 'osm-hot',
+  disclaimerAcceptedAt: null,
+  colorBy: 'group',
+  defaultPhotoLicense: 'CC-BY-SA-4.0'
+};
+
+const ALLOWED_LICENSES: PhotoLicense[] = [
+  'CC-BY-SA-4.0',
+  'CC-BY-4.0',
+  'CC-BY-NC-SA-4.0',
+  'CC0',
+  'all-rights-reserved'
+];
 
 /** Migrate older saved values to the current option set. */
 function normalize(s: Partial<Settings>): Settings {
   const allowed: Basemap[] = ['osm-hot', 'satellite'];
   const b = s.basemap && allowed.includes(s.basemap) ? s.basemap : DEFAULT.basemap;
   const cb: ColorBy = s.colorBy === 'category' ? 'category' : 'group';
+  const lic: PhotoLicense =
+    s.defaultPhotoLicense && ALLOWED_LICENSES.includes(s.defaultPhotoLicense)
+      ? s.defaultPhotoLicense
+      : DEFAULT.defaultPhotoLicense;
   return {
     basemap: b,
     disclaimerAcceptedAt: s.disclaimerAcceptedAt ?? null,
-    colorBy: cb
+    colorBy: cb,
+    defaultPhotoLicense: lic
   };
 }
 
@@ -63,4 +93,8 @@ export function setBasemap(b: Basemap): void {
 
 export function setColorBy(cb: ColorBy): void {
   settings.update((s) => ({ ...s, colorBy: cb }));
+}
+
+export function setDefaultPhotoLicense(lic: PhotoLicense): void {
+  settings.update((s) => ({ ...s, defaultPhotoLicense: lic }));
 }

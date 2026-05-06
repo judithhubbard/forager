@@ -314,7 +314,9 @@ export type Database = {
           captured_lng: number | null
           created_at: string
           id: string
+          license: string
           observation_id: string | null
+          photographer_credit: string | null
           pin_id: string
           storage_path: string
           taken_at: string | null
@@ -329,7 +331,9 @@ export type Database = {
           captured_lng?: number | null
           created_at?: string
           id?: string
+          license?: string
           observation_id?: string | null
+          photographer_credit?: string | null
           pin_id: string
           storage_path: string
           taken_at?: string | null
@@ -344,7 +348,9 @@ export type Database = {
           captured_lng?: number | null
           created_at?: string
           id?: string
+          license?: string
           observation_id?: string | null
+          photographer_credit?: string | null
           pin_id?: string
           storage_path?: string
           taken_at?: string | null

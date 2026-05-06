@@ -32,6 +32,7 @@
   import { profileLabel } from '$lib/services/profileService';
   import { profile } from '$lib/stores/profile';
   import { activeRegion } from '$lib/stores/activeRegion';
+  import { settings } from '$lib/stores/settings';
   import {
     listByPin as listPhotos,
     signUrls,
@@ -182,6 +183,27 @@
   })();
   $: loosePhotos = photos.filter((p) => !p.observation_id);
 
+  /** Map db license code → human-readable short label for the lightbox
+   *  footer. Keep in sync with the license enum in
+   *  src/lib/stores/settings.ts and the SQL CHECK constraint. */
+  const LICENSE_SHORT: Record<string, string> = {
+    'CC-BY-SA-4.0':        'CC BY-SA 4.0',
+    'CC-BY-4.0':           'CC BY 4.0',
+    'CC-BY-NC-SA-4.0':     'CC BY-NC-SA 4.0',
+    'CC0':                 'CC0',
+    'all-rights-reserved': 'all rights reserved'
+  };
+  function photoCreditLine(p: Photo): string {
+    const credit = p.photographer_credit?.trim();
+    const author = credit
+      ? credit
+      : p.uploader_username
+        ? '@' + p.uploader_username
+        : 'unknown';
+    const license = LICENSE_SHORT[p.license] ?? p.license;
+    return `Photo by ${author} · ${license}`;
+  }
+
   // Reload whenever pinId changes (for use as a reusable panel component).
   let lastLoadedId: string | null = null;
   $: if (pinId && pinId !== lastLoadedId) {
@@ -319,7 +341,8 @@
         file,
         capturedLat: loc.lat,
         capturedLng: loc.lng,
-        capturedAccuracyM: loc.accuracyM
+        capturedAccuracyM: loc.accuracyM,
+        license: $settings.defaultPhotoLicense
       });
       await loadPhotos();
       input.value = '';
@@ -914,6 +937,7 @@
     {:else}
       <p>Loading…</p>
     {/if}
+    <div class="lightbox-credit" aria-live="polite">{photoCreditLine(lightboxPhoto)}</div>
   </div>
 {/if}
 
@@ -1336,4 +1360,18 @@
   }
   .lightbox-delete:hover { background: rgba(176, 48, 48, 1); }
   .lightbox-delete:disabled { opacity: 0.6; cursor: default; }
+  .lightbox-credit {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 0.3rem 0.65rem;
+    border-radius: 0.3rem;
+    pointer-events: none;
+    max-width: 90vw;
+    text-align: center;
+  }
 </style>
