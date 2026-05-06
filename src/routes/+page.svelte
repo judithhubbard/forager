@@ -15,7 +15,8 @@
     type PinCluster
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
-  import { listMyTrackPoints } from '$lib/services/trackService';
+  import { listMyTrackPoints, importParsedTrack } from '$lib/services/trackService';
+  import { recording, stop as stopRecording } from '$lib/stores/recording';
   import Map from '$lib/components/Map.svelte';
   import DropPinModal from '$lib/components/DropPinModal.svelte';
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
@@ -59,6 +60,34 @@
   }
   // Hide heatmap when toggle is off OR the user signs out.
   $: shownHeatPoints = $settings.showHeatmap && $session ? heatPoints : [];
+
+  /** Bound from <Map> so we can call clearRecorder() after a save. */
+  let mapRef: { clearRecorder: () => void } | null = null;
+  async function handleRecordSave(e: CustomEvent<{ title: string }>) {
+    const snap = stopRecording();
+    if (snap.points.length < 2) return;
+    try {
+      const parsed = {
+        title: e.detail.title,
+        source: 'live' as const,
+        points: snap.points.map((p) => ({
+          lat: p.lat,
+          lng: p.lng,
+          recorded_at: new Date(p.ts).toISOString(),
+          elevation_m: null
+        }))
+      };
+      await importParsedTrack(parsed, {
+        regionId: $activeRegion?.id ?? null,
+        title: e.detail.title,
+        visibility: 'private'
+      });
+      mapRef?.clearRecorder();
+    } catch (err) {
+      console.error('[+page] save recording failed', err);
+      alert(err instanceof Error ? err.message : 'Could not save the recording.');
+    }
+  }
   // Track the last requested viewport so a stale in-flight load that
   // resolves after a newer one doesn't clobber the visible layer.
   let viewportSeq = 0;
@@ -719,9 +748,11 @@
   </div>
 
   <Map
+    bind:this={mapRef}
     pins={filteredPins}
     {clusters}
     heatPoints={shownHeatPoints}
+    showRecorder={!!$session}
     {categoryOf}
     colorOf={colorOfPin}
     {labelOf}
@@ -735,6 +766,7 @@
     on:pinClick={handlePinClick}
     on:mapTap={handleMapTap}
     on:viewportChange={handleViewportChange}
+    on:recordSave={handleRecordSave}
   />
 
   {#if !selectedPinId}

@@ -3,10 +3,13 @@
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
   import { recentRain, formatMm } from '$lib/services/weatherService';
-  // leaflet.heat is loaded dynamically below — see onMount. The
-  // plugin reads from a global `L` that doesn't exist under ESM
-  // unless we explicitly expose the leaflet module first, which
-  // a static side-effect import wouldn't allow us to sequence.
+  import {
+    recording,
+    start as startRec,
+    pause as pauseRec,
+    resume as resumeRec,
+    discard as discardRec
+  } from '$lib/stores/recording';
 
   type ForageCategory = 'fruit' | 'bramble' | 'nut' | 'mushroom' | 'other' | 'unknown';
 
@@ -102,6 +105,11 @@
    *  $settings.showHeatmap. */
   export let heatPoints: Array<[number, number]> = [];
 
+  /** Show the live track-recorder controls + path overlay. Parent
+   *  passes true for signed-in viewers; signed-out viewers don't
+   *  have a place to save tracks to. */
+  export let showRecorder: boolean = false;
+
   /** Setting this prop animates the map to the given location. Parent
    *  passes a fresh object on each desired fly (e.g. after a geocode
    *  result is picked); we never null it back out — Svelte fires the
@@ -120,19 +128,22 @@
      *  zooming. The parent uses this to refetch the public-pin
      *  layer for the new viewport. bbox is [west, south, east, north]. */
     viewportChange: { bbox: [number, number, number, number]; zoom: number };
+    /** Fired when the user hits Save in the recorder overlay. The
+     *  parent supplies region context + persists via the same
+     *  importParsedTrack pipeline as file uploads. */
+    recordSave: { title: string };
   }>();
 
   let mapEl: HTMLDivElement;
   let map: import('leaflet').Map | undefined;
   let markerLayer: import('leaflet').LayerGroup | undefined;
   let clusterLayer: import('leaflet').LayerGroup | undefined;
-  let heatLayer: import('leaflet').Layer | undefined;
-  /** True once leaflet.heat has loaded and attached its factory.
-   *  The reactive that calls renderHeat watches this so a heatPoints
-   *  payload that arrived before the plugin finished loading still
-   *  paints once it's ready. */
-  let heatPluginReady = false;
   let userMarker: import('leaflet').CircleMarker | undefined;
+  /** Polyline drawn from the live recorder's buffered points so the
+   *  user can watch their track grow as they walk. Recreated only
+   *  when the polyline doesn't exist yet; subsequent updates set
+   *  latlngs in place to avoid layer churn. */
+  let recordPolyline: import('leaflet').Polyline | undefined;
   /** Cached leaflet module — set once in onMount so renderPins can
    *  run fully synchronously. Without this, every render had to
    *  re-resolve `import('leaflet')` (cached but still microtask-async),
@@ -192,34 +203,72 @@
   $: if (map && clusterLayer && LCache) {
     renderClusters(clusters);
   }
-  // Heatmap reactive disabled — rendering is a no-op until we
-  // resolve the dynamic-import hydration issue. The heatPoints
-  // prop still ships across; the layer just doesn't paint.
-  $: void heatPluginReady;
+  // Heatmap intentionally a no-op for now — see commit log. Touch
+  // heatPoints so the linter doesn't flag the unused prop.
   $: void heatPoints;
 
-  function renderHeat(points: Array<[number, number]>) {
+  // Live track polyline: redraw on every store update.
+  $: if (map && LCache) updateRecordedPath($recording.points);
+
+  function updateRecordedPath(points: Array<{ lat: number; lng: number }>) {
     if (!map || !LCache) return;
-    if (heatLayer) {
-      heatLayer.remove();
-      heatLayer = undefined;
+    const L = LCache;
+    const latlngs = points.map((p) => [p.lat, p.lng] as [number, number]);
+    if (latlngs.length === 0) {
+      if (recordPolyline) {
+        recordPolyline.remove();
+        recordPolyline = undefined;
+      }
+      return;
     }
-    if (points.length === 0) return;
-    // leaflet.heat is attached at runtime via the side-effect import
-    // at the top of this script.
-    const L = LCache as unknown as {
-      heatLayer: (
-        latlngs: Array<[number, number]>,
-        options?: { radius?: number; blur?: number; maxZoom?: number; minOpacity?: number }
-      ) => import('leaflet').Layer;
-    };
-    heatLayer = L.heatLayer(points, {
-      radius: 22,
-      blur: 18,
-      minOpacity: 0.25,
-      maxZoom: 17
-    });
-    heatLayer.addTo(map);
+    if (recordPolyline) {
+      recordPolyline.setLatLngs(latlngs);
+    } else {
+      recordPolyline = L.polyline(latlngs, {
+        color: '#c14a3a',
+        weight: 4,
+        opacity: 0.85,
+        lineJoin: 'round',
+        lineCap: 'round',
+        interactive: false
+      }).addTo(map);
+    }
+  }
+
+  // Recorder overlay state — local to the controls UI.
+  let recTitle = '';
+  let recSaving = false;
+  let recError = '';
+  function fmtElapsedShort(ms: number): string {
+    if (ms <= 0) return '0:00';
+    const total = Math.floor(ms / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+  let nowMs = Date.now();
+  $: if ($recording.status === 'recording') nowMs = Date.now();
+  // Tick once per second so the elapsed display updates while
+  // recording. setInterval set up in onMount, cleared in onDestroy.
+  let recTickInterval: ReturnType<typeof setInterval> | null = null;
+  function clickSave() {
+    if ($recording.points.length < 2) {
+      recError = 'Need at least 2 GPS points to save.';
+      return;
+    }
+    recError = '';
+    recSaving = true;
+    dispatch('recordSave', { title: recTitle.trim() || 'Recorded track' });
+  }
+  /** Called by the parent after a successful save so the recorder
+   *  resets cleanly. */
+  export function clearRecorder(): void {
+    recTitle = '';
+    recError = '';
+    recSaving = false;
+    discardRec();
   }
 
   async function locateMe() {
@@ -611,8 +660,13 @@
     }
   });
 
+  onMount(() => {
+    recTickInterval = setInterval(() => (nowMs = Date.now()), 1000);
+  });
+
   onDestroy(() => {
     if (map) map.remove();
+    if (recTickInterval) clearInterval(recTickInterval);
   });
 </script>
 
@@ -654,6 +708,48 @@
       title="Rainfall in the last 7 days at the center of the visible map. Source: Open-Meteo."
     >
       🌧 {formatMm(rainTotalMm)} · last 7 days
+    </div>
+  {/if}
+  {#if showRecorder}
+    <div class="recorder-overlay" class:active={$recording.status !== 'idle'}>
+      {#if $recording.status === 'idle'}
+        <button class="rec-btn rec-start" on:click={startRec} title="Start recording a track">
+          <span class="rec-dot-static"></span> Record track
+        </button>
+      {:else}
+        {@const elapsed =
+          $recording.startedAt
+            ? ($recording.endedAt ?? nowMs) - $recording.startedAt
+            : 0}
+        <div class="rec-status">
+          {#if $recording.status === 'recording'}
+            <span class="rec-dot-pulse" aria-hidden="true"></span>
+          {:else}
+            <span class="rec-paused-icon">⏸</span>
+          {/if}
+          <span class="rec-elapsed">{fmtElapsedShort(elapsed)}</span>
+          <span class="rec-stat">· {$recording.points.length} pt</span>
+        </div>
+        <div class="rec-controls">
+          {#if $recording.status === 'recording'}
+            <button on:click={pauseRec}>⏸</button>
+          {:else}
+            <button on:click={resumeRec}>▶</button>
+          {/if}
+          <input
+            type="text"
+            placeholder="Title"
+            bind:value={recTitle}
+            disabled={recSaving}
+          />
+          <button class="rec-save" on:click={clickSave} disabled={recSaving || $recording.points.length < 2}>
+            {recSaving ? '…' : '✓ Save'}
+          </button>
+          <button class="rec-discard" on:click={() => clearRecorder()} disabled={recSaving}>×</button>
+        </div>
+        {#if recError}<p class="rec-error">{recError}</p>{/if}
+        {#if $recording.error}<p class="rec-error">{$recording.error}</p>{/if}
+      {/if}
     </div>
   {/if}
 </div>
@@ -785,6 +881,94 @@
   }
   .rain-overlay.dry { background: #fdf4e3; border-color: #e8c97a; color: #7a4a10; }
   .rain-overlay.wet { background: #d4e9f5; border-color: #6fa9d0; color: #0e3b58; }
+
+  /* Recorder overlay — top-center; small idle button, expands to a
+     stats + controls bar while recording. */
+  .recorder-overlay {
+    position: absolute;
+    top: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    background: white;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.45rem;
+    padding: 0.3rem 0.55rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: calc(100vw - 1.5rem);
+  }
+  .recorder-overlay.active { background: #fbfdfa; border-color: #3a5a3a; }
+  .rec-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: white;
+    color: #3a5a3a;
+    border: 0;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 0.3rem;
+  }
+  .rec-btn:hover { background: #f0f5ef; }
+  .rec-dot-static {
+    width: 0.65rem; height: 0.65rem; border-radius: 50%;
+    background: #c14a3a;
+  }
+  .rec-status {
+    display: flex; align-items: center; gap: 0.35rem;
+    font-size: 0.85rem; color: #1f2a1f; font-weight: 600;
+  }
+  .rec-dot-pulse {
+    width: 0.65rem; height: 0.65rem; border-radius: 50%;
+    background: #c14a3a;
+    animation: rec-pulse 1.4s infinite;
+    box-shadow: 0 0 0 0 rgba(193, 74, 58, 0.6);
+  }
+  @keyframes rec-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(193, 74, 58, 0.6); }
+    70% { box-shadow: 0 0 0 6px rgba(193, 74, 58, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(193, 74, 58, 0); }
+  }
+  .rec-paused-icon { color: #7a4a10; }
+  .rec-elapsed { font-variant-numeric: tabular-nums; }
+  .rec-stat { color: #6b7a6b; font-weight: 400; font-size: 0.8rem; }
+  .rec-controls {
+    display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;
+  }
+  .rec-controls button {
+    background: white;
+    border: 1px solid #c7d0c7;
+    color: #3a5a3a;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .rec-controls button:hover { background: #f0f5ef; }
+  .rec-controls button:disabled { opacity: 0.55; cursor: default; }
+  .rec-controls .rec-save {
+    background: #3a5a3a; color: white; border-color: #3a5a3a;
+  }
+  .rec-controls .rec-discard {
+    color: #b03030; border-color: #d6a3a3;
+  }
+  .rec-controls input[type='text'] {
+    flex: 1 1 8rem;
+    min-width: 7rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.25rem;
+    font-size: 0.82rem;
+  }
+  .rec-error {
+    margin: 0;
+    color: #b03030;
+    font-size: 0.78rem;
+  }
   @media (max-width: 640px) {
     .locate {
       width: 2.85rem;
