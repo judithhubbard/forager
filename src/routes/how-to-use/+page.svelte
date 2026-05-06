@@ -40,7 +40,7 @@
   <h2>Tools menu (≡)</h2>
   <ul>
     <li><strong>Activity</strong> — recent observations across the region.</li>
-    <li><strong>Edit harvest windows</strong> — adjust the predicted ripe windows for species or for a specific year.</li>
+    <li><strong>Harvest windows</strong> — view the year-long timeline of fruiting stages. Click any colored bar to edit its dates.</li>
     <li><strong>Sign out</strong>.</li>
   </ul>
 </main>

@@ -111,6 +111,34 @@ export async function upload(input: UploadPhotoInput): Promise<string> {
   return id;
 }
 
+/** Delete a photo: remove storage objects + row. Goes through outbox so
+ *  the deletion replays if offline. Owner-only via RLS. */
+export async function remove(photo: Photo): Promise<void> {
+  await enqueue({
+    id: photo.id,
+    entityType: 'photo',
+    op: 'delete',
+    payload: { id: photo.id, storage_path: photo.storage_path, thumbnail_path: photo.thumbnail_path },
+    exec: async () => {
+      // Storage cleanup is best-effort — the row delete is the source of
+      // truth. If the storage objects are already gone, that's fine.
+      await supabase.storage
+        .from('photos')
+        .remove(
+          [photo.storage_path, photo.thumbnail_path].filter(
+            (p): p is string => !!p
+          )
+        )
+        .catch(() => {});
+      const { error } = await supabase.from('photos').delete().eq('id', photo.id);
+      if (error) {
+        console.error('[photoService] remove error:', error);
+        throw error;
+      }
+    }
+  });
+}
+
 /** GPS capture for photo upload (PLAN §B8). Falls back to pinFallback. */
 export async function capturePhotoLocation(
   pinFallback: { lng: number; lat: number; accuracyM?: number | null }

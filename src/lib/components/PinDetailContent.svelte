@@ -24,16 +24,33 @@
     groupByYear,
     STAGES,
     type Observation,
+    type ObservationWithUser,
     type Stage,
     type ObservationPrecision
   } from '$lib/services/observationService';
+  import { profileLabel } from '$lib/services/profileService';
   import {
     listByPin as listPhotos,
     signUrls,
     upload as uploadPhoto,
+    remove as removePhoto,
     capturePhotoLocation,
     type Photo
   } from '$lib/services/photoService';
+  import { supabase } from '$lib/supabase';
+
+  type WindowRow = { stage: string; start_doy: number; end_doy: number };
+
+  /** Earthy palette, must match the /windows page so this mini-timeline
+   *  reads consistently. */
+  const STAGE_COLORS: Record<string, string> = {
+    flowering: '#9b7fb2',
+    green: '#6b9442',
+    ripening: '#b87a2f',
+    ripe: '#8e2828',
+    past: '#7a7368'
+  };
+  const STAGE_ORDER = ['flowering', 'green', 'ripening', 'ripe', 'past'];
 
   export let pinId: string;
 
@@ -41,8 +58,9 @@
 
   let pin: PinEffective | null = null;
   let species: Species | null = null;
-  let observations: Observation[] = [];
+  let observations: ObservationWithUser[] = [];
   let allSpecies: Species[] = [];
+  let windows: WindowRow[] = [];
   let photos: Photo[] = [];
   let thumbUrls = new Map<string, string>();
   let fullUrls = new Map<string, string>();
@@ -113,6 +131,21 @@
   $: byYear = groupByYear(observations);
   $: years = [...byYear.keys()].sort((a, b) => b - a);
 
+  /** Group photos by their observation_id so each observation can render
+   *  its own thumbnail strip; "loose" photos (no observation) keep their
+   *  own grid at the bottom. */
+  $: photosByObs = (() => {
+    const m = new Map<string, Photo[]>();
+    for (const p of photos) {
+      if (!p.observation_id) continue;
+      const arr = m.get(p.observation_id) ?? [];
+      arr.push(p);
+      m.set(p.observation_id, arr);
+    }
+    return m;
+  })();
+  $: loosePhotos = photos.filter((p) => !p.observation_id);
+
   // Reload whenever pinId changes (for use as a reusable panel component).
   let lastLoadedId: string | null = null;
   $: if (pinId && pinId !== lastLoadedId) {
@@ -143,6 +176,18 @@
       hazards = hazResult;
       if (pin?.species_id) {
         species = allSpecies.find((s) => s.id === pin?.species_id) ?? null;
+      }
+      // Fetch the species' fruiting windows for this pin's region so the
+      // mini-timeline in the summary can show when this plant flowers / ripens.
+      if (pin?.species_id && pin?.region_id) {
+        const { data: winData } = await supabase
+          .from('species_fruiting_windows')
+          .select('stage, start_doy, end_doy')
+          .eq('species_id', pin.species_id)
+          .eq('region_id', pin.region_id);
+        windows = winData ?? [];
+      } else {
+        windows = [];
       }
       loadPhotos();
     } catch (err) {
@@ -201,12 +246,18 @@
     thumbUrls = await signUrls(paths, 3600);
   }
 
+  /** Holds the observation_id that the next file-input change should attach
+   *  the uploaded photo to. Set right before triggering fileInput.click(). */
+  let pendingUploadObsId: string | null = null;
+
   async function handleFileChange(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file || !pin || pin.lng == null || pin.lat == null) return;
     uploading = true;
     uploadError = '';
+    const obsId = pendingUploadObsId;
+    pendingUploadObsId = null;
     try {
       const loc = await capturePhotoLocation({
         lng: pin.lng,
@@ -215,6 +266,7 @@
       });
       await uploadPhoto({
         pinId,
+        observationId: obsId,
         file,
         capturedLat: loc.lat,
         capturedLng: loc.lng,
@@ -238,6 +290,22 @@
   }
   function closeLightbox() {
     lightboxPhoto = null;
+  }
+
+  let deletingPhotoId: string | null = null;
+  async function deleteLightboxPhoto() {
+    if (!lightboxPhoto) return;
+    if (!confirm('Delete this photo? This cannot be undone.')) return;
+    deletingPhotoId = lightboxPhoto.id;
+    try {
+      await removePhoto(lightboxPhoto);
+      photos = photos.filter((p) => p.id !== lightboxPhoto!.id);
+      lightboxPhoto = null;
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Could not delete photo.';
+    } finally {
+      deletingPhotoId = null;
+    }
   }
 
   async function submitObservation() {
@@ -348,6 +416,48 @@
       default:          return '#9090a0';
     }
   }
+
+  /** Compute the trimmed timeline range for the mini-timeline: hugs the
+   *  earliest stage start to latest stage end, padded by 14 days. */
+  $: miniRange = (() => {
+    if (windows.length === 0) return { start: 1, end: 365, span: 364 };
+    let lo = 365, hi = 1;
+    for (const w of windows) {
+      if (w.start_doy < lo) lo = w.start_doy;
+      if (w.end_doy > hi) hi = w.end_doy;
+    }
+    const start = Math.max(1, lo - 14);
+    const end = Math.min(365, hi + 14);
+    return { start, end, span: Math.max(1, end - start) };
+  })();
+  function miniPct(doy: number): number {
+    return ((doy - miniRange.start) / miniRange.span) * 100;
+  }
+  function miniTodayDoy(): number {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    return Math.floor((now.getTime() - start.getTime()) / 86_400_000);
+  }
+  $: todayDoy = miniTodayDoy();
+  $: todayInRange = todayDoy >= miniRange.start && todayDoy <= miniRange.end;
+
+  const MINI_MONTH_TICKS = [
+    { label: 'J', doy: 1 },   { label: 'F', doy: 32 },
+    { label: 'M', doy: 60 },  { label: 'A', doy: 91 },
+    { label: 'M', doy: 121 }, { label: 'J', doy: 152 },
+    { label: 'J', doy: 182 }, { label: 'A', doy: 213 },
+    { label: 'S', doy: 244 }, { label: 'O', doy: 274 },
+    { label: 'N', doy: 305 }, { label: 'D', doy: 335 }
+  ];
+  $: miniMonthTicks = MINI_MONTH_TICKS.filter(
+    (t) => t.doy >= miniRange.start && t.doy <= miniRange.end
+  );
+
+  /** Sort windows in canonical stage order so flowering renders first
+   *  and past last (matches the /windows page). */
+  $: sortedWindows = [...windows].sort(
+    (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage)
+  );
 </script>
 
 <div class="content">
@@ -373,6 +483,28 @@
             {#if pin.location_accuracy_m}<span class="muted">±{pin.location_accuracy_m}m</span>{/if}
           </span>
         </p>
+      {/if}
+
+      {#if windows.length > 0}
+        <div class="mini-timeline" title="Harvest window for this species. Edit on the Harvest windows page.">
+          <div class="mini-months">
+            {#each miniMonthTicks as t}
+              <span class="mini-month" style={`left: ${miniPct(t.doy)}%`}>{t.label}</span>
+            {/each}
+          </div>
+          <div class="mini-track">
+            {#each sortedWindows as w}
+              <div
+                class="mini-bar"
+                style={`left: ${miniPct(w.start_doy)}%; width: ${miniPct(w.end_doy) - miniPct(w.start_doy)}%; background: ${STAGE_COLORS[w.stage] ?? '#888'};`}
+                title="{w.stage}: DOY {w.start_doy}–{w.end_doy}"
+              ></div>
+            {/each}
+            {#if todayInRange}
+              <div class="mini-today" style={`left: ${miniPct(todayDoy)}%`}></div>
+            {/if}
+          </div>
+        </div>
       {/if}
       <div class="status-edit-row">
         <select bind:value={pendingStatus}>
@@ -494,13 +626,34 @@
               <li>
                 <span class="stage" style="background: {stageColor(o.stage)}">{o.stage}</span>
                 <span class="date">{fmtObservation(o)}</span>
+                <span class="by" title={o.user_username ? '@' + o.user_username : ''}>by {profileLabel({ username: o.user_username, display_name: o.user_display_name })}</span>
                 {#if o.quality_rating === 0}
                   <span class="no-harvest">🚫 no harvest</span>
                 {:else if o.quality_rating}
                   <span class="quality">{'★'.repeat(o.quality_rating)}</span>
                 {/if}
+                <button
+                  class="obs-add-photo"
+                  on:click={() => { pendingUploadObsId = o.id; fileInput?.click(); }}
+                  disabled={uploading}
+                  aria-label="Add photo to this observation"
+                  title="Add photo"
+                >📷</button>
                 <button class="obs-delete" on:click={() => deleteObservation(o)} aria-label="Delete observation">×</button>
                 {#if o.quality_notes}<p class="obs-notes">{o.quality_notes}</p>{/if}
+                {#if (photosByObs.get(o.id)?.length ?? 0) > 0}
+                  <div class="obs-photos">
+                    {#each photosByObs.get(o.id) ?? [] as p}
+                      <button class="obs-thumb" on:click={() => openLightbox(p)} aria-label="Open photo">
+                        {#if thumbUrls.get(p.thumbnail_path)}
+                          <img src={thumbUrls.get(p.thumbnail_path)} alt={p.caption ?? 'Photo'} loading="lazy" />
+                        {:else}
+                          <span class="thumb-loading">…</span>
+                        {/if}
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
               </li>
             {/each}
           </ul>
@@ -554,18 +707,18 @@
     <section class="photos">
       <div class="section-header">
         <h3>Photos</h3>
-        <button on:click={() => fileInput?.click()} disabled={uploading}>
+        <button on:click={() => { pendingUploadObsId = null; fileInput?.click(); }} disabled={uploading}>
           {uploading ? 'Uploading…' : 'Add photo'}
         </button>
         <input type="file" accept="image/*" capture="environment" bind:this={fileInput}
                on:change={handleFileChange} style="display: none" />
       </div>
       {#if uploadError}<p class="error">{uploadError}</p>{/if}
-      {#if photos.length === 0}
-        <p class="hint">No photos yet.</p>
+      {#if loosePhotos.length === 0}
+        <p class="hint">{photos.length === 0 ? 'No photos yet.' : 'All photos are attached to observations.'}</p>
       {:else}
         <div class="thumb-grid">
-          {#each photos as p}
+          {#each loosePhotos as p}
             <button class="thumb" on:click={() => openLightbox(p)} aria-label="Open photo">
               {#if thumbUrls.get(p.thumbnail_path)}
                 <img src={thumbUrls.get(p.thumbnail_path)} alt={p.caption ?? 'Photo'} loading="lazy" />
@@ -605,6 +758,12 @@
   <div class="lightbox" on:click|self={closeLightbox}
        on:keydown|self={(e) => e.key === 'Escape' && closeLightbox()} role="presentation">
     <button class="lightbox-close" on:click={closeLightbox} aria-label="Close">×</button>
+    <button
+      class="lightbox-delete"
+      on:click={deleteLightboxPhoto}
+      disabled={deletingPhotoId === lightboxPhoto.id}
+      aria-label="Delete photo"
+    >{deletingPhotoId === lightboxPhoto.id ? '…' : 'Delete'}</button>
     {#if fullUrls.get(lightboxPhoto.storage_path)}
       <img src={fullUrls.get(lightboxPhoto.storage_path)} alt={lightboxPhoto.caption ?? 'Photo'} />
     {:else}
@@ -639,6 +798,49 @@
   ul.meta { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #4a554a; }
   ul.meta li { margin-bottom: 0.15rem; line-height: 1.3; }
   .notes { background: #f5f8f5; padding: 0.5rem 0.7rem; border-radius: 0.35rem; margin: 0.4rem 0 0; color: #1f2a1f; font-size: 0.85rem; }
+
+  /* Mini harvest-window timeline shown in the pin summary. Compact —
+   *  just bars + month letters + today marker; clicking the /windows
+   *  page is where editing happens. */
+  .mini-timeline {
+    margin: 0.5rem 0 0.4rem;
+    padding: 0.3rem 0.4rem;
+    background: #fafcf6;
+    border: 1px solid #e1e8e1;
+    border-radius: 0.3rem;
+  }
+  .mini-months {
+    position: relative;
+    height: 0.85rem;
+    font-size: 0.62rem;
+    color: #6b7a6b;
+  }
+  .mini-month {
+    position: absolute;
+    transform: translateX(-50%);
+    line-height: 1;
+  }
+  .mini-track {
+    position: relative;
+    height: 0.7rem;
+    background: #ebefeb;
+    border-radius: 0.2rem;
+  }
+  .mini-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 1px;
+  }
+  .mini-today {
+    position: absolute;
+    top: -0.18rem;
+    bottom: -0.18rem;
+    width: 1.5px;
+    background: #b03030;
+    border-radius: 1px;
+    pointer-events: none;
+  }
 
   /* Title row + status chip */
   .title-row {
@@ -760,13 +962,41 @@
     border-color: #6b7a6b;
   }
   .obs-notes { flex-basis: 100%; margin: 0; color: #4a554a; font-size: 0.85rem; padding-left: 0.5rem; }
+  .by { font-size: 0.78rem; color: #6b7a6b; }
   .obs-delete {
     background: transparent; border: 0; color: #b03030; cursor: pointer;
-    font-size: 1.05rem; padding: 0.2rem 0.4rem; line-height: 1; margin-left: auto;
+    font-size: 1.05rem; padding: 0.2rem 0.4rem; line-height: 1;
     min-height: 1.6rem; min-width: 1.6rem;
   }
+  .obs-add-photo {
+    background: transparent; border: 0; cursor: pointer;
+    font-size: 1rem; padding: 0.2rem 0.4rem; line-height: 1;
+    margin-left: auto;
+    min-height: 1.6rem; min-width: 1.6rem;
+  }
+  .obs-add-photo:disabled { opacity: 0.4; cursor: default; }
+  .obs-photos {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.3rem;
+    padding-left: 0.5rem;
+  }
+  .obs-thumb {
+    width: 3rem;
+    height: 3rem;
+    padding: 0;
+    border: 1px solid #d0d8d0;
+    border-radius: 0.25rem;
+    background: #ebefeb;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .obs-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   @media (max-width: 640px) {
-    .obs-delete { min-height: 2rem; min-width: 2rem; padding: 0.35rem 0.55rem; }
+    .obs-delete, .obs-add-photo { min-height: 2rem; min-width: 2rem; padding: 0.35rem 0.55rem; }
+    .obs-thumb { width: 3.5rem; height: 3.5rem; }
   }
 
   fieldset.date-precision {
@@ -871,4 +1101,16 @@
     position: absolute; top: 0.75rem; right: 1rem; background: transparent;
     border: 0; color: white; font-size: 2rem; cursor: pointer;
   }
+  .lightbox-delete {
+    position: absolute; top: 1rem; left: 1rem;
+    background: rgba(176, 48, 48, 0.85);
+    color: white;
+    border: 0;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.3rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .lightbox-delete:hover { background: rgba(176, 48, 48, 1); }
+  .lightbox-delete:disabled { opacity: 0.6; cursor: default; }
 </style>

@@ -6,6 +6,14 @@ import { enqueue } from './outbox';
 import type { Database } from '$lib/database.types';
 
 export type Observation = Database['public']['Tables']['observations']['Row'];
+
+/** Observation row decorated with the author's username/display_name —
+ *  used in the per-pin observation list so each entry can show who
+ *  logged it. */
+export type ObservationWithUser = Observation & {
+  user_username: string | null;
+  user_display_name: string | null;
+};
 export type ObservationWithPin = Database['public']['Views']['v_observation_with_pin']['Row'];
 export type Stage = Database['public']['Enums']['stage'];
 
@@ -30,17 +38,33 @@ export interface CreateObservationInput {
   observedPrecision?: ObservationPrecision;
 }
 
-export async function listByPin(pinId: string): Promise<Observation[]> {
+export async function listByPin(pinId: string): Promise<ObservationWithUser[]> {
+  // Embed profile attribution via the observations.user_id → profiles.id
+  // FK added in the admin-portal migration. Hint by FK constraint name
+  // so PostgREST picks the profiles relationship (the user_id column
+  // also has an FK to auth.users that we don't want to follow).
   const { data, error } = await supabase
     .from('observations')
-    .select('*')
+    .select('*, author:profiles!observations_user_id_profile_fkey(username, display_name)')
     .eq('pin_id', pinId)
     .order('observed_at', { ascending: false });
   if (error) {
     console.error('[observationService] listByPin error:', error);
     throw error;
   }
-  return data ?? [];
+  type Row = Observation & {
+    author: { username: string | null; display_name: string | null } | null;
+  };
+  // Cast via unknown — the FK was added in 20260506000001 but the
+  // generated types lag behind real schema until regenerated.
+  return ((data as unknown as Row[] | null) ?? []).map((r) => {
+    const { author, ...rest } = r;
+    return {
+      ...rest,
+      user_username: author?.username ?? null,
+      user_display_name: author?.display_name ?? null
+    };
+  });
 }
 
 /** Recent observations across a region, newest first. For the activity feed. */
@@ -110,8 +134,10 @@ export async function remove(id: string): Promise<void> {
 }
 
 /** Group observations by year for the year-over-year UI (PLAN §3.4). */
-export function groupByYear(obs: Observation[]): Map<number, Observation[]> {
-  const out = new Map<number, Observation[]>();
+export function groupByYear<T extends { observed_at: string }>(
+  obs: T[]
+): Map<number, T[]> {
+  const out = new Map<number, T[]>();
   for (const o of obs) {
     const yr = new Date(o.observed_at).getFullYear();
     const list = out.get(yr) ?? [];

@@ -1,13 +1,14 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { activeRegion, regionsLoading, myRegions } from '$lib/stores/activeRegion';
-  import { signOut } from '$lib/services/authService';
   import { session } from '$lib/stores/auth';
   import { listByRegion, type PinEffective } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import Map from '$lib/components/Map.svelte';
   import DropPinModal from '$lib/components/DropPinModal.svelte';
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
+  import ToolsMenu from '$lib/components/ToolsMenu.svelte';
 
   let pins: PinEffective[] = [];
   let pinsLoading = false;
@@ -48,7 +49,6 @@
     Juglans: 'Walnut',
     Malus: 'Apple / Pear',
     Pyrus: 'Apple / Pear',
-    Mentha: 'Mint',
     Morus: 'Mulberry',
     Prunus: 'Cherry / Plum',
     Ribes: 'Currant',
@@ -56,11 +56,14 @@
     Sambucus: 'Elderberry',
     Vaccinium: 'Blueberry',
     Elaeagnus: 'Autumn olive',
-    Allium: 'Ramps / wild leek',
-    Asparagus: 'Asparagus',
     Vitis: 'Grape',
-    Cantharellus: 'Chanterelle',
-    Morchella: 'Morel'
+    // Mushrooms collapsed into one bucket.
+    Cantharellus: 'Mushroom',
+    Morchella: 'Mushroom',
+    // Misc edibles collapsed into "Other".
+    Allium: 'Other',
+    Asparagus: 'Other',
+    Mentha: 'Other'
   };
   function groupOf(s: Species): string {
     // Specific species overrides (almond split out from other Prunus).
@@ -96,7 +99,6 @@
   let showLegend = true;
 
   let selectedPinId: string | null = null;
-  let toolsOpen = false;
 
   type Cat = 'fruit' | 'nut' | 'mushroom' | 'other' | 'unknown';
   type CatMap = Record<string, Cat>;
@@ -162,6 +164,35 @@
   $: isSelected = (id: string) =>
     selectedSpeciesIds === null || selectedSpeciesIds.has(id);
 
+  /** Which legend rows are worth showing — only categories actually
+   *  present in the visible pin set, plus ripe/possibly indicators only
+   *  if any pin currently has them, plus the gone/dormant row only when
+   *  the user is showing all statuses. */
+  $: legendShows = (() => {
+    const cats = { fruit: false, nut: false, mushroom: false, other: false };
+    let ripe = false, possibly = false, gone = false;
+    for (const p of filteredPins) {
+      const cat = p.species_id ? categoryBySpecies[p.species_id] : null;
+      if (cat === 'fruit') cats.fruit = true;
+      else if (cat === 'nut') cats.nut = true;
+      else if (cat === 'mushroom') cats.mushroom = true;
+      else cats.other = true;
+      if (p.is_ripe_strict) ripe = true;
+      else if (p.is_ripe_now) possibly = true;
+      if (p.effective_status === 'gone' || p.effective_status === 'dormant') gone = true;
+    }
+    return {
+      fruit: cats.fruit,
+      nut: cats.nut,
+      mushroom: cats.mushroom,
+      other: cats.other,
+      ripe,
+      possibly,
+      // Gone/dormant only shows when the user is actually viewing them.
+      gone: gone && filterStatus === 'all'
+    };
+  })();
+
   function toggleSpecies(id: string) {
     let next: Set<string>;
     if (selectedSpeciesIds === null) {
@@ -211,6 +242,13 @@
   // Reload pins + species when active region changes.
   $: if ($activeRegion) loadAll($activeRegion.id);
 
+  // Deep-link: /?pin=ID opens that pin's detail panel on load. Used by
+  // the harvest-windows drill-down to "Open pin" → land here.
+  $: {
+    const want = $page.url.searchParams.get('pin');
+    if (want && want !== selectedPinId) selectedPinId = want;
+  }
+
   async function loadAll(regionId: string) {
     pinsLoading = true;
     try {
@@ -222,11 +260,6 @@
     } finally {
       pinsLoading = false;
     }
-  }
-
-  async function handleSignOut() {
-    await signOut();
-    goto('/login', { replaceState: true });
   }
 
   function handlePinClick(e: CustomEvent<{ pinId: string }>) {
@@ -272,19 +305,7 @@
       <span class="hint">Loading…</span>
     {/if}
     <a class="link ripe-link" href="/ripe">Ripe now</a>
-    <div class="tools-wrap">
-      <button class="tools-button" on:click={() => (toolsOpen = !toolsOpen)} aria-label="Tools menu">≡</button>
-      {#if toolsOpen}
-        <div class="tools-menu" role="menu">
-          <a href="/activity" on:click={() => (toolsOpen = false)}>Activity</a>
-          <a href="/windows" on:click={() => (toolsOpen = false)}>Edit harvest windows</a>
-          <a href="/how-to-use" on:click={() => (toolsOpen = false)}>How to use</a>
-          <a href="/about" on:click={() => (toolsOpen = false)}>About</a>
-          <hr />
-          <button on:click={() => { toolsOpen = false; handleSignOut(); }}>Sign out</button>
-        </div>
-      {/if}
-    </div>
+    <ToolsMenu />
   </div>
 </header>
 
@@ -386,13 +407,13 @@
           <button class="legend-toggle" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
         </div>
         <ul>
-          <li><span class="dot" style="background:#c14a3a"></span> Fruit</li>
-          <li><span class="dot" style="background:#7a5230"></span> Nut</li>
-          <li><span class="dot" style="background:#8a4ea0"></span> Mushroom</li>
-          <li><span class="dot" style="background:#6ba040"></span> Other (greens, ramps, mint, …)</li>
-          <li><span class="ring1"></span> Ripe (in window)</li>
-          <li><span class="ring2"></span> Possibly ripe (within ±10 days)</li>
-          <li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant</li>
+          {#if legendShows.fruit}<li><span class="dot" style="background:#c14a3a"></span> Fruit</li>{/if}
+          {#if legendShows.nut}<li><span class="dot" style="background:#7a5230"></span> Nut</li>{/if}
+          {#if legendShows.mushroom}<li><span class="dot" style="background:#8a4ea0"></span> Mushroom</li>{/if}
+          {#if legendShows.other}<li><span class="dot" style="background:#6ba040"></span> Other</li>{/if}
+          {#if legendShows.ripe}<li><span class="ring1"></span> Ripe</li>{/if}
+          {#if legendShows.possibly}<li><span class="ring2"></span> Possibly ripe</li>{/if}
+          {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant</li>{/if}
         </ul>
       </div>
     {:else}
@@ -441,6 +462,26 @@
     margin: 0;
     font-size: 1.05rem;
     color: #3a5a3a;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  header h1::before {
+    content: '';
+    display: inline-block;
+    width: 1.8rem;
+    height: 1.8rem;
+    /* The silhouette runs to the very edge of the PNG, so 'contain' would
+       show it touching the icon border. Shrink the image to ~72% of the
+       container so the matching teal background forms a visible frame
+       around the figure on all four sides. */
+    background-color: #356b66;
+    background-image: url('/icon.png');
+    background-size: 72%;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 0.3rem;
+    flex-shrink: 0;
   }
   .meta {
     display: flex;
@@ -457,93 +498,22 @@
   .hint {
     color: #6b7a6b;
   }
-  .signout, .link {
+  .link {
     background: transparent;
-    color: #6b7a6b;
+    color: #3a5a3a;
     border: 0;
     cursor: pointer;
     text-decoration: underline;
     font-size: 0.85rem;
-  }
-  .link {
-    color: #3a5a3a;
   }
   .ripe-link {
     color: #d57100;
     font-weight: 600;
   }
 
-  /* Tools menu */
-  .tools-wrap {
-    position: relative;
-  }
-  .tools-button {
-    background: transparent;
-    border: 1px solid #c7d0c7;
-    color: #3a5a3a;
-    border-radius: 0.3rem;
-    width: 2rem;
-    height: 1.85rem;
-    font-size: 1.1rem;
-    line-height: 1;
-    cursor: pointer;
-  }
-  .tools-menu {
-    position: absolute;
-    top: calc(100% + 0.3rem);
-    right: 0;
-    min-width: 11rem;
-    background: white;
-    border: 1px solid #d0d8d0;
-    border-radius: 0.4rem;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-    z-index: 1200;
-    padding: 0.25rem;
-    display: flex;
-    flex-direction: column;
-  }
-  .tools-menu a, .tools-menu button {
-    display: block;
-    padding: 0.45rem 0.7rem;
-    text-decoration: none;
-    color: #1f2a1f;
-    font-size: 0.88rem;
-    border-radius: 0.3rem;
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    text-align: left;
-  }
-  .tools-menu a:hover, .tools-menu button:hover {
-    background: #f0f5ef;
-  }
-  .tools-menu hr {
-    margin: 0.25rem 0;
-    border: 0;
-    border-top: 1px solid #ebefeb;
-  }
   main.loading {
     padding: 2rem;
     color: #6b7a6b;
-  }
-  .fab {
-    position: fixed;
-    bottom: 1.25rem;
-    right: 1.25rem;
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 50%;
-    border: 0;
-    background: #3a5a3a;
-    color: white;
-    font-size: 2rem;
-    line-height: 1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    z-index: 600;
-  }
-  .fab:active {
-    background: #2a4a2a;
   }
   .filterbar {
     display: flex;
@@ -729,6 +699,38 @@
       top: auto;
       height: 70vh;
     }
+    /* Keep filters on a single row on phones (was wrapping to two). */
+    .filterbar {
+      flex-wrap: nowrap;
+      gap: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.78rem;
+    }
+    .filterbar select {
+      max-width: none;
+      flex: 1;
+      min-width: 0;
+      font-size: 0.78rem;
+      padding: 0.2rem 0.35rem;
+    }
+    .filterbar label {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .species-toggle { font-size: 0.78rem; padding: 0.2rem 0.5rem; }
+    /* Tighter, smaller legend on mobile so it stops dominating the map. */
+    .legend {
+      bottom: 0.5rem;
+      left: 0.5rem;
+      padding: 0.35rem 0.55rem;
+      font-size: 0.72rem;
+      max-width: 9.5rem;
+    }
+    .legend ul { gap: 0.18rem; }
+    .legend .dot { width: 0.6rem; height: 0.6rem; margin-right: 0.3rem; }
+    .legend .ring1, .legend .ring2 {
+      width: 0.7rem; height: 0.7rem; margin-right: 0.3rem;
+    }
   }
   .panel-header {
     flex: 0 0 auto;
@@ -824,13 +826,18 @@
     background: #c14a3a;
     border-radius: 50%;
     border: 1.5px solid white;
-    box-shadow: 0 0 0 1.6px #d57100;
   }
-  .legend .ring2 {
+  /* Ripe: bold solid double-ring (matches the map's strict-ripe pin). */
+  .legend .ring1 {
     box-shadow:
-      0 0 0 1.6px #d57100,
-      0 0 0 2.4px white,
-      0 0 0 3.4px rgba(213, 113, 0, 0.45);
+      0 0 0 2.2px #d57100,
+      0 0 0 3.4px white,
+      0 0 0 4.4px rgba(213, 113, 0, 0.65);
+  }
+  /* Possibly ripe: a single faint dashed halo (matches the map). */
+  .legend .ring2 {
+    outline: 1.5px dashed #d57100;
+    outline-offset: 1.5px;
   }
   .legend-show {
     position: fixed;

@@ -83,27 +83,35 @@
         const baseR = isTouch ? 6 : 4.5;
 
         // Add ripeness rings BEFORE the main marker (so they render
-        // beneath it). One ring = strict ripe; two rings = possibly
-        // ripe (within the ±10 day buffer but not strictly).
-        if (isPossibly) {
-          // Inner ring (drawn for both strict and possibly).
+        // beneath it). Strict ripe gets the bold double-ring treatment to
+        // really pop; "possibly ripe" (in the ±10-day buffer but not
+        // strictly inside the window) gets a single faint dashed ring
+        // that suggests "maybe" without competing with strict ripe pins.
+        if (isStrictRipe) {
           L.circleMarker([pin.lat, pin.lng], {
-            radius: baseR + 3.5,
+            radius: baseR + 4,
             color: '#d57100',
             fill: false,
-            weight: 1.8,
-            opacity: 0.85,
+            weight: 2.5,
+            opacity: 1.0,
             interactive: false
           }).addTo(markerLayer);
-        }
-        if (isPossibly && !isStrictRipe) {
-          // Outer ring only when in the buffer zone (not strictly ripe).
           L.circleMarker([pin.lat, pin.lng], {
-            radius: baseR + 7,
+            radius: baseR + 8.5,
             color: '#d57100',
             fill: false,
-            weight: 1.4,
-            opacity: 0.45,
+            weight: 1.6,
+            opacity: 0.65,
+            interactive: false
+          }).addTo(markerLayer);
+        } else if (isPossibly) {
+          L.circleMarker([pin.lat, pin.lng], {
+            radius: baseR + 4,
+            color: '#d57100',
+            fill: false,
+            weight: 1.2,
+            opacity: 0.55,
+            dashArray: '3,3',
             interactive: false
           }).addTo(markerLayer);
         }
@@ -118,14 +126,31 @@
           weight: 1.5,
           bubblingMouseEvents: false
         });
-        marker.on('click', () => {
-          if (pin.id) dispatch('pinClick', { pinId: pin.id });
-        });
         const label = labelOf(pin);
         if (label) {
           marker.bindTooltip(label, { direction: 'top', offset: [0, -2], sticky: true });
         }
         marker.addTo(markerLayer);
+
+        // On touch devices the visual marker is too small for a finger
+        // (≈12px diameter). Layer a transparent, larger circle on top
+        // that captures the tap. Visual stays the same; hit area
+        // roughly triples. Desktop keeps a smaller bonus for easier
+        // hovering.
+        const hitR = isTouch ? baseR + 8 : baseR + 3;
+        const hit = L.circleMarker([pin.lat, pin.lng], {
+          radius: hitR,
+          color: 'transparent',
+          fillColor: '#000',
+          fillOpacity: 0,
+          opacity: 0,
+          weight: 0,
+          bubblingMouseEvents: false
+        });
+        hit.on('click', () => {
+          if (pin.id) dispatch('pinClick', { pinId: pin.id });
+        });
+        hit.addTo(markerLayer);
       }
     });
   }

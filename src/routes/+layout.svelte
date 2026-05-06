@@ -1,25 +1,41 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { onMount } from 'svelte';
   import { session, authLoading } from '$lib/stores/auth';
+  import { profile } from '$lib/stores/profile';
+  import { isPlaceholderUsername } from '$lib/services/profileService';
+  import { safeNext, encodeNext } from '$lib/utils/safeNext';
+  import UsernameSetup from '$lib/components/UsernameSetup.svelte';
 
   const PUBLIC_ROUTES = ['/login', '/register'];
 
   $: routeIsPublic = PUBLIC_ROUTES.some((r) => $page.url.pathname.startsWith(r));
 
-  // Redirect on auth state — but only after the initial session fetch completes.
+  // Redirect on auth state — but only after the initial session fetch
+  // completes. Signed-out users on protected routes get bounced to
+  // /login with a `?next=` carrying the path they tried to reach;
+  // signed-in users on public routes land on whatever `?next=` says
+  // (validated to same-origin), defaulting to /.
   $: if (!$authLoading) {
     if (!$session && !routeIsPublic) {
-      goto('/login', { replaceState: true });
+      const here = $page.url.pathname + $page.url.search;
+      goto(`/login?next=${encodeNext(here)}`, { replaceState: true });
     } else if ($session && routeIsPublic) {
-      goto('/', { replaceState: true });
+      const dest = safeNext($page.url.searchParams.get('next'), '/');
+      goto(dest, { replaceState: true });
     }
   }
 
-  onMount(() => {
-    // No-op; presence of mount hook keeps types/lifecycle clean.
-  });
+  // Soft-block: show the username setup as soon as we have a session AND
+  // a loaded profile whose username is still the auto-issued placeholder.
+  // App content keeps rendering underneath — the modal sits over it. We
+  // don't show on /login or /register (no session yet) or before the
+  // profile is loaded (avoids a flash).
+  $: needsUsername =
+    !!$session &&
+    !routeIsPublic &&
+    !!$profile &&
+    isPlaceholderUsername($profile.username);
 </script>
 
 {#if $authLoading}
@@ -28,6 +44,9 @@
   </main>
 {:else}
   <slot />
+  {#if needsUsername && $profile}
+    <UsernameSetup profile={$profile} />
+  {/if}
 {/if}
 
 <style>

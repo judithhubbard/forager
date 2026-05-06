@@ -225,7 +225,7 @@ export type Database = {
           invited_by: string
           region_id: string
           role?: Database["public"]["Enums"]["region_role"]
-          token: string
+          token?: string
         }
         Update: {
           accepted_at?: string | null
@@ -462,18 +462,21 @@ export type Database = {
           display_name: string | null
           id: string
           updated_at: string
+          username: string
         }
         Insert: {
           created_at?: string
           display_name?: string | null
           id: string
           updated_at?: string
+          username: string
         }
         Update: {
           created_at?: string
           display_name?: string | null
           id?: string
           updated_at?: string
+          username?: string
         }
         Relationships: []
       }
@@ -816,6 +819,8 @@ export type Database = {
           species_scientific_name: string | null
           stage: Database["public"]["Enums"]["stage"] | null
           user_id: string | null
+          user_username: string | null
+          user_display_name: string | null
         }
         Relationships: [
           {
@@ -896,6 +901,14 @@ export type Database = {
       }
     }
     Functions: {
+      accept_invitation: {
+        Args: { invite_token: string }
+        Returns: string
+      }
+      username_available: {
+        Args: { candidate: string }
+        Returns: boolean
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
