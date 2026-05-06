@@ -9,10 +9,12 @@ const config = {
     adapter: adapter({
       pages: 'build',
       assets: 'build',
-      // SPA fallback: every unknown route is served the SvelteKit shell,
-      // which then hydrates and routes client-side. Required for GitHub
-      // Pages, which has no server-side routing.
-      fallback: 'index.html',
+      // SPA fallback: GitHub Pages serves 404.html for any path it
+      // can't resolve, so writing the SvelteKit shell to that filename
+      // makes deep links (/forager/admin, /forager/accept?token=...)
+      // hydrate and route client-side. The root index.html is still
+      // produced by adapter-static for the home URL.
+      fallback: '404.html',
       precompress: false,
       strict: true
     }),
