@@ -1099,6 +1099,7 @@ export type Database = {
           created_at: string | null
           id: string | null
           observed_at: string | null
+          observed_precision: string | null
           pin_display_name: string | null
           pin_id: string | null
           pin_region_id: string | null

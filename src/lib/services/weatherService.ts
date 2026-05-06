@@ -203,11 +203,13 @@ async function fetchForecastYear(
   const forecastEnd = endDate > today ? today : endDate;
   let forecastPart: DailyWeather[] = [];
   if (forecastStart <= forecastEnd) {
+    // Open-Meteo rejects past_days + explicit start/end together
+    // (returns 400). Use start/end only — past_days is implied by
+    // the date range itself.
     const url =
       `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}` +
       `&start_date=${forecastStart}&end_date=${forecastEnd}` +
-      `&past_days=92&forecast_days=1` +
       `&daily=precipitation_sum,temperature_2m_max,temperature_2m_min` +
       `&timezone=auto`;
     const res = await fetch(url);

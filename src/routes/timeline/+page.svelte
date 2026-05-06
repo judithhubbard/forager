@@ -15,6 +15,10 @@
   type ObsRow = {
     id: string;
     observed_at: string;
+    /** 'day' | 'month' | 'year'. Only day-precision observations get
+     *  rendered as ticks on the timeline — a "ripe in 2024" entry
+     *  should not be pinned to Jan 1. */
+    observed_precision: string | null;
     stage: string | null;
     species_id: string | null;
     species_common_name: string | null;
@@ -80,7 +84,7 @@
       supabase
         .from('v_observation_with_pin')
         .select(
-          'id, observed_at, stage, species_id, species_common_name, pin_id, pin_display_name, quality_rating'
+          'id, observed_at, observed_precision, stage, species_id, species_common_name, pin_id, pin_display_name, quality_rating'
         )
         .eq('pin_region_id', regionId)
         .order('observed_at', { ascending: false })
@@ -180,14 +184,18 @@
     return Math.floor((d.getTime() - start.getTime()) / 86400000);
   }
 
-  // SVG layout — viewBox-scaled to the row's full width.
+  // SVG layout — viewBox-scaled to the row's full width. Left
+  // padding is bigger than right because we want the y-axis scale
+  // labels (rain mm, temp °F) on the left side, away from the
+  // species-name labels on the right.
   const W = 1000;
-  const PAD_L = 4, PAD_R = 4;
+  const PAD_L = 38;
+  const PAD_R = 6;
   const AXIS_H = 14;
   const LANE_H = 9;        // per-species band; many lanes per region
   const LANE_GAP = 1;
-  const RAIN_H = 36;       // dedicated bar-chart lane (top)
-  const TEMP_H = 44;       // dedicated min/max lane (below rain)
+  const RAIN_H = 40;       // dedicated bar-chart lane (top)
+  const TEMP_H = 50;       // dedicated min/max lane (below rain)
   const TRACK_GAP = 6;     // breathing room between major tracks
   const PLOT_W = W - PAD_L - PAD_R;
   /** Fixed scale ceiling for rain bars (mm/day). Days above this
@@ -201,6 +209,11 @@
   const TEMP_LO_C = -20;
   const TEMP_HI_C = 40;
   const TEMP_RANGE_C = TEMP_HI_C - TEMP_LO_C;
+  /** °C thresholds that split the temperature polygon into three
+   *  perceptual zones: cool (below freezing → cold blue), warm
+   *  (above freezing through 80°F → amber), hot (above 80°F → red). */
+  const FREEZE_C = 0;        // 32°F
+  const HOT_C = (80 - 32) * 5 / 9; // 80°F ≈ 26.7°C
 
   function doyToX(doy: number): number {
     return PAD_L + ((doy - 1) / 365) * PLOT_W;
@@ -243,6 +256,10 @@
       (o) =>
         o.species_id === speciesId &&
         o.observed_at &&
+        // Only day-precision obs get rendered as ticks. Year/month
+        // precision should not be misleadingly pinned to Jan 1 or
+        // the first of the month.
+        (o.observed_precision == null || o.observed_precision === 'day') &&
         new Date(o.observed_at).getFullYear() === year
     );
   }
@@ -270,25 +287,29 @@
     return rows.some((d) => d.temp_max_c != null || d.rain_mm > 0);
   }
 
-  /** Polyline points for either the daily max or the daily min temp,
-   *  using the FIXED -20…40°C lane scale so winters don't squish
-   *  summer swings. Values outside the range are clipped to the lane
-   *  edges. */
-  function tempPolyPoints(
-    rows: DailyWeather[],
-    yStart: number,
-    field: 'max' | 'min'
-  ): string {
-    const parts: string[] = [];
+  /** Convert a °C value to a y-pixel inside the temp track, using
+   *  the fixed −20…40°C scale. Values outside the range clip. */
+  function tempToY(c: number, yStart: number): number {
+    const clipped = Math.max(TEMP_LO_C, Math.min(TEMP_HI_C, c));
+    return yStart + TEMP_H - ((clipped - TEMP_LO_C) / TEMP_RANGE_C) * TEMP_H;
+  }
+
+  /** Polygon spanning the daily min→max temperature range across the
+   *  year. Rendered twice with different clip-paths: once in warm
+   *  (above freezing) and once in cool (below freezing) so winter
+   *  cold snaps read clearly without losing the per-day shape. */
+  function tempRangePolygon(rows: DailyWeather[], yStart: number): string {
+    const top: string[] = [];
+    const bot: string[] = [];
     for (const d of rows) {
-      const v = field === 'max' ? d.temp_max_c : d.temp_min_c;
-      if (v == null) continue;
-      const clipped = Math.max(TEMP_LO_C, Math.min(TEMP_HI_C, v));
+      if (d.temp_max_c == null || d.temp_min_c == null) continue;
       const x = doyToX(dateToDoy(d.date));
-      const y = yStart + TEMP_H - ((clipped - TEMP_LO_C) / TEMP_RANGE_C) * TEMP_H;
-      parts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+      top.push(`${x.toFixed(1)},${tempToY(d.temp_max_c, yStart).toFixed(1)}`);
+      bot.push(`${x.toFixed(1)},${tempToY(d.temp_min_c, yStart).toFixed(1)}`);
     }
-    return parts.join(' ');
+    if (top.length === 0) return '';
+    bot.reverse();
+    return [...top, ...bot].join(' ');
   }
 
   /** Format temperature in °F (US convention) with one decimal. */
@@ -336,15 +357,16 @@
       </span>
       <span class="leg-item leg-sep">|</span>
       <span class="leg-item">
-        <span class="leg-tick" style="background: #1a4a66"></span> rain (mm/day)
+        <span class="leg-tick" style="background: #1a4a66"></span> rain
       </span>
       <span class="leg-item">
-        <svg width="20" height="10"><line x1="0" y1="5" x2="20" y2="5" stroke="#d57100" stroke-width="2"/></svg>
-        max temp
+        <span class="leg-band" style="background: #d04a3a"></span> &gt;80°F
       </span>
       <span class="leg-item">
-        <svg width="20" height="10"><line x1="0" y1="5" x2="20" y2="5" stroke="#3a8db0" stroke-width="2"/></svg>
-        min temp
+        <span class="leg-band" style="background: #e8a560"></span> 32–80°F
+      </span>
+      <span class="leg-item">
+        <span class="leg-band" style="background: #3a6b8b"></span> &lt;32°F
       </span>
       <span class="leg-item leg-sep">|</span>
       <span class="leg-item leg-hint">Hover a tick for species + date</span>
@@ -359,6 +381,18 @@
             {rt.observations.length} observation{rt.observations.length === 1 ? '' : 's'} · {allSids.length} species
             {#if rt.weatherLoading}<span class="hint"> · loading weather…</span>{/if}
           </span>
+          {#if rt.center}
+            <span class="region-meta weather-loc">
+              Weather from
+              <a
+                href={`https://www.openstreetmap.org/?mlat=${rt.center.lat.toFixed(4)}&mlon=${rt.center.lng.toFixed(4)}&zoom=11`}
+                target="_blank"
+                rel="noopener"
+                title="Open this lookup point on OSM"
+              >{rt.center.lat.toFixed(3)}°, {rt.center.lng.toFixed(3)}°</a>
+              (centroid of {rt.regionName} pins)
+            </span>
+          {/if}
         </header>
 
     <div class="years">
@@ -369,6 +403,11 @@
         {@const tempY = rainY + RAIN_H + TRACK_GAP}
         {@const lanesY = tempY + TEMP_H + TRACK_GAP}
         {@const totalH = lanesY + lanesH + 6}
+        {@const yHi = tempToY(TEMP_HI_C, tempY)}
+        {@const y80 = tempToY(HOT_C, tempY)}
+        {@const y32 = tempToY(FREEZE_C, tempY)}
+        {@const yLo = tempToY(TEMP_LO_C, tempY)}
+        {@const tempPoly = tempRangePolygon(yWeather, tempY)}
         <section class="year-row" class:current={year === currentYear}>
           <div class="year-label">
             {year}
@@ -381,13 +420,18 @@
               <line x1={doyToX(ms)} y1={AXIS_H} x2={doyToX(ms)} y2={totalH} stroke="#e1e8e1" stroke-width="0.5" />
             {/each}
 
-            <!-- Rain track at top: dedicated bar-chart lane in blue.
+            <!-- Rain track at top: dedicated bar-chart lane.
                  Fixed 25mm/day cap so a single big winter event
                  doesn't make all the summer bars invisible. -->
             <rect
               x={PAD_L} y={rainY} width={PLOT_W} height={RAIN_H}
               fill="#f3f8fc" stroke="#dde7ee" stroke-width="0.5"
             />
+            <!-- Left-side scale labels for rain: 0 at bottom, 25 at top -->
+            <text x={PAD_L - 2} y={rainY + 4} text-anchor="end" font-size="9" fill="#1a4a66" font-weight="600">rain</text>
+            <text x={PAD_L - 2} y={rainY + 14} text-anchor="end" font-size="8" fill="#8a948a">25mm</text>
+            <text x={PAD_L - 2} y={rainY + RAIN_H / 2 + 3} text-anchor="end" font-size="8" fill="#8a948a">12</text>
+            <text x={PAD_L - 2} y={rainY + RAIN_H - 2} text-anchor="end" font-size="8" fill="#8a948a">0</text>
             {#if !hasWeatherData(yWeather) && rt.weather.length === 0}
               <text x={W / 2} y={rainY + RAIN_H / 2 + 3} text-anchor="middle" font-size="9" fill="#8a948a" font-style="italic">
                 {rt.weatherLoading ? 'loading weather…' : 'no weather data'}
@@ -404,39 +448,45 @@
                   fill="#1a4a66"
                   opacity="0.92"
                 >
-                  <title>{d.date} · {d.rain_mm.toFixed(1)}mm ({(d.rain_mm / 25.4).toFixed(2)}")</title>
+                  <title>{d.date} · {d.rain_mm.toFixed(1)} mm ({(d.rain_mm / 25.4).toFixed(2)} in)</title>
                 </rect>
               {/if}
             {/each}
-            <text x={PAD_L + 4} y={rainY + 11} font-size="10" fill="#1a4a66" font-weight="600">rain</text>
-            <text x={W - PAD_R - 1} y={rainY + RAIN_H - 2} text-anchor="end" font-size="8" fill="#8a948a">
-              0…{RAIN_CAP_MM}mm/day
-            </text>
 
-            <!-- Temp track: max (orange) + min (cool blue) polylines
-                 on a fixed -20…40°C lane so winter doesn't squish
-                 summer swings. -->
+            <!-- Temp track: per-day min→max polygon, color-zoned by
+                 temperature. Cool (below freezing) in dark blue,
+                 warm (32–80°F) in amber, hot (above 80°F) in red.
+                 Faint horizontal lines at the freezing and 80°F
+                 thresholds for reference. -->
             <rect
               x={PAD_L} y={tempY} width={PLOT_W} height={TEMP_H}
               fill="#fbf9f3" stroke="#e8e3d4" stroke-width="0.5"
             />
-            {#if hasWeatherData(yWeather)}
-              <polyline
-                points={tempPolyPoints(yWeather, tempY, 'min')}
-                fill="none" stroke="#3a8db0" stroke-width="1.2" opacity="0.85"
-              />
-              <polyline
-                points={tempPolyPoints(yWeather, tempY, 'max')}
-                fill="none" stroke="#d57100" stroke-width="1.2" opacity="0.95"
-              />
+            {#if tempPoly}
+              <defs>
+                <clipPath id={`hot-${rt.regionId}-${year}`}>
+                  <rect x={PAD_L} y={yHi} width={PLOT_W} height={Math.max(0, y80 - yHi)} />
+                </clipPath>
+                <clipPath id={`warm-${rt.regionId}-${year}`}>
+                  <rect x={PAD_L} y={y80} width={PLOT_W} height={Math.max(0, y32 - y80)} />
+                </clipPath>
+                <clipPath id={`cool-${rt.regionId}-${year}`}>
+                  <rect x={PAD_L} y={y32} width={PLOT_W} height={Math.max(0, yLo - y32)} />
+                </clipPath>
+              </defs>
+              <polygon points={tempPoly} fill="#3a6b8b" opacity="0.85" clip-path="url(#cool-{rt.regionId}-{year})" />
+              <polygon points={tempPoly} fill="#e8a560" opacity="0.85" clip-path="url(#warm-{rt.regionId}-{year})" />
+              <polygon points={tempPoly} fill="#d04a3a" opacity="0.85" clip-path="url(#hot-{rt.regionId}-{year})" />
+              <!-- Threshold reference lines -->
+              <line x1={PAD_L} y1={y32} x2={W - PAD_R} y2={y32} stroke="#5e7a8b" stroke-width="0.6" stroke-dasharray="3,2" opacity="0.55" />
+              <line x1={PAD_L} y1={y80} x2={W - PAD_R} y2={y80} stroke="#a04030" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.4" />
             {/if}
-            <text x={PAD_L + 4} y={tempY + 11} font-size="10" fill="#7a4a10" font-weight="600">temp</text>
-            <text x={W - PAD_R - 1} y={tempY + 11} text-anchor="end" font-size="8" fill="#7a4a10">
-              104°F
-            </text>
-            <text x={W - PAD_R - 1} y={tempY + TEMP_H - 2} text-anchor="end" font-size="8" fill="#1a4a66">
-              −4°F
-            </text>
+            <!-- Left-side scale labels for temp -->
+            <text x={PAD_L - 2} y={tempY + 4} text-anchor="end" font-size="9" fill="#7a4a10" font-weight="600">temp</text>
+            <text x={PAD_L - 2} y={yHi + 4} text-anchor="end" font-size="8" fill="#a04030">104°F</text>
+            <text x={PAD_L - 2} y={y80 + 3} text-anchor="end" font-size="8" fill="#a04030">80°F</text>
+            <text x={PAD_L - 2} y={y32 + 3} text-anchor="end" font-size="8" fill="#3a6b8b">32°F</text>
+            <text x={PAD_L - 2} y={yLo - 1} text-anchor="end" font-size="8" fill="#3a6b8b">−4°F</text>
 
             <!-- All region species, one thin lane each. Window bands
                  + observation markers if present. -->
@@ -445,7 +495,9 @@
               {@const color = laneColor(sid)}
               {@const sw = windowsForSpecies(rt, sid)}
               {@const yObs = obsInYearForSpecies(rt, year, sid)}
-              <rect x={PAD_L} y={laneY} width={PLOT_W} height={LANE_H} fill={color} opacity="0.06" />
+              <rect x={PAD_L} y={laneY} width={PLOT_W} height={LANE_H} fill={color} opacity="0.06">
+                <title>{speciesLabel(sid)}</title>
+              </rect>
               {#each sw as w}
                 <rect
                   x={doyToX(w.start_doy)}
@@ -534,6 +586,8 @@
     font-size: 1.1rem;
   }
   .region-meta { color: #6b7a6b; font-size: 0.85rem; }
+  .region-meta.weather-loc { font-size: 0.8rem; flex-basis: 100%; margin-top: 0.1rem; }
+  .region-meta.weather-loc a { color: #3a5a3a; }
   .years { display: flex; flex-direction: column; gap: 0.6rem; }
   .year-row {
     background: white;
