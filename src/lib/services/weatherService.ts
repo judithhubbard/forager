@@ -114,29 +114,38 @@ export async function historicalWeather(
   const todayIso = new Date().toISOString().slice(0, 10);
   const currentYear = parseInt(todayIso.slice(0, 4), 10);
 
-  const all: DailyWeather[] = [];
+  // Fan out per-year fetches in parallel — each request to Open-Meteo
+  // is small and independent, so 5 years come back in roughly the
+  // same wall-clock time as 1.
+  const yearTasks: Promise<DailyWeather[]>[] = [];
   for (let year = startYear; year <= endYear; year++) {
     const yStart = year === startYear ? startDate : `${year}-01-01`;
     const yEnd =
       year === endYear
         ? (endDate < `${year}-12-31` ? endDate : `${year}-12-31`)
         : `${year}-12-31`;
-    try {
-      const rows =
-        year < currentYear
-          ? await fetchArchiveYear(lng, lat, yStart, yEnd)
-          : await fetchForecastYear(lng, lat, yStart, yEnd);
-      all.push(...rows);
-      // eslint-disable-next-line no-console
-      console.log(
-        `[weather] ${year} ${yStart}…${yEnd}: ${rows.length} days, ` +
-          `${rows.filter((r) => r.rain_mm > 0).length} with rain, ` +
-          `${rows.filter((r) => r.temp_max_c != null).length} with temp`
-      );
-    } catch (e) {
-      console.warn(`[weather] ${year} fetch failed:`, e);
-    }
+    const fetcher = year < currentYear
+      ? fetchArchiveYear(lng, lat, yStart, yEnd)
+      : fetchForecastYear(lng, lat, yStart, yEnd);
+    yearTasks.push(
+      fetcher
+        .then((rows) => {
+          // eslint-disable-next-line no-console
+          console.log(
+            `[weather] ${year} ${yStart}…${yEnd}: ${rows.length} days, ` +
+              `${rows.filter((r) => r.rain_mm > 0).length} with rain, ` +
+              `${rows.filter((r) => r.temp_max_c != null).length} with temp`
+          );
+          return rows;
+        })
+        .catch((e) => {
+          console.warn(`[weather] ${year} fetch failed:`, e);
+          return [] as DailyWeather[];
+        })
+    );
   }
+  const yearResults = await Promise.all(yearTasks);
+  const all: DailyWeather[] = ([] as DailyWeather[]).concat(...yearResults);
   histCache.set(cacheKey, all);
   return all;
 }

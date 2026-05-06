@@ -189,7 +189,10 @@
   // labels (rain mm, temp °F) on the left side, away from the
   // species-name labels on the right.
   const W = 1000;
-  const PAD_L = 38;
+  // Wider left padding to fit a rotated 'rain' / 'temp' track label
+  // on the far left + numeric scale labels (25mm, 104°F, etc.) to
+  // its right, without colliding.
+  const PAD_L = 56;
   const PAD_R = 6;
   const AXIS_H = 14;
   const LANE_H = 9;        // per-species band; many lanes per region
@@ -295,19 +298,34 @@
   }
 
   /** Polygon spanning the daily min→max temperature range across the
-   *  year. Rendered twice with different clip-paths: once in warm
-   *  (above freezing) and once in cool (below freezing) so winter
-   *  cold snaps read clearly without losing the per-day shape. */
+   *  year. Rendered three times with different clip-paths: cool
+   *  (below freezing), warm (32–80°F), hot (above 80°F). The
+   *  polygon outline is the daily-max line on top and the daily-min
+   *  line on the bottom, traced left-to-right then right-to-left.
+   *
+   *  Sorts the input by date defensively — out-of-order rows would
+   *  send the polygon zigzagging across the year.
+   *
+   *  Also clamps min ≤ max per day so a glitched API row (where the
+   *  archive returned higher min than max) doesn't invert that day's
+   *  band. */
   function tempRangePolygon(rows: DailyWeather[], yStart: number): string {
+    const sorted = rows
+      .filter((d) => d.temp_max_c != null && d.temp_min_c != null)
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (sorted.length === 0) return '';
     const top: string[] = [];
     const bot: string[] = [];
-    for (const d of rows) {
-      if (d.temp_max_c == null || d.temp_min_c == null) continue;
+    for (const d of sorted) {
+      const max = d.temp_max_c as number;
+      const min = d.temp_min_c as number;
+      const hi = Math.max(max, min);
+      const lo = Math.min(max, min);
       const x = doyToX(dateToDoy(d.date));
-      top.push(`${x.toFixed(1)},${tempToY(d.temp_max_c, yStart).toFixed(1)}`);
-      bot.push(`${x.toFixed(1)},${tempToY(d.temp_min_c, yStart).toFixed(1)}`);
+      top.push(`${x.toFixed(1)},${tempToY(hi, yStart).toFixed(1)}`);
+      bot.push(`${x.toFixed(1)},${tempToY(lo, yStart).toFixed(1)}`);
     }
-    if (top.length === 0) return '';
     bot.reverse();
     return [...top, ...bot].join(' ');
   }
@@ -427,11 +445,17 @@
               x={PAD_L} y={rainY} width={PLOT_W} height={RAIN_H}
               fill="#f3f8fc" stroke="#dde7ee" stroke-width="0.5"
             />
-            <!-- Left-side scale labels for rain: 0 at bottom, 25 at top -->
-            <text x={PAD_L - 2} y={rainY + 4} text-anchor="end" font-size="9" fill="#1a4a66" font-weight="600">rain</text>
-            <text x={PAD_L - 2} y={rainY + 14} text-anchor="end" font-size="8" fill="#8a948a">25mm</text>
-            <text x={PAD_L - 2} y={rainY + RAIN_H / 2 + 3} text-anchor="end" font-size="8" fill="#8a948a">12</text>
-            <text x={PAD_L - 2} y={rainY + RAIN_H - 2} text-anchor="end" font-size="8" fill="#8a948a">0</text>
+            <!-- Track-name "rain" rotated 90° on the far left, then
+                 numeric scale labels right-aligned at PAD_L − 3 -->
+            <text
+              transform={`rotate(-90 10 ${rainY + RAIN_H / 2})`}
+              x="10" y={rainY + RAIN_H / 2 + 3}
+              text-anchor="middle" font-size="10"
+              fill="#1a4a66" font-weight="600"
+            >rain</text>
+            <text x={PAD_L - 3} y={rainY + 8} text-anchor="end" font-size="8" fill="#8a948a">25 mm</text>
+            <text x={PAD_L - 3} y={rainY + RAIN_H / 2 + 3} text-anchor="end" font-size="8" fill="#8a948a">12</text>
+            <text x={PAD_L - 3} y={rainY + RAIN_H - 2} text-anchor="end" font-size="8" fill="#8a948a">0</text>
             {#if !hasWeatherData(yWeather) && rt.weather.length === 0}
               <text x={W / 2} y={rainY + RAIN_H / 2 + 3} text-anchor="middle" font-size="9" fill="#8a948a" font-style="italic">
                 {rt.weatherLoading ? 'loading weather…' : 'no weather data'}
@@ -481,12 +505,18 @@
               <line x1={PAD_L} y1={y32} x2={W - PAD_R} y2={y32} stroke="#5e7a8b" stroke-width="0.6" stroke-dasharray="3,2" opacity="0.55" />
               <line x1={PAD_L} y1={y80} x2={W - PAD_R} y2={y80} stroke="#a04030" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.4" />
             {/if}
-            <!-- Left-side scale labels for temp -->
-            <text x={PAD_L - 2} y={tempY + 4} text-anchor="end" font-size="9" fill="#7a4a10" font-weight="600">temp</text>
-            <text x={PAD_L - 2} y={yHi + 4} text-anchor="end" font-size="8" fill="#a04030">104°F</text>
-            <text x={PAD_L - 2} y={y80 + 3} text-anchor="end" font-size="8" fill="#a04030">80°F</text>
-            <text x={PAD_L - 2} y={y32 + 3} text-anchor="end" font-size="8" fill="#3a6b8b">32°F</text>
-            <text x={PAD_L - 2} y={yLo - 1} text-anchor="end" font-size="8" fill="#3a6b8b">−4°F</text>
+            <!-- Track-name "temp" rotated 90°; numeric scale labels
+                 right-aligned to its right -->
+            <text
+              transform={`rotate(-90 10 ${tempY + TEMP_H / 2})`}
+              x="10" y={tempY + TEMP_H / 2 + 3}
+              text-anchor="middle" font-size="10"
+              fill="#7a4a10" font-weight="600"
+            >temp</text>
+            <text x={PAD_L - 3} y={yHi + 8} text-anchor="end" font-size="8" fill="#a04030">104°F</text>
+            <text x={PAD_L - 3} y={y80 + 3} text-anchor="end" font-size="8" fill="#a04030">80°F</text>
+            <text x={PAD_L - 3} y={y32 + 3} text-anchor="end" font-size="8" fill="#3a6b8b">32°F</text>
+            <text x={PAD_L - 3} y={yLo - 1} text-anchor="end" font-size="8" fill="#3a6b8b">−4°F</text>
 
             <!-- All region species, one thin lane each. Window bands
                  + observation markers if present. -->
