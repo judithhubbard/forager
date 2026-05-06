@@ -44,6 +44,13 @@ jobs:
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
 
+      # GitHub Pages serves 404.html for any path it can't resolve. Mirror
+      # the SPA shell to that filename so deep links (/forager/admin,
+      # /forager/accept?token=…) still load the app and route client-side
+      # instead of hitting the generic Pages 404.
+      - name: Copy index.html to 404.html for SPA deep links
+        run: cp build/index.html build/404.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

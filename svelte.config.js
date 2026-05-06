@@ -9,12 +9,11 @@ const config = {
     adapter: adapter({
       pages: 'build',
       assets: 'build',
-      // SPA fallback: GitHub Pages serves 404.html for any path it
-      // can't resolve, so writing the SvelteKit shell to that filename
-      // makes deep links (/forager/admin, /forager/accept?token=...)
-      // hydrate and route client-side. The root index.html is still
-      // produced by adapter-static for the home URL.
-      fallback: '404.html',
+      // SPA fallback: every unknown route is served the SvelteKit
+      // shell, which then hydrates and routes client-side. The deploy
+      // workflow copies this file to 404.html as well so GitHub Pages
+      // serves the shell on deep links it can't resolve.
+      fallback: 'index.html',
       precompress: false,
       strict: true
     }),
