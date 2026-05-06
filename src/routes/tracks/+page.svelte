@@ -144,6 +144,11 @@
     }
   }
 
+  function onShowToggle(e: Event, trackId: string) {
+    if ((e.currentTarget as HTMLInputElement).checked) showTrack(trackId);
+    else hideTrack(trackId);
+  }
+
   async function onDelete(t: TrackRow) {
     if (!confirm(`Delete "${t.title ?? 'this track'}"? This cannot be undone.`)) return;
     try {
@@ -285,10 +290,7 @@
               <input
                 type="checkbox"
                 checked={$displayedTrackIds.has(t.id)}
-                on:change={(e) => {
-                  if ((e.currentTarget as HTMLInputElement).checked) showTrack(t.id);
-                  else hideTrack(t.id);
-                }}
+                on:change={(e) => onShowToggle(e, t.id)}
                 title="Toggle this track on the map"
               />
             </td>
