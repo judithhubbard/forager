@@ -3,6 +3,10 @@
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
   import { recentRain, formatMm } from '$lib/services/weatherService';
+  // leaflet.heat is a side-effect import that attaches a
+  // heatLayer factory to the L namespace at runtime. No type
+  // export, so we cast the runtime L object where we use it.
+  import 'leaflet.heat';
 
   type ForageCategory = 'fruit' | 'bramble' | 'nut' | 'mushroom' | 'other' | 'unknown';
 
@@ -92,6 +96,12 @@
   };
   export let clusters: ClusterPoint[] = [];
 
+  /** Foraging heatmap points: flat [lat, lng] pairs from the user's
+   *  uploaded tracks. Rendered as a leaflet.heat density layer when
+   *  non-empty. Computed in +page.svelte and gated by
+   *  $settings.showHeatmap. */
+  export let heatPoints: Array<[number, number]> = [];
+
   /** Setting this prop animates the map to the given location. Parent
    *  passes a fresh object on each desired fly (e.g. after a geocode
    *  result is picked); we never null it back out — Svelte fires the
@@ -116,6 +126,7 @@
   let map: import('leaflet').Map | undefined;
   let markerLayer: import('leaflet').LayerGroup | undefined;
   let clusterLayer: import('leaflet').LayerGroup | undefined;
+  let heatLayer: import('leaflet').Layer | undefined;
   let userMarker: import('leaflet').CircleMarker | undefined;
   /** Cached leaflet module — set once in onMount so renderPins can
    *  run fully synchronously. Without this, every render had to
@@ -175,6 +186,35 @@
   // current viewport.
   $: if (map && clusterLayer && LCache) {
     renderClusters(clusters);
+  }
+  // Heatmap: build/replace the leaflet.heat layer whenever the
+  // points prop changes. Empty array means "no layer."
+  $: if (map && LCache) {
+    renderHeat(heatPoints);
+  }
+
+  function renderHeat(points: Array<[number, number]>) {
+    if (!map || !LCache) return;
+    if (heatLayer) {
+      heatLayer.remove();
+      heatLayer = undefined;
+    }
+    if (points.length === 0) return;
+    // leaflet.heat is attached at runtime via the side-effect import
+    // at the top of this script.
+    const L = LCache as unknown as {
+      heatLayer: (
+        latlngs: Array<[number, number]>,
+        options?: { radius?: number; blur?: number; maxZoom?: number; minOpacity?: number }
+      ) => import('leaflet').Layer;
+    };
+    heatLayer = L.heatLayer(points, {
+      radius: 22,
+      blur: 18,
+      minOpacity: 0.25,
+      maxZoom: 17
+    });
+    heatLayer.addTo(map);
   }
 
   async function locateMe() {

@@ -38,6 +38,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
     "svelte-i18n": "^4.0.1",
     "uuid": "^11.0.0"
   }

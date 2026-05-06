@@ -15,6 +15,7 @@
     type PinCluster
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
+  import { listMyTrackPoints } from '$lib/services/trackService';
   import Map from '$lib/components/Map.svelte';
   import DropPinModal from '$lib/components/DropPinModal.svelte';
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
@@ -34,6 +35,30 @@
   let pins: PinEffective[] = [];
   let clusters: PinCluster[] = [];
   let pinsLoading = false;
+
+  /** Heatmap points loaded from the user's uploaded tracks. Lazy:
+   *  fetched the first time the user enables the toggle and cached
+   *  for the session so subsequent on/off flips are instant. Cleared
+   *  on sign-out via the session reactive below. */
+  let heatPoints: Array<[number, number]> = [];
+  let heatLoading = false;
+  let heatLoaded = false;
+  $: if ($settings.showHeatmap && $session && !heatLoaded && !heatLoading) {
+    heatLoading = true;
+    listMyTrackPoints()
+      .then((pts) => {
+        heatPoints = pts;
+        heatLoaded = true;
+      })
+      .catch((e) => {
+        console.error('[+page] heatmap fetch failed', e);
+      })
+      .finally(() => {
+        heatLoading = false;
+      });
+  }
+  // Hide heatmap when toggle is off OR the user signs out.
+  $: shownHeatPoints = $settings.showHeatmap && $session ? heatPoints : [];
   // Track the last requested viewport so a stale in-flight load that
   // resolves after a newer one doesn't clobber the visible layer.
   let viewportSeq = 0;
@@ -696,6 +721,7 @@
   <Map
     pins={filteredPins}
     {clusters}
+    heatPoints={shownHeatPoints}
     {categoryOf}
     colorOf={colorOfPin}
     {labelOf}

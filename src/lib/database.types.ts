@@ -1139,6 +1139,17 @@ export type Database = {
           },
         ]
       }
+      v_track_points_latlng: {
+        Row: {
+          track_id: string | null
+          recorded_at: string | null
+          lng: number | null
+          lat: number | null
+          elevation_m: number | null
+          accuracy_m: number | null
+        }
+        Relationships: []
+      }
       v_pin_effective: {
         Row: {
           access_status: Database["public"]["Enums"]["access_status"] | null

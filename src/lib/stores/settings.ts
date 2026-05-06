@@ -30,12 +30,17 @@ interface Settings {
    *  the tools menu; the value sticks across uploads so the user
    *  doesn't have to reselect each time. */
   defaultPhotoLicense: PhotoLicense;
+  /** Show the foraging heatmap (built from the user's uploaded
+   *  tracks) overlaid on the map. Defaults off to keep the initial
+   *  paint clean. */
+  showHeatmap: boolean;
 }
 const DEFAULT: Settings = {
   basemap: 'osm-hot',
   disclaimerAcceptedAt: null,
   colorBy: 'group',
-  defaultPhotoLicense: 'CC-BY-SA-4.0'
+  defaultPhotoLicense: 'CC-BY-SA-4.0',
+  showHeatmap: false
 };
 
 const ALLOWED_LICENSES: PhotoLicense[] = [
@@ -59,7 +64,8 @@ function normalize(s: Partial<Settings>): Settings {
     basemap: b,
     disclaimerAcceptedAt: s.disclaimerAcceptedAt ?? null,
     colorBy: cb,
-    defaultPhotoLicense: lic
+    defaultPhotoLicense: lic,
+    showHeatmap: !!s.showHeatmap
   };
 }
 
@@ -97,4 +103,8 @@ export function setColorBy(cb: ColorBy): void {
 
 export function setDefaultPhotoLicense(lic: PhotoLicense): void {
   settings.update((s) => ({ ...s, defaultPhotoLicense: lic }));
+}
+
+export function setShowHeatmap(v: boolean): void {
+  settings.update((s) => ({ ...s, showHeatmap: v }));
 }

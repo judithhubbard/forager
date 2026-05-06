@@ -24,6 +24,37 @@ export type TrackRow = {
   updated_at: string;
 };
 
+/** Pull every track point belonging to the signed-in user as
+ *  flat [lat, lng] pairs — the format leaflet.heat consumes
+ *  directly. Paginated since PostgREST caps each response at 1000
+ *  rows. Backed by the v_track_points_latlng view (migration 24)
+ *  which inherits track_points's RLS via security_invoker. */
+export async function listMyTrackPoints(): Promise<Array<[number, number]>> {
+  const all: Array<[number, number]> = [];
+  const PAGE = 1000;
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await supabase
+      .from('v_track_points_latlng')
+      .select('lat, lng')
+      .range(offset, offset + PAGE - 1);
+    if (error) {
+      console.error('[trackService] listMyTrackPoints error:', error);
+      throw error;
+    }
+    const rows = (data ?? []) as Array<{ lat: number; lng: number }>;
+    for (const r of rows) {
+      if (Number.isFinite(r.lat) && Number.isFinite(r.lng)) {
+        all.push([r.lat, r.lng]);
+      }
+    }
+    if (rows.length < PAGE) break;
+    // Safety stop — track datasets above this size will need a
+    // bbox-aware fetch. Worth revisiting at that scale.
+    if (all.length > 50000) break;
+  }
+  return all;
+}
+
 export async function listMine(): Promise<TrackRow[]> {
   const { data, error } = await supabase
     .from('tracks')
