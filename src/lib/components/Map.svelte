@@ -22,11 +22,6 @@
    *  panel is open so it doesn't collide with the panel's close button. */
   export let hideLocate: boolean = false;
 
-  /** Marker style for the four forage categories. Temporary picker in
-   *  the filter bar drives this so the user can compare options. */
-  type SymbolStyle = 'circle' | 'shape' | 'letter' | 'emoji';
-  export let symbolStyle: SymbolStyle = 'circle';
-
   /** When true, the next click on empty map area fires mapTap (so the
    *  parent can open the drop-pin flow at that coordinate). The map
    *  also gets a crosshair cursor as a visual cue. Used by the desktop
@@ -99,13 +94,11 @@
   const isTouch =
     typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
-  // Reactive update of markers when `pins`, the symbol style, the
-  // selected pin, or the color resolver changes. All passed
-  // explicitly so Svelte tracks them as deps and renderPins reads
-  // values at call time.
+  // Reactive update of markers when `pins`, the selected pin, or the
+  // color resolver changes.
   $: if (map && markerLayer) {
     void colorOf; // keep colorOf in the dependency set
-    renderPins(pins, symbolStyle, selectedPinId);
+    renderPins(pins, selectedPinId);
   }
 
   async function locateMe() {
@@ -156,7 +149,6 @@
 
   function renderPins(
     currentPins: PinEffective[],
-    style: SymbolStyle,
     selectedId: string | null
   ) {
     if (!markerLayer || !map) return;
@@ -230,65 +222,25 @@
           }).addTo(markerLayer);
         }
 
-        // Main pin marker. Style depends on the picker:
-        //   circle: existing colored disc
-        //   shape:  shape varies per category (●■▲◆) in the same color
-        //   letter: bold F/N/M/O letter inside the colored disc
-        //   emoji:  category-appropriate emoji (no disc)
+        // Main pin marker — shape varies by category (●■▲◆ for
+        // fruit/nut/mushroom/other, ★ for brambles), filled with the
+        // group color. Rendered as a non-interactive divIcon; the
+        // transparent hit-target circle below captures clicks.
         const cat = categoryOf(pin);
         const px = baseR * 2;
         const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
         const opacityCss = fillOpacity.toFixed(2);
-        let marker: import('leaflet').Layer;
-        if (style === 'circle') {
-          marker = L.circleMarker([pin.lat, pin.lng], {
-            radius: baseR,
-            color: '#1f2a1f',
-            fillColor: fill,
-            fillOpacity,
-            opacity: strokeOpacity,
-            weight: 1.4,
-            bubblingMouseEvents: false
-          });
-        } else if (style === 'shape') {
-          const html = shapeHtml(cat, fillVisible, opacityCss, px);
-          marker = L.marker([pin.lat, pin.lng], {
-            icon: L.divIcon({
-              className: 'forager-shape',
-              html,
-              iconSize: [px + 4, px + 4],
-              iconAnchor: [(px + 4) / 2, (px + 4) / 2]
-            }),
-            keyboard: false,
-            interactive: false
-          });
-        } else if (style === 'letter') {
-          const letter = ({ fruit: 'F', bramble: 'B', nut: 'N', mushroom: 'M', other: 'O', unknown: '?' } as const)[cat];
-          marker = L.marker([pin.lat, pin.lng], {
-            icon: L.divIcon({
-              className: 'forager-letter',
-              html: `<span style="background:${fillVisible};opacity:${opacityCss};width:${px + 2}px;height:${px + 2}px;font-size:${Math.max(9, baseR + 3)}px;">${letter}</span>`,
-              iconSize: [px + 2, px + 2],
-              iconAnchor: [(px + 2) / 2, (px + 2) / 2]
-            }),
-            keyboard: false,
-            interactive: false
-          });
-        } else {
-          // emoji
-          const emoji = ({ fruit: '🍒', bramble: '🍇', nut: '🌰', mushroom: '🍄', other: '🌿', unknown: '📍' } as const)[cat];
-          const sizePx = Math.round(baseR * 2.6);
-          marker = L.marker([pin.lat, pin.lng], {
-            icon: L.divIcon({
-              className: 'forager-emoji',
-              html: `<span style="font-size:${sizePx}px;opacity:${opacityCss};">${emoji}</span>`,
-              iconSize: [sizePx + 2, sizePx + 2],
-              iconAnchor: [(sizePx + 2) / 2, (sizePx + 2) / 2]
-            }),
-            keyboard: false,
-            interactive: false
-          });
-        }
+        const html = shapeHtml(cat, fillVisible, opacityCss, px);
+        const marker = L.marker([pin.lat, pin.lng], {
+          icon: L.divIcon({
+            className: 'forager-shape',
+            html,
+            iconSize: [px + 4, px + 4],
+            iconAnchor: [(px + 4) / 2, (px + 4) / 2]
+          }),
+          keyboard: false,
+          interactive: false
+        });
         marker.addTo(markerLayer);
 
         // On touch devices the visual marker is too small for a finger
@@ -413,7 +365,7 @@
     // `map` exists, so no need for a hardcoded layer here.
 
     markerLayer = L.layerGroup().addTo(map);
-    renderPins(pins, symbolStyle, selectedPinId);
+    renderPins(pins, selectedPinId);
 
     // Long-press (or right-click on desktop) on empty map area: emit
     // mapTap. Marker clicks still don't bubble here. Using contextmenu
@@ -542,31 +494,12 @@
     to { transform: rotate(360deg); }
   }
   /* Leaflet inserts divIcons outside our scoped CSS, so target them via
-     :global. They're decorative — actual taps go to the transparent
-     hit-target circle layered on top in renderPins. */
-  :global(.forager-shape),
-  :global(.forager-letter),
-  :global(.forager-emoji) {
+     :global. The shape itself is decorative — actual taps go to the
+     transparent hit-target circle layered on top in renderPins. */
+  :global(.forager-shape) {
     pointer-events: none;
     background: transparent;
     border: 0;
-  }
-  :global(.forager-letter span) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    color: white;
-    font-weight: 700;
-    line-height: 1;
-    border: 1.5px solid white;
-    box-sizing: border-box;
-    font-family: system-ui, -apple-system, sans-serif;
-  }
-  :global(.forager-emoji span) {
-    display: inline-block;
-    line-height: 1;
-    text-shadow: 0 0 2px white, 0 0 2px white;
   }
   .loc-error {
     position: absolute;

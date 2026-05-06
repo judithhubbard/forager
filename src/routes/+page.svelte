@@ -122,9 +122,6 @@
   let filterStatus: FilterStatus = 'active';
   let showLegend = true;
 
-  // Temporary symbol-style picker so the user can compare options live.
-  // Pick one and we'll bake it in as the default; remove the picker.
-  let symbolStyle: 'circle' | 'shape' | 'letter' | 'emoji' = 'circle';
 
   let selectedPinId: string | null = null;
 
@@ -564,16 +561,6 @@
         <option value="confirmed_harvest">Confirmed harvest history ({statusCounts.confirmed_harvest})</option>
       </select>
     </label>
-    <!-- Temporary symbol-style picker. Will be removed once a style is chosen. -->
-    <label>
-      Symbols:
-      <select bind:value={symbolStyle}>
-        <option value="circle">● Circles (current)</option>
-        <option value="shape">●■▲◆ Shapes per category</option>
-        <option value="letter">F/N/M/O letters</option>
-        <option value="emoji">🍒🌰🍄🌿 Emoji</option>
-      </select>
-    </label>
   </div>
 
   <Map
@@ -581,7 +568,6 @@
     {categoryOf}
     colorOf={colorOfPin}
     {labelOf}
-    {symbolStyle}
     {selectedPinId}
     basemap={$settings.basemap}
     placing={placingPin}
