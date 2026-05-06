@@ -66,7 +66,7 @@
           class="pw-toggle"
           on:click={() => (showPassword = !showPassword)}
           aria-label={showPassword ? 'Hide password' : 'Show password'}
-        >{showPassword ? '🙈' : '👁'}</button>
+        >{showPassword ? '👁' : '🙈'}</button>
       </div>
     </label>
 
