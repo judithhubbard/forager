@@ -181,6 +181,18 @@
     return GROUP_LABELS[genus] ?? genus;
   }
 
+  /** Group label for the *timeline* specifically — flatter than the
+   *  map's groupOf. The map gives each Rubus species its own group
+   *  (and color) so blackberries / wineberries / black raspberries
+   *  stand out individually. The timeline is more compact and the
+   *  user asked for all brambles to cluster as one group. Same
+   *  treatment for any other family that has many fine-grained
+   *  groups in groupOf — collapse to a parent name here. */
+  function timelineGroupOf(s: Species): string {
+    if (s.scientific_name.startsWith('Rubus ')) return 'Bramble';
+    return groupOf(s);
+  }
+
   /** Forage category for a species — same logic as +page.svelte so
    *  the timeline lanes group like the map filter panel: fruit
    *  trees, then brambles, then nuts, then mushrooms, then other. */
@@ -306,8 +318,8 @@
       const ca = CAT_ORDER.indexOf(categoryOfSpecies(sa));
       const cb = CAT_ORDER.indexOf(categoryOfSpecies(sb));
       if (ca !== cb) return ca - cb;
-      const ga = groupOf(sa);
-      const gb = groupOf(sb);
+      const ga = timelineGroupOf(sa);
+      const gb = timelineGroupOf(sb);
       if (ga !== gb) return ga.localeCompare(gb);
       return sa.common_name.localeCompare(sb.common_name);
     });
@@ -379,7 +391,7 @@
   function laneColor(speciesId: string): string {
     const s = speciesById[speciesId];
     if (!s) return '#999';
-    return colorForGroup(groupOf(s));
+    return colorForGroup(timelineGroupOf(s));
   }
 
   /** Compute lane positions for a region, inserting an extra gap and
@@ -400,7 +412,7 @@
     for (const sid of sids) {
       const s = speciesById[sid];
       if (!s) continue;
-      const group = groupOf(s);
+      const group = timelineGroupOf(s);
       const first = group !== prev;
       if (first && prev !== null) y += GROUP_GAP;
       slots.push({ sid, y, group, color: colorForGroup(group), isFirstInGroup: first });
