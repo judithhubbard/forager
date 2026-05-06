@@ -279,14 +279,16 @@
         // fruit/nut/mushroom/other, ★ for brambles), filled with the
         // group color. Rendered as a non-interactive divIcon; the
         // transparent hit-target circle below captures clicks.
-        // Public pins get a dotted stroke so they're visibly distinct
-        // from a paid user's own/group pins on the same map (Phase 2D).
+        // (Public-vs-personal differentiation is communicated through
+        // the chip in the detail panel and the tooltip suffix; the
+        // dashed-stroke experiment was hard to read at 12px so we
+        // dropped it. shapeHtml still accepts a dotted flag for
+        // future use.)
         const cat = categoryOf(pin);
         const px = baseR * 2;
         const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
         const opacityCss = fillOpacity.toFixed(2);
-        const dotted = pin.visibility === 'public';
-        const html = shapeHtml(cat, fillVisible, opacityCss, px, dotted);
+        const html = shapeHtml(cat, fillVisible, opacityCss, px);
         const marker = L.marker([pin.lat, pin.lng], {
           icon: L.divIcon({
             className: 'forager-shape',
