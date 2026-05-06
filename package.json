@@ -15,7 +15,9 @@
     "seed:dev": "tsx scripts/seed-dev.ts",
     "import:cornell": "tsx scripts/import/cornell-cti.ts",
     "import:ithaca": "tsx scripts/import/ithaca-ti.ts",
-    "import:cornell-bg": "tsx scripts/import/cornell-bg.ts"
+    "import:cornell-bg": "tsx scripts/import/cornell-bg.ts",
+    "import:nyc-trees": "tsx scripts/import/nyc-trees.ts",
+    "import:chicago-trees": "tsx scripts/import/chicago-trees.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.0",
