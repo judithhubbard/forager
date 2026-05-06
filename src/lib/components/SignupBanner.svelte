@@ -18,8 +18,8 @@
 
 <div class="banner" role="region" aria-label="Sign up prompt">
   <p class="msg">
-    <strong>Sign up free</strong> to save your finds, get notified when
-    berries are ripe, and create private spots.
+    <strong>Sign up free</strong> to follow species you forage and get
+    a heads-up when they're ripe near you.
   </p>
   <div class="actions">
     <button class="primary" on:click={() => go('/register')}>Sign up free</button>
