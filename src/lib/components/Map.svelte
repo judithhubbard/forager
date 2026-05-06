@@ -273,6 +273,20 @@
   // Recorder overlay state — local to the controls UI.
   let recSaving = false;
   let recError = '';
+  /** Elapsed-time label, recomputed by a top-level $: reactive
+   *  whenever either the recording state or the wall-clock store
+   *  changes. The earlier @const-inside-template approach didn't
+   *  reliably re-evaluate when only $now changed — Svelte 4's
+   *  reactivity for @const is tied to the surrounding block's
+   *  invalidation, which doesn't always fire from a deep store
+   *  subscription. A script-level reactive guarantees it. */
+  let elapsedLabel = '0:00';
+  $: {
+    const ms = $recording.startedAt
+      ? ($recording.endedAt ?? $now) - $recording.startedAt
+      : 0;
+    elapsedLabel = fmtElapsedShort(ms);
+  }
   function fmtElapsedShort(ms: number): string {
     if (ms <= 0) return '0:00';
     const total = Math.floor(ms / 1000);
@@ -771,10 +785,6 @@
         Record
       </button>
     {:else}
-      {@const elapsed =
-        $recording.startedAt
-          ? ($recording.endedAt ?? $now) - $recording.startedAt
-          : 0}
       <button
         class="rec-active"
         on:click={clickStop}
@@ -788,7 +798,7 @@
         {:else}
           <span class="rec-paused-icon" aria-hidden="true">⏸</span>
         {/if}
-        <span class="rec-elapsed">{fmtElapsedShort(elapsed)}</span>
+        <span class="rec-elapsed">{elapsedLabel}</span>
         <span class="rec-stop-icon" aria-hidden="true">⏹</span>
       </button>
       {#if $recording.error}
