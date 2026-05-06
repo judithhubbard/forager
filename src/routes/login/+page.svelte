@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { base } from '$app/paths';
   import { signInWithPassword } from '$lib/services/authService';
 
   let email = '';
@@ -80,7 +81,8 @@
   </form>
 
   <p class="footnote">
-    Accounts are invitation-only. If you do not have one, ask the person who invited you.
+    Don't have an account?
+    <a href={base + '/register'}>Sign up free</a>.
   </p>
 </main>
 
