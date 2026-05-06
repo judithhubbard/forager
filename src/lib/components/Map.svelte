@@ -31,6 +31,12 @@
   let markerLayer: import('leaflet').LayerGroup | undefined;
   let userMarker: import('leaflet').CircleMarker | undefined;
 
+  // Surface geolocation state so the user sees what's happening when they
+  // tap the locate button — silent failures were a recurring source of
+  // "the button does nothing" reports.
+  let locating = false;
+  let locationError = '';
+
   // Coarse pointer (touch device) gets larger hit target.
   const isTouch =
     typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
@@ -39,9 +45,16 @@
   $: if (map && markerLayer) renderPins(pins);
 
   async function locateMe() {
-    if (!map || !navigator.geolocation) return;
+    if (!map) return;
+    if (!navigator.geolocation) {
+      locationError = 'This browser does not support geolocation.';
+      return;
+    }
+    locating = true;
+    locationError = '';
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        locating = false;
         if (!map) return;
         const { latitude, longitude } = pos.coords;
         map.setView([latitude, longitude], 15);
@@ -59,7 +72,19 @@
         });
       },
       (err) => {
-        console.warn('[Map] geolocation failed:', err.message);
+        locating = false;
+        // PERMISSION_DENIED=1, POSITION_UNAVAILABLE=2, TIMEOUT=3
+        const reason =
+          err.code === 1 ? 'Location permission was denied — check the lock icon ↑ in the address bar.'
+          : err.code === 2 ? 'Could not determine location.'
+          : err.code === 3 ? 'Location request timed out.'
+          : err.message || 'Could not get location.';
+        locationError = reason;
+        console.warn('[Map] geolocation failed:', err.code, err.message);
+        // Auto-clear the error after a few seconds so it doesn't linger.
+        setTimeout(() => {
+          if (locationError === reason) locationError = '';
+        }, 6000);
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -211,16 +236,29 @@
 <div class="map-wrap">
   <div bind:this={mapEl} class="map" />
   {#if !hideLocate}
-    <button class="locate" on:click={locateMe} aria-label="Center map on my location">
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-        <circle cx="12" cy="12" r="2.5" fill="currentColor" />
-        <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.6" />
-        <line x1="12" y1="1.5" x2="12" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-        <line x1="12" y1="20" x2="12" y2="22.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-        <line x1="1.5" y1="12" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-        <line x1="20" y1="12" x2="22.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-      </svg>
+    <button
+      class="locate"
+      class:locating
+      on:click={locateMe}
+      disabled={locating}
+      aria-label="Center map on my location"
+    >
+      {#if locating}
+        <span class="spinner" aria-hidden="true"></span>
+      {:else}
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+          <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.6" />
+          <line x1="12" y1="1.5" x2="12" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <line x1="12" y1="20" x2="12" y2="22.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <line x1="1.5" y1="12" x2="4" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <line x1="20" y1="12" x2="22.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      {/if}
     </button>
+  {/if}
+  {#if locationError}
+    <div class="loc-error" role="status">{locationError}</div>
   {/if}
 </div>
 
@@ -257,11 +295,40 @@
   .locate:active {
     background: #eaf2ea;
   }
+  .locate.locating { cursor: progress; }
+  .locate:disabled { opacity: 1; }
+  .spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #c7d0c7;
+    border-top-color: #3a5a3a;
+    border-radius: 50%;
+    animation: locspin 0.8s linear infinite;
+  }
+  @keyframes locspin {
+    to { transform: rotate(360deg); }
+  }
+  .loc-error {
+    position: absolute;
+    top: 3.5rem;
+    right: 0.75rem;
+    z-index: 1100;
+    max-width: 18rem;
+    background: #fff5f5;
+    border: 1px solid #d6a3a3;
+    color: #a02323;
+    padding: 0.45rem 0.65rem;
+    border-radius: 0.35rem;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  }
   @media (max-width: 640px) {
     .locate {
       width: 2.85rem;
       height: 2.85rem;
       font-size: 1.25rem;
     }
+    .loc-error { top: 3.85rem; max-width: 15rem; }
   }
 </style>
