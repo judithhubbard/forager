@@ -850,7 +850,10 @@
 {/if}
 
 <style>
-  .content { padding: 0.6rem 0.9rem 2rem; font-size: 0.9rem; }
+  /* Generous side padding so every section has breathing room from the
+     panel edge. The :where() bumps specificity in case any parent
+     :global rule competes with this. */
+  :where(.content) { padding: 0.6rem 1.1rem 2rem 1.2rem; font-size: 0.9rem; box-sizing: border-box; }
   .hint { color: #6b7a6b; font-size: 0.85rem; margin: 0.25rem 0; }
   .error { color: #b03030; font-size: 0.85rem; margin: 0.25rem 0; }
   .muted { color: #8a948a; }

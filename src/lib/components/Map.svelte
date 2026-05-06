@@ -29,6 +29,11 @@
    *  primary entry point. */
   export let placing: boolean = false;
 
+  /** Currently-selected pin (whose detail panel is open). Drawn with a
+   *  highlight ring so the user can see which pin on the map they're
+   *  looking at — especially useful when several pins cluster. */
+  export let selectedPinId: string | null = null;
+
   export let pins: PinEffective[] = [];
   export let center: [number, number] = [42.4534, -76.4836]; // Cornell campus default
   export let zoom: number = 14;
@@ -53,11 +58,10 @@
   const isTouch =
     typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
-  // Reactive update of markers when `pins` or the symbol style changes.
-  // symbolStyle is included in the condition (always truthy) so Svelte
-  // tracks it as a dependency — a bare `void symbolStyle` was getting
-  // optimized away and the markers didn't refresh on picker change.
-  $: if (map && markerLayer && symbolStyle) renderPins(pins);
+  // Reactive update of markers when `pins`, the symbol style, or the
+  // selected pin changes. All three are passed explicitly so Svelte
+  // tracks them as deps AND renderPins reads the value at call time.
+  $: if (map && markerLayer) renderPins(pins, symbolStyle, selectedPinId);
 
   async function locateMe() {
     if (!map) return;
@@ -105,7 +109,11 @@
     );
   }
 
-  function renderPins(currentPins: PinEffective[]) {
+  function renderPins(
+    currentPins: PinEffective[],
+    style: SymbolStyle,
+    selectedId: string | null
+  ) {
     if (!markerLayer || !map) return;
     markerLayer.clearLayers();
     import('leaflet').then((L) => {
@@ -113,6 +121,7 @@
       for (const pin of currentPins) {
         if (pin.lat == null || pin.lng == null) continue;
         const fill = colorFor(pin);
+        const isSelected = !!selectedId && pin.id === selectedId;
         const isStrictRipe = pin.is_ripe_strict === true;
         const isPossibly = pin.is_ripe_now === true; // already widened by the buffer
         const muted =
@@ -121,6 +130,26 @@
         const fillOpacity = inaccessible ? 0.2 : muted ? 0.45 : 0.9;
         const strokeOpacity = inaccessible ? 0.6 : muted ? 0.8 : 1.0;
         const baseR = isTouch ? 6 : 4.5;
+
+        // Selected-pin highlight ring (drawn first so it sits below).
+        if (isSelected) {
+          L.circleMarker([pin.lat, pin.lng], {
+            radius: baseR + 13,
+            color: '#1f6fe0',
+            fill: false,
+            weight: 1.5,
+            opacity: 0.35,
+            interactive: false
+          }).addTo(markerLayer);
+          L.circleMarker([pin.lat, pin.lng], {
+            radius: baseR + 7,
+            color: '#1f6fe0',
+            fill: false,
+            weight: 2.5,
+            opacity: 1,
+            interactive: false
+          }).addTo(markerLayer);
+        }
 
         // Add ripeness rings BEFORE the main marker (so they render
         // beneath it). Strict ripe gets the bold double-ring treatment to
@@ -166,7 +195,7 @@
         const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
         const opacityCss = fillOpacity.toFixed(2);
         let marker: import('leaflet').Layer;
-        if (symbolStyle === 'circle') {
+        if (style === 'circle') {
           marker = L.circleMarker([pin.lat, pin.lng], {
             radius: baseR,
             color: '#ffffff',
@@ -176,7 +205,7 @@
             weight: 1.5,
             bubblingMouseEvents: false
           });
-        } else if (symbolStyle === 'shape') {
+        } else if (style === 'shape') {
           const html = shapeHtml(cat, fillVisible, opacityCss, px);
           marker = L.marker([pin.lat, pin.lng], {
             icon: L.divIcon({
@@ -188,7 +217,7 @@
             keyboard: false,
             interactive: false
           });
-        } else if (symbolStyle === 'letter') {
+        } else if (style === 'letter') {
           const letter = ({ fruit: 'F', nut: 'N', mushroom: 'M', other: 'O', unknown: '?' } as const)[cat];
           marker = L.marker([pin.lat, pin.lng], {
             icon: L.divIcon({
@@ -323,7 +352,7 @@
     }).addTo(map);
 
     markerLayer = L.layerGroup().addTo(map);
-    renderPins(pins);
+    renderPins(pins, symbolStyle, selectedPinId);
 
     // Long-press (or right-click on desktop) on empty map area: emit
     // mapTap. Marker clicks still don't bubble here. Using contextmenu

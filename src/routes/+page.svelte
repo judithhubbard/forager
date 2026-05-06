@@ -424,6 +424,7 @@
     {categoryOf}
     {labelOf}
     {symbolStyle}
+    {selectedPinId}
     placing={placingPin}
     hideLocate={!!selectedPinId}
     on:pinClick={handlePinClick}
