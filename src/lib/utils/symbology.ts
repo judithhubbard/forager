@@ -91,8 +91,8 @@ export function colorForCategoryFallback(
 ): string {
   switch (cat) {
     case 'fruit':    return '#e41a1c'; // red
-    case 'bramble':  return '#ff7f00'; // orange
-    case 'nut':      return '#a65628'; // brown
+    case 'bramble':  return '#ffd400'; // yellow
+    case 'nut':      return '#1f78b4'; // blue
     case 'mushroom': return '#984ea3'; // purple
     case 'other':    return '#4daf4a'; // green
     default:         return '#999999'; // neutral gray

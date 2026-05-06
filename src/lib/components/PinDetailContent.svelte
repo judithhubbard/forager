@@ -48,6 +48,7 @@
     unwatch as unwatchRow,
     type WatchlistRow
   } from '$lib/services/watchlistService';
+  import { recentRain, formatMm, type RecentRain } from '$lib/services/weatherService';
   import {
     listByPin as listPhotos,
     signUrls,
@@ -116,6 +117,31 @@
 
   let watching: WatchlistRow | null = null;
   let watchBusy = false;
+
+  /** Past-7-day rainfall at the pin location. Fetched lazily for
+   *  mushroom-category species since rain is the dominant predictor
+   *  of a mushroom flush; the fetch is skipped for trees / brambles
+   *  where rainfall is much less informative. */
+  let rain: RecentRain | null = null;
+  let rainLoading = false;
+  $: isMushroom = !!(species?.forage_parts?.includes('mushroom'));
+  async function maybeFetchRain() {
+    if (!isMushroom || !pin || pin.lng == null || pin.lat == null) {
+      rain = null;
+      return;
+    }
+    rainLoading = true;
+    try {
+      rain = await recentRain(pin.lng, pin.lat, 7);
+    } catch {
+      rain = null;
+    } finally {
+      rainLoading = false;
+    }
+  }
+  // Refetch when pin OR species changes — species can resolve a tick
+  // after pin loads, so we react to both.
+  $: if (pin && species) void maybeFetchRain();
   async function refreshWatching(id: string) {
     if (!$session) {
       watching = null;
@@ -746,6 +772,17 @@
           </div>
         </div>
       {/if}
+      {#if isMushroom}
+        <div class="rain-row" title="Recent rainfall at this location. Open-Meteo data, last 7 days.">
+          {#if rainLoading}
+            <span class="rain-chip rain-loading">🌧 …</span>
+          {:else if rain}
+            <span class="rain-chip" class:dry={rain.total_mm < 5} class:wet={rain.total_mm >= 25}>
+              🌧 {formatMm(rain.total_mm)} in last 7 days
+            </span>
+          {/if}
+        </div>
+      {/if}
       {#if $session}
         <div class="status-edit-row">
           <select bind:value={pendingStatus}>
@@ -1330,6 +1367,19 @@
     padding: 0.05rem 0.45rem;
     border-radius: 0.45rem;
   }
+  .rain-row { margin: 0.45rem 0 0.2rem; }
+  .rain-chip {
+    display: inline-block;
+    background: #e3eff5;
+    border: 1px solid #a8cde0;
+    color: #1a4a66;
+    padding: 0.15rem 0.55rem;
+    border-radius: 0.4rem;
+    font-size: 0.82rem;
+  }
+  .rain-chip.dry  { background: #fdf4e3; border-color: #e8c97a; color: #7a4a10; }
+  .rain-chip.wet  { background: #d4e9f5; border-color: #6fa9d0; color: #0e3b58; }
+  .rain-chip.rain-loading { background: #f5f8f5; border-color: #d4ddd2; color: #6b7a6b; font-style: italic; }
   .watch-row { margin: 0.35rem 0; }
   .watch-btn {
     background: white;
