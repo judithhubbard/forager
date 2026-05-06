@@ -17,6 +17,11 @@
    *  panel is open so it doesn't collide with the panel's close button. */
   export let hideLocate: boolean = false;
 
+  /** Marker style for the four forage categories. Temporary picker in
+   *  the filter bar drives this so the user can compare options. */
+  type SymbolStyle = 'circle' | 'shape' | 'letter' | 'emoji';
+  export let symbolStyle: SymbolStyle = 'circle';
+
   export let pins: PinEffective[] = [];
   export let center: [number, number] = [42.4534, -76.4836]; // Cornell campus default
   export let zoom: number = 14;
@@ -41,8 +46,11 @@
   const isTouch =
     typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
-  // Reactive update of markers when `pins` changes.
-  $: if (map && markerLayer) renderPins(pins);
+  // Reactive update of markers when `pins` (or the symbol style) changes.
+  $: if (map && markerLayer) {
+    void symbolStyle; // re-render when the picker changes
+    renderPins(pins);
+  }
 
   async function locateMe() {
     if (!map) return;
@@ -141,19 +149,71 @@
           }).addTo(markerLayer);
         }
 
-        // Main pin marker (white outline for legibility on any map).
-        const marker = L.circleMarker([pin.lat, pin.lng], {
-          radius: baseR,
-          color: '#ffffff',
-          fillColor: fill,
-          fillOpacity,
-          opacity: strokeOpacity,
-          weight: 1.5,
-          bubblingMouseEvents: false
-        });
+        // Main pin marker. Style depends on the picker:
+        //   circle: existing colored disc
+        //   shape:  shape varies per category (●■▲◆) in the same color
+        //   letter: bold F/N/M/O letter inside the colored disc
+        //   emoji:  category-appropriate emoji (no disc)
+        const cat = categoryOf(pin);
+        const px = baseR * 2;
+        const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
+        const opacityCss = fillOpacity.toFixed(2);
+        let marker: import('leaflet').Layer;
+        if (symbolStyle === 'circle') {
+          marker = L.circleMarker([pin.lat, pin.lng], {
+            radius: baseR,
+            color: '#ffffff',
+            fillColor: fill,
+            fillOpacity,
+            opacity: strokeOpacity,
+            weight: 1.5,
+            bubblingMouseEvents: false
+          });
+        } else if (symbolStyle === 'shape') {
+          const html = shapeHtml(cat, fillVisible, opacityCss, px);
+          marker = L.marker([pin.lat, pin.lng], {
+            icon: L.divIcon({
+              className: 'forager-shape',
+              html,
+              iconSize: [px + 4, px + 4],
+              iconAnchor: [(px + 4) / 2, (px + 4) / 2]
+            }),
+            keyboard: false,
+            interactive: false
+          });
+        } else if (symbolStyle === 'letter') {
+          const letter = ({ fruit: 'F', nut: 'N', mushroom: 'M', other: 'O', unknown: '?' } as const)[cat];
+          marker = L.marker([pin.lat, pin.lng], {
+            icon: L.divIcon({
+              className: 'forager-letter',
+              html: `<span style="background:${fillVisible};opacity:${opacityCss};width:${px + 2}px;height:${px + 2}px;font-size:${Math.max(9, baseR + 3)}px;">${letter}</span>`,
+              iconSize: [px + 2, px + 2],
+              iconAnchor: [(px + 2) / 2, (px + 2) / 2]
+            }),
+            keyboard: false,
+            interactive: false
+          });
+        } else {
+          // emoji
+          const emoji = ({ fruit: '🍒', nut: '🌰', mushroom: '🍄', other: '🌿', unknown: '📍' } as const)[cat];
+          const sizePx = Math.round(baseR * 2.6);
+          marker = L.marker([pin.lat, pin.lng], {
+            icon: L.divIcon({
+              className: 'forager-emoji',
+              html: `<span style="font-size:${sizePx}px;opacity:${opacityCss};">${emoji}</span>`,
+              iconSize: [sizePx + 2, sizePx + 2],
+              iconAnchor: [(sizePx + 2) / 2, (sizePx + 2) / 2]
+            }),
+            keyboard: false,
+            interactive: false
+          });
+        }
         const label = labelOf(pin);
-        if (label) {
-          marker.bindTooltip(label, { direction: 'top', offset: [0, -2], sticky: true });
+        if (label && 'bindTooltip' in marker) {
+          (marker as import('leaflet').CircleMarker).bindTooltip(
+            label,
+            { direction: 'top', offset: [0, -2], sticky: true }
+          );
         }
         marker.addTo(markerLayer);
 
@@ -178,6 +238,54 @@
         hit.addTo(markerLayer);
       }
     });
+  }
+
+  /** SVG-as-HTML body for the "shape" style: circle/square/triangle/diamond
+   *  per category, all sized to fit the same bounding box as the circle
+   *  marker so ripeness rings still surround the centroid cleanly. */
+  function shapeHtml(
+    cat: ForageCategory,
+    fill: string,
+    opacity: string,
+    px: number
+  ): string {
+    const box = px + 4;
+    const cx = box / 2;
+    const cy = box / 2;
+    const r = px / 2;
+    const stroke = '#ffffff';
+    const sw = 1.5;
+    let body: string;
+    switch (cat) {
+      case 'fruit':
+        body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        break;
+      case 'nut': {
+        const s = r * 1.85; // square side
+        const x = cx - s / 2;
+        const y = cy - s / 2;
+        body = `<rect x="${x}" y="${y}" width="${s}" height="${s}" rx="1.2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        break;
+      }
+      case 'mushroom': {
+        const h = r * 2;
+        const w = h * 1.05;
+        const top = cy - h / 2;
+        const bot = cy + h / 2;
+        const left = cx - w / 2;
+        const right = cx + w / 2;
+        body = `<polygon points="${cx},${top} ${right},${bot} ${left},${bot}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        break;
+      }
+      case 'other': {
+        const s = r * 1.25;
+        body = `<polygon points="${cx},${cy - s * 1.1} ${cx + s},${cy} ${cx},${cy + s * 1.1} ${cx - s},${cy}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        break;
+      }
+      default:
+        body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+    }
+    return `<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="opacity:${opacity};">${body}</svg>`;
   }
 
   /** Color is by forage category. Status overlays handled via opacity +
@@ -308,6 +416,33 @@
   }
   @keyframes locspin {
     to { transform: rotate(360deg); }
+  }
+  /* Leaflet inserts divIcons outside our scoped CSS, so target them via
+     :global. They're decorative — actual taps go to the transparent
+     hit-target circle layered on top in renderPins. */
+  :global(.forager-shape),
+  :global(.forager-letter),
+  :global(.forager-emoji) {
+    pointer-events: none;
+    background: transparent;
+    border: 0;
+  }
+  :global(.forager-letter span) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: white;
+    font-weight: 700;
+    line-height: 1;
+    border: 1.5px solid white;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  :global(.forager-emoji span) {
+    display: inline-block;
+    line-height: 1;
+    text-shadow: 0 0 2px white, 0 0 2px white;
   }
   .loc-error {
     position: absolute;

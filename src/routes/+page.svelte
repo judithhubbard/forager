@@ -99,6 +99,10 @@
     | 'best_4_plus' = 'active';
   let showLegend = true;
 
+  // Temporary symbol-style picker so the user can compare options live.
+  // Pick one and we'll bake it in as the default; remove the picker.
+  let symbolStyle: 'circle' | 'shape' | 'letter' | 'emoji' = 'circle';
+
   let selectedPinId: string | null = null;
 
   type Cat = 'fruit' | 'nut' | 'mushroom' | 'other' | 'unknown';
@@ -398,12 +402,23 @@
         <option value="best_4_plus">Best harvest ≥ 4★</option>
       </select>
     </label>
+    <!-- Temporary symbol-style picker. Will be removed once a style is chosen. -->
+    <label>
+      Symbols:
+      <select bind:value={symbolStyle}>
+        <option value="circle">● Circles (current)</option>
+        <option value="shape">●■▲◆ Shapes per category</option>
+        <option value="letter">F/N/M/O letters</option>
+        <option value="emoji">🍒🌰🍄🌿 Emoji</option>
+      </select>
+    </label>
   </div>
 
   <Map
     pins={filteredPins}
     {categoryOf}
     {labelOf}
+    {symbolStyle}
     hideLocate={!!selectedPinId}
     on:pinClick={handlePinClick}
     on:mapTap={handleMapTap}
