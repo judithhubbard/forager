@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$lib/utils/nav';
+  import { base } from '$app/paths';
 </script>
 
 <header>
@@ -40,8 +41,18 @@
   <h2>Tools menu (≡)</h2>
   <ul>
     <li><strong>Activity</strong> — recent observations across the region.</li>
+    <li><strong>Watchlist</strong> — species or pins you're following for ripeness alerts.</li>
+    <li><strong>Year history</strong> — stacked annual timelines combining your observations with weather.</li>
+    <li><strong>My tracks</strong> — upload GPX/KML files or record live tracks; turn on the foraging heatmap.</li>
     <li><strong>Harvest windows</strong> — view the year-long timeline of fruiting stages. Click any colored bar to edit its dates.</li>
-    <li><strong>Sign out</strong>.</li>
+    <li><strong>Options</strong> — basemap, marker color, photo license, heatmap toggle.</li>
+    <li><strong>Help</strong> — this page, plus <a href={base + '/about'}>About</a> and <a href={base + '/sources'}>Data sources</a>.</li>
+  </ul>
+
+  <h2>More info</h2>
+  <ul>
+    <li><a href={base + '/about'}>About Forager</a> — what the app is for and the foraging-responsibly disclaimer.</li>
+    <li><a href={base + '/sources'}>Data sources</a> — every imported dataset, weather provider, geocoder, and species data source with licenses.</li>
   </ul>
 </main>
 
