@@ -71,6 +71,7 @@
           <li>Attach photos with GPS-tagged proof of where you found it</li>
           <li><strong>Tune harvest windows</strong> for your area based on your own ripeness observations</li>
           <li>Year-over-year journal: see when each spot was ripe in 2024 vs 2025 vs 2026</li>
+          <li><strong>Map your tracks</strong> from foraging outings (upload GPX or record live) and see a heatmap of where you've been</li>
           <li>Move and edit pins as conditions change</li>
           <li>Export all your data on request</li>
         </ul>

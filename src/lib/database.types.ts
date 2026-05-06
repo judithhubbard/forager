@@ -138,6 +138,94 @@ export type Database = {
           },
         ]
       }
+      tracks: {
+        Row: {
+          id: string
+          user_id: string
+          region_id: string | null
+          started_at: string
+          ended_at: string | null
+          path: unknown | null
+          distance_m: number | null
+          source: 'live' | 'gpx' | 'kml'
+          visibility: 'private' | 'shared' | 'public'
+          title: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          region_id?: string | null
+          started_at: string
+          ended_at?: string | null
+          path?: unknown | null
+          distance_m?: number | null
+          source?: 'live' | 'gpx' | 'kml'
+          visibility?: 'private' | 'shared' | 'public'
+          title?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          region_id?: string | null
+          started_at?: string
+          ended_at?: string | null
+          path?: unknown | null
+          distance_m?: number | null
+          source?: 'live' | 'gpx' | 'kml'
+          visibility?: 'private' | 'shared' | 'public'
+          title?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracks_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      track_points: {
+        Row: {
+          track_id: string
+          recorded_at: string
+          location: unknown
+          accuracy_m: number | null
+          elevation_m: number | null
+        }
+        Insert: {
+          track_id: string
+          recorded_at: string
+          location: unknown
+          accuracy_m?: number | null
+          elevation_m?: number | null
+        }
+        Update: {
+          track_id?: string
+          recorded_at?: string
+          location?: unknown
+          accuracy_m?: number | null
+          elevation_m?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_points_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       watchlist: {
         Row: {
           id: string
