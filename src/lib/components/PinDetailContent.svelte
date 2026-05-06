@@ -382,20 +382,6 @@
     }
   }
 
-  /** Open the observation form pre-filled to 'ripe' so the user can rate
-   *  the harvest 1-5 stars and pick a date (incl. a past year). Submitting
-   *  the form is what actually verifies. */
-  function startVerifyHarvest() {
-    formStage = 'ripe';
-    formQuality = null;
-    formNotes = '';
-    formPrecision = 'day';
-    formYear = NOW.getFullYear();
-    formMonth = NOW.getMonth() + 1;
-    formDay = NOW.getDate();
-    formOpen = true;
-  }
-
   /** Owner-only: flip a pin between shared and private. Called from
    *  the visibility chip in the title row. RLS will reject anyone who
    *  isn't the creator, but we already gate the click in the markup. */
@@ -654,14 +640,9 @@
     <section class="observations">
       <div class="section-header">
         <h3>Observations</h3>
-        <div class="header-actions">
-          <button class="verify" on:click={startVerifyHarvest}>
-            ✓ Verify harvest
-          </button>
-          <button on:click={() => (formOpen = !formOpen)}>
-            {formOpen ? 'Cancel' : 'Log observation'}
-          </button>
-        </div>
+        <button on:click={() => (formOpen = !formOpen)}>
+          {formOpen ? 'Cancel' : 'Log observation'}
+        </button>
       </div>
       {#if formOpen}
         <form class="obs-form" on:submit|preventDefault={submitObservation}>
@@ -1112,8 +1093,6 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
-  .header-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-
   .obs-form, .haz-form {
     border: 1px solid #d0d8d0; border-radius: 0.4rem; padding: 0.75rem; margin-bottom: 0.75rem;
     background: #fafcf6; display: flex; flex-direction: column; gap: 0.45rem;
@@ -1144,9 +1123,6 @@
     line-height: 1.1;
   }
   button[type='submit']:disabled, .section-header button:disabled { opacity: 0.6; cursor: not-allowed; }
-  .verify {
-    background: #d57100 !important;
-  }
   /* Slightly larger touch targets on small screens. */
   @media (max-width: 640px) {
     .section-header button {
