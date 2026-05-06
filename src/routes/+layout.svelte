@@ -102,17 +102,27 @@
     !!$profile &&
     isPlaceholderUsername($profile.username);
 
-  // One-time foraging-responsibility acknowledgment. Shown only after
-  // the user has cleared the username step AND has at least one
-  // region, so it doesn't pile up over the welcome flow.
+  // One-time foraging-responsibility acknowledgment. Shown to anyone
+  // who hasn't accepted yet — including anonymous viewers, since the
+  // safety / legal / property disclaimers are critical for ANY user
+  // looking at forageable-plant data on a map. For signed-in users
+  // we still wait until they've cleared the username + welcome flow
+  // so it doesn't pile on top of those modals.
   $: needsDisclaimer =
-    !!$session &&
-    !routeIsPublic &&
+    !$settings.disclaimerAcceptedAt &&
+    !routeIsAuthExclusive &&
     !routeIsWelcome &&
-    !!$profile &&
-    !isPlaceholderUsername($profile.username) &&
-    $myRegions.length > 0 &&
-    !$settings.disclaimerAcceptedAt;
+    (
+      // Anon viewers: show on any non-auth route as soon as the page
+      // loads (i18n + auth have settled).
+      !$session
+      // Authed: existing gate — username set, at least one region.
+      || (
+        !!$profile &&
+        !isPlaceholderUsername($profile.username) &&
+        $myRegions.length > 0
+      )
+    );
 </script>
 
 {#if $authLoading || $i18nLoading}
