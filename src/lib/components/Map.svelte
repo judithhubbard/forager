@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+  import { readable } from 'svelte/store';
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
   import { recentRain, formatMm } from '$lib/services/weatherService';
@@ -247,11 +248,15 @@
     if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     return `${m}:${String(s).padStart(2, '0')}`;
   }
-  let nowMs = Date.now();
-  $: if ($recording.status === 'recording') nowMs = Date.now();
-  // Tick once per second so the elapsed display updates while
-  // recording. setInterval set up in onMount, cleared in onDestroy.
-  let recTickInterval: ReturnType<typeof setInterval> | null = null;
+  /** Wall-clock store that ticks once per second. The earlier
+   *  setInterval-mutates-let approach was missing renders (the
+   *  user saw the elapsed counter jumping 0:00 → 0:03 → 0:09
+   *  instead of incrementing smoothly). A readable store guarantees
+   *  Svelte invalidates anywhere that reads $now. */
+  const now = readable(Date.now(), (set) => {
+    const id = setInterval(() => set(Date.now()), 1000);
+    return () => clearInterval(id);
+  });
   /** Auto-title from the recording's start time. The user wanted
    *  to skip the manual name step — most foragers just want their
    *  trip stamped with when it happened. */
@@ -667,13 +672,8 @@
     }
   });
 
-  onMount(() => {
-    recTickInterval = setInterval(() => (nowMs = Date.now()), 1000);
-  });
-
   onDestroy(() => {
     if (map) map.remove();
-    if (recTickInterval) clearInterval(recTickInterval);
   });
 </script>
 
@@ -726,7 +726,7 @@
     {:else}
       {@const elapsed =
         $recording.startedAt
-          ? ($recording.endedAt ?? nowMs) - $recording.startedAt
+          ? ($recording.endedAt ?? $now) - $recording.startedAt
           : 0}
       <button
         class="rec-active"

@@ -124,13 +124,13 @@ export async function importParsedTrack(
     );
   }
 
-  // PostgREST + PostGIS accepts GeoJSON for geometry/geography
-  // columns. LineString coordinates are [lng, lat].
-  const path = {
-    type: 'LineString' as const,
-    coordinates: points.map((p) => [p.lng, p.lat])
-  };
-
+  // The tracks.path column is nullable; we leave it null on insert
+  // and let consumers (heatmap, future overlays) read directly
+  // from track_points instead. PostgREST's geometry encoding has
+  // version-dependent quirks and was the most plausible cause of
+  // 'could not save the recording' reports. distance_m is still
+  // populated from the haversine sum above, so size + duration
+  // queries work without geometry.
   const trackId = uuidv4();
   const { error: insertErr } = await supabase.from('tracks').insert({
     id: trackId,
@@ -138,7 +138,6 @@ export async function importParsedTrack(
     region_id: options.regionId ?? null,
     started_at: startedAt,
     ended_at: endedAt,
-    path: path as unknown as never,
     distance_m,
     source: parsed.source,
     visibility: options.visibility ?? 'private',
@@ -171,10 +170,11 @@ export async function importParsedTrack(
     const rows = slice.map((p) => ({
       track_id: trackId,
       recorded_at: new Date(p.ts).toISOString(),
-      location: {
-        type: 'Point' as const,
-        coordinates: [p.lng, p.lat]
-      } as unknown as never,
+      // EWKT — PostGIS accepts this as input for geography(Point,
+      // 4326) directly. PostgREST's GeoJSON-on-insert support is
+      // version-dependent, so the explicit text form is safer
+      // across Supabase upgrades.
+      location: `SRID=4326;POINT(${p.lng} ${p.lat})` as unknown as never,
       elevation_m: p.elevation_m,
       accuracy_m: null
     }));
