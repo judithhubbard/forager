@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$lib/utils/nav';
   import { base } from '$app/paths';
-  import { activeRegion } from '$lib/stores/activeRegion';
+  import { myRegions, regionsLoading } from '$lib/stores/activeRegion';
   import { session } from '$lib/stores/auth';
   import { listByRegion, type PinEffective } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
@@ -29,84 +29,115 @@
     end_doy: number;
   };
 
-  let observations: ObsRow[] = [];
+  /** One per region the user belongs to. Each region has its own
+   *  observations, harvest windows, weather centroid, and weather
+   *  series — they don't share, since regions can be in different
+   *  climates and the data would be misleading if combined. */
+  type RegionTimeline = {
+    regionId: string;
+    regionName: string;
+    observations: ObsRow[];
+    windows: WindowRow[];
+    weather: DailyWeather[];
+    center: { lng: number; lat: number } | null;
+    weatherLoading: boolean;
+  };
+
   let speciesById: Record<string, Species> = {};
-  let windows: WindowRow[] = [];
-  let weather: DailyWeather[] = [];
-  let center: { lng: number; lat: number } | null = null;
+  let regionTimelines: RegionTimeline[] = [];
   let loading = true;
-  let weatherLoading = false;
   let error = '';
 
-  /** Loads when an active region resolves. Anon viewers without a
-   *  region see the picker / explainer. */
-  $: if ($activeRegion) void loadRegion($activeRegion.id);
+  /** Reload all regions whenever the user's region list changes. */
+  $: if (!$regionsLoading && $myRegions.length > 0) void loadAllRegions();
 
-  async function loadRegion(regionId: string) {
+  async function loadAllRegions() {
     loading = true;
     error = '';
     try {
-      const [obsRows, allSpecies, winRows, regionPins] = await Promise.all([
-        supabase
-          .from('v_observation_with_pin')
-          .select(
-            'id, observed_at, stage, species_id, species_common_name, pin_id, pin_display_name, quality_rating'
-          )
-          .eq('pin_region_id', regionId)
-          .order('observed_at', { ascending: false })
-          .limit(5000),
-        listSpecies(),
-        supabase
-          .from('species_fruiting_windows')
-          .select('species_id, stage, start_doy, end_doy')
-          .eq('region_id', regionId),
-        listByRegion(regionId)
-      ]);
-      observations = (obsRows.data ?? []) as ObsRow[];
+      const allSpecies = await listSpecies();
       speciesById = Object.fromEntries(allSpecies.map((s) => [s.id, s]));
-      windows = (winRows.data ?? []) as WindowRow[];
-
-      // Region centroid for weather: average all pin coords.
-      const valid = regionPins.filter(
-        (p): p is PinEffective & { lng: number; lat: number } =>
-          p.lng != null && p.lat != null
+      regionTimelines = await Promise.all(
+        $myRegions.map((r) => loadOneRegion(r.id, r.name))
       );
-      if (valid.length > 0) {
-        center = {
-          lng: valid.reduce((a, p) => a + p.lng, 0) / valid.length,
-          lat: valid.reduce((a, p) => a + p.lat, 0) / valid.length
-        };
-      }
       loading = false;
-
-      // Lazy weather load.
-      if (center) {
-        weatherLoading = true;
-        const currentYear = new Date().getFullYear();
-        const earliestObsYear = observations.length
-          ? Math.min(
-              ...observations
-                .filter((o) => o.observed_at)
-                .map((o) => new Date(o.observed_at).getFullYear())
-            )
-          : currentYear - 2;
-        const earliest = Math.min(earliestObsYear, currentYear - 2);
-        try {
-          weather = await historicalWeather(
-            center.lng,
-            center.lat,
-            `${earliest}-01-01`,
-            `${currentYear}-12-31`
-          );
-        } catch (e) {
-          console.warn('[timeline] weather fetch failed', e);
-        } finally {
-          weatherLoading = false;
-        }
-      }
+      // Lazy weather load per region — fire-and-forget so the species
+      // lanes paint immediately while the historical weather call
+      // (one Open-Meteo round-trip per region) settles in the
+      // background.
+      void Promise.all(regionTimelines.map((rt) => fetchWeatherFor(rt)));
     } catch (e) {
       error = e instanceof Error ? e.message : 'Could not load timeline.';
       loading = false;
+    }
+  }
+
+  async function loadOneRegion(
+    regionId: string,
+    regionName: string
+  ): Promise<RegionTimeline> {
+    const [obsRows, winRows, regionPins] = await Promise.all([
+      supabase
+        .from('v_observation_with_pin')
+        .select(
+          'id, observed_at, stage, species_id, species_common_name, pin_id, pin_display_name, quality_rating'
+        )
+        .eq('pin_region_id', regionId)
+        .order('observed_at', { ascending: false })
+        .limit(5000),
+      supabase
+        .from('species_fruiting_windows')
+        .select('species_id, stage, start_doy, end_doy')
+        .eq('region_id', regionId),
+      listByRegion(regionId)
+    ]);
+    const observations = (obsRows.data ?? []) as ObsRow[];
+    const windows = (winRows.data ?? []) as WindowRow[];
+
+    // Region centroid for weather lookup.
+    const valid = regionPins.filter(
+      (p): p is PinEffective & { lng: number; lat: number } =>
+        p.lng != null && p.lat != null
+    );
+    let center: { lng: number; lat: number } | null = null;
+    if (valid.length > 0) {
+      center = {
+        lng: valid.reduce((a, p) => a + p.lng, 0) / valid.length,
+        lat: valid.reduce((a, p) => a + p.lat, 0) / valid.length
+      };
+    }
+    return {
+      regionId, regionName, observations, windows,
+      weather: [], center, weatherLoading: !!center
+    };
+  }
+
+  async function fetchWeatherFor(rt: RegionTimeline) {
+    if (!rt.center) return;
+    const currentYear = new Date().getFullYear();
+    const earliestObsYear = rt.observations.length
+      ? Math.min(
+          ...rt.observations
+            .filter((o) => o.observed_at)
+            .map((o) => new Date(o.observed_at).getFullYear())
+        )
+      : currentYear - 2;
+    const earliest = Math.min(earliestObsYear, currentYear - 2);
+    try {
+      const w = await historicalWeather(
+        rt.center.lng, rt.center.lat,
+        `${earliest}-01-01`, `${currentYear}-12-31`
+      );
+      regionTimelines = regionTimelines.map((r) =>
+        r.regionId === rt.regionId
+          ? { ...r, weather: w, weatherLoading: false }
+          : r
+      );
+    } catch (e) {
+      console.warn('[timeline] weather fetch failed for', rt.regionName, e);
+      regionTimelines = regionTimelines.map((r) =>
+        r.regionId === rt.regionId ? { ...r, weatherLoading: false } : r
+      );
     }
   }
 
@@ -153,10 +184,11 @@
   const W = 1000;
   const PAD_L = 4, PAD_R = 4;
   const AXIS_H = 14;
-  const LANE_H = 9;        // per-species thin band
-  const LANE_GAP = 1;
-  const RAIN_H = 24;
-  const TEMP_H = 26;
+  const LANE_H = 12;       // per-species band
+  const LANE_GAP = 2;
+  const RAIN_H = 44;       // dedicated bar-chart lane
+  const TEMP_H = 50;       // dedicated min/max lane
+  const TRACK_GAP = 8;     // breathing room between major tracks
   const PLOT_W = W - PAD_L - PAD_R;
 
   function doyToX(doy: number): number {
@@ -166,27 +198,23 @@
   const MONTH_STARTS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
   const MONTH_LETTERS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 
-  /** Per-year breakdown: which species got observed and the row for
-   *  each lane. */
-  $: years = (() => {
+  function yearsFor(rt: RegionTimeline): number[] {
     const y = new Set<number>();
-    const cur = new Date().getFullYear();
-    y.add(cur);
-    for (const o of observations) {
+    y.add(new Date().getFullYear());
+    for (const o of rt.observations) {
       if (!o.observed_at) continue;
       const yr = new Date(o.observed_at).getFullYear();
       if (!isNaN(yr)) y.add(yr);
     }
     return Array.from(y).sort((a, b) => b - a);
-  })();
+  }
 
-  function speciesIdsInYear(year: number): string[] {
+  function speciesIdsInYear(rt: RegionTimeline, year: number): string[] {
     const set = new Set<string>();
-    for (const o of observations) {
+    for (const o of rt.observations) {
       if (!o.observed_at || !o.species_id) continue;
       if (new Date(o.observed_at).getFullYear() === year) set.add(o.species_id);
     }
-    // Sort lanes by group label so related species cluster.
     return Array.from(set).sort((a, b) => {
       const sa = speciesById[a];
       const sb = speciesById[b];
@@ -195,8 +223,8 @@
     });
   }
 
-  function obsInYearForSpecies(year: number, speciesId: string): ObsRow[] {
-    return observations.filter(
+  function obsInYearForSpecies(rt: RegionTimeline, year: number, speciesId: string): ObsRow[] {
+    return rt.observations.filter(
       (o) =>
         o.species_id === speciesId &&
         o.observed_at &&
@@ -204,8 +232,12 @@
     );
   }
 
-  function windowsForSpecies(speciesId: string): WindowRow[] {
-    return windows.filter((w) => w.species_id === speciesId);
+  function windowsForSpecies(rt: RegionTimeline, speciesId: string): WindowRow[] {
+    return rt.windows.filter((w) => w.species_id === speciesId);
+  }
+
+  function weatherInYear(rt: RegionTimeline, year: number): DailyWeather[] {
+    return rt.weather.filter((d) => d.date.startsWith(String(year)));
   }
 
   function laneColor(speciesId: string): string {
@@ -219,35 +251,45 @@
     return s ? s.common_name : '?';
   }
 
-  function weatherFor(year: number) {
-    return weather.filter((d) => d.date.startsWith(String(year)));
-  }
   function computeYearStats(rows: DailyWeather[]) {
     const tempVals: number[] = [];
     let maxRain = 5;
     for (const r of rows) {
       if (r.temp_max_c != null) tempVals.push(r.temp_max_c);
+      if (r.temp_min_c != null) tempVals.push(r.temp_min_c);
       if (r.rain_mm > maxRain) maxRain = r.rain_mm;
     }
-    const tempMin = tempVals.length ? Math.min(...tempVals) : 0;
-    const tempMax = tempVals.length ? Math.max(...tempVals) : 30;
-    const tempRange = Math.max(1, tempMax - tempMin);
-    return { maxRain, tempMin, tempMax, tempRange, tempVals };
+    const tempLo = tempVals.length ? Math.min(...tempVals) : 0;
+    const tempHi = tempVals.length ? Math.max(...tempVals) : 30;
+    const tempRange = Math.max(1, tempHi - tempLo);
+    return { maxRain, tempLo, tempHi, tempRange, hasTemp: tempVals.length > 0 };
   }
+
+  /** Polyline points for either the daily max or the daily min temp.
+   *  field='max' → orange line at top of the track; field='min' →
+   *  blue line below it. Y is scaled to the year's combined min/max
+   *  range so both lines fit in the same lane. */
   function tempPolyPoints(
     rows: DailyWeather[],
     yStart: number,
-    tempMin: number,
-    tempRange: number
+    tempLo: number,
+    tempRange: number,
+    field: 'max' | 'min'
   ): string {
     const parts: string[] = [];
     for (const d of rows) {
-      if (d.temp_max_c == null) continue;
+      const v = field === 'max' ? d.temp_max_c : d.temp_min_c;
+      if (v == null) continue;
       const x = doyToX(dateToDoy(d.date));
-      const y = yStart + TEMP_H - ((d.temp_max_c - tempMin) / tempRange) * TEMP_H;
+      const y = yStart + TEMP_H - ((v - tempLo) / tempRange) * TEMP_H;
       parts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
     }
     return parts.join(' ');
+  }
+
+  /** Format temperature in °F (US convention) with one decimal. */
+  function fmtTempF(c: number): string {
+    return `${(c * 9 / 5 + 32).toFixed(1)}°F`;
   }
 
   $: todayDoy = dateToDoy(new Date().toISOString().slice(0, 10));
@@ -257,26 +299,22 @@
 <header>
   <button class="back" on:click={back} aria-label="Back">← Back</button>
   <h1>Year history</h1>
-  {#if $activeRegion}
-    <span class="region-tag">{$activeRegion.name}</span>
-  {/if}
 </header>
 
 <main>
-  {#if !$activeRegion}
+  {#if $regionsLoading || loading}
+    <p class="hint">Loading…</p>
+  {:else if $myRegions.length === 0}
     <p class="lead">Sign in and pick a region to see year-by-year history.</p>
     {#if !$session}
       <p class="hint"><a href={base + '/register'}>Sign up free</a> to track your foraging activity over time.</p>
     {/if}
-  {:else if loading}
-    <p class="hint">Loading…</p>
   {:else if error}
     <p class="error">{error}</p>
   {:else}
     <p class="lead">
-      Aggregated across all pins in <strong>{$activeRegion.name}</strong> ·
-      {observations.length} observation{observations.length === 1 ? '' : 's'}
-      {#if weatherLoading}<span class="hint"> · loading weather…</span>{/if}
+      Year-by-year history across {$myRegions.length === 1 ? 'your region' : `your ${$myRegions.length} regions`}.
+      Each region has its own weather (climate varies; combining them would be misleading).
     </p>
 
     <div class="legend-bar">
@@ -294,32 +332,46 @@
       </span>
       <span class="leg-item leg-sep">|</span>
       <span class="leg-item">
-        <span class="leg-tick" style="background: #1a4a66"></span> rain
+        <span class="leg-tick" style="background: #1a4a66"></span> rain (mm/day)
       </span>
       <span class="leg-item">
         <svg width="20" height="10"><line x1="0" y1="5" x2="20" y2="5" stroke="#d57100" stroke-width="2"/></svg>
         max temp
       </span>
+      <span class="leg-item">
+        <svg width="20" height="10"><line x1="0" y1="5" x2="20" y2="5" stroke="#3a8db0" stroke-width="2"/></svg>
+        min temp
+      </span>
       <span class="leg-item leg-sep">|</span>
       <span class="leg-item leg-hint">Hover a tick for species + date</span>
     </div>
 
+    {#each regionTimelines as rt (rt.regionId)}
+      <section class="region-block">
+        <header class="region-head">
+          <h2>{rt.regionName}</h2>
+          <span class="region-meta">
+            {rt.observations.length} observation{rt.observations.length === 1 ? '' : 's'}
+            {#if rt.weatherLoading}<span class="hint"> · loading weather…</span>{/if}
+          </span>
+        </header>
+
     <div class="years">
-      {#each years as year}
-        {@const sids = speciesIdsInYear(year)}
-        {@const yWeather = weatherFor(year)}
+      {#each yearsFor(rt) as year}
+        {@const sids = speciesIdsInYear(rt, year)}
+        {@const yWeather = weatherInYear(rt, year)}
         {@const yStats = computeYearStats(yWeather)}
         {@const lanesH = sids.length * (LANE_H + LANE_GAP)}
-        {@const rainY = AXIS_H + 4 + lanesH + 6}
-        {@const tempY = rainY + RAIN_H + 4}
-        {@const totalH = tempY + TEMP_H + 4}
+        {@const rainY = AXIS_H + 4 + lanesH + TRACK_GAP}
+        {@const tempY = rainY + RAIN_H + TRACK_GAP}
+        {@const totalH = tempY + TEMP_H + 6}
         <section class="year-row" class:current={year === currentYear}>
           <div class="year-label">
             {year}
             {#if year === currentYear}<span class="cur-tag">current</span>{/if}
             <span class="lane-count">{sids.length} species</span>
           </div>
-          <svg viewBox="0 0 {W} {totalH}" preserveAspectRatio="none" class="year-svg" style="height: {totalH * 0.85}px;">
+          <svg viewBox="0 0 {W} {totalH}" preserveAspectRatio="none" class="year-svg" style="height: {totalH * 1.1}px;">
             <!-- Month axis -->
             {#each MONTH_STARTS as ms, i}
               <text x={doyToX(ms) + 2} y={11} font-size="10" fill="#6b7a6b">{MONTH_LETTERS[i]}</text>
@@ -330,8 +382,8 @@
             {#each sids as sid, idx}
               {@const laneY = AXIS_H + 4 + idx * (LANE_H + LANE_GAP)}
               {@const color = laneColor(sid)}
-              {@const sw = windowsForSpecies(sid)}
-              {@const yObs = obsInYearForSpecies(year, sid)}
+              {@const sw = windowsForSpecies(rt, sid)}
+              {@const yObs = obsInYearForSpecies(rt, year, sid)}
               <!-- Lane base (very faint fill so empty lanes still show) -->
               <rect x={PAD_L} y={laneY} width={PLOT_W} height={LANE_H} fill={color} opacity="0.06" />
               <!-- Stage-colored window bands, transparent -->
@@ -365,35 +417,62 @@
               </text>
             {/each}
 
-            <!-- Rain bars -->
+            <!-- Rain track: dedicated bar-chart lane in blue -->
+            <rect
+              x={PAD_L} y={rainY} width={PLOT_W} height={RAIN_H}
+              fill="#f3f8fc" stroke="#dde7ee" stroke-width="0.5"
+            />
             {#each yWeather as d}
               {#if d.rain_mm > 0.05}
-                {@const barH = Math.min(RAIN_H, (d.rain_mm / yStats.maxRain) * RAIN_H)}
+                {@const barH = Math.min(RAIN_H - 2, (d.rain_mm / yStats.maxRain) * (RAIN_H - 2))}
                 <rect
-                  x={doyToX(dateToDoy(d.date))}
+                  x={doyToX(dateToDoy(d.date)) - 0.9}
                   y={rainY + (RAIN_H - barH)}
-                  width="1.5"
+                  width="2"
                   height={barH}
                   fill="#1a4a66"
-                  opacity="0.85"
+                  opacity="0.92"
                 >
-                  <title>{d.date} · {d.rain_mm.toFixed(1)}mm rain</title>
+                  <title>{d.date} · {d.rain_mm.toFixed(1)}mm rain ({(d.rain_mm / 25.4).toFixed(2)}")</title>
                 </rect>
               {/if}
             {/each}
-            <text x={W - PAD_R - 1} y={rainY + RAIN_H - 2} text-anchor="end" font-size="9" fill="#8a948a">rain</text>
+            <text x={PAD_L + 4} y={rainY + 11} font-size="10" fill="#1a4a66" font-weight="600">rain</text>
+            <text x={W - PAD_R - 1} y={rainY + RAIN_H - 2} text-anchor="end" font-size="8" fill="#8a948a">
+              max {yStats.maxRain.toFixed(0)}mm/d
+            </text>
 
-            <!-- Temp polyline -->
-            {#if yStats.tempVals.length > 0}
+            <!-- Temperature track: dedicated lane with max (orange)
+                 and min (cool blue) polylines, scaled to the year's
+                 combined range so seasonal swings are obvious. -->
+            <rect
+              x={PAD_L} y={tempY} width={PLOT_W} height={TEMP_H}
+              fill="#fbf9f3" stroke="#e8e3d4" stroke-width="0.5"
+            />
+            {#if yStats.hasTemp}
+              <!-- Min line drawn first so max sits on top. -->
               <polyline
-                points={tempPolyPoints(yWeather, tempY, yStats.tempMin, yStats.tempRange)}
+                points={tempPolyPoints(yWeather, tempY, yStats.tempLo, yStats.tempRange, 'min')}
                 fill="none"
-                stroke="#d57100"
-                stroke-width="1"
+                stroke="#3a8db0"
+                stroke-width="1.2"
                 opacity="0.85"
               />
+              <polyline
+                points={tempPolyPoints(yWeather, tempY, yStats.tempLo, yStats.tempRange, 'max')}
+                fill="none"
+                stroke="#d57100"
+                stroke-width="1.2"
+                opacity="0.95"
+              />
             {/if}
-            <text x={W - PAD_R - 1} y={tempY + TEMP_H - 2} text-anchor="end" font-size="9" fill="#8a948a">temp</text>
+            <text x={PAD_L + 4} y={tempY + 11} font-size="10" fill="#7a4a10" font-weight="600">temp</text>
+            <text x={W - PAD_R - 1} y={tempY + 11} text-anchor="end" font-size="8" fill="#7a4a10">
+              {fmtTempF(yStats.tempHi)}
+            </text>
+            <text x={W - PAD_R - 1} y={tempY + TEMP_H - 2} text-anchor="end" font-size="8" fill="#1a4a66">
+              {fmtTempF(yStats.tempLo)}
+            </text>
 
             <!-- Today marker on the current-year strip -->
             {#if year === currentYear}
@@ -407,6 +486,8 @@
         </section>
       {/each}
     </div>
+      </section>
+    {/each}
   {/if}
 </main>
 
@@ -418,14 +499,6 @@
     height: 56px; box-sizing: border-box;
   }
   header h1 { margin: 0; font-size: 1.05rem; color: #3a5a3a; }
-  .region-tag {
-    padding: 0.15rem 0.55rem;
-    border: 1px solid #c7d0c7;
-    background: #f5f8f5;
-    border-radius: 0.35rem;
-    font-size: 0.78rem;
-    color: #3a5a3a;
-  }
   .back { background: transparent; border: 0; color: #3a5a3a; font-size: 0.9rem; cursor: pointer; }
   main { padding: 1rem; max-width: 64rem; margin: 0 auto; color: #1f2a1f; }
   .lead { color: #4a554a; margin: 0 0 0.85rem; }
@@ -445,6 +518,22 @@
   .leg-sep   { color: #c7d0c7; }
   .leg-hint  { color: #6b7a6b; font-style: italic; }
 
+  .region-block {
+    margin: 1rem 0 1.5rem;
+    padding-top: 0.5rem;
+    border-top: 2px solid #d4ddd2;
+  }
+  .region-block:first-of-type { border-top: 0; padding-top: 0; }
+  .region-head {
+    display: flex; align-items: baseline; gap: 0.85rem;
+    flex-wrap: wrap; margin-bottom: 0.5rem;
+  }
+  .region-head h2 {
+    margin: 0;
+    color: #3a5a3a;
+    font-size: 1.1rem;
+  }
+  .region-meta { color: #6b7a6b; font-size: 0.85rem; }
   .years { display: flex; flex-direction: column; gap: 0.6rem; }
   .year-row {
     background: white;
