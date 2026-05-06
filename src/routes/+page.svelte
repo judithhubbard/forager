@@ -16,6 +16,7 @@
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
   import { settings } from '$lib/stores/settings';
   import { dataChange } from '$lib/stores/dataChange';
+  import { colorForGroup, colorForCategoryFallback } from '$lib/utils/symbology';
 
   let pins: PinEffective[] = [];
   let pinsLoading = false;
@@ -165,53 +166,34 @@
     return m;
   })();
 
-  /** 20 maximally-distinct saturated hues spread across the full color
-   *  wheel. No semantic ties to fruit color — the shape already tells
-   *  you the category, so the color is free to be wherever it's most
-   *  distinct from its neighbors. */
-  const GROUP_COLORS: Record<string, string> = {
-    Almond:              '#fabed4', // pink
-    'Apple / Pear':      '#3cb44b', // green
-    'Autumn olive':      '#808000', // olive
-    Blueberry:           '#4363d8', // blue
-    // 'Bramble' is the fallback for any Rubus species without an
-    // explicit color. Each known Rubus gets its own group + hue.
-    Bramble:                '#800000', // maroon (fallback)
-    'Black raspberry':      '#4b1f6e', // deep purple
-    'Red raspberry':        '#e30b5c', // raspberry pink
-    'Wineberry':            '#d35400', // rust orange
-    'Allegheny blackberry': '#1a2540', // dark indigo
-    'Cherry / Plum':     '#e6194b', // red
-    Chestnut:            '#9a6324', // brown
-    'Cornelian cherry':  '#ff8c42', // bright orange
-    Currant:             '#911eb4', // purple
-    Elderberry:          '#673ab7', // deep purple
-    Grape:               '#dcbeff', // lavender
-    Hazelnut:            '#f58231', // orange
-    Hickory:             '#ffe119', // yellow
-    Mulberry:            '#f032e6', // magenta
-    Mushroom:            '#469990', // teal
-    Other:               '#a9a9a9', // gray
-    Pawpaw:              '#bfef45', // lime
-    Persimmon:           '#03a9f4', // sky blue
-    Serviceberry:        '#42d4f4', // cyan
-    Walnut:              '#795548'  // warm wood-brown
-  };
   function groupOfPin(p: PinEffective): string {
     const s = p.species_id ? speciesById[p.species_id] : null;
     return s ? groupOf(s) : '';
   }
   $: colorOfPin = (p: PinEffective): string => {
+    // 'category' mode: every pin uses its category-default color.
+    // Useful when a user has many active species and per-group hues
+    // start to feel busy.
+    if ($settings.colorBy === 'category') {
+      const cat = p.species_id ? categoryBySpecies[p.species_id] : null;
+      return colorForCategoryFallback(cat as Cat);
+    }
     const g = groupOfPin(p);
-    if (g && GROUP_COLORS[g]) return GROUP_COLORS[g];
-    // Fallback by category so unknown groups still get a sensible hue.
+    if (g) return colorForGroup(g);
+    // No species or unknown group → category-fallback neutral.
     const cat = p.species_id ? categoryBySpecies[p.species_id] : null;
-    if (cat === 'fruit')    return '#c14a3a';
-    if (cat === 'bramble')  return '#5a2440';
-    if (cat === 'nut')      return '#7a5230';
-    if (cat === 'mushroom') return '#8a4ea0';
-    if (cat === 'other')    return '#6ba040';
-    return '#6b7a6b';
+    return colorForCategoryFallback(cat as Cat);
+  };
+
+  /** Color for a group label, honoring the user's colorBy preference.
+   *  Used by the species panel + legend (rendering swatches without a
+   *  specific pin to call colorOfPin on). */
+  $: colorForGroupLabel = (groupName: string, sample: Species | undefined): string => {
+    if ($settings.colorBy === 'category') {
+      const cat = sample ? (categoryBySpecies[sample.id] as Cat | undefined) ?? null : null;
+      return colorForCategoryFallback(cat);
+    }
+    return colorForGroup(groupName);
   };
 
   /** Map a group label to one of the legend-shape glyphs based on the
@@ -241,7 +223,7 @@
       out.push({
         group: g,
         cat: cat ?? 'other',
-        color: GROUP_COLORS[g] ?? colorOfPin(p),
+        color: colorOfPin(p),
         shape: shapeForGroup(g)
       });
     }
@@ -571,7 +553,7 @@
           <ul class="species-list">
             {#each groupedSpecies as [groupName, list]}
               {@const shape = shapeForGroup(groupName)}
-              {@const color = GROUP_COLORS[groupName] ?? '#6b7a6b'}
+              {@const color = colorForGroupLabel(groupName, list[0])}
               <li class="group-header">
                 {#if shape === 'triangle'}
                   <span class="legend-shape triangle" style="border-bottom-color: {color};"></span>

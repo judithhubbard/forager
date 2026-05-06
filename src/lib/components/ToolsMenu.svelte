@@ -8,7 +8,7 @@
     myRegions,
     setActiveRegionId
   } from '$lib/stores/activeRegion';
-  import { settings, setBasemap, type Basemap } from '$lib/stores/settings';
+  import { settings, setBasemap, setColorBy, type Basemap, type ColorBy } from '$lib/stores/settings';
 
   let open = false;
   $: isAdmin = $activeRegion?.role === 'admin';
@@ -17,6 +17,11 @@
   const BASEMAP_OPTIONS: { value: Basemap; label: string }[] = [
     { value: 'osm-hot',   label: 'Humanitarian OSM' },
     { value: 'satellite', label: 'Satellite' }
+  ];
+
+  const COLOR_BY_OPTIONS: { value: ColorBy; label: string }[] = [
+    { value: 'group',    label: 'Per species group' },
+    { value: 'category', label: 'By category only' }
   ];
 
   async function handleSignOut() {
@@ -33,6 +38,9 @@
 
   function onBasemapChange(e: Event) {
     setBasemap((e.currentTarget as HTMLSelectElement).value as Basemap);
+  }
+  function onColorByChange(e: Event) {
+    setColorBy((e.currentTarget as HTMLSelectElement).value as ColorBy);
   }
   function onRegionChange(e: Event) {
     setActiveRegionId((e.currentTarget as HTMLSelectElement).value);
@@ -73,6 +81,16 @@
           Basemap
           <select value={$settings.basemap} on:change={onBasemapChange}>
             {#each BASEMAP_OPTIONS as o}
+              <option value={o.value}>{o.label}</option>
+            {/each}
+          </select>
+        </label>
+      </div>
+      <div class="settings-block">
+        <label>
+          Marker color
+          <select value={$settings.colorBy} on:change={onColorByChange}>
+            {#each COLOR_BY_OPTIONS as o}
               <option value={o.value}>{o.label}</option>
             {/each}
           </select>
