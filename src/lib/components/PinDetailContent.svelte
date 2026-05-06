@@ -707,11 +707,11 @@
           >
             {watching ? '★ Watching' : '☆ Watch'}
           </button>
-          <a class="watch-btn link-btn" href={base + '/timeline?pin=' + pinId}>Year history →</a>
+          <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
         </div>
       {:else}
         <div class="watch-row">
-          <a class="watch-btn link-btn" href={base + '/timeline?pin=' + pinId}>Year history →</a>
+          <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
         </div>
       {/if}
       {#if windows.length > 0}
