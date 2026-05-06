@@ -146,7 +146,7 @@ export type Database = {
           notes: string | null
           pin_id: string
           user_id: string
-          visibility: 'shared' | 'private'
+          visibility: 'shared' | 'private' | 'public'
         }
         Insert: {
           created_at?: string
@@ -155,7 +155,7 @@ export type Database = {
           notes?: string | null
           pin_id: string
           user_id: string
-          visibility?: 'shared' | 'private'
+          visibility?: 'shared' | 'private' | 'public'
         }
         Update: {
           created_at?: string
@@ -164,7 +164,7 @@ export type Database = {
           notes?: string | null
           pin_id?: string
           user_id?: string
-          visibility?: 'shared' | 'private'
+          visibility?: 'shared' | 'private' | 'public'
         }
         Relationships: [
           {
@@ -323,7 +323,7 @@ export type Database = {
           quality_rating: number | null
           stage: Database["public"]["Enums"]["stage"]
           user_id: string
-          visibility: 'shared' | 'private'
+          visibility: 'shared' | 'private' | 'public'
         }
         Insert: {
           created_at?: string
@@ -335,7 +335,7 @@ export type Database = {
           quality_rating?: number | null
           stage: Database["public"]["Enums"]["stage"]
           user_id: string
-          visibility?: 'shared' | 'private'
+          visibility?: 'shared' | 'private' | 'public'
         }
         Update: {
           created_at?: string
@@ -347,7 +347,7 @@ export type Database = {
           quality_rating?: number | null
           stage?: Database["public"]["Enums"]["stage"]
           user_id?: string
-          visibility?: 'shared' | 'private'
+          visibility?: 'shared' | 'private' | 'public'
         }
         Relationships: [
           {
@@ -382,7 +382,7 @@ export type Database = {
           taken_at: string | null
           thumbnail_path: string
           user_id: string
-          visibility: 'shared' | 'private'
+          visibility: 'shared' | 'private' | 'public'
         }
         Insert: {
           caption?: string | null
@@ -399,7 +399,7 @@ export type Database = {
           taken_at?: string | null
           thumbnail_path: string
           user_id: string
-          visibility?: 'shared' | 'private'
+          visibility?: 'shared' | 'private' | 'public'
         }
         Update: {
           caption?: string | null
@@ -416,7 +416,7 @@ export type Database = {
           taken_at?: string | null
           thumbnail_path?: string
           user_id?: string
-          visibility?: 'shared' | 'private'
+          visibility?: 'shared' | 'private' | 'public'
         }
         Relationships: [
           {
@@ -469,7 +469,7 @@ export type Database = {
           species_id: string | null
           status: Database["public"]["Enums"]["pin_status"]
           updated_at: string
-          visibility: 'shared' | 'private'
+          visibility: 'shared' | 'private' | 'public'
         }
         Insert: {
           access_status?: Database["public"]["Enums"]["access_status"] | null
@@ -490,7 +490,7 @@ export type Database = {
           species_id?: string | null
           status?: Database["public"]["Enums"]["pin_status"]
           updated_at?: string
-          visibility?: 'shared' | 'private'
+          visibility?: 'shared' | 'private' | 'public'
         }
         Update: {
           access_status?: Database["public"]["Enums"]["access_status"] | null
@@ -511,7 +511,7 @@ export type Database = {
           species_id?: string | null
           status?: Database["public"]["Enums"]["pin_status"]
           updated_at?: string
-          visibility?: 'shared' | 'private'
+          visibility?: 'shared' | 'private' | 'public'
         }
         Relationships: [
           {
@@ -637,7 +637,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           default_map_center: unknown
-          default_pin_visibility: 'shared' | 'private'
+          default_pin_visibility: 'shared' | 'private' | 'public'
           default_zoom: number
           id: string
           name: string
@@ -649,7 +649,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_map_center?: unknown
-          default_pin_visibility?: 'shared' | 'private'
+          default_pin_visibility?: 'shared' | 'private' | 'public'
           default_zoom?: number
           id?: string
           name: string
@@ -661,7 +661,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_map_center?: unknown
-          default_pin_visibility?: 'shared' | 'private'
+          default_pin_visibility?: 'shared' | 'private' | 'public'
           default_zoom?: number
           id?: string
           name?: string
@@ -952,7 +952,7 @@ export type Database = {
           user_id: string | null
           user_username: string | null
           user_display_name: string | null
-          visibility: 'shared' | 'private' | null
+          visibility: 'shared' | 'private' | 'public' | null
         }
         Relationships: [
           {
@@ -1007,7 +1007,7 @@ export type Database = {
           species_id: string | null
           status: Database["public"]["Enums"]["pin_status"] | null
           updated_at: string | null
-          visibility: 'shared' | 'private' | null
+          visibility: 'shared' | 'private' | 'public' | null
         }
         Relationships: [
           {
@@ -1051,6 +1051,37 @@ export type Database = {
           p_location_accuracy_m?: number | null
         }
         Returns: void
+      }
+      public_pins_bbox: {
+        Args: {
+          p_min_lng: number
+          p_min_lat: number
+          p_max_lng: number
+          p_max_lat: number
+          p_max_rows?: number
+        }
+        Returns: Database["public"]["Views"]["v_pin_effective"]["Row"][]
+      }
+      public_pins_clusters: {
+        Args: {
+          p_min_lng: number
+          p_min_lat: number
+          p_max_lng: number
+          p_max_lat: number
+          p_eps_deg?: number
+          p_minpoints?: number
+        }
+        Returns: {
+          cluster_id: number | null
+          count_pins: number
+          centroid_lng: number
+          centroid_lat: number
+          representative_species_id: string | null
+        }[]
+      }
+      zone_for_point: {
+        Args: { p_lng: number; p_lat: number }
+        Returns: string
       }
       username_available: {
         Args: { candidate: string }

@@ -12,7 +12,21 @@ export type PinInsert = Database['public']['Tables']['pins']['Insert'];
 export type PinEffective = Database['public']['Views']['v_pin_effective']['Row'];
 export type PinStatus = Database['public']['Enums']['pin_status'];
 
-export type Visibility = 'shared' | 'private';
+export type Visibility = 'shared' | 'private' | 'public';
+
+/** Bbox in [west, south, east, north] order — matches Leaflet's
+ *  LatLngBounds.toBBoxString() output. Used by the anon public-pin
+ *  fetch path and by the cluster RPC. */
+export type Bbox = [number, number, number, number];
+
+/** A single cluster point returned by public_pins_clusters. */
+export interface PinCluster {
+  cluster_id: number | null;
+  count_pins: number;
+  centroid_lng: number;
+  centroid_lat: number;
+  representative_species_id: string | null;
+}
 
 export interface CreatePinInput {
   regionId: string;
@@ -94,6 +108,65 @@ export async function listByRegion(regionId: string): Promise<PinEffective[]> {
     if (data.length < PAGE) break;
   }
   return all;
+}
+
+/** Public pins inside the given bbox. Anon-callable. Capped at
+ *  maxRows (server enforces ≤1000). At low zooms callers should
+ *  prefer listPublicPinClusters() — passing a 50-state bbox here
+ *  would silently truncate to 500 pins. */
+export async function listPublicPins(
+  bbox: Bbox,
+  maxRows: number = 500
+): Promise<PinEffective[]> {
+  const [west, south, east, north] = bbox;
+  const { data, error } = await supabase.rpc('public_pins_bbox', {
+    p_min_lng: west,
+    p_min_lat: south,
+    p_max_lng: east,
+    p_max_lat: north,
+    p_max_rows: maxRows
+  });
+  if (error) {
+    console.error('[pinService] listPublicPins error:', error);
+    throw error;
+  }
+  return (data ?? []) as PinEffective[];
+}
+
+/** ST_ClusterDBSCAN-aggregated cluster points for the public dataset.
+ *  epsDeg is the cluster radius in degrees (rough rule of thumb:
+ *  one degree of latitude ≈ 111km, so 0.05° ≈ 5km — appropriate for
+ *  zoom ~6). Tune by zoom level. */
+export async function listPublicPinClusters(
+  bbox: Bbox,
+  epsDeg: number = 0.05
+): Promise<PinCluster[]> {
+  const [west, south, east, north] = bbox;
+  const { data, error } = await supabase.rpc('public_pins_clusters', {
+    p_min_lng: west,
+    p_min_lat: south,
+    p_max_lng: east,
+    p_max_lat: north,
+    p_eps_deg: epsDeg,
+    p_minpoints: 1
+  });
+  if (error) {
+    console.error('[pinService] listPublicPinClusters error:', error);
+    throw error;
+  }
+  return (data ?? []) as PinCluster[];
+}
+
+/** Pick a sensible cluster eps (in degrees) based on map zoom. At
+ *  low zooms we want big clusters (continent-scale views shouldn't
+ *  spew hundreds of dots); at high zooms each pin stands alone. */
+export function clusterEpsForZoom(zoom: number): number {
+  if (zoom < 4)  return 5.0;
+  if (zoom < 6)  return 1.5;
+  if (zoom < 8)  return 0.5;
+  if (zoom < 10) return 0.15;
+  if (zoom < 12) return 0.05;
+  return 0.01;
 }
 
 /** Pins currently in their ripe window (and not gone/dormant). */

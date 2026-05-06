@@ -32,6 +32,7 @@
   } from '$lib/services/observationService';
   import { profileLabel } from '$lib/services/profileService';
   import { profile } from '$lib/stores/profile';
+  import { session } from '$lib/stores/auth';
   import { activeRegion } from '$lib/stores/activeRegion';
   import { settings } from '$lib/stores/settings';
   import {
@@ -617,7 +618,9 @@
           {statusLabel(pin.effective_status)}
           {#if pin.is_ripe_now}<span class="ripe-dot" title="In ripe window">🍒</span>{/if}
         </span>
-        {#if pin.visibility === 'private' && pin.created_by === $profile?.id}
+        {#if pin.visibility === 'public'}
+          <span class="vis-chip vis-public" title="Public — visible to anyone, including signed-out viewers.">🌐 public</span>
+        {:else if pin.visibility === 'private' && pin.created_by === $profile?.id}
           <button
             type="button"
             class="vis-chip vis-private"
@@ -684,26 +687,28 @@
           </div>
         </div>
       {/if}
-      <div class="status-edit-row">
-        <select bind:value={pendingStatus}>
-          <option value={null}>change status…</option>
-          {#each STATUSES as s}
-            {#if s !== pin.status}<option value={s}>{statusLabel(s)}</option>{/if}
-          {/each}
-        </select>
-        {#if pendingStatus}
-          <button class="inline" on:click={saveStatus} disabled={statusSaving}>
-            {statusSaving ? '…' : `Set ${statusLabel(pendingStatus)}`}
-          </button>
-        {/if}
-        {#if pin.created_by === $profile?.id || $activeRegion?.role === 'admin'}
-          <button
-            class="inline"
-            on:click={() => dispatch('requestMove', { pinId })}
-            title="Click on the map to set a new location"
-          >Move pin</button>
-        {/if}
-      </div>
+      {#if $session}
+        <div class="status-edit-row">
+          <select bind:value={pendingStatus}>
+            <option value={null}>change status…</option>
+            {#each STATUSES as s}
+              {#if s !== pin.status}<option value={s}>{statusLabel(s)}</option>{/if}
+            {/each}
+          </select>
+          {#if pendingStatus}
+            <button class="inline" on:click={saveStatus} disabled={statusSaving}>
+              {statusSaving ? '…' : `Set ${statusLabel(pendingStatus)}`}
+            </button>
+          {/if}
+          {#if pin.created_by === $profile?.id || $activeRegion?.role === 'admin'}
+            <button
+              class="inline"
+              on:click={() => dispatch('requestMove', { pinId })}
+              title="Click on the map to set a new location"
+            >Move pin</button>
+          {/if}
+        </div>
+      {/if}
       <div class="access-row">
         <span class="access-label">Access:</span>
         {#if pin.created_by === $profile?.id || $activeRegion?.role === 'admin'}
@@ -767,9 +772,11 @@
     <section class="observations">
       <div class="section-header">
         <h3>Observations</h3>
-        <button on:click={() => (formOpen = !formOpen)}>
-          {formOpen ? 'Cancel' : 'Log observation'}
-        </button>
+        {#if $session}
+          <button on:click={() => (formOpen = !formOpen)}>
+            {formOpen ? 'Cancel' : 'Log observation'}
+          </button>
+        {/if}
       </div>
       {#if formOpen}
         <form class="obs-form" on:submit|preventDefault={submitObservation}>
@@ -913,9 +920,11 @@
     <section class="hazards">
       <div class="section-header">
         <h3>Hazards &amp; access</h3>
-        <button on:click={() => (showHazardForm = !showHazardForm)}>
-          {showHazardForm ? 'Cancel' : 'Add'}
-        </button>
+        {#if $session}
+          <button on:click={() => (showHazardForm = !showHazardForm)}>
+            {showHazardForm ? 'Cancel' : 'Add'}
+          </button>
+        {/if}
       </div>
       {#if showHazardForm}
         <form class="haz-form" on:submit|preventDefault={addHazard}>
@@ -956,11 +965,13 @@
     <section class="photos">
       <div class="section-header">
         <h3>Photos</h3>
-        <button on:click={() => { pendingUploadObsId = null; fileInput?.click(); }} disabled={uploading}>
-          {uploading ? 'Uploading…' : 'Add photo'}
-        </button>
-        <input type="file" accept="image/*" capture="environment" bind:this={fileInput}
-               on:change={handleFileChange} style="display: none" />
+        {#if $session}
+          <button on:click={() => { pendingUploadObsId = null; fileInput?.click(); }} disabled={uploading}>
+            {uploading ? 'Uploading…' : 'Add photo'}
+          </button>
+          <input type="file" accept="image/*" capture="environment" bind:this={fileInput}
+                 on:change={handleFileChange} style="display: none" />
+        {/if}
       </div>
       {#if uploadError}<p class="error">{uploadError}</p>{/if}
       {#if loosePhotos.length === 0}
@@ -1200,6 +1211,7 @@
   }
   .vis-chip.vis-private { background: #e9e3f0; color: #4a2466; border-color: #c5b3da; }
   .vis-chip.vis-shared  { background: #eef2ee; color: #4a554a; border-color: #c7d0c7; }
+  .vis-chip.vis-public  { background: #e3eff5; color: #1a4a66; border-color: #a8cde0; }
   button.vis-chip { cursor: pointer; }
   button.vis-chip:focus-visible { outline: 2px solid #3a5a3a; outline-offset: 1px; }
 

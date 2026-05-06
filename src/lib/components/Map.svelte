@@ -254,11 +254,14 @@
         // fruit/nut/mushroom/other, ★ for brambles), filled with the
         // group color. Rendered as a non-interactive divIcon; the
         // transparent hit-target circle below captures clicks.
+        // Public pins get a dotted stroke so they're visibly distinct
+        // from a paid user's own/group pins on the same map (Phase 2D).
         const cat = categoryOf(pin);
         const px = baseR * 2;
         const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
         const opacityCss = fillOpacity.toFixed(2);
-        const html = shapeHtml(cat, fillVisible, opacityCss, px);
+        const dotted = pin.visibility === 'public';
+        const html = shapeHtml(cat, fillVisible, opacityCss, px, dotted);
         const marker = L.marker([pin.lat, pin.lng], {
           icon: L.divIcon({
             className: 'forager-shape',
@@ -306,12 +309,16 @@
 
   /** SVG-as-HTML body for the "shape" style: circle/square/triangle/diamond
    *  per category, all sized to fit the same bounding box as the circle
-   *  marker so ripeness rings still surround the centroid cleanly. */
+   *  marker so ripeness rings still surround the centroid cleanly.
+   *  When `dotted` is true, the stroke is dashed instead of solid —
+   *  used for public-dataset pins so they're visibly distinct from
+   *  the user's own/group pins on the same map. */
   function shapeHtml(
     cat: ForageCategory,
     fill: string,
     opacity: string,
-    px: number
+    px: number,
+    dotted: boolean = false
   ): string {
     const box = px + 4;
     const cx = box / 2;
@@ -322,17 +329,20 @@
     // white halo separates the shape from the background).
     const stroke = '#1f2a1f';
     const sw = 1.4;
+    // 2,1.6 dash pattern is small enough to read on a 12px shape but
+    // large enough to be obviously NOT a solid stroke at a glance.
+    const dashAttr = dotted ? ' stroke-dasharray="2,1.6"' : '';
     const haloFilter = 'drop-shadow(0 0 1px white) drop-shadow(0 0 1px white)';
     let body: string;
     switch (cat) {
       case 'fruit':
-        body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dashAttr}/>`;
         break;
       case 'nut': {
         const s = r * 1.85; // square side
         const x = cx - s / 2;
         const y = cy - s / 2;
-        body = `<rect x="${x}" y="${y}" width="${s}" height="${s}" rx="1.2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        body = `<rect x="${x}" y="${y}" width="${s}" height="${s}" rx="1.2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dashAttr}/>`;
         break;
       }
       case 'mushroom': {
@@ -342,12 +352,12 @@
         const bot = cy + h / 2;
         const left = cx - w / 2;
         const right = cx + w / 2;
-        body = `<polygon points="${cx},${top} ${right},${bot} ${left},${bot}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        body = `<polygon points="${cx},${top} ${right},${bot} ${left},${bot}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"${dashAttr}/>`;
         break;
       }
       case 'other': {
         const s = r * 1.25;
-        body = `<polygon points="${cx},${cy - s * 1.1} ${cx + s},${cy} ${cx},${cy + s * 1.1} ${cx - s},${cy}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        body = `<polygon points="${cx},${cy - s * 1.1} ${cx + s},${cy} ${cx},${cy + s * 1.1} ${cx - s},${cy}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"${dashAttr}/>`;
         break;
       }
       case 'bramble': {
@@ -360,11 +370,11 @@
           const rad = i % 2 === 0 ? outer : inner;
           pts.push(`${(cx + rad * Math.cos(ang)).toFixed(2)},${(cy + rad * Math.sin(ang)).toFixed(2)}`);
         }
-        body = `<polygon points="${pts.join(' ')}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        body = `<polygon points="${pts.join(' ')}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"${dashAttr}/>`;
         break;
       }
       default:
-        body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dashAttr}/>`;
     }
     return `<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="opacity:${opacity};filter:${haloFilter};">${body}</svg>`;
   }

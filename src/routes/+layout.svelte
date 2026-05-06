@@ -15,7 +15,20 @@
   import '$lib/i18n';
   import { isLoading as i18nLoading } from 'svelte-i18n';
 
-  const PUBLIC_ROUTES = ['/login', '/register'];
+  // Routes that anonymous (signed-out) viewers can reach. The map (/)
+  // and species/pin detail are anon-readable per Phase 2A; the
+  // existing /login + /register stay; /about + /how-to-use are
+  // marketing-friendly so signed-out browsers can read them too.
+  const PUBLIC_ROUTES = [
+    '/login',
+    '/register',
+    '/',
+    '/about',
+    '/how-to-use',
+    '/accept',
+    '/species',
+    '/pins'
+  ];
 
   /** Strip the configured base path from `$page.url.pathname` so route
    *  matching doesn't depend on whether the app is hosted at `/` or at
@@ -33,6 +46,13 @@
   })();
 
   $: routeIsPublic = PUBLIC_ROUTES.some((r) => localPath.startsWith(r));
+  /** Auth-exclusive: signed-in users get bounced off these (so an
+   *  authed user landing on /login is redirected back to wherever
+   *  they came from). The rest of PUBLIC_ROUTES are open to both. */
+  const AUTH_EXCLUSIVE_ROUTES = ['/login', '/register'];
+  $: routeIsAuthExclusive = AUTH_EXCLUSIVE_ROUTES.some((r) =>
+    localPath.startsWith(r)
+  );
   /** /welcome is reachable while signed in but has no other prereqs.
    *  Treated like a public route for redirect purposes — visiting it
    *  shouldn't trigger the "no memberships → /welcome" bounce that
@@ -48,7 +68,7 @@
     if (!$session && !routeIsPublic) {
       const here = localPath + $page.url.search;
       goto(`/login?next=${encodeNext(here)}`, { replaceState: true });
-    } else if ($session && routeIsPublic) {
+    } else if ($session && routeIsAuthExclusive) {
       const dest = safeNext($page.url.searchParams.get('next'), '/');
       goto(dest, { replaceState: true });
     }

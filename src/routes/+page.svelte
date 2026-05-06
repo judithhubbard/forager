@@ -6,8 +6,10 @@
   import { session } from '$lib/stores/auth';
   import {
     listByRegion,
+    listPublicPins,
     updateLocation as updatePinLocation,
-    type PinEffective
+    type PinEffective,
+    type Bbox
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import Map from '$lib/components/Map.svelte';
@@ -15,6 +17,7 @@
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
   import AddressSearch from '$lib/components/AddressSearch.svelte';
+  import SignupBanner from '$lib/components/SignupBanner.svelte';
   import { settings } from '$lib/stores/settings';
   import {
     enabledIds,
@@ -261,10 +264,13 @@
     const status =
       p.effective_status === 'active' ? '' : ` [${p.effective_status}]`;
     const ripe = p.is_ripe_now ? '  · 🍒 ripe now' : '';
-    // Private marker on the tooltip so the user knows at a glance
-    // that other group members can't see this pin.
-    const priv = p.visibility === 'private' ? '  · 🔒 private' : '';
-    return `${name}${status}${ripe}${priv}`;
+    // Private/public markers on the tooltip so the user knows at a
+    // glance whether other viewers can see this pin.
+    const visTag =
+      p.visibility === 'private' ? '  · 🔒 private'
+      : p.visibility === 'public' ? '  · 🌐 public'
+      : '';
+    return `${name}${status}${ripe}${visTag}`;
   }
 
   $: filteredPins = pins.filter((p) => {
@@ -408,9 +414,14 @@
   // Refetch on activeRegion change AND on any pin/observation
   // mutation elsewhere in the app (e.g., adding an observation in
   // the pin panel updates ripeness on the map).
+  // Anonymous (signed-out) viewers go down a separate code path:
+  // there's no region, just the public dataset fetched by bbox.
   $: if ($activeRegion) {
     void $dataChange;
     loadAll($activeRegion.id);
+  } else if (!$session && !$regionsLoading) {
+    void $dataChange;
+    loadPublicLayer();
   }
 
   // Deep-link: /?pin=ID opens that pin's detail panel on load. Used by
@@ -426,6 +437,31 @@
       [pins, species] = await Promise.all([listByRegion(regionId), listSpecies()]);
     } catch (err) {
       console.error('[+page] loadAll error', err);
+      pins = [];
+      species = [];
+    } finally {
+      pinsLoading = false;
+    }
+  }
+
+  /** Anonymous-tier load: pull the public dataset for a generous
+   *  starting bbox so the map has visible content immediately. The
+   *  user can then pan / search to refine. v1 ships without
+   *  pan-driven refetch — that gets bolted on once the public
+   *  dataset is large enough to warrant it. */
+  async function loadPublicLayer() {
+    pinsLoading = true;
+    try {
+      // Continental US default bbox until the user pans or geocodes.
+      // Caps the response at 500 rows server-side so a 50-state view
+      // never spams the client.
+      const bbox: Bbox = [-125, 24, -66, 50];
+      [pins, species] = await Promise.all([
+        listPublicPins(bbox, 500),
+        listSpecies()
+      ]);
+    } catch (err) {
+      console.error('[+page] loadPublicLayer error', err);
       pins = [];
       species = [];
     } finally {
@@ -514,12 +550,22 @@
     {#if pinsLoading}
       <span class="hint">Loading…</span>
     {/if}
-    <a class="link ripe-link" href={base + '/ripe'}>Ripe now</a>
-    <ToolsMenu />
+    {#if $session}
+      <a class="link ripe-link" href={base + '/ripe'}>Ripe now</a>
+    {/if}
+    {#if $session}
+      <ToolsMenu />
+    {:else}
+      <a class="link" href={base + '/login'}>Sign in</a>
+    {/if}
   </div>
 </header>
 
-{#if $activeRegion}
+{#if !$session}
+  <SignupBanner />
+{/if}
+
+{#if $activeRegion || (!$session && !$regionsLoading)}
   <div class="filterbar">
     <AddressSearch on:select={handleGeocodeSelect} />
     <div class="species-filter">
