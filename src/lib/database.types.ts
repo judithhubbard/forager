@@ -86,6 +86,7 @@ export type Database = {
           notes: string | null
           pin_id: string
           user_id: string
+          visibility: 'shared' | 'private'
         }
         Insert: {
           created_at?: string
@@ -94,6 +95,7 @@ export type Database = {
           notes?: string | null
           pin_id: string
           user_id: string
+          visibility?: 'shared' | 'private'
         }
         Update: {
           created_at?: string
@@ -102,6 +104,7 @@ export type Database = {
           notes?: string | null
           pin_id?: string
           user_id?: string
+          visibility?: 'shared' | 'private'
         }
         Relationships: [
           {
@@ -260,6 +263,7 @@ export type Database = {
           quality_rating: number | null
           stage: Database["public"]["Enums"]["stage"]
           user_id: string
+          visibility: 'shared' | 'private'
         }
         Insert: {
           created_at?: string
@@ -271,6 +275,7 @@ export type Database = {
           quality_rating?: number | null
           stage: Database["public"]["Enums"]["stage"]
           user_id: string
+          visibility?: 'shared' | 'private'
         }
         Update: {
           created_at?: string
@@ -282,6 +287,7 @@ export type Database = {
           quality_rating?: number | null
           stage?: Database["public"]["Enums"]["stage"]
           user_id?: string
+          visibility?: 'shared' | 'private'
         }
         Relationships: [
           {
@@ -314,6 +320,7 @@ export type Database = {
           taken_at: string | null
           thumbnail_path: string
           user_id: string
+          visibility: 'shared' | 'private'
         }
         Insert: {
           caption?: string | null
@@ -328,6 +335,7 @@ export type Database = {
           taken_at?: string | null
           thumbnail_path: string
           user_id: string
+          visibility?: 'shared' | 'private'
         }
         Update: {
           caption?: string | null
@@ -342,6 +350,7 @@ export type Database = {
           taken_at?: string | null
           thumbnail_path?: string
           user_id?: string
+          visibility?: 'shared' | 'private'
         }
         Relationships: [
           {
@@ -393,6 +402,7 @@ export type Database = {
           species_id: string | null
           status: Database["public"]["Enums"]["pin_status"]
           updated_at: string
+          visibility: 'shared' | 'private'
         }
         Insert: {
           created_at?: string
@@ -412,6 +422,7 @@ export type Database = {
           species_id?: string | null
           status?: Database["public"]["Enums"]["pin_status"]
           updated_at?: string
+          visibility?: 'shared' | 'private'
         }
         Update: {
           created_at?: string
@@ -431,6 +442,7 @@ export type Database = {
           species_id?: string | null
           status?: Database["public"]["Enums"]["pin_status"]
           updated_at?: string
+          visibility?: 'shared' | 'private'
         }
         Relationships: [
           {
@@ -556,6 +568,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           default_map_center: unknown
+          default_pin_visibility: 'shared' | 'private'
           default_zoom: number
           id: string
           name: string
@@ -567,6 +580,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_map_center?: unknown
+          default_pin_visibility?: 'shared' | 'private'
           default_zoom?: number
           id?: string
           name: string
@@ -578,6 +592,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_map_center?: unknown
+          default_pin_visibility?: 'shared' | 'private'
           default_zoom?: number
           id?: string
           name?: string
