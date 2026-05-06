@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
   import { page } from '$app/stores';
   import { session, authLoading } from '$lib/stores/auth';
   import { profile } from '$lib/stores/profile';

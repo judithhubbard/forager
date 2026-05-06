@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
+  import { base } from '$app/paths';
   import { activeRegion } from '$lib/stores/activeRegion';
   import {
     listRecentInRegion,
@@ -67,7 +68,7 @@
     <ul class="feed">
       {#each observations as o}
         <li>
-          <a class="row" href={`/pins/${o.pin_id}`}>
+          <a class="row" href={`${base}/pins/${o.pin_id}`}>
             <span class="stage" style="background: {stageColor(o.stage)}">{o.stage}</span>
             <div class="body">
               <p class="primary">

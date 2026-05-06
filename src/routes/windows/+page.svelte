@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
   import { activeRegion } from '$lib/stores/activeRegion';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import { supabase } from '$lib/supabase';

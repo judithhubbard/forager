@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
+  import { base } from '$app/paths';
   import { activeRegion } from '$lib/stores/activeRegion';
   import {
     listRipeNow,
@@ -86,7 +87,7 @@
   {:else if sortedPins.length === 0}
     <p class="hint">
       Nothing is in its ripe window in this region right now. Check the
-      <a href="/activity">Activity</a> feed or wait a few weeks.
+      <a href={base + '/activity'}>Activity</a> feed or wait a few weeks.
     </p>
   {:else}
     {#if userLng == null || userLat == null}

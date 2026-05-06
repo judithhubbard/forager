@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
 
   $: pinId = $page.params.id as string;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
   import { activeRegion } from '$lib/stores/activeRegion';
   import { profile } from '$lib/stores/profile';
   import { profileLabel } from '$lib/services/profileService';

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { signOut } from '$lib/services/authService';
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
 
   async function handleSignOut() {
     await signOut();

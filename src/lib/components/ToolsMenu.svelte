@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
+  import { base } from '$app/paths';
   import { signOut } from '$lib/services/authService';
   import { activeRegion } from '$lib/stores/activeRegion';
 
@@ -25,14 +26,14 @@
   <button class="tools-button" on:click={() => (open = !open)} aria-label="Tools menu">≡</button>
   {#if open}
     <div class="tools-menu" role="menu">
-      <a href="/" on:click={() => (open = false)}>Map</a>
-      <a href="/activity" on:click={() => (open = false)}>Activity</a>
-      <a href="/windows" on:click={() => (open = false)}>Harvest windows</a>
-      <a href="/how-to-use" on:click={() => (open = false)}>How to use</a>
-      <a href="/about" on:click={() => (open = false)}>About</a>
+      <a href={base + '/'} on:click={() => (open = false)}>Map</a>
+      <a href={base + '/activity'} on:click={() => (open = false)}>Activity</a>
+      <a href={base + '/windows'} on:click={() => (open = false)}>Harvest windows</a>
+      <a href={base + '/how-to-use'} on:click={() => (open = false)}>How to use</a>
+      <a href={base + '/about'} on:click={() => (open = false)}>About</a>
       {#if isAdmin}
         <hr />
-        <a href="/admin" on:click={() => (open = false)}>Admin</a>
+        <a href={base + '/admin'} on:click={() => (open = false)}>Admin</a>
       {/if}
       <hr />
       <button on:click={handleSignOut}>Sign out</button>

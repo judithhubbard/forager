@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
+  import { base } from '$app/paths';
   import { page } from '$app/stores';
   import { activeRegion, regionsLoading, myRegions } from '$lib/stores/activeRegion';
   import { session } from '$lib/stores/auth';
@@ -304,7 +305,7 @@
     {#if pinsLoading}
       <span class="hint">Loading…</span>
     {/if}
-    <a class="link ripe-link" href="/ripe">Ripe now</a>
+    <a class="link ripe-link" href={base + '/ripe'}>Ripe now</a>
     <ToolsMenu />
   </div>
 </header>

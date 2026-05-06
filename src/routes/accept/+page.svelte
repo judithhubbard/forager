@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { goto } from '$lib/utils/nav';
+  import { base } from '$app/paths';
   import { page } from '$app/stores';
   import { session, authLoading } from '$lib/stores/auth';
   import { supabase } from '$lib/supabase';
@@ -53,7 +54,7 @@
     <p class="ok">{message}</p>
   {:else}
     <p class="error">{message}</p>
-    <p><a href="/">Back to map</a></p>
+    <p><a href={base + '/'}>Back to map</a></p>
   {/if}
 </main>
 
