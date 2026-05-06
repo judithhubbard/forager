@@ -138,9 +138,11 @@
   // color resolver changes. LCache must be set (we cache the
   // dynamically-imported leaflet module on mount so renderPins can
   // run fully synchronously and avoid the clear-then-add flash).
+  // colorOf is passed explicitly into renderPins so the Svelte
+  // compiler tracks it as a real reactive dependency — a `void colorOf`
+  // hint inside the block was fragile across Svelte versions.
   $: if (map && markerLayer && LCache) {
-    void colorOf; // keep colorOf in the dependency set
-    renderPins(pins, selectedPinId);
+    renderPins(pins, selectedPinId, colorOf, categoryOf);
   }
   // Same atomic-swap pattern for the cluster layer so cluster count
   // dots update in sync with whatever the parent fetched for the
@@ -197,7 +199,9 @@
 
   function renderPins(
     currentPins: PinEffective[],
-    selectedId: string | null
+    selectedId: string | null,
+    colorResolver: ((pin: PinEffective) => string) | null,
+    catResolver: (pin: PinEffective) => ForageCategory
   ) {
     if (!markerLayer || !map || !LCache) return;
     const L = LCache;
@@ -210,7 +214,7 @@
     {
       for (const pin of currentPins) {
         if (pin.lat == null || pin.lng == null) continue;
-        const fill = colorOf ? colorOf(pin) : colorFor(pin);
+        const fill = colorResolver ? colorResolver(pin) : colorFor(pin);
         const isSelected = !!selectedId && pin.id === selectedId;
         const isStrictRipe = pin.is_ripe_strict === true;
         const isPossibly = pin.is_ripe_now === true; // already widened by the buffer
@@ -284,7 +288,7 @@
         // dashed-stroke experiment was hard to read at 12px so we
         // dropped it. shapeHtml still accepts a dotted flag for
         // future use.)
-        const cat = categoryOf(pin);
+        const cat = catResolver(pin);
         const px = baseR * 2;
         const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
         const opacityCss = fillOpacity.toFixed(2);
@@ -478,7 +482,7 @@
 
     markerLayer = L.layerGroup().addTo(map);
     clusterLayer = L.layerGroup().addTo(map);
-    renderPins(pins, selectedPinId);
+    renderPins(pins, selectedPinId, colorOf, categoryOf);
     renderClusters(clusters);
 
     // Debounced viewport-change emission. The parent listens to this

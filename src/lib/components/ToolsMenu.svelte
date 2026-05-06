@@ -91,6 +91,7 @@
       <a href={base + '/windows'} on:click={() => (open = false)}>Harvest windows</a>
       <a href={base + '/how-to-use'} on:click={() => (open = false)}>How to use</a>
       <a href={base + '/about'} on:click={() => (open = false)}>About</a>
+      <a href={base + '/sources'} on:click={() => (open = false)}>Data sources</a>
       {#if isAdmin}
         <hr />
         <a href={base + '/admin'} on:click={() => (open = false)}>Admin</a>

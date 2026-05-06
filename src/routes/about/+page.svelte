@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$lib/utils/nav';
+  import { base } from '$app/paths';
 </script>
 
 <header>
@@ -9,21 +10,28 @@
 
 <main>
   <p>
-    Forager is a private, mobile-friendly map of forageable plants. It bootstraps
-    from public datasets (Cornell Campus Tree Inventory, City of Ithaca Tree
-    Inventory, Cornell Botanic Gardens) and lets you add your own pins, log
-    harvests, attach photos, and tag hazards or access notes.
+    Forager is a community foraging map. The public layer is built from
+    open municipal and academic tree inventories — a growing list of
+    cities is included today, with more added as their data becomes
+    accessible.
   </p>
   <p>
-    The app is invitation-only; data is scoped to a single region (Ithaca, NY).
-    See <a href="https://github.com/judithhubbard/forager" target="_blank" rel="noopener">the source repo</a>
+    Signed-in users get a personal watchlist and ripeness alerts.
+    <a href={base + '/register'}>Forager Pro</a> adds private pin
+    dropping, observation logging with photos, year-over-year
+    journaling, and track / heatmap recording.
+  </p>
+  <p>
+    See <a href={base + '/sources'}>Data sources</a> for the full list
+    of contributing datasets and licenses, or
+    <a href="https://github.com/judithhubbard/forager" target="_blank" rel="noopener">the source repo</a>
     for design notes.
   </p>
 
   <h2>Forage responsibly</h2>
   <p>
-    Forager is a personal record-keeping tool, not a guarantee. You — not Forager,
-    not whoever logged the pin — are responsible for:
+    Forager is a record-keeping tool, not a guarantee. You — not
+    Forager, not whoever logged the pin — are responsible for:
   </p>
   <ul class="disclaimer">
     <li>
@@ -39,37 +47,6 @@
       permission to enter private land. Confirm access before harvesting.
     </li>
   </ul>
-
-  <h2>Data attribution</h2>
-  <ul>
-    <li>
-      <strong>Cornell Campus Tree Inventory</strong> — via
-      <a href="https://cugir.library.cornell.edu/catalog/cugir-009100" target="_blank" rel="noopener">CUGIR cugir-009100</a>.
-    </li>
-    <li>
-      <strong>City of Ithaca Tree Inventory</strong> — via the
-      <a href="https://data-ithacany.opendata.arcgis.com/datasets/city-managed-trees" target="_blank" rel="noopener">City of Ithaca open data portal</a>.
-    </li>
-    <li>
-      <strong>Cornell Botanic Gardens</strong> plant collection — scraped from the
-      <a href="https://cornell.gardenexplorer.org/" target="_blank" rel="noopener">Garden Explorer</a> public records.
-    </li>
-    <li>
-      <strong>Map tiles</strong> — © OpenStreetMap contributors.
-    </li>
-    <li>
-      <strong>Address search</strong> — geocoding by
-      <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">Nominatim</a>,
-      data © OpenStreetMap contributors.
-    </li>
-    <li>
-      <strong>Default harvest windows</strong> — approximate per-species
-      flowering / ripening day-of-year ranges for USDA zones 5b/6a.
-      Compiled from USDA, USA-NPN, Cornell Cooperative Extension, and
-      foraging field guides; refined from logged observations. Edit
-      defaults on the <em>Harvest windows</em> page.
-    </li>
-  </ul>
 </main>
 
 <style>
@@ -78,8 +55,7 @@
   .back { background: transparent; border: 0; color: #3a5a3a; font-size: 0.9rem; cursor: pointer; }
   main { padding: 1.25rem 1rem; max-width: 36rem; margin: 0 auto; line-height: 1.5; color: #1f2a1f; }
   h2 { color: #3a5a3a; font-size: 1rem; margin: 1.5rem 0 0.5rem; }
-  ul { padding-left: 1.25rem; }
-  ul.disclaimer { list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  ul.disclaimer { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
   ul.disclaimer li { border-left: 3px solid #3a5a3a; padding-left: 0.7rem; }
   a { color: #3a5a3a; }
 </style>
