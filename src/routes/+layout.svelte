@@ -7,6 +7,7 @@
   import { isPlaceholderUsername } from '$lib/services/profileService';
   import { safeNext, encodeNext } from '$lib/utils/safeNext';
   import { settings } from '$lib/stores/settings';
+  import { myRegions, regionsLoading } from '$lib/stores/activeRegion';
   import UsernameSetup from '$lib/components/UsernameSetup.svelte';
   import Disclaimer from '$lib/components/Disclaimer.svelte';
 
@@ -28,6 +29,11 @@
   })();
 
   $: routeIsPublic = PUBLIC_ROUTES.some((r) => localPath.startsWith(r));
+  /** /welcome is reachable while signed in but has no other prereqs.
+   *  Treated like a public route for redirect purposes — visiting it
+   *  shouldn't trigger the "no memberships → /welcome" bounce that
+   *  applies to other in-app routes. */
+  $: routeIsWelcome = localPath.startsWith('/welcome');
 
   // Redirect on auth state — but only after the initial session fetch
   // completes. Signed-out users on protected routes get bounced to
@@ -44,6 +50,21 @@
     }
   }
 
+  // First-run flow: if a signed-in user has no memberships yet, send
+  // them to /welcome to pick a mode (join / start group / personal).
+  // Wait for both the auth check and the regions fetch to settle to
+  // avoid bouncing during initial load.
+  $: if (
+    !$authLoading &&
+    $session &&
+    !$regionsLoading &&
+    !routeIsPublic &&
+    !routeIsWelcome &&
+    $myRegions.length === 0
+  ) {
+    goto('/welcome', { replaceState: true });
+  }
+
   // Soft-block: show the username setup as soon as we have a session AND
   // a loaded profile whose username is still the auto-issued placeholder.
   // App content keeps rendering underneath — the modal sits over it. We
@@ -52,17 +73,20 @@
   $: needsUsername =
     !!$session &&
     !routeIsPublic &&
+    !routeIsWelcome &&
     !!$profile &&
     isPlaceholderUsername($profile.username);
 
   // One-time foraging-responsibility acknowledgment. Shown only after
-  // the user has cleared the username step, so it doesn't pile two
-  // modals on top of each other on a brand-new account.
+  // the user has cleared the username step AND has at least one
+  // region, so it doesn't pile up over the welcome flow.
   $: needsDisclaimer =
     !!$session &&
     !routeIsPublic &&
+    !routeIsWelcome &&
     !!$profile &&
     !isPlaceholderUsername($profile.username) &&
+    $myRegions.length > 0 &&
     !$settings.disclaimerAcceptedAt;
 </script>
 

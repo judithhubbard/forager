@@ -920,6 +920,10 @@ export type Database = {
         Args: { invite_token: string }
         Returns: string
       }
+      create_region: {
+        Args: { p_name: string; p_default_pin_visibility?: string }
+        Returns: string
+      }
       username_available: {
         Args: { candidate: string }
         Returns: boolean

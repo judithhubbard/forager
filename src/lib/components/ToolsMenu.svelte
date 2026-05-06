@@ -2,11 +2,17 @@
   import { goto } from '$lib/utils/nav';
   import { base } from '$app/paths';
   import { signOut } from '$lib/services/authService';
-  import { activeRegion } from '$lib/stores/activeRegion';
+  import {
+    activeRegion,
+    activeRegionId,
+    myRegions,
+    setActiveRegionId
+  } from '$lib/stores/activeRegion';
   import { settings, setBasemap, type Basemap } from '$lib/stores/settings';
 
   let open = false;
   $: isAdmin = $activeRegion?.role === 'admin';
+  $: hasMultipleRegions = $myRegions.length > 1;
 
   const BASEMAP_OPTIONS: { value: Basemap; label: string }[] = [
     { value: 'osm-hot',   label: 'Humanitarian OSM' },
@@ -28,6 +34,9 @@
   function onBasemapChange(e: Event) {
     setBasemap((e.currentTarget as HTMLSelectElement).value as Basemap);
   }
+  function onRegionChange(e: Event) {
+    setActiveRegionId((e.currentTarget as HTMLSelectElement).value);
+  }
 </script>
 
 <svelte:window on:click={handleClickOutside} />
@@ -36,6 +45,19 @@
   <button class="tools-button" on:click={() => (open = !open)} aria-label="Tools menu">≡</button>
   {#if open}
     <div class="tools-menu" role="menu">
+      {#if hasMultipleRegions}
+        <div class="settings-block">
+          <label>
+            Region
+            <select value={$activeRegionId} on:change={onRegionChange}>
+              {#each $myRegions as r}
+                <option value={r.id}>{r.name}{r.role === 'admin' ? ' (admin)' : ''}</option>
+              {/each}
+            </select>
+          </label>
+        </div>
+        <hr />
+      {/if}
       <a href={base + '/'} on:click={() => (open = false)}>Map</a>
       <a href={base + '/activity'} on:click={() => (open = false)}>Activity</a>
       <a href={base + '/windows'} on:click={() => (open = false)}>Harvest windows</a>

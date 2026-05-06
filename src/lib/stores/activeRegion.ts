@@ -72,3 +72,30 @@ export const activeRegion: Readable<RegionWithRole | null> = derived(
 export function setActiveRegionId(id: string): void {
   _activeId.set(id);
 }
+
+/** Force a fresh region list reload (used after the user creates a
+ *  region or accepts an invitation, so the new region appears in the
+ *  switcher immediately and can be set as active). If `selectId` is
+ *  given, that region becomes active provided it's actually in the
+ *  reloaded list. */
+export async function reloadRegions(selectId?: string): Promise<void> {
+  if (!browser) return;
+  _loading.set(true);
+  try {
+    const list = await listMyRegions();
+    _regions.set(list);
+    const validIds = new Set(list.map((r) => r.id));
+    if (selectId && validIds.has(selectId)) {
+      _activeId.set(selectId);
+    } else {
+      const current = get(_activeId);
+      if (!current || !validIds.has(current)) {
+        _activeId.set(list.length > 0 ? list[0].id : null);
+      }
+    }
+  } catch (err) {
+    console.error('[activeRegion] reload failed:', err);
+  } finally {
+    _loading.set(false);
+  }
+}

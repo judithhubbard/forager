@@ -40,3 +40,23 @@ export async function getRegion(id: string): Promise<Region | null> {
   if (error) throw error;
   return data;
 }
+
+/** Create a new region with the caller as admin. Goes through the
+ *  create_region RPC so the regions row + region_memberships row land
+ *  in the same transaction. Returns the new region id so the caller
+ *  can switch to it. */
+export async function createRegion(input: {
+  name: string;
+  defaultPinVisibility?: 'shared' | 'private';
+}): Promise<string> {
+  const { data, error } = await supabase.rpc('create_region', {
+    p_name: input.name,
+    p_default_pin_visibility: input.defaultPinVisibility ?? 'shared'
+  });
+  if (error) {
+    console.error('[regionService] createRegion error:', error);
+    throw error;
+  }
+  if (!data) throw new Error('Region creation returned no id');
+  return data;
+}
