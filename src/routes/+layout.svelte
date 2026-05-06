@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$lib/utils/nav';
+  import { base } from '$app/paths';
   import { page } from '$app/stores';
   import { session, authLoading } from '$lib/stores/auth';
   import { profile } from '$lib/stores/profile';
@@ -9,7 +10,22 @@
 
   const PUBLIC_ROUTES = ['/login', '/register'];
 
-  $: routeIsPublic = PUBLIC_ROUTES.some((r) => $page.url.pathname.startsWith(r));
+  /** Strip the configured base path from `$page.url.pathname` so route
+   *  matching doesn't depend on whether the app is hosted at `/` or at
+   *  `/forager/`. Without this, on production `pathname` is
+   *  `/forager/login` and a startsWith('/login') check returns false —
+   *  which used to send signed-out users into an infinite redirect
+   *  loop on the login page itself. */
+  $: localPath = (() => {
+    const p = $page.url.pathname;
+    if (base && p.startsWith(base)) {
+      const rest = p.slice(base.length);
+      return rest.startsWith('/') ? rest : '/' + rest;
+    }
+    return p;
+  })();
+
+  $: routeIsPublic = PUBLIC_ROUTES.some((r) => localPath.startsWith(r));
 
   // Redirect on auth state — but only after the initial session fetch
   // completes. Signed-out users on protected routes get bounced to
@@ -18,7 +34,7 @@
   // (validated to same-origin), defaulting to /.
   $: if (!$authLoading) {
     if (!$session && !routeIsPublic) {
-      const here = $page.url.pathname + $page.url.search;
+      const here = localPath + $page.url.search;
       goto(`/login?next=${encodeNext(here)}`, { replaceState: true });
     } else if ($session && routeIsPublic) {
       const dest = safeNext($page.url.searchParams.get('next'), '/');

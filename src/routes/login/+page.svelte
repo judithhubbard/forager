@@ -3,6 +3,7 @@
 
   let email = '';
   let password = '';
+  let showPassword = false;
   let submitting = false;
   let errorMessage = '';
 
@@ -13,6 +14,10 @@
     submitting = false;
     if (!result.ok) errorMessage = result.message;
     // On success, the +layout effect handles redirect to /.
+  }
+
+  function onPwInput(e: Event) {
+    password = (e.currentTarget as HTMLInputElement).value;
   }
 </script>
 
@@ -34,13 +39,35 @@
 
     <label>
       Password
-      <input
-        type="password"
-        autocomplete="current-password"
-        bind:value={password}
-        required
-        disabled={submitting}
-      />
+      <div class="pw-row">
+        <!-- Svelte forbids a dynamic `type` with bind:value, so render
+             two <input>s and toggle visibility by which gets mounted. -->
+        {#if showPassword}
+          <input
+            type="text"
+            autocomplete="current-password"
+            value={password}
+            on:input={onPwInput}
+            required
+            disabled={submitting}
+          />
+        {:else}
+          <input
+            type="password"
+            autocomplete="current-password"
+            value={password}
+            on:input={onPwInput}
+            required
+            disabled={submitting}
+          />
+        {/if}
+        <button
+          type="button"
+          class="pw-toggle"
+          on:click={() => (showPassword = !showPassword)}
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
+        >{showPassword ? '🙈' : '👁'}</button>
+      </div>
     </label>
 
     {#if errorMessage}
@@ -93,6 +120,20 @@
   input:focus {
     outline: 2px solid #3a5a3a;
     outline-offset: -1px;
+  }
+  .pw-row { position: relative; display: flex; }
+  .pw-row input { flex: 1; padding-right: 3rem; }
+  .pw-toggle {
+    position: absolute;
+    right: 0.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+    background: transparent;
+    border: 0;
+    font-size: 1.1rem;
+    cursor: pointer;
   }
   button {
     margin-top: 0.5rem;
