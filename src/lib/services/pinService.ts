@@ -163,6 +163,35 @@ export async function updateVisibility(pinId: string, visibility: Visibility): P
   bumpDataChange();
 }
 
+/** Move a pin to a new lng/lat. Owner-or-admin only via RLS. Used
+ *  for correcting mis-located pins from the pin detail panel. */
+export async function updateLocation(
+  pinId: string,
+  lng: number,
+  lat: number,
+  accuracyM?: number | null
+): Promise<void> {
+  await enqueue({
+    id: pinId,
+    entityType: 'pin',
+    op: 'update',
+    payload: { lng, lat, accuracyM },
+    exec: async () => {
+      const { error } = await supabase.rpc('update_pin_location', {
+        p_pin_id: pinId,
+        p_lng: lng,
+        p_lat: lat,
+        p_location_accuracy_m: accuracyM ?? null
+      });
+      if (error) {
+        console.error('[pinService] updateLocation error:', error);
+        throw error;
+      }
+    }
+  });
+  bumpDataChange();
+}
+
 /** Update the stored status of a pin. */
 export async function updateStatus(pinId: string, status: PinStatus): Promise<void> {
   await enqueue({

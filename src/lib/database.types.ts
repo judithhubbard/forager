@@ -926,6 +926,15 @@ export type Database = {
         Args: { p_name: string; p_default_pin_visibility?: string }
         Returns: string
       }
+      update_pin_location: {
+        Args: {
+          p_pin_id: string
+          p_lng: number
+          p_lat: number
+          p_location_accuracy_m?: number | null
+        }
+        Returns: void
+      }
       username_available: {
         Args: { candidate: string }
         Returns: boolean

@@ -25,9 +25,12 @@
   /** When true, the next click on empty map area fires mapTap (so the
    *  parent can open the drop-pin flow at that coordinate). The map
    *  also gets a crosshair cursor as a visual cue. Used by the desktop
-   *  "+ new pin" flow; on mobile the long-press gesture stays the
-   *  primary entry point. */
+   *  "+ new pin" flow and by the move-pin flow; on mobile the long-press
+   *  gesture stays the primary entry point. */
   export let placing: boolean = false;
+  /** Customizable hint text shown above the map while in `placing`
+   *  mode. Defaults to the new-pin wording. */
+  export let placingHint: string = 'Click on the map to place the pin · Esc to cancel';
 
   /** Currently-selected pin (whose detail panel is open). Drawn with a
    *  highlight ring so the user can see which pin on the map they're
@@ -399,7 +402,7 @@
 <div class="map-wrap" class:placing>
   <div bind:this={mapEl} class="map" />
   {#if placing}
-    <div class="placing-hint" role="status">Click on the map to place the pin · Esc to cancel</div>
+    <div class="placing-hint" role="status">{placingHint}</div>
   {/if}
   {#if !hideLocate}
     <button

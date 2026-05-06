@@ -31,6 +31,7 @@
   } from '$lib/services/observationService';
   import { profileLabel } from '$lib/services/profileService';
   import { profile } from '$lib/stores/profile';
+  import { activeRegion } from '$lib/stores/activeRegion';
   import {
     listByPin as listPhotos,
     signUrls,
@@ -56,7 +57,10 @@
 
   export let pinId: string;
 
-  const dispatch = createEventDispatcher<{ statusChanged: void }>();
+  const dispatch = createEventDispatcher<{
+    statusChanged: void;
+    requestMove: { pinId: string };
+  }>();
 
   let pin: PinEffective | null = null;
   let species: Species | null = null;
@@ -642,6 +646,13 @@
           <button class="inline" on:click={saveStatus} disabled={statusSaving}>
             {statusSaving ? '…' : `Set ${statusLabel(pendingStatus)}`}
           </button>
+        {/if}
+        {#if pin.created_by === $profile?.id || $activeRegion?.role === 'admin'}
+          <button
+            class="inline"
+            on:click={() => dispatch('requestMove', { pinId })}
+            title="Click on the map to set a new location"
+          >Move pin</button>
         {/if}
       </div>
       {#if pin.notes}

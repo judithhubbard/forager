@@ -4,7 +4,11 @@
   import { page } from '$app/stores';
   import { activeRegion, regionsLoading, myRegions } from '$lib/stores/activeRegion';
   import { session } from '$lib/stores/auth';
-  import { listByRegion, type PinEffective } from '$lib/services/pinService';
+  import {
+    listByRegion,
+    updateLocation as updatePinLocation,
+    type PinEffective
+  } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import Map from '$lib/components/Map.svelte';
   import DropPinModal from '$lib/components/DropPinModal.svelte';
@@ -448,7 +452,20 @@
     if ($activeRegion) loadAll($activeRegion.id);
   }
 
-  function handleMapTap(e: CustomEvent<{ lng: number; lat: number }>) {
+  async function handleMapTap(e: CustomEvent<{ lng: number; lat: number }>) {
+    // Move-pin flow takes precedence: if we're moving an existing
+    // pin, the next tap relocates it (and skips the drop-pin modal).
+    if (movingPinId) {
+      const id = movingPinId;
+      movingPinId = null;
+      try {
+        await updatePinLocation(id, e.detail.lng, e.detail.lat);
+      } catch (err) {
+        console.error('[+page] move pin failed', err);
+        alert('Could not move the pin. ' + (err instanceof Error ? err.message : ''));
+      }
+      return;
+    }
     dropPinLng = e.detail.lng;
     dropPinLat = e.detail.lat;
     showDropPin = true;
@@ -475,8 +492,20 @@
   function handleNewPinClick() {
     placingPin = true;
   }
+
+  /** "Move pin" flow: when set, the next mapTap relocates this pin
+   *  instead of opening the drop-pin modal. The pin detail panel is
+   *  closed so the user can see the map and the relocation hint. */
+  let movingPinId: string | null = null;
+  function handleRequestMove(e: CustomEvent<{ pinId: string }>) {
+    movingPinId = e.detail.pinId;
+    selectedPinId = null; // close the panel so the map is fully visible
+  }
+
   function handlePlacingKey(e: KeyboardEvent) {
-    if (placingPin && e.key === 'Escape') placingPin = false;
+    if (e.key !== 'Escape') return;
+    if (placingPin) placingPin = false;
+    if (movingPinId) movingPinId = null;
   }
 </script>
 
@@ -594,7 +623,8 @@
     {labelOf}
     {selectedPinId}
     basemap={$settings.basemap}
-    placing={placingPin}
+    placing={placingPin || !!movingPinId}
+    placingHint={movingPinId ? 'Click on the map to set the new location · Esc to cancel' : 'Click on the map to place the pin · Esc to cancel'}
     hideLocate={!!selectedPinId}
     on:pinClick={handlePinClick}
     on:mapTap={handleMapTap}
@@ -655,7 +685,11 @@
         <button class="close" on:click={closePanel} aria-label="Close">×</button>
       </div>
     </header>
-    <PinDetailContent pinId={selectedPinId} on:statusChanged={onPanelStatusChanged} />
+    <PinDetailContent
+      pinId={selectedPinId}
+      on:statusChanged={onPanelStatusChanged}
+      on:requestMove={handleRequestMove}
+    />
   </aside>
 {/if}
 
