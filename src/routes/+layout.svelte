@@ -28,7 +28,8 @@
     '/accept',
     '/species',
     '/pins',
-    '/sources'
+    '/sources',
+    '/timeline'
   ];
 
   /** Strip the configured base path from `$page.url.pathname` so route

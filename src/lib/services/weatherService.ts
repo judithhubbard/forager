@@ -70,3 +70,97 @@ export function formatMm(mm: number): string {
   const inches = mm / 25.4;
   return `${inches.toFixed(1)}"`;
 }
+
+/** Daily-grain historical weather (for the /timeline year-history
+ *  page). One row per calendar day in the requested range. */
+export interface DailyWeather {
+  /** ISO yyyy-mm-dd. */
+  date: string;
+  rain_mm: number;
+  /** Daily max temperature in °C. Null when the source has no
+   *  reading for that day (gaps near the edge of the archive). */
+  temp_max_c: number | null;
+  temp_min_c: number | null;
+}
+
+const histCache = new Map<string, DailyWeather[]>();
+
+/** Open-Meteo's archive goes back to 1940 with ~5 days of latency.
+ *  For the most-recent few days we fall back to the forecast API
+ *  with past_days set, then merge the two. Returns one row per day
+ *  in the requested range, in ascending date order. */
+export async function historicalWeather(
+  lng: number,
+  lat: number,
+  startDate: string,
+  endDate: string
+): Promise<DailyWeather[]> {
+  const r = (n: number) => Math.round(n * 10) / 10;
+  const cacheKey = `${r(lng)},${r(lat)},${startDate},${endDate}`;
+  const hit = histCache.get(cacheKey);
+  if (hit) return hit;
+
+  const archiveUrl =
+    `https://archive-api.open-meteo.com/v1/archive` +
+    `?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}` +
+    `&start_date=${startDate}&end_date=${endDate}` +
+    `&daily=precipitation_sum,temperature_2m_max,temperature_2m_min` +
+    `&timezone=auto`;
+  const archiveRes = await fetch(archiveUrl);
+  if (!archiveRes.ok) {
+    throw new Error(`historical weather fetch ${archiveRes.status}`);
+  }
+  const archive = (await archiveRes.json()) as {
+    daily?: {
+      time: string[];
+      precipitation_sum: number[];
+      temperature_2m_max: number[];
+      temperature_2m_min: number[];
+    };
+  };
+
+  // Today's date in the local TZ — the comparison below is a string
+  // compare so YYYY-MM-DD ordering is fine.
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const out: DailyWeather[] = (archive.daily?.time ?? []).map((d, i) => ({
+    date: d,
+    rain_mm: archive.daily?.precipitation_sum[i] ?? 0,
+    temp_max_c: archive.daily?.temperature_2m_max[i] ?? null,
+    temp_min_c: archive.daily?.temperature_2m_min[i] ?? null
+  }));
+
+  // Patch in the very recent days (archive lags ~5 days) via the
+  // forecast endpoint. Cheap if endDate is well in the past — skip.
+  if (endDate >= todayIso) {
+    const recentUrl =
+      `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}` +
+      `&past_days=10&forecast_days=1` +
+      `&daily=precipitation_sum,temperature_2m_max,temperature_2m_min` +
+      `&timezone=auto`;
+    try {
+      const recentRes = await fetch(recentUrl);
+      if (recentRes.ok) {
+        const recent = (await recentRes.json()) as typeof archive;
+        const seen = new Set(out.map((r) => r.date));
+        for (const [i, d] of (recent.daily?.time ?? []).entries()) {
+          if (seen.has(d)) continue;
+          if (d < startDate || d > endDate) continue;
+          out.push({
+            date: d,
+            rain_mm: recent.daily?.precipitation_sum[i] ?? 0,
+            temp_max_c: recent.daily?.temperature_2m_max[i] ?? null,
+            temp_min_c: recent.daily?.temperature_2m_min[i] ?? null
+          });
+        }
+        out.sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch {
+      // Best-effort patch; the archive part is enough on its own.
+    }
+  }
+
+  histCache.set(cacheKey, out);
+  return out;
+}

@@ -707,6 +707,11 @@
           >
             {watching ? '★ Watching' : '☆ Watch'}
           </button>
+          <a class="watch-btn link-btn" href={base + '/timeline?pin=' + pinId}>Year history →</a>
+        </div>
+      {:else}
+        <div class="watch-row">
+          <a class="watch-btn link-btn" href={base + '/timeline?pin=' + pinId}>Year history →</a>
         </div>
       {/if}
       {#if windows.length > 0}
@@ -1331,7 +1336,7 @@
     padding: 0.05rem 0.45rem;
     border-radius: 0.45rem;
   }
-  .watch-row { margin: 0.35rem 0; }
+  .watch-row { margin: 0.35rem 0; display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .watch-btn {
     background: white;
     border: 1px solid #c7d0c7;
@@ -1340,6 +1345,8 @@
     border-radius: 0.3rem;
     cursor: pointer;
     font-size: 0.82rem;
+    text-decoration: none;
+    display: inline-block;
   }
   .watch-btn:hover { background: #f0f5ef; }
   .watch-btn.active {
@@ -1347,6 +1354,7 @@
     border-color: #e8d3a6;
     color: #7a4a10;
   }
+  .watch-btn.link-btn { background: white; }
 
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
   .section-header h3 {

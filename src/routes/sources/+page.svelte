@@ -90,6 +90,20 @@
     </li>
   </ul>
 
+  <h2>Weather</h2>
+  <ul class="sources">
+    <li>
+      <strong>Recent rainfall + historical daily weather</strong> —
+      <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>
+      (CC BY 4.0). Used for the rainfall chip in the corner of the
+      map and for the daily rain bars + temperature line on the Year
+      history page. Open-Meteo aggregates from national weather
+      services including
+      <a href="https://www.weather.gov/" target="_blank" rel="noopener">NOAA / NWS</a>,
+      DWD (Germany), ECMWF, and others.
+    </li>
+  </ul>
+
   <h2>Phenology</h2>
   <ul class="sources">
     <li>
