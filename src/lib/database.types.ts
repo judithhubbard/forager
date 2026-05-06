@@ -1892,7 +1892,7 @@ export type Database = {
         | "inaccessible"
         | "fenced"
         | "sick"
-      pin_status: "active" | "gone" | "dormant" | "needs_verification"
+      pin_status: "active" | "gone" | "inaccessible" | "not_good" | "dormant" | "needs_verification"
       region_role: "admin" | "member"
       stage:
         | "flowering"
@@ -2053,7 +2053,7 @@ export const Constants = {
         "fenced",
         "sick",
       ],
-      pin_status: ["active", "gone", "dormant", "needs_verification"],
+      pin_status: ["active", "gone", "inaccessible", "not_good", "dormant", "needs_verification"],
       region_role: ["admin", "member"],
       stage: [
         "flowering",

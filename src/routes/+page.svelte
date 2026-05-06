@@ -341,7 +341,12 @@
       else cats.other = true;
       if (p.is_ripe_strict) ripe = true;
       else if (p.is_ripe_now) possibly = true;
-      if (p.effective_status === 'gone' || p.effective_status === 'dormant') gone = true;
+      if (
+        p.effective_status === 'gone' ||
+        p.effective_status === 'inaccessible' ||
+        p.effective_status === 'not_good' ||
+        p.effective_status === 'dormant'
+      ) gone = true;
     }
     return {
       fruit: cats.fruit,
@@ -573,7 +578,7 @@
     <label>
       Show:
       <select bind:value={filterStatus}>
-        <option value="all">All ({statusCounts.all}, incl. gone/dormant)</option>
+        <option value="all">All ({statusCounts.all}, incl. gone / inaccessible / not good)</option>
         <option value="active">Active ({statusCounts.active})</option>
         <option value="possibly_ripe">Possibly ripe today ({statusCounts.possibly_ripe})</option>
         <option value="confirmed_ripe">Confirmed ripe this year ({statusCounts.confirmed_ripe})</option>
@@ -608,7 +613,7 @@
         <ul>
           {#if legendShows.ripe}<li><span class="ring1"></span> Ripe</li>{/if}
           {#if legendShows.possibly}<li><span class="ring2"></span> Possibly ripe</li>{/if}
-          {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant</li>{/if}
+          {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Inactive (gone / inaccessible / not good)</li>{/if}
         </ul>
       </div>
     {:else if hasStatusRows}

@@ -92,7 +92,7 @@
   let statusSaving = false;
   // needs_verification is set automatically by the 4-year auto-degrade rule;
   // not a manual choice. active = exists; gone = removed; dormant = unproductive.
-  const STATUSES: PinStatus[] = ['active', 'gone', 'dormant'];
+  const STATUSES: PinStatus[] = ['active', 'gone', 'inaccessible', 'not_good'];
 
   let formOpen = false;
   let formStage: Stage = 'ripe';
@@ -1035,10 +1035,14 @@
     border: 1px solid transparent;
     white-space: nowrap;
   }
-  .status-chip.status-active            { background: #e1f1de; color: #2a4a2a; border-color: #b9d8b3; }
-  .status-chip.status-gone              { background: #ececec; color: #555;    border-color: #c7c7c7; }
-  .status-chip.status-dormant           { background: #f5e8c4; color: #6a4a14; border-color: #e0c98a; }
+  .status-chip.status-active             { background: #e1f1de; color: #2a4a2a; border-color: #b9d8b3; }
+  .status-chip.status-gone               { background: #ececec; color: #555;    border-color: #c7c7c7; }
+  .status-chip.status-inaccessible       { background: #fde6da; color: #7a3414; border-color: #f0c2a4; }
+  .status-chip.status-not_good           { background: #f5e8c4; color: #6a4a14; border-color: #e0c98a; }
   .status-chip.status-needs_verification { background: #ecdcef; color: #6a3a78; border-color: #d3b9d8; }
+  /* Legacy: existing 'dormant' rows are migrated to 'active' but
+     keep this rule for any that slip through. */
+  .status-chip.status-dormant            { background: #f5e8c4; color: #6a4a14; border-color: #e0c98a; }
 
   .ripe-dot { font-size: 0.85em; }
 

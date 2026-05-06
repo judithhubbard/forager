@@ -46,7 +46,7 @@ export async function create(input: CreatePinInput): Promise<string> {
         p_location_accuracy_m?: number;
         p_display_name?: string;
         p_notes?: string;
-        p_status?: 'active' | 'gone' | 'dormant' | 'needs_verification';
+        p_status?: PinStatus;
         p_visibility?: Visibility;
       } = {
         p_id: id,
