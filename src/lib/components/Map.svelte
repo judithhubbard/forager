@@ -2,6 +2,7 @@
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
+  import { recentRain, formatMm } from '$lib/services/weatherService';
 
   type ForageCategory = 'fruit' | 'bramble' | 'nut' | 'mushroom' | 'other' | 'unknown';
 
@@ -129,6 +130,31 @@
   // "the button does nothing" reports.
   let locating = false;
   let locationError = '';
+
+  // Persistent rain chip in the corner of the map: shows the past
+  // 7 days of rainfall at the map's current center. Rain is broadly
+  // useful for foragers — anyone deciding whether to head out. The
+  // weatherService cache is keyed at ~11km granularity so panning
+  // around the same area is essentially free. Updates after every
+  // moveend (300ms debounced via the existing viewport timer).
+  let rainTotalMm: number | null = null;
+  let rainAt: { lng: number; lat: number } | null = null;
+  async function refreshMapRain(lng: number, lat: number) {
+    // Skip if we already have rain for the same ~11km cell.
+    if (
+      rainAt &&
+      Math.abs(rainAt.lng - lng) < 0.05 &&
+      Math.abs(rainAt.lat - lat) < 0.05 &&
+      rainTotalMm !== null
+    ) return;
+    try {
+      const r = await recentRain(lng, lat, 7);
+      rainTotalMm = r.total_mm;
+      rainAt = { lng, lat };
+    } catch {
+      // Network blip — leave the chip showing the previous value.
+    }
+  }
 
   // Coarse pointer (touch device) gets larger hit target.
   const isTouch =
@@ -502,6 +528,8 @@
         b.getNorth()
       ];
       dispatch('viewportChange', { bbox, zoom: map.getZoom() });
+      const c = map.getCenter();
+      void refreshMapRain(c.lng, c.lat);
     };
     map.on('moveend zoomend', () => {
       if (viewportTimer) clearTimeout(viewportTimer);
@@ -569,6 +597,16 @@
   {/if}
   {#if locationError}
     <div class="loc-error" role="status">{locationError}</div>
+  {/if}
+  {#if rainTotalMm !== null}
+    <div
+      class="rain-overlay"
+      class:dry={rainTotalMm < 5}
+      class:wet={rainTotalMm >= 25}
+      title="Rainfall in the last 7 days at the center of the visible map. Source: Open-Meteo."
+    >
+      🌧 {formatMm(rainTotalMm)} · last 7 days
+    </div>
   {/if}
 </div>
 
@@ -678,6 +716,24 @@
     font-size: 0.8rem;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   }
+  /* Top-left overlay; mirrors the locate button position. */
+  .rain-overlay {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 1100;
+    background: #e3eff5;
+    border: 1px solid #a8cde0;
+    color: #1a4a66;
+    padding: 0.3rem 0.65rem;
+    border-radius: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    pointer-events: auto;
+  }
+  .rain-overlay.dry { background: #fdf4e3; border-color: #e8c97a; color: #7a4a10; }
+  .rain-overlay.wet { background: #d4e9f5; border-color: #6fa9d0; color: #0e3b58; }
   @media (max-width: 640px) {
     .locate {
       width: 2.85rem;

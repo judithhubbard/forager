@@ -602,7 +602,6 @@
 
 {#if $activeRegion || (!$session && !$regionsLoading)}
   <div class="filterbar">
-    <AddressSearch on:select={handleGeocodeSelect} />
     <div class="species-filter">
       <button
         class="species-toggle"
@@ -690,6 +689,8 @@
         <option value="confirmed_harvest">Confirmed harvest history ({statusCounts.confirmed_harvest})</option>
       </select>
     </label>
+    <div class="filterbar-spacer"></div>
+    <AddressSearch on:select={handleGeocodeSelect} />
   </div>
 
   <Map
@@ -893,6 +894,11 @@
     background: white;
     max-width: 16rem;
   }
+  /* Pushes the address search to the far right of the filter bar.
+     With flex-wrap on, when space gets tight the search wraps to a
+     new row left-aligned, which is fine — better than crowding the
+     species/show controls. */
+  .filterbar-spacer { flex: 1 1 auto; }
 
   /* Multi-select species filter */
   .species-filter {
@@ -1190,15 +1196,26 @@
     margin-right: 0.4rem;
     vertical-align: middle;
     background: #1f2a1f;
+    /* Match the dark stroke + thin halo on the actual map markers
+       (Map.svelte's shapeHtml) so the swatches read as the same
+       symbol. Without this border the panel showed flat fills while
+       the map showed bordered shapes — confused several users. */
+    border: 1.4px solid #1f2a1f;
+    box-sizing: border-box;
   }
   .legend-shape.circle { border-radius: 50%; }
   .legend-shape.square { border-radius: 1px; }
+  /* Triangle is a CSS-border trick (no fill, the bottom-border IS
+     the shape), so it can't carry a real outer border. Add a
+     filter-based dark outline to fake it. */
   .legend-shape.triangle {
     width: 0; height: 0;
     background: transparent;
     border-left: 0.45rem solid transparent;
     border-right: 0.45rem solid transparent;
     border-bottom: 0.78rem solid #1f2a1f;
+    border-top: 0;
+    filter: drop-shadow(0 0 0.3px #1f2a1f) drop-shadow(0 0 0.3px #1f2a1f);
   }
   .legend-shape.diamond {
     transform: rotate(45deg);

@@ -118,15 +118,15 @@
   let watching: WatchlistRow | null = null;
   let watchBusy = false;
 
-  /** Past-7-day rainfall at the pin location. Fetched lazily for
-   *  mushroom-category species since rain is the dominant predictor
-   *  of a mushroom flush; the fetch is skipped for trees / brambles
-   *  where rainfall is much less informative. */
+  /** Past-7-day rainfall at the pin location. Surfaced on every pin
+   *  detail panel — mushroom hunters care most, but anyone deciding
+   *  whether to head out wants to know if recent rain has shifted
+   *  ground conditions. The 11km cell cache in weatherService keeps
+   *  this near-free. */
   let rain: RecentRain | null = null;
   let rainLoading = false;
-  $: isMushroom = !!(species?.forage_parts?.includes('mushroom'));
   async function maybeFetchRain() {
-    if (!isMushroom || !pin || pin.lng == null || pin.lat == null) {
+    if (!pin || pin.lng == null || pin.lat == null) {
       rain = null;
       return;
     }
@@ -139,9 +139,8 @@
       rainLoading = false;
     }
   }
-  // Refetch when pin OR species changes — species can resolve a tick
-  // after pin loads, so we react to both.
-  $: if (pin && species) void maybeFetchRain();
+  // Refetch when pin changes.
+  $: if (pin) void maybeFetchRain();
   async function refreshWatching(id: string) {
     if (!$session) {
       watching = null;
@@ -772,17 +771,15 @@
           </div>
         </div>
       {/if}
-      {#if isMushroom}
-        <div class="rain-row" title="Recent rainfall at this location. Open-Meteo data, last 7 days.">
-          {#if rainLoading}
-            <span class="rain-chip rain-loading">🌧 …</span>
-          {:else if rain}
-            <span class="rain-chip" class:dry={rain.total_mm < 5} class:wet={rain.total_mm >= 25}>
-              🌧 {formatMm(rain.total_mm)} in last 7 days
-            </span>
-          {/if}
-        </div>
-      {/if}
+      <div class="rain-row" title="Recent rainfall at this location. Open-Meteo data, last 7 days.">
+        {#if rainLoading}
+          <span class="rain-chip rain-loading">🌧 …</span>
+        {:else if rain}
+          <span class="rain-chip" class:dry={rain.total_mm < 5} class:wet={rain.total_mm >= 25}>
+            🌧 {formatMm(rain.total_mm)} in last 7 days
+          </span>
+        {/if}
+      </div>
       {#if $session}
         <div class="status-edit-row">
           <select bind:value={pendingStatus}>
