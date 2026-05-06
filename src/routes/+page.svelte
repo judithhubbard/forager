@@ -42,7 +42,7 @@
    *  fetched the first time the user enables the toggle and cached
    *  for the session so subsequent on/off flips are instant. Cleared
    *  on sign-out via the session reactive below. */
-  let heatPoints: Array<[number, number]> = [];
+  let heatPoints: [number, number][] = [];
   let heatLoading = false;
   let heatLoaded = false;
   $: if ($settings.showHeatmap && $session && !heatLoaded && !heatLoading) {
@@ -64,13 +64,13 @@
 
   /** Cache of track-id → point list so flipping a track on/off
    *  doesn't re-hit the network on the second toggle. */
-  let trackPointsCache = new Map<string, Array<[number, number]>>();
-  let displayedTrackPolylines: Array<{ id: string; points: Array<[number, number]> }> = [];
+  let trackPointsCache = new Map<string, [number, number][]>();
+  let displayedTrackPolylines: { id: string; points: [number, number][] }[] = [];
   /** Whenever the displayedTrackIds set changes, fetch any missing
    *  track points and rebuild the polylines list passed to Map. */
   $: void rebuildDisplayedTracks($displayedTrackIds);
   async function rebuildDisplayedTracks(ids: Set<string>) {
-    const out: Array<{ id: string; points: Array<[number, number]> }> = [];
+    const out: { id: string; points: [number, number][] }[] = [];
     for (const id of ids) {
       let pts = trackPointsCache.get(id);
       if (!pts) {
@@ -112,7 +112,7 @@
       // we don't have to round-trip to refetch — and add the new
       // track to the displayed set so its polyline stays on the
       // map until the user explicitly hides it.
-      const latlngs: Array<[number, number]> = snap.points.map((p) => [p.lat, p.lng]);
+      const latlngs: [number, number][] = snap.points.map((p) => [p.lat, p.lng]);
       trackPointsCache.set(newId, latlngs);
       showTrack(newId);
       mapRef?.clearRecorder();
