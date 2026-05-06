@@ -16,6 +16,12 @@
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
   import AddressSearch from '$lib/components/AddressSearch.svelte';
   import { settings } from '$lib/stores/settings';
+  import {
+    enabledIds,
+    setEnabled as setSpeciesEnabled,
+    setExplicitSet as setExplicitSpecies,
+    enableAll as enableAllSpecies
+  } from '$lib/stores/userPreferences';
   import { dataChange } from '$lib/stores/dataChange';
   import { colorForGroup, colorForCategoryFallback } from '$lib/utils/symbology';
 
@@ -36,10 +42,11 @@
   }
 
   let species: Species[] = [];
-  /** Species filter:
-   *   null     → no filter, show all species
-   *   Set([…]) → show only listed species (empty set = show none) */
-  let selectedSpeciesIds: Set<string> | null = null;
+  /** Species filter — sourced from the persisted userPreferences store.
+   *   null     → no filter, show all species (default for new users
+   *              and any user with zero preference rows)
+   *   Set([…]) → only listed species are visible (empty set = show none) */
+  $: selectedSpeciesIds = $enabledIds;
   let speciesPanelOpen = false;
   /** Category filter for the species panel — checkboxes that turn each
    *  category on/off. The set holds enabled categories. Brambles are
@@ -358,25 +365,19 @@
   })();
 
   function toggleSpecies(id: string) {
-    let next: Set<string>;
-    if (selectedSpeciesIds === null) {
-      // Currently "all"; un-checking one means "all except this one".
-      next = new Set(speciesInRegion.map((s) => s.id));
-      next.delete(id);
-    } else {
-      next = new Set(selectedSpeciesIds);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-    }
-    selectedSpeciesIds = next;
+    const allIds = speciesInRegion.map((s) => s.id);
+    const currentlyEnabled =
+      selectedSpeciesIds === null || selectedSpeciesIds.has(id);
+    setSpeciesEnabled(id, !currentlyEnabled, allIds);
   }
   function clearSpecies() {
-    // Explicit empty: show no species.
-    selectedSpeciesIds = new Set();
+    // Show no species — materializes one disabled row per species.
+    setExplicitSpecies(new Set<string>(), speciesInRegion.map((s) => s.id));
   }
   function selectAllSpecies() {
-    // Back to "all" (no filter).
-    selectedSpeciesIds = null;
+    // Back to "all enabled" (writes enabled=true rows for every
+    // species — server still reads this as the all-on state).
+    enableAllSpecies(speciesInRegion.map((s) => s.id));
   }
 
   // Sort species by common name; only include species that have at least
