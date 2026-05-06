@@ -546,11 +546,16 @@
   type YearMode = 'all' | 'observed';
   let yearMode = new Map<string, YearMode>();
   function modeKey(regionId: string, year: number) { return `${regionId}:${year}`; }
-  function getMode(regionId: string, year: number): YearMode {
-    return yearMode.get(modeKey(regionId, year)) ?? 'all';
+  /** Pure lookup that takes the map as an argument so the Svelte
+   *  template's @const reactivity sees yearMode as an explicit
+   *  read — without that, the compiler can't tell that the const
+   *  needs to re-evaluate when the map mutates, and the toggle
+   *  button only worked once. */
+  function getModeFromMap(map: Map<string, YearMode>, regionId: string, year: number): YearMode {
+    return map.get(modeKey(regionId, year)) ?? 'all';
   }
   function toggleMode(regionId: string, year: number) {
-    const next: YearMode = getMode(regionId, year) === 'all' ? 'observed' : 'all';
+    const next: YearMode = getModeFromMap(yearMode, regionId, year) === 'all' ? 'observed' : 'all';
     yearMode = new Map(yearMode).set(modeKey(regionId, year), next);
   }
   /** Filter the region-wide species list to only those with at least
@@ -711,7 +716,7 @@
         {@const yLo = tempToY(TEMP_LO_C, tempY)}
         {@const tempRects = tempDayRects(yWeather, tempY, year)}
         {@const doyAvg = computeDoyAverages(rt, year)}
-        {@const mode = getMode(rt.regionId, year)}
+        {@const mode = getModeFromMap(yearMode, rt.regionId, year)}
         {@const visibleSids = mode === 'observed' ? observedSidsInYear(rt, year, allSids) : allSids}
         {@const laneLayout = computeLanes(visibleSids, lanesY)}
         {@const totalH = lanesY + laneLayout.height + 6}
