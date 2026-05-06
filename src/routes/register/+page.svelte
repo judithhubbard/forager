@@ -31,10 +31,6 @@
 <main>
   <header class="hero">
     <h1>Choose your plan</h1>
-    <p class="lead">
-      Forager is a private, mobile-friendly map of forageable plants.
-      Pick a tier to get started.
-    </p>
   </header>
 
   {#if needsConfirmation}
@@ -54,12 +50,12 @@
           <p class="price">$0 forever</p>
         </header>
         <ul>
-          <li>Browse the public map</li>
-          <li>Read full species pages</li>
+          <li>Browse <strong>10,000+ forageable trees and plants</strong> across the US (and growing)</li>
+          <li>Use GPS to center the map on where you are</li>
+          <li>Read full species pages — edible parts, preparation, harvest tips, safety notes</li>
           <li><strong>Watch species</strong> and get a heads-up when they're ripe near you</li>
           <li>Track your filter preferences across devices</li>
         </ul>
-        <p class="not-yet">Pin-dropping, journaling, photos, and group sharing live in Pro.</p>
       </section>
 
       <section class="tier pro">
@@ -73,23 +69,17 @@
           <li><strong>Drop your own pins</strong> — private, shared with a group, or both</li>
           <li>Log observations + harvest quality ratings</li>
           <li>Attach photos with GPS-tagged proof of where you found it</li>
+          <li><strong>Tune harvest windows</strong> for your area based on your own ripeness observations</li>
           <li>Year-over-year journal: see when each spot was ripe in 2024 vs 2025 vs 2026</li>
           <li>Move and edit pins as conditions change</li>
           <li>Export all your data on request</li>
         </ul>
-        <p class="not-yet">
-          Subscriptions launch later this year. Sign up free now;
-          upgrading takes one click when Pro opens.
-        </p>
+        <p class="not-yet">Sign up free now — upgrade in one click when Pro launches later this year.</p>
       </section>
     </div>
 
     <form class="signup" on:submit|preventDefault={handleSubmit}>
       <h2>Create your account</h2>
-      <p class="hint">
-        Free for now. Pro unlocks when subscriptions go live — you keep
-        the same account.
-      </p>
       <label>
         Email
         <input
@@ -125,19 +115,23 @@
 
 <style>
   main {
-    max-width: 56rem;
-    margin: 2.5rem auto 4rem;
-    padding: 0 1.5rem;
+    max-width: 52rem;
+    margin: 1.25rem auto 2.5rem;
+    padding: 0 1rem;
     color: #1f2a1f;
   }
-  .hero h1 { color: #3a5a3a; margin: 0 0 0.4rem; font-size: 1.7rem; }
-  .lead { margin: 0 0 2rem; color: #4a554a; line-height: 1.5; }
+  .hero h1 {
+    color: #3a5a3a;
+    margin: 0 0 1rem;
+    font-size: 1.3rem;
+    text-align: center;
+  }
 
   .tiers {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
   }
   @media (max-width: 720px) {
     .tiers { grid-template-columns: 1fr; }
@@ -145,8 +139,8 @@
   .tier {
     background: white;
     border: 1px solid #c7d0c7;
-    border-radius: 0.55rem;
-    padding: 1.4rem 1.4rem 1.6rem;
+    border-radius: 0.45rem;
+    padding: 0.85rem 0.95rem 0.95rem;
     position: relative;
   }
   .tier.pro {
@@ -154,29 +148,30 @@
     border-color: #3a5a3a;
     border-width: 2px;
   }
-  .tier header { margin-bottom: 0.85rem; }
-  .tier h2 { margin: 0; color: #3a5a3a; font-size: 1.2rem; }
-  .tier .price { margin: 0.2rem 0 0; color: #1f2a1f; font-size: 1.05rem; font-weight: 600; }
+  .tier header { margin-bottom: 0.5rem; }
+  .tier h2 { margin: 0; color: #3a5a3a; font-size: 1rem; }
+  .tier .price { margin: 0.1rem 0 0; color: #1f2a1f; font-size: 0.9rem; font-weight: 600; }
   .tier .badge {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
+    top: 0.7rem;
+    right: 0.7rem;
     background: #fff4e3;
     color: #7a4a10;
     border: 1px solid #e8d3a6;
-    padding: 0.15rem 0.55rem;
-    border-radius: 0.4rem;
-    font-size: 0.75rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.35rem;
+    font-size: 0.7rem;
     font-weight: 600;
   }
   .tier ul {
     list-style: none;
     padding: 0;
-    margin: 0 0 0.85rem;
+    margin: 0 0 0.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
-    line-height: 1.4;
+    gap: 0.3rem;
+    line-height: 1.35;
+    font-size: 0.85rem;
   }
   .tier li::before {
     content: '✓ ';
@@ -185,7 +180,7 @@
   }
   .not-yet {
     margin: 0;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: #6b7a6b;
     font-style: italic;
   }
@@ -193,47 +188,46 @@
   .signup {
     background: white;
     border: 1px solid #c7d0c7;
-    border-radius: 0.55rem;
-    padding: 1.4rem;
-    max-width: 28rem;
+    border-radius: 0.45rem;
+    padding: 0.95rem 1rem 1.05rem;
+    max-width: 26rem;
     margin: 0 auto;
   }
-  .signup h2 { color: #3a5a3a; margin: 0 0 0.4rem; font-size: 1.1rem; }
-  .signup .hint { margin: 0 0 1rem; color: #4a554a; font-size: 0.9rem; line-height: 1.4; }
+  .signup h2 { color: #3a5a3a; margin: 0 0 0.5rem; font-size: 1rem; }
   .signup label {
     display: block;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #4a554a;
-    margin-top: 0.85rem;
+    margin-top: 0.6rem;
   }
   .signup input {
     display: block;
     width: 100%;
     box-sizing: border-box;
-    margin-top: 0.3rem;
-    padding: 0.55rem 0.7rem;
+    margin-top: 0.25rem;
+    padding: 0.45rem 0.6rem;
     border: 1px solid #c7d0c7;
-    border-radius: 0.35rem;
-    font-size: 1rem;
+    border-radius: 0.3rem;
+    font-size: 0.95rem;
   }
-  .pw-hint { display: block; font-size: 0.78rem; color: #6b7a6b; margin-top: 0.25rem; }
-  .error { color: #b03030; font-size: 0.9rem; margin-top: 0.6rem; }
+  .pw-hint { display: block; font-size: 0.75rem; color: #6b7a6b; margin-top: 0.2rem; }
+  .error { color: #b03030; font-size: 0.85rem; margin-top: 0.5rem; }
   .actions {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
-    margin-top: 1.25rem;
+    gap: 0.6rem;
+    margin-top: 0.85rem;
     flex-wrap: wrap;
   }
   .actions .primary {
-    padding: 0.55rem 1.1rem;
-    border-radius: 0.35rem;
+    padding: 0.45rem 1rem;
+    border-radius: 0.3rem;
     border: 1px solid #3a5a3a;
     background: #3a5a3a;
     color: white;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
   .actions .primary:disabled { opacity: 0.6; cursor: default; }
   .back-link {
