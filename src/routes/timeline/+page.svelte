@@ -352,14 +352,18 @@
    *  glance whether 2026 is running warm/wet/dry vs the historical
    *  pattern. */
   type DoyAvg = { rain_mm: number; temp_max_c: number | null; temp_min_c: number | null };
-  function computeDoyAverages(rt: RegionTimeline, currentYear: number): Map<number, DoyAvg> {
+  /** Mean rain + temp per day-of-year, computed from every year in
+   *  rt.weather EXCEPT excludeYear. Called per year-strip so the
+   *  overlay represents "every other year you have data for" —
+   *  meaningful both on past strips and on the current year. */
+  function computeDoyAverages(rt: RegionTimeline, excludeYear: number): Map<number, DoyAvg> {
     const acc = new Map<
       number,
       { rainSum: number; rainCount: number; maxSum: number; maxCount: number; minSum: number; minCount: number }
     >();
     for (const d of rt.weather) {
       const yr = parseInt(d.date.slice(0, 4), 10);
-      if (isNaN(yr) || yr === currentYear) continue;
+      if (isNaN(yr) || yr === excludeYear) continue;
       const doy = dateToDoy(d.date);
       let a = acc.get(doy);
       if (!a) {
@@ -635,10 +639,8 @@
       <span class="leg-item leg-sep">|</span>
       <span class="leg-item">
         <span class="leg-band" style="background: #9aa6a3; opacity: 0.45;"></span>
-        typical year (current strip only)
+        typical year
       </span>
-      <span class="leg-item leg-sep">|</span>
-      <span class="leg-item leg-hint">Hover a tick for species + date</span>
     </div>
 
     {#if tooltip}
@@ -682,7 +684,7 @@
         {@const y32 = tempToY(FREEZE_C, tempY)}
         {@const yLo = tempToY(TEMP_LO_C, tempY)}
         {@const tempRects = tempDayRects(yWeather, tempY, year)}
-        {@const doyAvg = year === currentYear ? computeDoyAverages(rt, currentYear) : null}
+        {@const doyAvg = computeDoyAverages(rt, year)}
         {@const laneLayout = computeLanes(allSids, lanesY)}
         {@const totalH = lanesY + laneLayout.height + 6}
         <section class="year-row" class:current={year === currentYear}>
