@@ -127,8 +127,11 @@
 
   // Title and whether to also show the species common name beneath
   // (skipped if the title already IS the common name).
-  $: title = pin?.display_name ?? species?.common_name ?? 'Unnamed';
-  $: showCommonNameBelow = !!pin?.display_name && !!species && species.common_name !== title;
+  // Species name is always the title. display_name is no longer set
+  // by the drop-pin form (notes go in the notes field), but legacy
+  // pins that have one display it as a small subtitle.
+  $: title = species?.common_name ?? pin?.display_name ?? 'Unnamed';
+  $: showCommonNameBelow = false;
 
   // Try to extract a human-readable accession / external id from the raw
   // import payload, regardless of which source produced it.

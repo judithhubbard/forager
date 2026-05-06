@@ -25,7 +25,6 @@
   let species: Species[] = [];
   let speciesQuery = '';
   let speciesId: string | null = null;
-  let displayName = '';
   let notes = '';
   // Default visibility comes from the active region's preference. The
   // user can flip per-pin without changing the region default.
@@ -82,7 +81,7 @@
         lng,
         lat,
         locationAccuracyM: accuracy ? Math.round(accuracy) : null,
-        displayName: displayName.trim() || null,
+        displayName: null,
         notes: notes.trim() || null,
         visibility
       });
@@ -145,15 +144,6 @@
           {/each}
         </ul>
       {/if}
-
-      <label>
-        Name (optional)
-        <input
-          type="text"
-          placeholder="e.g. 'big serviceberry by the gate'"
-          bind:value={displayName}
-        />
-      </label>
 
       <label>
         Notes (optional)

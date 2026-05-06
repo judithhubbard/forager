@@ -244,7 +244,9 @@
 
   function labelOf(p: PinEffective): string {
     const s = p.species_id ? speciesById[p.species_id] : null;
-    const name = p.display_name ?? s?.common_name ?? '(unnamed pin)';
+    // Species first, display_name only as a fallback for legacy pins
+    // that were created before the name field was removed.
+    const name = s?.common_name ?? p.display_name ?? '(unnamed pin)';
     const status =
       p.effective_status === 'active' ? '' : ` [${p.effective_status}]`;
     const ripe = p.is_ripe_now ? '  · 🍒 ripe now' : '';
