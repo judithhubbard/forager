@@ -529,6 +529,60 @@
 
   $: todayDoy = dateToDoy(new Date().toISOString().slice(0, 10));
   $: currentYear = new Date().getFullYear();
+
+  /** Custom tooltip — much faster than SVG <title> (which has the
+   *  browser-native ~500ms hover delay). One global piece of state;
+   *  rain + temp track background rects fire mousemove handlers
+   *  that compute the day from cursor x and update this. */
+  let tooltip: { x: number; y: number; lines: string[] } | null = null;
+
+  function onTrackHover(
+    e: MouseEvent,
+    track: 'rain' | 'temp',
+    year: number,
+    rows: DailyWeather[]
+  ) {
+    const target = e.currentTarget as SVGRectElement;
+    const svg = target.ownerSVGElement;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const xVb = ((e.clientX - rect.left) / rect.width) * W;
+    const days = daysInYear(year);
+    const doy = Math.round(((xVb - PAD_L) / PLOT_W) * (days - 1)) + 1;
+    if (doy < 1 || doy > days) { tooltip = null; return; }
+    // Find the matching weather row. Faster than a .find() across
+    // ~365 entries: assume rows are sorted ascending by date and
+    // index by year offset.
+    const day = rows.find(
+      (d) => d.date.startsWith(String(year)) && dateToDoy(d.date) === doy
+    );
+    const lines: string[] = [];
+    if (day) {
+      lines.push(day.date);
+      if (track === 'rain') {
+        lines.push(
+          day.rain_mm > 0
+            ? `${day.rain_mm.toFixed(1)} mm (${(day.rain_mm / 25.4).toFixed(2)} in) rain`
+            : 'no rain'
+        );
+      } else if (day.temp_max_c != null && day.temp_min_c != null) {
+        const lo = Math.min(day.temp_max_c, day.temp_min_c);
+        const hi = Math.max(day.temp_max_c, day.temp_min_c);
+        lines.push(`low ${fmtTempF(lo)} · high ${fmtTempF(hi)}`);
+      } else {
+        lines.push('no temperature data');
+      }
+    } else {
+      // Synthesize doy → calendar date for the empty-day case.
+      const dayDate = new Date(Date.UTC(year, 0, doy));
+      lines.push(dayDate.toISOString().slice(0, 10));
+      lines.push(track === 'rain' ? 'no rain data' : 'no temperature data');
+    }
+    tooltip = { x: e.clientX + 12, y: e.clientY + 12, lines };
+  }
+  function clearTooltip() {
+    tooltip = null;
+  }
 </script>
 
 <header>
@@ -587,6 +641,13 @@
       <span class="leg-item leg-hint">Hover a tick for species + date</span>
     </div>
 
+    {#if tooltip}
+      <div class="weather-tt" style="left: {tooltip.x}px; top: {tooltip.y}px;">
+        {#each tooltip.lines as line}
+          <div>{line}</div>
+        {/each}
+      </div>
+    {/if}
     {#each regionTimelines as rt (rt.regionId)}
       {@const allSids = regionSpeciesIds(rt)}
       <section class="region-block">
@@ -640,8 +701,11 @@
                  Fixed 25mm/day cap so a single big winter event
                  doesn't make all the summer bars invisible. -->
             <rect
+              class="hover-track"
               x={PAD_L} y={rainY} width={PLOT_W} height={RAIN_H}
               fill="#f3f8fc" stroke="#dde7ee" stroke-width="0.5"
+              on:mousemove={(e) => onTrackHover(e, 'rain', year, yWeather)}
+              on:mouseleave={clearTooltip}
             />
             <!-- Average-year overlay: faint rain bars from past years
                  averaged per day-of-year, drawn under the current
@@ -657,9 +721,8 @@
                     height={aBarH}
                     fill="#88a8c0"
                     opacity="0.45"
-                  >
-                    <title>typical {avg.rain_mm.toFixed(1)} mm ({(avg.rain_mm / 25.4).toFixed(2)} in) on day {doy}</title>
-                  </rect>
+                    pointer-events="none"
+                  />
                 {/if}
               {/each}
             {/if}
@@ -689,9 +752,8 @@
                   height={barH}
                   fill="#1a4a66"
                   opacity="0.92"
-                >
-                  <title>{d.date} · {d.rain_mm.toFixed(1)} mm ({(d.rain_mm / 25.4).toFixed(2)} in)</title>
-                </rect>
+                  pointer-events="none"
+                />
               {/if}
             {/each}
 
@@ -701,13 +763,16 @@
                  Faint horizontal lines at the freezing and 80°F
                  thresholds for reference. -->
             <rect
+              class="hover-track"
               x={PAD_L} y={tempY} width={PLOT_W} height={TEMP_H}
               fill="#fbf9f3" stroke="#e8e3d4" stroke-width="0.5"
+              on:mousemove={(e) => onTrackHover(e, 'temp', year, yWeather)}
+              on:mouseleave={clearTooltip}
             />
             {#if doyAvg}
               {@const avgPoly = avgTempPolygon(doyAvg, tempY, year)}
               {#if avgPoly}
-                <polygon points={avgPoly} fill="#9aa6a3" opacity="0.25" />
+                <polygon points={avgPoly} fill="#9aa6a3" opacity="0.25" pointer-events="none" />
               {/if}
             {/if}
             {#if tempRects.length > 0}
@@ -716,13 +781,12 @@
                   x={r.x} y={r.y} width={r.w} height={r.h}
                   fill={ZONE_COLOR[r.zone]}
                   opacity="0.85"
-                >
-                  <title>{r.date} · low {fmtTempF(r.lo)} / high {fmtTempF(r.hi)}</title>
-                </rect>
+                  pointer-events="none"
+                />
               {/each}
               <!-- Threshold reference lines on top of the bars -->
-              <line x1={PAD_L} y1={y32} x2={W - PAD_R} y2={y32} stroke="#5e7a8b" stroke-width="0.6" stroke-dasharray="3,2" opacity="0.6" />
-              <line x1={PAD_L} y1={y80} x2={W - PAD_R} y2={y80} stroke="#a04030" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.45" />
+              <line x1={PAD_L} y1={y32} x2={W - PAD_R} y2={y32} stroke="#5e7a8b" stroke-width="0.6" stroke-dasharray="3,2" opacity="0.6" pointer-events="none" />
+              <line x1={PAD_L} y1={y80} x2={W - PAD_R} y2={y80} stroke="#a04030" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.45" pointer-events="none" />
             {/if}
             <!-- Track-name "temp" rotated 90°; numeric scale labels
                  right-aligned to its right -->
@@ -883,5 +947,23 @@
   .year-svg {
     width: 100%;
     display: block;
+  }
+  /* Custom hover tooltip — positioned in viewport coordinates,
+     follows the cursor with no native-tooltip delay. */
+  .weather-tt {
+    position: fixed;
+    z-index: 4000;
+    background: rgba(31, 42, 31, 0.96);
+    color: white;
+    padding: 0.35rem 0.55rem;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    line-height: 1.25;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+  }
+  .hover-track {
+    cursor: crosshair;
   }
 </style>
