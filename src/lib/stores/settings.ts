@@ -3,13 +3,7 @@
 import { writable, type Writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
-export type Basemap =
-  | 'osm-hot'
-  | 'satellite'
-  | 'topo'
-  | 'cyclosm'
-  | 'voyager'
-  | 'sentinel';
+export type Basemap = 'osm-hot' | 'satellite';
 
 const KEY = 'forager.settings.v1';
 
@@ -24,9 +18,7 @@ const DEFAULT: Settings = { basemap: 'osm-hot', disclaimerAcceptedAt: null };
 
 /** Migrate older saved values to the current option set. */
 function normalize(s: Partial<Settings>): Settings {
-  const allowed: Basemap[] = [
-    'osm-hot', 'satellite', 'topo', 'cyclosm', 'voyager', 'sentinel'
-  ];
+  const allowed: Basemap[] = ['osm-hot', 'satellite'];
   const b = s.basemap && allowed.includes(s.basemap) ? s.basemap : DEFAULT.basemap;
   return { basemap: b, disclaimerAcceptedAt: s.disclaimerAcceptedAt ?? null };
 }

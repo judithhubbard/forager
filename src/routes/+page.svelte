@@ -25,27 +25,28 @@
   let selectedSpeciesIds: Set<string> | null = null;
   let speciesPanelOpen = false;
   /** Category filter for the species panel — checkboxes that turn each
-   *  category on/off. The set holds enabled categories; toggling one
-   *  excludes those species from the list (selection within hidden
-   *  categories is preserved across toggles). */
-  type SpeciesCat = 'fruit' | 'nut' | 'mushroom' | 'other';
+   *  category on/off. The set holds enabled categories. Brambles are
+   *  their own category alongside fruit/nut/mushroom/other and get
+   *  their own shape (star) on the map. */
+  type SpeciesCat = 'fruit' | 'bramble' | 'nut' | 'mushroom' | 'other';
   const SPECIES_CATS: { k: SpeciesCat; label: string }[] = [
-    { k: 'fruit',    label: 'Fruit' },
-    { k: 'nut',      label: 'Nut' },
-    { k: 'mushroom', label: 'Mushroom' },
+    { k: 'fruit',    label: 'Fruit trees' },
+    { k: 'bramble',  label: 'Brambles' },
+    { k: 'nut',      label: 'Nuts' },
+    { k: 'mushroom', label: 'Mushrooms' },
     { k: 'other',    label: 'Other' }
   ];
-  /** Categories whose species are visible in the panel. Defaults to all
-   *  on (matches the previous "All" tab behavior). */
-  let visibleCats: Set<SpeciesCat> = new Set(['fruit', 'nut', 'mushroom', 'other']);
+  /** Categories whose species are visible in the panel. All on by
+   *  default (matches the previous "All" tab behavior). */
+  let visibleCats: Set<SpeciesCat> = new Set(['fruit', 'bramble', 'nut', 'mushroom', 'other']);
   function toggleCat(k: SpeciesCat) {
     const next = new Set(visibleCats);
     if (next.has(k)) next.delete(k); else next.add(k);
     visibleCats = next;
   }
-  /** Canonical category order — drives both panel-list ordering and
-   *  the legend. */
-  const CAT_ORDER: SpeciesCat[] = ['fruit', 'nut', 'mushroom', 'other'];
+  /** Canonical category order — drives panel-list ordering, legend
+   *  ordering, and the harvest-windows page sort. */
+  const CAT_ORDER: SpeciesCat[] = ['fruit', 'bramble', 'nut', 'mushroom', 'other'];
 
   /** Friendly group label per genus. Falls back to the genus itself if not
    *  in the mapping. Drives the indented sub-list in the species panel.
@@ -129,15 +130,20 @@
 
   let selectedPinId: string | null = null;
 
-  type Cat = 'fruit' | 'nut' | 'mushroom' | 'other' | 'unknown';
+  type Cat = 'fruit' | 'bramble' | 'nut' | 'mushroom' | 'other' | 'unknown';
   type CatMap = Record<string, Cat>;
 
   function buildCategoryMap(speciesList: Species[]): CatMap {
     const m: CatMap = {};
     for (const s of speciesList) {
       const parts = s.forage_parts ?? [];
+      // Brambles (Rubus) get their own category — they're forage-relevant
+      // in a different way than tree fruits (canes vs trees, harvest
+      // technique, ripeness behavior).
+      const isBramble = s.scientific_name.startsWith('Rubus');
       let cat: Cat = 'other';
-      if (parts.includes('mushroom')) cat = 'mushroom';
+      if (isBramble) cat = 'bramble';
+      else if (parts.includes('mushroom')) cat = 'mushroom';
       else if (parts.includes('nut')) cat = 'nut';
       else if (parts.includes('fruit')) cat = 'fruit';
       // everything else (leaf, shoot, bulb, root, spice, bark, …) → 'other'
@@ -192,18 +198,20 @@
     // Fallback by category so unknown groups still get a sensible hue.
     const cat = p.species_id ? categoryBySpecies[p.species_id] : null;
     if (cat === 'fruit')    return '#c14a3a';
+    if (cat === 'bramble')  return '#5a2440';
     if (cat === 'nut')      return '#7a5230';
     if (cat === 'mushroom') return '#8a4ea0';
     if (cat === 'other')    return '#6ba040';
     return '#6b7a6b';
   };
 
-  /** Map a group label to one of the four legend-shape glyphs based on
-   *  the category of any species in the group. (All species in a
-   *  group share a category, so picking the first works.) */
-  function shapeForGroup(group: string): 'circle' | 'square' | 'triangle' | 'diamond' {
+  /** Map a group label to one of the legend-shape glyphs based on the
+   *  category of any species in the group. (All species in a group
+   *  share a category, so picking the first works.) */
+  function shapeForGroup(group: string): 'circle' | 'square' | 'triangle' | 'diamond' | 'star' {
     const sp = speciesInRegion.find((s) => groupOf(s) === group);
     const cat = sp ? categoryBySpecies[sp.id] : null;
+    if (cat === 'bramble') return 'star';
     if (cat === 'nut') return 'square';
     if (cat === 'mushroom') return 'triangle';
     if (cat === 'other') return 'diamond';
@@ -553,6 +561,16 @@
             <li>
               {#if g.shape === 'triangle'}
                 <span class="legend-shape triangle" style="border-bottom-color: {g.color};"></span>
+              {:else if g.shape === 'star'}
+                <svg class="legend-shape" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                  <polygon
+                    points="7,1 8.6,5.5 13.5,5.5 9.5,8.5 11.1,13 7,10 2.9,13 4.5,8.5 0.5,5.5 5.4,5.5"
+                    fill={g.color}
+                    stroke="#1f2a1f"
+                    stroke-width="1"
+                    stroke-linejoin="round"
+                  />
+                </svg>
               {:else}
                 <span class="legend-shape {g.shape}" style="background: {g.color};"></span>
               {/if}

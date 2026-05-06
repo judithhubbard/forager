@@ -3,7 +3,7 @@
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
 
-  type ForageCategory = 'fruit' | 'nut' | 'mushroom' | 'other' | 'unknown';
+  type ForageCategory = 'fruit' | 'bramble' | 'nut' | 'mushroom' | 'other' | 'unknown';
 
   /** Optional category resolver, normally computed in +page.svelte from
    *  the species' forage_parts. If omitted, all pins get color 'unknown'. */
@@ -40,7 +40,7 @@
   export let selectedPinId: string | null = null;
 
   /** Which tile layer to render. Picker lives in the tools menu. */
-  type Basemap = 'osm-hot' | 'satellite' | 'topo' | 'cyclosm' | 'voyager' | 'sentinel';
+  type Basemap = 'osm-hot' | 'satellite';
   export let basemap: Basemap = 'osm-hot';
   const BASEMAPS: Record<
     Basemap,
@@ -51,34 +51,15 @@
       attribution: '© OpenStreetMap, Humanitarian OSM Team',
       maxZoom: 19
     },
-    // USGS imagery for the US is sourced largely from NAIP, which is
-    // flown during the summer growing season — leaf-on conditions.
+    // Esri WorldImagery — high-res aerial, crisp tiles up to zoom 19
+    // for most populated areas. Imagery is mixed-vintage (some tiles
+    // can be winter for any given location), but it supports zoom-in
+    // detail for spotting individual trees, which the lower-zoom
+    // sources (USGS NAIP, Sentinel-2) cannot.
     satellite: {
-      url: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
-      attribution: 'Imagery © U.S. Geological Survey (NAIP)',
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, USDA, USGS',
       maxZoom: 19
-    },
-    topo: {
-      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      attribution: '© OpenTopoMap (CC-BY-SA), © OpenStreetMap contributors',
-      maxZoom: 17
-    },
-    cyclosm: {
-      url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-      attribution: '© CyclOSM, © OpenStreetMap contributors',
-      maxZoom: 20
-    },
-    voyager: {
-      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      attribution: '© CartoDB, © OpenStreetMap contributors',
-      maxZoom: 20
-    },
-    // Sentinel-2 cloudless 2023 — global summer composite at ~10m.
-    // Lower-res than USGS NAIP in the US but covers everywhere.
-    sentinel: {
-      url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/g/{z}/{y}/{x}.jpg',
-      attribution: 'Sentinel-2 cloudless © EOX IT Services GmbH',
-      maxZoom: 17
     }
   };
   let tileLayer: import('leaflet').TileLayer | undefined;
@@ -282,7 +263,7 @@
             interactive: false
           });
         } else if (style === 'letter') {
-          const letter = ({ fruit: 'F', nut: 'N', mushroom: 'M', other: 'O', unknown: '?' } as const)[cat];
+          const letter = ({ fruit: 'F', bramble: 'B', nut: 'N', mushroom: 'M', other: 'O', unknown: '?' } as const)[cat];
           marker = L.marker([pin.lat, pin.lng], {
             icon: L.divIcon({
               className: 'forager-letter',
@@ -295,7 +276,7 @@
           });
         } else {
           // emoji
-          const emoji = ({ fruit: '🍒', nut: '🌰', mushroom: '🍄', other: '🌿', unknown: '📍' } as const)[cat];
+          const emoji = ({ fruit: '🍒', bramble: '🍇', nut: '🌰', mushroom: '🍄', other: '🌿', unknown: '📍' } as const)[cat];
           const sizePx = Math.round(baseR * 2.6);
           marker = L.marker([pin.lat, pin.lng], {
             icon: L.divIcon({
@@ -384,6 +365,19 @@
         body = `<polygon points="${cx},${cy - s * 1.1} ${cx + s},${cy} ${cx},${cy + s * 1.1} ${cx - s},${cy}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
         break;
       }
+      case 'bramble': {
+        // 5-pointed star — brambles get a distinct shape from tree fruit.
+        const outer = r * 1.15;
+        const inner = outer * 0.45;
+        const pts: string[] = [];
+        for (let i = 0; i < 10; i++) {
+          const ang = -Math.PI / 2 + (i * Math.PI) / 5;
+          const rad = i % 2 === 0 ? outer : inner;
+          pts.push(`${(cx + rad * Math.cos(ang)).toFixed(2)},${(cy + rad * Math.sin(ang)).toFixed(2)}`);
+        }
+        body = `<polygon points="${pts.join(' ')}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        break;
+      }
       default:
         body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
     }
@@ -395,7 +389,8 @@
   function colorFor(pin: PinEffective): string {
     const cat = categoryOf(pin);
     switch (cat) {
-      case 'fruit':    return '#c14a3a'; // red-orange (cherries, mulberries, brambles)
+      case 'fruit':    return '#c14a3a'; // red-orange (cherries, mulberries)
+      case 'bramble':  return '#5a2440'; // dark berry (raspberries, blackberries)
       case 'nut':      return '#7a5230'; // brown (hickories, hazelnuts, chestnuts)
       case 'mushroom': return '#8a4ea0'; // purple (morels, chanterelles)
       case 'other':    return '#6ba040'; // green (ramps, asparagus, mint, anything else)
