@@ -9,6 +9,11 @@
    *  the species' forage_parts. If omitted, all pins get color 'unknown'. */
   export let categoryOf: (pin: PinEffective) => ForageCategory = () => 'unknown';
 
+  /** Optional fill-color override. When provided, takes precedence over
+   *  the category-default color. Used by the parent to color pins by
+   *  species group rather than by category. */
+  export let colorOf: ((pin: PinEffective) => string) | null = null;
+
   /** Optional hover-tooltip resolver. Returns plain text shown on mouseover. */
   export let labelOf: (pin: PinEffective) => string = (p) =>
     p.display_name ?? '(unnamed pin)';
@@ -34,6 +39,47 @@
    *  looking at — especially useful when several pins cluster. */
   export let selectedPinId: string | null = null;
 
+  /** Which tile layer to render. Picker lives in the tools menu. */
+  type Basemap = 'osm' | 'osm-hot' | 'topo' | 'satellite';
+  export let basemap: Basemap = 'osm';
+  const BASEMAPS: Record<
+    Basemap,
+    { url: string; attribution: string; maxZoom: number }
+  > = {
+    osm: {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    },
+    'osm-hot': {
+      url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+      attribution: '© OpenStreetMap, Humanitarian OSM Team',
+      maxZoom: 19
+    },
+    topo: {
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution: '© OpenTopoMap (CC-BY-SA), © OpenStreetMap contributors',
+      maxZoom: 17
+    },
+    satellite: {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, USDA',
+      maxZoom: 19
+    }
+  };
+  let tileLayer: import('leaflet').TileLayer | undefined;
+  $: if (map && basemap) applyBasemap(basemap);
+  async function applyBasemap(b: Basemap) {
+    const L = await import('leaflet');
+    if (!map) return;
+    const cfg = BASEMAPS[b];
+    if (tileLayer) tileLayer.remove();
+    tileLayer = L.tileLayer(cfg.url, {
+      attribution: cfg.attribution,
+      maxZoom: cfg.maxZoom
+    }).addTo(map);
+  }
+
   export let pins: PinEffective[] = [];
   export let center: [number, number] = [42.4534, -76.4836]; // Cornell campus default
   export let zoom: number = 14;
@@ -58,10 +104,14 @@
   const isTouch =
     typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
-  // Reactive update of markers when `pins`, the symbol style, or the
-  // selected pin changes. All three are passed explicitly so Svelte
-  // tracks them as deps AND renderPins reads the value at call time.
-  $: if (map && markerLayer) renderPins(pins, symbolStyle, selectedPinId);
+  // Reactive update of markers when `pins`, the symbol style, the
+  // selected pin, or the color resolver changes. All passed
+  // explicitly so Svelte tracks them as deps and renderPins reads
+  // values at call time.
+  $: if (map && markerLayer) {
+    void colorOf; // keep colorOf in the dependency set
+    renderPins(pins, symbolStyle, selectedPinId);
+  }
 
   async function locateMe() {
     if (!map) return;
@@ -120,7 +170,7 @@
       if (!markerLayer) return;
       for (const pin of currentPins) {
         if (pin.lat == null || pin.lng == null) continue;
-        const fill = colorFor(pin);
+        const fill = colorOf ? colorOf(pin) : colorFor(pin);
         const isSelected = !!selectedId && pin.id === selectedId;
         const isStrictRipe = pin.is_ripe_strict === true;
         const isPossibly = pin.is_ripe_now === true; // already widened by the buffer
@@ -198,11 +248,11 @@
         if (style === 'circle') {
           marker = L.circleMarker([pin.lat, pin.lng], {
             radius: baseR,
-            color: '#ffffff',
+            color: '#1f2a1f',
             fillColor: fill,
             fillOpacity,
             opacity: strokeOpacity,
-            weight: 1.5,
+            weight: 1.4,
             bubblingMouseEvents: false
           });
         } else if (style === 'shape') {
@@ -287,8 +337,12 @@
     const cx = box / 2;
     const cy = box / 2;
     const r = px / 2;
-    const stroke = '#ffffff';
-    const sw = 1.5;
+    // Dark stroke + thin white halo via drop-shadow gives contrast on
+    // both light tiles (the dark stroke pops) and dark tiles (the
+    // white halo separates the shape from the background).
+    const stroke = '#1f2a1f';
+    const sw = 1.4;
+    const haloFilter = 'drop-shadow(0 0 1px white) drop-shadow(0 0 1px white)';
     let body: string;
     switch (cat) {
       case 'fruit':
@@ -319,7 +373,7 @@
       default:
         body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
     }
-    return `<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="opacity:${opacity};">${body}</svg>`;
+    return `<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="opacity:${opacity};filter:${haloFilter};">${body}</svg>`;
   }
 
   /** Color is by forage category. Status overlays handled via opacity +
@@ -346,10 +400,8 @@
       preferCanvas: true
     }).setView(center, zoom);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(map);
+    // Tile layer is set by the reactive applyBasemap above as soon as
+    // `map` exists, so no need for a hardcoded layer here.
 
     markerLayer = L.layerGroup().addTo(map);
     renderPins(pins, symbolStyle, selectedPinId);

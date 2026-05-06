@@ -3,9 +3,17 @@
   import { base } from '$app/paths';
   import { signOut } from '$lib/services/authService';
   import { activeRegion } from '$lib/stores/activeRegion';
+  import { settings, setBasemap, type Basemap } from '$lib/stores/settings';
 
   let open = false;
   $: isAdmin = $activeRegion?.role === 'admin';
+
+  const BASEMAP_OPTIONS: { value: Basemap; label: string }[] = [
+    { value: 'osm', label: 'Standard (OpenStreetMap)' },
+    { value: 'osm-hot', label: 'Humanitarian OSM' },
+    { value: 'topo', label: 'Topographic' },
+    { value: 'satellite', label: 'Satellite' }
+  ];
 
   async function handleSignOut() {
     open = false;
@@ -17,6 +25,10 @@
     if (!open) return;
     const target = e.target as HTMLElement;
     if (!target.closest('.tools-wrap')) open = false;
+  }
+
+  function onBasemapChange(e: Event) {
+    setBasemap((e.currentTarget as HTMLSelectElement).value as Basemap);
   }
 </script>
 
@@ -35,6 +47,17 @@
         <hr />
         <a href={base + '/admin'} on:click={() => (open = false)}>Admin</a>
       {/if}
+      <hr />
+      <div class="settings-block">
+        <label>
+          Basemap
+          <select value={$settings.basemap} on:change={onBasemapChange}>
+            {#each BASEMAP_OPTIONS as o}
+              <option value={o.value}>{o.label}</option>
+            {/each}
+          </select>
+        </label>
+      </div>
       <hr />
       <button on:click={handleSignOut}>Sign out</button>
     </div>
@@ -89,5 +112,22 @@
     margin: 0.25rem 0;
     border: 0;
     border-top: 1px solid #ebefeb;
+  }
+  .settings-block {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.78rem;
+    color: #4a554a;
+  }
+  .settings-block label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .settings-block select {
+    padding: 0.25rem 0.4rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.25rem;
+    background: white;
+    font-size: 0.85rem;
   }
 </style>

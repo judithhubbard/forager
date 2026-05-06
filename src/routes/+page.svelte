@@ -10,6 +10,7 @@
   import DropPinModal from '$lib/components/DropPinModal.svelte';
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
+  import { settings } from '$lib/stores/settings';
 
   let pins: PinEffective[] = [];
   let pinsLoading = false;
@@ -131,6 +132,49 @@
     for (const s of species) m[s.id] = s;
     return m;
   })();
+
+  /** Curated palette assigning a distinct color to each species group.
+   *  Color is loosely tied to category so palettes don't clash, but
+   *  every group is visually distinct: berries lean red/pink/purple,
+   *  pomes amber, nuts brown family, etc. Unmapped groups fall back to
+   *  the existing per-category color. */
+  const GROUP_COLORS: Record<string, string> = {
+    Serviceberry: '#8a4f72',
+    Pawpaw: '#bba74a',
+    'Cornelian cherry': '#c4513a',
+    Persimmon: '#d68330',
+    'Apple / Pear': '#a83838',
+    Mulberry: '#5e2a4f',
+    'Cherry / Plum': '#b3315c',
+    Almond: '#b89878',
+    Currant: '#7a1f3a',
+    Bramble: '#3a2440',
+    Elderberry: '#2a1538',
+    Blueberry: '#3f5a9c',
+    'Autumn olive': '#9aa84a',
+    Grape: '#4a2872',
+    Hickory: '#5c3a1f',
+    Chestnut: '#7d4a28',
+    Hazelnut: '#a47654',
+    Walnut: '#3d2812',
+    Mushroom: '#7a429a',
+    Other: '#6ba040'
+  };
+  function groupOfPin(p: PinEffective): string {
+    const s = p.species_id ? speciesById[p.species_id] : null;
+    return s ? groupOf(s) : '';
+  }
+  $: colorOfPin = (p: PinEffective): string => {
+    const g = groupOfPin(p);
+    if (g && GROUP_COLORS[g]) return GROUP_COLORS[g];
+    // Fallback by category so unknown groups still get a sensible hue.
+    const cat = p.species_id ? categoryBySpecies[p.species_id] : null;
+    if (cat === 'fruit')    return '#c14a3a';
+    if (cat === 'nut')      return '#7a5230';
+    if (cat === 'mushroom') return '#8a4ea0';
+    if (cat === 'other')    return '#6ba040';
+    return '#6b7a6b';
+  };
 
   function labelOf(p: PinEffective): string {
     const s = p.species_id ? speciesById[p.species_id] : null;
@@ -422,9 +466,11 @@
   <Map
     pins={filteredPins}
     {categoryOf}
+    colorOf={colorOfPin}
     {labelOf}
     {symbolStyle}
     {selectedPinId}
+    basemap={$settings.basemap}
     placing={placingPin}
     hideLocate={!!selectedPinId}
     on:pinClick={handlePinClick}
