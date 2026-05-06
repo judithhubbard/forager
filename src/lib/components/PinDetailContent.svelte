@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { base } from '$app/paths';
   import {
     getEffective,
     updateStatus,
@@ -681,6 +682,38 @@
       {#if pin.notes}
         <p class="notes">{pin.notes}</p>
       {/if}
+
+      {#if species && (species.preparation_methods?.length || species.usage_notes || species.harvest_tips || species.toxicity_notes || species.safety_notes)}
+        <div class="about-species">
+          <div class="about-head">
+            <strong>About this species</strong>
+            <a class="more-link" href={base + '/species/' + species.id}>More →</a>
+          </div>
+          {#if species.forage_parts?.length}
+            <div class="about-row">
+              <span class="about-label">Edible:</span>
+              <span class="about-chips">
+                {#each species.forage_parts as part}
+                  <span class="about-chip">{part.replace(/_/g, ' ')}</span>
+                {/each}
+              </span>
+            </div>
+          {/if}
+          {#if species.preparation_methods?.length}
+            <div class="about-row">
+              <span class="about-label">Uses:</span>
+              <span class="about-chips">
+                {#each species.preparation_methods as m}
+                  <span class="about-chip about-chip-method">{m.replace(/_/g, ' ')}</span>
+                {/each}
+              </span>
+            </div>
+          {/if}
+          {#if species.safety_notes}
+            <p class="about-safety">{species.safety_notes}</p>
+          {/if}
+        </div>
+      {/if}
     </section>
 
     <section class="observations">
@@ -970,6 +1003,36 @@
   ul.meta { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #4a554a; }
   ul.meta li { margin-bottom: 0.15rem; line-height: 1.3; }
   .notes { background: #f5f8f5; padding: 0.5rem 0.7rem; border-radius: 0.35rem; margin: 0.4rem 0 0; color: #1f2a1f; font-size: 0.85rem; }
+
+  .about-species {
+    margin-top: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #e1e8e1;
+    border-radius: 0.35rem;
+    background: #fbfdfa;
+    font-size: 0.85rem;
+  }
+  .about-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem; }
+  .about-head strong { color: #3a5a3a; font-weight: 600; }
+  .about-head .more-link { color: #3a5a3a; font-size: 0.8rem; text-decoration: none; }
+  .about-head .more-link:hover { text-decoration: underline; }
+  .about-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem; margin: 0.18rem 0; }
+  .about-label { color: #6b7a6b; font-size: 0.78rem; }
+  .about-chips { display: inline-flex; flex-wrap: wrap; gap: 0.25rem; }
+  .about-chip {
+    background: #eef3ed;
+    border: 1px solid #d4ddd2;
+    color: #1f2a1f;
+    padding: 0.05rem 0.4rem;
+    border-radius: 0.45rem;
+    font-size: 0.78rem;
+  }
+  .about-chip-method { background: #fff4e3; border-color: #e8d3a6; }
+  .about-safety {
+    margin: 0.35rem 0 0;
+    color: #7a3a3a;
+    font-size: 0.8rem;
+  }
 
   /* Mini harvest-window timeline shown in the pin summary. Compact —
    *  just bars + month letters + today marker; clicking the /windows

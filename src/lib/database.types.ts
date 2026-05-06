@@ -634,30 +634,45 @@ export type Database = {
       species: {
         Row: {
           aliases: string[]
+          attribution: string | null
           common_name: string
           forage_parts: string[]
+          harvest_tips: string | null
           id: string
           is_forageable: boolean
+          preparation_methods: string[]
           safety_notes: string
           scientific_name: string
+          toxicity_notes: string | null
+          usage_notes: string | null
         }
         Insert: {
           aliases?: string[]
+          attribution?: string | null
           common_name: string
           forage_parts?: string[]
+          harvest_tips?: string | null
           id?: string
           is_forageable?: boolean
+          preparation_methods?: string[]
           safety_notes?: string
           scientific_name: string
+          toxicity_notes?: string | null
+          usage_notes?: string | null
         }
         Update: {
           aliases?: string[]
+          attribution?: string | null
           common_name?: string
           forage_parts?: string[]
+          harvest_tips?: string | null
           id?: string
           is_forageable?: boolean
+          preparation_methods?: string[]
           safety_notes?: string
           scientific_name?: string
+          toxicity_notes?: string | null
+          usage_notes?: string | null
         }
         Relationships: []
       }
