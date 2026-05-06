@@ -94,6 +94,18 @@
   // not a manual choice. active = exists; gone = removed; dormant = unproductive.
   const STATUSES: PinStatus[] = ['active', 'gone', 'inaccessible', 'not_good'];
 
+  function statusLabel(s: PinStatus | null | undefined): string {
+    switch (s) {
+      case 'gone':              return 'Gone';
+      case 'inaccessible':      return 'Inaccessible';
+      case 'not_good':          return 'Not good';
+      case 'needs_verification': return 'Needs verification';
+      case 'dormant':           return 'Dormant';
+      case 'active':            return 'Active';
+      default:                  return 'Active';
+    }
+  }
+
   let formOpen = false;
   let formStage: Stage = 'ripe';
   let formQuality: number | null = null;
@@ -549,7 +561,7 @@
       <div class="title-row">
         <h2>{title}</h2>
         <span class="status-chip status-{pin.effective_status ?? 'active'}">
-          {(pin.effective_status ?? 'active').replace('_', ' ')}
+          {statusLabel(pin.effective_status)}
           {#if pin.is_ripe_now}<span class="ripe-dot" title="In ripe window">🍒</span>{/if}
         </span>
         {#if pin.visibility === 'private' && pin.created_by === $profile?.id}
@@ -623,12 +635,12 @@
         <select bind:value={pendingStatus}>
           <option value={null}>change status…</option>
           {#each STATUSES as s}
-            {#if s !== pin.status}<option value={s}>{s}</option>{/if}
+            {#if s !== pin.status}<option value={s}>{statusLabel(s)}</option>{/if}
           {/each}
         </select>
         {#if pendingStatus}
           <button class="inline" on:click={saveStatus} disabled={statusSaving}>
-            {statusSaving ? '…' : `Set ${pendingStatus}`}
+            {statusSaving ? '…' : `Set ${statusLabel(pendingStatus)}`}
           </button>
         {/if}
       </div>

@@ -578,7 +578,7 @@
     <label>
       Show:
       <select bind:value={filterStatus}>
-        <option value="all">All ({statusCounts.all}, incl. gone / inaccessible / not good)</option>
+        <option value="all">All ({statusCounts.all}, incl. Gone / Inaccessible / Not good)</option>
         <option value="active">Active ({statusCounts.active})</option>
         <option value="possibly_ripe">Possibly ripe today ({statusCounts.possibly_ripe})</option>
         <option value="confirmed_ripe">Confirmed ripe this year ({statusCounts.confirmed_ripe})</option>
@@ -613,7 +613,7 @@
         <ul>
           {#if legendShows.ripe}<li><span class="ring1"></span> Ripe</li>{/if}
           {#if legendShows.possibly}<li><span class="ring2"></span> Possibly ripe</li>{/if}
-          {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Inactive (gone / inaccessible / not good)</li>{/if}
+          {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Inactive (Gone / Inaccessible / Not good)</li>{/if}
         </ul>
       </div>
     {:else if hasStatusRows}
