@@ -452,16 +452,18 @@
   }
 
   /** Color is by forage category. Status overlays handled via opacity +
-   *  ripe-now overlays in renderPins. */
+   *  ripe-now overlays in renderPins. Palette matches the
+   *  colorForCategoryFallback used in symbology.ts so the legend and
+   *  the "by category" marker-color setting stay consistent. */
   function colorFor(pin: PinEffective): string {
     const cat = categoryOf(pin);
     switch (cat) {
-      case 'fruit':    return '#c14a3a'; // red-orange (cherries, mulberries)
-      case 'bramble':  return '#5a2440'; // dark berry (raspberries, blackberries)
-      case 'nut':      return '#7a5230'; // brown (hickories, hazelnuts, chestnuts)
-      case 'mushroom': return '#8a4ea0'; // purple (morels, chanterelles)
-      case 'other':    return '#6ba040'; // green (ramps, asparagus, mint, anything else)
-      default:         return '#6b7a6b'; // unknown / no species
+      case 'fruit':    return '#e41a1c';
+      case 'bramble':  return '#ff7f00';
+      case 'nut':      return '#a65628';
+      case 'mushroom': return '#984ea3';
+      case 'other':    return '#4daf4a';
+      default:         return '#999999';
     }
   }
 

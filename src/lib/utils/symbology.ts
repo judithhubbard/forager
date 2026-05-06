@@ -69,9 +69,15 @@ export function colorForGroup(group: string): string {
   return `hsl(${hue.toFixed(1)} ${saturation}% ${lightness}%)`;
 }
 
-/** Per-category fallback when there's no group at all (no species_id
- *  on the pin). Mirrors the 5 category shapes. Accepts 'unknown' and
- *  null/undefined to match call sites that don't know the category. */
+/** Per-category color. Used both as the fallback when a pin has no
+ *  group AND as the primary palette when the user picks "By category
+ *  only" in the marker-color setting.
+ *
+ *  Picked from a qualitative high-contrast palette (ColorBrewer Set1
+ *  family) so the 5 categories sit in clearly separate hue zones —
+ *  red / orange / brown / purple / green / gray. The earlier
+ *  "match the food's natural color" palette put fruit, bramble, and
+ *  nut all in warm darks that read as a single mass on screen. */
 export function colorForCategoryFallback(
   cat:
     | 'fruit'
@@ -84,11 +90,11 @@ export function colorForCategoryFallback(
     | undefined
 ): string {
   switch (cat) {
-    case 'fruit':    return '#c14a3a';
-    case 'bramble':  return '#5a2440';
-    case 'nut':      return '#7a5230';
-    case 'mushroom': return '#8a4ea0';
-    case 'other':    return '#6ba040';
-    default:         return '#6b7a6b';
+    case 'fruit':    return '#e41a1c'; // red
+    case 'bramble':  return '#ff7f00'; // orange
+    case 'nut':      return '#a65628'; // brown
+    case 'mushroom': return '#984ea3'; // purple
+    case 'other':    return '#4daf4a'; // green
+    default:         return '#999999'; // neutral gray
   }
 }
