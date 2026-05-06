@@ -18,7 +18,10 @@
   import { listMyTrackPoints, importParsedTrack, getTrackPoints } from '$lib/services/trackService';
   import { recording, stop as stopRecording } from '$lib/stores/recording';
   import { displayedTrackIds, showTrack } from '$lib/stores/displayedTracks';
-  import Map from '$lib/components/Map.svelte';
+  // Renamed from `Map` because the bare name shadows the JS Map
+   // built-in type in TypeScript, which broke a `new Map<...>()`
+   // declaration elsewhere in this file.
+  import MapView from '$lib/components/Map.svelte';
   import DropPinModal from '$lib/components/DropPinModal.svelte';
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
@@ -786,7 +789,7 @@
     <AddressSearch on:select={handleGeocodeSelect} />
   </div>
 
-  <Map
+  <MapView
     bind:this={mapRef}
     pins={filteredPins}
     {clusters}
