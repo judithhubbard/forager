@@ -836,6 +836,7 @@ export type Database = {
           user_id: string | null
           user_username: string | null
           user_display_name: string | null
+          visibility: 'shared' | 'private' | null
         }
         Relationships: [
           {
@@ -889,6 +890,7 @@ export type Database = {
           species_id: string | null
           status: Database["public"]["Enums"]["pin_status"] | null
           updated_at: string | null
+          visibility: 'shared' | 'private' | null
         }
         Relationships: [
           {

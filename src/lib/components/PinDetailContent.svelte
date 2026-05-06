@@ -3,6 +3,7 @@
   import {
     getEffective,
     updateStatus,
+    updateVisibility,
     type PinEffective,
     type PinStatus
   } from '$lib/services/pinService';
@@ -29,6 +30,7 @@
     type ObservationPrecision
   } from '$lib/services/observationService';
   import { profileLabel } from '$lib/services/profileService';
+  import { profile } from '$lib/stores/profile';
   import {
     listByPin as listPhotos,
     signUrls,
@@ -97,6 +99,14 @@
   let formQuality: number | null = null;
   let formNotes = '';
   let formPrecision: ObservationPrecision = 'day';
+  /** Observation visibility — defaults to the pin's visibility (no
+   *  point posting a "shared" observation on a private pin) but the
+   *  user can flip per-observation. Reset every time the form opens
+   *  so it tracks the current pin. */
+  let formVisibility: 'shared' | 'private' = 'shared';
+  $: if (formOpen && pin) {
+    formVisibility = (pin.visibility as 'shared' | 'private') ?? 'shared';
+  }
   // Year/month/day form fields — three selects avoids the native date
   // input's flaky keyboard handling on Chrome/Mac (the dd kept resetting).
   const NOW = new Date();
@@ -347,7 +357,8 @@
         qualityRating: formQuality,
         qualityNotes: formNotes.trim() || null,
         observedAt,
-        observedPrecision: formPrecision
+        observedPrecision: formPrecision,
+        visibility: formVisibility
       });
       formOpen = false;
       formNotes = '';
@@ -380,6 +391,20 @@
     formMonth = NOW.getMonth() + 1;
     formDay = NOW.getDate();
     formOpen = true;
+  }
+
+  /** Owner-only: flip a pin between shared and private. Called from
+   *  the visibility chip in the title row. RLS will reject anyone who
+   *  isn't the creator, but we already gate the click in the markup. */
+  async function togglePinVisibility() {
+    if (!pin) return;
+    const next: 'shared' | 'private' = pin.visibility === 'private' ? 'shared' : 'private';
+    try {
+      await updateVisibility(pinId, next);
+      pin = { ...pin, visibility: next };
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Could not change visibility.';
+    }
   }
 
   async function deleteObservation(o: Observation) {
@@ -538,6 +563,23 @@
           {(pin.effective_status ?? 'active').replace('_', ' ')}
           {#if pin.is_ripe_now}<span class="ripe-dot" title="In ripe window">🍒</span>{/if}
         </span>
+        {#if pin.visibility === 'private' && pin.created_by === $profile?.id}
+          <button
+            type="button"
+            class="vis-chip vis-private"
+            title="Only you can see this pin. Click to share with the group."
+            on:click={togglePinVisibility}
+          >🔒 private</button>
+        {:else if pin.visibility === 'private'}
+          <span class="vis-chip vis-private" title="Private — only the owner can see this.">🔒 private</span>
+        {:else if pin.created_by === $profile?.id}
+          <button
+            type="button"
+            class="vis-chip vis-shared"
+            title="Shared with the group. Click to make private."
+            on:click={togglePinVisibility}
+          >shared</button>
+        {/if}
       </div>
       {#if species}
         <p class="sub">
@@ -692,6 +734,17 @@
             Notes (optional)
             <textarea rows="3" bind:value={formNotes} placeholder="Tartness, abundance, …"></textarea>
           </label>
+          <fieldset class="obs-vis">
+            <legend>Visibility</legend>
+            <label class="vis-opt">
+              <input type="radio" bind:group={formVisibility} value="shared" />
+              <span>Shared</span>
+            </label>
+            <label class="vis-opt">
+              <input type="radio" bind:group={formVisibility} value="private" />
+              <span>🔒 Private (only you)</span>
+            </label>
+          </fieldset>
           {#if errorMessage}<p class="error">{errorMessage}</p>{/if}
           <button type="submit" disabled={formSubmitting}>
             {formSubmitting ? 'Saving…' : 'Save observation'}
@@ -709,6 +762,9 @@
                 <span class="stage" style="background: {stageColor(o.stage)}">{o.stage}</span>
                 <span class="date">{fmtObservation(o)}</span>
                 <span class="by" title={o.user_username ? '@' + o.user_username : ''}>by {profileLabel({ username: o.user_username, display_name: o.user_display_name })}</span>
+                {#if o.visibility === 'private'}
+                  <span class="vis-tag" title="Only you can see this observation">🔒</span>
+                {/if}
                 {#if o.quality_rating === 0}
                   <span class="no-harvest">🚫 no harvest</span>
                 {:else if o.quality_rating}
@@ -979,6 +1035,54 @@
   .status-chip.status-needs_verification { background: #ecdcef; color: #6a3a78; border-color: #d3b9d8; }
 
   .ripe-dot { font-size: 0.85em; }
+
+  /* Visibility chip in the title row — clickable for the owner. */
+  .vis-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 1rem;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .vis-chip.vis-private { background: #e9e3f0; color: #4a2466; border-color: #c5b3da; }
+  .vis-chip.vis-shared  { background: #eef2ee; color: #4a554a; border-color: #c7d0c7; }
+  button.vis-chip { cursor: pointer; }
+  button.vis-chip:focus-visible { outline: 2px solid #3a5a3a; outline-offset: 1px; }
+
+  /* 🔒 inline tag on private observation rows */
+  .vis-tag {
+    display: inline-block;
+    font-size: 0.78rem;
+    color: #6b7a6b;
+    margin-left: 0.15rem;
+  }
+
+  /* Observation form visibility fieldset */
+  .obs-vis {
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    padding: 0.4rem 0.65rem 0.5rem;
+    margin: 0.3rem 0 0.5rem;
+  }
+  .obs-vis legend {
+    padding: 0 0.4rem;
+    font-size: 0.78rem;
+    color: #4a554a;
+  }
+  .obs-vis .vis-opt {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.2rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .obs-vis input { margin: 0; }
 
   .status-edit-row {
     display: flex;

@@ -7,9 +7,9 @@ import type { Database } from '$lib/database.types';
 
 export type Observation = Database['public']['Tables']['observations']['Row'];
 
-/** Observation row decorated with the author's username/display_name —
- *  used in the per-pin observation list so each entry can show who
- *  logged it. */
+/** Observation row decorated with the author's username/display_name
+ *  and explicit visibility (already on the base row, just keeping it
+ *  in the type for clarity at call sites). */
 export type ObservationWithUser = Observation & {
   user_username: string | null;
   user_display_name: string | null;
@@ -36,6 +36,10 @@ export interface CreateObservationInput {
   qualityNotes?: string | null;
   observedAt?: Date;
   observedPrecision?: ObservationPrecision;
+  /** Defaults to 'shared'. Mark 'private' to keep this observation
+   *  visible only to the author (e.g. detailed harvest notes you
+   *  don't want to share with the group). */
+  visibility?: 'shared' | 'private';
 }
 
 export async function listByPin(pinId: string): Promise<ObservationWithUser[]> {
@@ -105,7 +109,8 @@ export async function create(input: CreateObservationInput): Promise<string> {
         quality_rating: input.qualityRating ?? null,
         quality_notes: input.qualityNotes ?? null,
         observed_at: (input.observedAt ?? new Date()).toISOString(),
-        observed_precision: input.observedPrecision ?? 'day'
+        observed_precision: input.observedPrecision ?? 'day',
+        visibility: input.visibility ?? 'shared'
       });
       if (error) {
         console.error('[observationService] create error:', error);

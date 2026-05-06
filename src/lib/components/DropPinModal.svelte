@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
   import { listAll, search, type Species } from '$lib/services/speciesService';
-  import { create as createPin } from '$lib/services/pinService';
+  import { create as createPin, type Visibility } from '$lib/services/pinService';
+  import { activeRegion } from '$lib/stores/activeRegion';
 
   export let regionId: string;
   /** If provided (e.g. from a map tap), skip GPS capture entirely. */
@@ -26,6 +27,9 @@
   let speciesId: string | null = null;
   let displayName = '';
   let notes = '';
+  // Default visibility comes from the active region's preference. The
+  // user can flip per-pin without changing the region default.
+  let visibility: Visibility = ($activeRegion?.default_pin_visibility as Visibility) ?? 'shared';
 
   $: filtered = search(species, speciesQuery).slice(0, 10);
 
@@ -79,7 +83,8 @@
         lat,
         locationAccuracyM: accuracy ? Math.round(accuracy) : null,
         displayName: displayName.trim() || null,
-        notes: notes.trim() || null
+        notes: notes.trim() || null,
+        visibility
       });
       dispatch('saved', { id });
     } catch (err) {
@@ -155,6 +160,18 @@
         <textarea rows="3" bind:value={notes} placeholder="Quality, access notes, …"
         ></textarea>
       </label>
+
+      <fieldset class="visibility">
+        <legend>Who can see this pin?</legend>
+        <label class="vis-opt">
+          <input type="radio" bind:group={visibility} value="shared" />
+          <span><strong>Shared</strong> — everyone in this region</span>
+        </label>
+        <label class="vis-opt">
+          <input type="radio" bind:group={visibility} value="private" />
+          <span><strong>Private</strong> 🔒 — only you</span>
+        </label>
+      </fieldset>
 
       {#if errorMessage}
         <p class="error">{errorMessage}</p>
@@ -278,6 +295,26 @@
     font-size: 0.9rem;
     margin: 0 0 0.75rem;
   }
+  .visibility {
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    padding: 0.5rem 0.75rem 0.6rem;
+    margin: 0 0 0.85rem;
+  }
+  .visibility legend {
+    padding: 0 0.4rem;
+    font-size: 0.8rem;
+    color: #4a554a;
+  }
+  .vis-opt {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    margin-top: 0.25rem;
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+  .vis-opt input { margin: 0; }
   .actions {
     display: flex;
     gap: 0.75rem;
