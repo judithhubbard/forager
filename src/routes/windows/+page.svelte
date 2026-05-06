@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { goto } from '$lib/utils/nav';
   import { activeRegion } from '$lib/stores/activeRegion';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
@@ -94,29 +93,30 @@
     return m;
   })();
 
-  onMount(load);
+  // Re-run load whenever the active region (re)loads. Replaces an
+  // earlier onMount(load), which captured $activeRegion exactly once
+  // and missed the case where the region store hadn't populated yet.
+  $: if ($activeRegion) loadFor($activeRegion.id);
 
-  async function load() {
+  async function loadFor(regionId: string) {
     loading = true;
     errorMessage = '';
     try {
       species = await listSpecies();
-      if ($activeRegion) {
-        const [winRes, obsRes] = await Promise.all([
-          supabase
-            .from('species_fruiting_windows')
-            .select('id, species_id, region_id, stage, start_doy, end_doy')
-            .eq('region_id', $activeRegion.id),
-          supabase
-            .from('v_observation_with_pin')
-            .select('id, species_id, stage, observed_at, pin_id, pin_display_name, quality_rating, quality_notes')
-            .eq('pin_region_id', $activeRegion.id)
-        ]);
-        if (winRes.error) throw winRes.error;
-        if (obsRes.error) throw obsRes.error;
-        windows = winRes.data ?? [];
-        observations = obsRes.data ?? [];
-      }
+      const [winRes, obsRes] = await Promise.all([
+        supabase
+          .from('species_fruiting_windows')
+          .select('id, species_id, region_id, stage, start_doy, end_doy')
+          .eq('region_id', regionId),
+        supabase
+          .from('v_observation_with_pin')
+          .select('id, species_id, stage, observed_at, pin_id, pin_display_name, quality_rating, quality_notes')
+          .eq('pin_region_id', regionId)
+      ]);
+      if (winRes.error) throw winRes.error;
+      if (obsRes.error) throw obsRes.error;
+      windows = winRes.data ?? [];
+      observations = obsRes.data ?? [];
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Failed to load.';
     } finally {
