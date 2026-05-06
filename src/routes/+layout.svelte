@@ -10,6 +10,10 @@
   import { myRegions, regionsLoading } from '$lib/stores/activeRegion';
   import UsernameSetup from '$lib/components/UsernameSetup.svelte';
   import Disclaimer from '$lib/components/Disclaimer.svelte';
+  // Side-effect import: registers locales and kicks off init() at module
+  // load time so $_('key') is ready before any page mounts.
+  import '$lib/i18n';
+  import { isLoading as i18nLoading } from 'svelte-i18n';
 
   const PUBLIC_ROUTES = ['/login', '/register'];
 
@@ -90,7 +94,7 @@
     !$settings.disclaimerAcceptedAt;
 </script>
 
-{#if $authLoading}
+{#if $authLoading || $i18nLoading}
   <main class="loading">
     <p>Loading…</p>
   </main>

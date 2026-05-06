@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _ } from 'svelte-i18n';
   import { geocode, zoomForBbox, type GeocodeResult } from '$lib/services/geocoder';
 
   const dispatch = createEventDispatcher<{
@@ -42,7 +43,7 @@
     } catch (e) {
       // AbortError is expected when the user keeps typing.
       if ((e as Error).name === 'AbortError') return;
-      error = 'Search failed.';
+      error = $_('search.failed');
       results = [];
       open = true;
     } finally {
@@ -91,13 +92,13 @@
 <div class="search-wrap">
   <input
     type="search"
-    placeholder="Search address or place…"
+    placeholder={$_('search.address_placeholder')}
     bind:value={query}
     on:input={onInput}
     on:keydown={onKeyDown}
     on:blur={onBlur}
     on:focus={onFocus}
-    aria-label="Search address or place"
+    aria-label={$_('search.address_placeholder')}
     autocomplete="off"
   />
   {#if loading}
@@ -108,7 +109,7 @@
       {#if error}
         <li class="msg">{error}</li>
       {:else if results.length === 0 && !loading}
-        <li class="msg">No matches.</li>
+        <li class="msg">{$_('search.no_matches')}</li>
       {:else}
         {#each results as r, i}
           <li

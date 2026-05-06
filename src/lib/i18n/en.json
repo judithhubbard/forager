@@ -1,0 +1,52 @@
+{
+  "app": {
+    "title": "Forager",
+    "ripe_now": "Ripe now"
+  },
+  "common": {
+    "back": "← Back",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "ok": "OK"
+  },
+  "search": {
+    "address_placeholder": "Search address or place…",
+    "no_matches": "No matches.",
+    "failed": "Search failed."
+  },
+  "species_panel": {
+    "all": "All",
+    "none": "None",
+    "selected": "selected",
+    "select_all": "Select all",
+    "clear": "Clear",
+    "done": "Done"
+  },
+  "filter": {
+    "show": "Show:",
+    "all": "All",
+    "active": "Active",
+    "possibly_ripe": "Possibly ripe today",
+    "confirmed_ripe": "Confirmed ripe this year",
+    "confirmed_harvest": "Confirmed harvest history"
+  },
+  "pin": {
+    "log_observation": "Log observation",
+    "add_photo": "Add photo",
+    "add_hazard": "Add hazard",
+    "move_pin": "Move pin",
+    "private_chip": "🔒 private",
+    "shared_chip": "shared",
+    "access_label": "Access:",
+    "access_not_set": "not set",
+    "about_species": "About this species",
+    "edible": "Edible:",
+    "uses": "Uses:",
+    "more_link": "More →"
+  },
+  "photo": {
+    "by": "Photo by"
+  }
+}
