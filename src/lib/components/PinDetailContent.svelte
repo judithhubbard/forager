@@ -976,16 +976,19 @@
     bottom: 0;
     border-radius: 1px;
   }
-  /* Other pins' observations — small, faded, drawn behind this pin's
-     ticks so they don't draw the eye away. */
+  /* Other pins' observations — smaller and lower-contrast than this
+     pin's ticks. A thin white halo via box-shadow keeps them visible
+     against same-color bars (e.g., a 'ripe' tick on a 'ripe' bar
+     would otherwise vanish). */
   .mini-other {
     position: absolute;
     top: 50%;
-    width: 0.32rem;
-    height: 0.32rem;
+    width: 0.36rem;
+    height: 0.36rem;
     transform: translate(-50%, -50%) rotate(45deg);
-    opacity: 0.45;
+    opacity: 0.7;
     border-radius: 1px;
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(0, 0, 0, 0.35);
     pointer-events: none;
   }
   /* This pin's own observations — bold, white-ringed, larger so they
