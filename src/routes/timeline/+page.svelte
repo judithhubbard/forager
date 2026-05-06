@@ -306,6 +306,48 @@
     return rt.weather.filter((d) => d.date.startsWith(String(year)));
   }
 
+  /** Day-of-year averages computed across all PAST years' weather
+   *  (excluding the current year). Drives the "typical year"
+   *  overlay on the current-year strip, so the user can see at a
+   *  glance whether 2026 is running warm/wet/dry vs the historical
+   *  pattern. */
+  type DoyAvg = { rain_mm: number; temp_max_c: number | null; temp_min_c: number | null };
+  function computeDoyAverages(rt: RegionTimeline, currentYear: number): Map<number, DoyAvg> {
+    const acc = new Map<
+      number,
+      { rainSum: number; rainCount: number; maxSum: number; maxCount: number; minSum: number; minCount: number }
+    >();
+    for (const d of rt.weather) {
+      const yr = parseInt(d.date.slice(0, 4), 10);
+      if (isNaN(yr) || yr === currentYear) continue;
+      const doy = dateToDoy(d.date);
+      let a = acc.get(doy);
+      if (!a) {
+        a = { rainSum: 0, rainCount: 0, maxSum: 0, maxCount: 0, minSum: 0, minCount: 0 };
+        acc.set(doy, a);
+      }
+      a.rainSum += d.rain_mm;
+      a.rainCount += 1;
+      if (d.temp_max_c != null) {
+        a.maxSum += d.temp_max_c;
+        a.maxCount += 1;
+      }
+      if (d.temp_min_c != null) {
+        a.minSum += d.temp_min_c;
+        a.minCount += 1;
+      }
+    }
+    const out = new Map<number, DoyAvg>();
+    for (const [doy, a] of acc) {
+      out.set(doy, {
+        rain_mm: a.rainCount ? a.rainSum / a.rainCount : 0,
+        temp_max_c: a.maxCount ? a.maxSum / a.maxCount : null,
+        temp_min_c: a.minCount ? a.minSum / a.minCount : null
+      });
+    }
+    return out;
+  }
+
   function laneColor(speciesId: string): string {
     const s = speciesById[speciesId];
     if (!s) return '#999';
@@ -378,6 +420,30 @@
     hot: '#d04a3a'
   };
 
+  /** Polygon spanning the average min→max temperature band across
+   *  the year (computed from past years). Continuous data — no gaps,
+   *  so a single polygon is safe. Drawn faint behind the current
+   *  year's actual rects so deviations are visible. */
+  function avgTempPolygon(
+    doyAvg: Map<number, DoyAvg> | null,
+    yStart: number
+  ): string {
+    if (!doyAvg) return '';
+    const pairs = Array.from(doyAvg.entries())
+      .filter(([, a]) => a.temp_max_c != null && a.temp_min_c != null)
+      .sort((a, b) => a[0] - b[0]);
+    if (pairs.length === 0) return '';
+    const top: string[] = [];
+    const bot: string[] = [];
+    for (const [doy, a] of pairs) {
+      const x = doyToX(doy);
+      top.push(`${x.toFixed(1)},${tempToY(a.temp_max_c as number, yStart).toFixed(1)}`);
+      bot.push(`${x.toFixed(1)},${tempToY(a.temp_min_c as number, yStart).toFixed(1)}`);
+    }
+    bot.reverse();
+    return [...top, ...bot].join(' ');
+  }
+
   /** Format temperature in °F (US convention) with one decimal. */
   function fmtTempF(c: number): string {
     return `${(c * 9 / 5 + 32).toFixed(1)}°F`;
@@ -435,6 +501,11 @@
         <span class="leg-band" style="background: #3a6b8b"></span> &lt;32°F
       </span>
       <span class="leg-item leg-sep">|</span>
+      <span class="leg-item">
+        <span class="leg-band" style="background: #9aa6a3; opacity: 0.45;"></span>
+        typical year (current strip only)
+      </span>
+      <span class="leg-item leg-sep">|</span>
       <span class="leg-item leg-hint">Hover a tick for species + date</span>
     </div>
 
@@ -474,6 +545,7 @@
         {@const y32 = tempToY(FREEZE_C, tempY)}
         {@const yLo = tempToY(TEMP_LO_C, tempY)}
         {@const tempRects = tempDayRects(yWeather, tempY)}
+        {@const doyAvg = year === currentYear ? computeDoyAverages(rt, currentYear) : null}
         <section class="year-row" class:current={year === currentYear}>
           <div class="year-label">
             {year}
@@ -493,6 +565,24 @@
               x={PAD_L} y={rainY} width={PLOT_W} height={RAIN_H}
               fill="#f3f8fc" stroke="#dde7ee" stroke-width="0.5"
             />
+            <!-- Average-year overlay: faint rain bars from past years
+                 averaged per day-of-year, drawn under the current
+                 year's actual bars so deviations stand out. -->
+            {#if doyAvg}
+              {#each Array.from(doyAvg.entries()) as [doy, avg]}
+                {#if avg.rain_mm > 0.05}
+                  {@const aBarH = Math.min(RAIN_H - 2, (Math.min(avg.rain_mm, RAIN_CAP_MM) / RAIN_CAP_MM) * (RAIN_H - 2))}
+                  <rect
+                    x={doyToX(doy) - 1.0}
+                    y={rainY + (RAIN_H - aBarH)}
+                    width="2.2"
+                    height={aBarH}
+                    fill="#88a8c0"
+                    opacity="0.45"
+                  />
+                {/if}
+              {/each}
+            {/if}
             <!-- Track-name "rain" rotated 90° on the far left, then
                  numeric scale labels right-aligned at PAD_L − 3 -->
             <text
@@ -534,6 +624,12 @@
               x={PAD_L} y={tempY} width={PLOT_W} height={TEMP_H}
               fill="#fbf9f3" stroke="#e8e3d4" stroke-width="0.5"
             />
+            {#if doyAvg}
+              {@const avgPoly = avgTempPolygon(doyAvg, tempY)}
+              {#if avgPoly}
+                <polygon points={avgPoly} fill="#9aa6a3" opacity="0.25" />
+              {/if}
+            {/if}
             {#if tempRects.length > 0}
               {#each tempRects as r}
                 <rect
