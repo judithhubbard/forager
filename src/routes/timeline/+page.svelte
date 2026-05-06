@@ -178,6 +178,20 @@
     return GROUP_LABELS[genus] ?? genus;
   }
 
+  /** Forage category for a species — same logic as +page.svelte so
+   *  the timeline lanes group like the map filter panel: fruit
+   *  trees, then brambles, then nuts, then mushrooms, then other. */
+  type SpeciesCat = 'fruit' | 'bramble' | 'nut' | 'mushroom' | 'other';
+  const CAT_ORDER: SpeciesCat[] = ['fruit', 'bramble', 'nut', 'mushroom', 'other'];
+  function categoryOfSpecies(s: Species): SpeciesCat {
+    if (s.scientific_name.startsWith('Rubus')) return 'bramble';
+    const parts = s.forage_parts ?? [];
+    if (parts.includes('mushroom')) return 'mushroom';
+    if (parts.includes('nut')) return 'nut';
+    if (parts.includes('fruit')) return 'fruit';
+    return 'other';
+  }
+
   function dateToDoy(iso: string): number {
     const d = new Date(iso);
     const start = new Date(d.getFullYear(), 0, 0);
@@ -250,7 +264,15 @@
       const sa = speciesById[a];
       const sb = speciesById[b];
       if (!sa || !sb) return 0;
-      return groupOf(sa).localeCompare(groupOf(sb)) || sa.common_name.localeCompare(sb.common_name);
+      // Order: category (fruit → bramble → nut → mushroom → other),
+      // then group label within the category, then species name.
+      const ca = CAT_ORDER.indexOf(categoryOfSpecies(sa));
+      const cb = CAT_ORDER.indexOf(categoryOfSpecies(sb));
+      if (ca !== cb) return ca - cb;
+      const ga = groupOf(sa);
+      const gb = groupOf(sb);
+      if (ga !== gb) return ga.localeCompare(gb);
+      return sa.common_name.localeCompare(sb.common_name);
     });
   }
 
