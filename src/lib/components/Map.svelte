@@ -716,10 +716,13 @@
     font-size: 0.8rem;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   }
-  /* Top-left overlay; mirrors the locate button position. */
+  /* Bottom-left overlay — Leaflet's zoom buttons own the top-left
+     and the locate button owns the top-right, so the bottom-left
+     is the only corner without a permanent UI element. (Bottom-
+     right is Leaflet's attribution.) */
   .rain-overlay {
     position: absolute;
-    top: 0.75rem;
+    bottom: 0.75rem;
     left: 0.75rem;
     z-index: 1100;
     background: #e3eff5;
