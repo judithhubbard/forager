@@ -64,8 +64,10 @@
 
   /** Cache of track-id → point list so flipping a track on/off
    *  doesn't re-hit the network on the second toggle. */
-  let trackPointsCache = new Map<string, [number, number][]>();
-  let displayedTrackPolylines: { id: string; points: [number, number][] }[] = [];
+  type LatLng = [number, number];
+  type TrackPolyline = { id: string; points: LatLng[] };
+  let trackPointsCache: Map<string, LatLng[]> = new Map();
+  let displayedTrackPolylines: TrackPolyline[] = [];
   /** Whenever the displayedTrackIds set changes, fetch any missing
    *  track points and rebuild the polylines list passed to Map. */
   $: void rebuildDisplayedTracks($displayedTrackIds);
