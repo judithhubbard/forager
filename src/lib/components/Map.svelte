@@ -40,7 +40,7 @@
   export let selectedPinId: string | null = null;
 
   /** Which tile layer to render. Picker lives in the tools menu. */
-  type Basemap = 'osm-hot' | 'satellite';
+  type Basemap = 'osm-hot' | 'satellite' | 'topo' | 'cyclosm' | 'voyager' | 'sentinel';
   export let basemap: Basemap = 'osm-hot';
   const BASEMAPS: Record<
     Basemap,
@@ -52,15 +52,33 @@
       maxZoom: 19
     },
     // USGS imagery for the US is sourced largely from NAIP, which is
-    // flown during the summer growing season — i.e., leaf-on. Much
-    // better for foraging than the Esri default which can be winter
-    // for many tiles. (Outside the US it falls back to lower-res
-    // imagery; if you ship to non-US regions later, swap or layer in
-    // Sentinel-2 cloudless.)
+    // flown during the summer growing season — leaf-on conditions.
     satellite: {
       url: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
       attribution: 'Imagery © U.S. Geological Survey (NAIP)',
       maxZoom: 19
+    },
+    topo: {
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution: '© OpenTopoMap (CC-BY-SA), © OpenStreetMap contributors',
+      maxZoom: 17
+    },
+    cyclosm: {
+      url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+      attribution: '© CyclOSM, © OpenStreetMap contributors',
+      maxZoom: 20
+    },
+    voyager: {
+      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      attribution: '© CartoDB, © OpenStreetMap contributors',
+      maxZoom: 20
+    },
+    // Sentinel-2 cloudless 2023 — global summer composite at ~10m.
+    // Lower-res than USGS NAIP in the US but covers everywhere.
+    sentinel: {
+      url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/g/{z}/{y}/{x}.jpg',
+      attribution: 'Sentinel-2 cloudless © EOX IT Services GmbH',
+      maxZoom: 17
     }
   };
   let tileLayer: import('leaflet').TileLayer | undefined;

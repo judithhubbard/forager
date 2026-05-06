@@ -9,8 +9,12 @@
   $: isAdmin = $activeRegion?.role === 'admin';
 
   const BASEMAP_OPTIONS: { value: Basemap; label: string }[] = [
-    { value: 'osm-hot', label: 'Humanitarian OSM' },
-    { value: 'satellite', label: 'Satellite (USGS)' }
+    { value: 'osm-hot',   label: 'Humanitarian OSM' },
+    { value: 'voyager',   label: 'CartoDB Voyager' },
+    { value: 'cyclosm',   label: 'CyclOSM (paths/trails)' },
+    { value: 'topo',      label: 'OpenTopoMap (terrain)' },
+    { value: 'satellite', label: 'Satellite (USGS, US summer)' },
+    { value: 'sentinel',  label: 'Satellite (Sentinel-2, global)' }
   ];
 
   async function handleSignOut() {

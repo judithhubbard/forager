@@ -156,30 +156,31 @@
     return m;
   })();
 
-  /** 20 visually distinct colors covering the hue wheel — each group
-   *  gets its own. The shape already encodes category, so color is
-   *  free to range across the whole spectrum without clashing. */
+  /** 20 maximally-distinct saturated hues spread across the full color
+   *  wheel. No semantic ties to fruit color — the shape already tells
+   *  you the category, so the color is free to be wherever it's most
+   *  distinct from its neighbors. */
   const GROUP_COLORS: Record<string, string> = {
-    Serviceberry:        '#4363d8', // blue
-    Pawpaw:              '#ffb800', // gold
-    'Cornelian cherry':  '#e60026', // cherry red
-    Persimmon:           '#f58231', // bright orange
-    'Apple / Pear':      '#3cb44b', // apple green
-    Mulberry:            '#800020', // mulberry maroon
-    'Cherry / Plum':     '#d63384', // hot pink
-    Almond:              '#f3c5d5', // almond-blossom pink
-    Currant:             '#b30049', // deep raspberry
-    Bramble:             '#1f1f3a', // near-black indigo
-    Elderberry:          '#4a1166', // deep purple
-    Blueberry:           '#1170aa', // deep teal-blue
-    'Autumn olive':      '#b6b54a', // dusty olive yellow
-    Grape:               '#6a0dad', // royal purple
-    Hickory:             '#4a2e18', // dark brown
-    Chestnut:            '#b8651b', // chestnut
-    Hazelnut:            '#d4a574', // hazel tan
-    Walnut:              '#2b1810', // walnut black-brown
+    Almond:              '#fabed4', // pink
+    'Apple / Pear':      '#3cb44b', // green
+    'Autumn olive':      '#808000', // olive
+    Blueberry:           '#4363d8', // blue
+    Bramble:             '#800000', // maroon
+    'Cherry / Plum':     '#e6194b', // red
+    Chestnut:            '#9a6324', // brown
+    'Cornelian cherry':  '#ff8c42', // bright orange
+    Currant:             '#911eb4', // purple
+    Elderberry:          '#673ab7', // deep purple
+    Grape:               '#dcbeff', // lavender
+    Hazelnut:            '#f58231', // orange
+    Hickory:             '#ffe119', // yellow
+    Mulberry:            '#f032e6', // magenta
     Mushroom:            '#469990', // teal
-    Other:               '#7f8c8d'  // neutral gray-green
+    Other:               '#a9a9a9', // gray
+    Pawpaw:              '#bfef45', // lime
+    Persimmon:           '#03a9f4', // sky blue
+    Serviceberry:        '#42d4f4', // cyan
+    Walnut:              '#000075'  // navy
   };
   function groupOfPin(p: PinEffective): string {
     const s = p.species_id ? speciesById[p.species_id] : null;
@@ -196,6 +197,44 @@
     if (cat === 'other')    return '#6ba040';
     return '#6b7a6b';
   };
+
+  /** Map a group label to one of the four legend-shape glyphs based on
+   *  the category of any species in the group. (All species in a
+   *  group share a category, so picking the first works.) */
+  function shapeForGroup(group: string): 'circle' | 'square' | 'triangle' | 'diamond' {
+    const sp = speciesInRegion.find((s) => groupOf(s) === group);
+    const cat = sp ? categoryBySpecies[sp.id] : null;
+    if (cat === 'nut') return 'square';
+    if (cat === 'mushroom') return 'triangle';
+    if (cat === 'other') return 'diamond';
+    return 'circle';
+  }
+
+  /** Groups currently represented on the visible map, deduplicated and
+   *  sorted: by category (fruit → nut → mushroom → other), then by
+   *  group name within. Drives the per-group legend. */
+  $: visibleGroups = (() => {
+    const seen = new Set<string>();
+    const out: { group: string; cat: SpeciesCat; color: string; shape: ReturnType<typeof shapeForGroup> }[] = [];
+    for (const p of filteredPins) {
+      const g = groupOfPin(p);
+      if (!g || seen.has(g)) continue;
+      seen.add(g);
+      const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
+      out.push({
+        group: g,
+        cat: cat ?? 'other',
+        color: GROUP_COLORS[g] ?? colorOfPin(p),
+        shape: shapeForGroup(g)
+      });
+    }
+    return out.sort((a, b) => {
+      const ca = CAT_ORDER.indexOf(a.cat);
+      const cb = CAT_ORDER.indexOf(b.cat);
+      if (ca !== cb) return ca - cb;
+      return a.group.localeCompare(b.group);
+    });
+  })();
 
   function labelOf(p: PinEffective): string {
     const s = p.species_id ? speciesById[p.species_id] : null;
@@ -508,20 +547,18 @@
           <button class="legend-toggle" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
         </div>
         <ul>
-          <!-- Shape per category (color varies per group, see species
-               panel for the full list of group colors). -->
-          {#if legendShows.fruit}
-            <li><span class="legend-shape circle"></span> Fruit</li>
-          {/if}
-          {#if legendShows.nut}
-            <li><span class="legend-shape square"></span> Nut</li>
-          {/if}
-          {#if legendShows.mushroom}
-            <li><span class="legend-shape triangle"></span> Mushroom</li>
-          {/if}
-          {#if legendShows.other}
-            <li><span class="legend-shape diamond"></span> Other</li>
-          {/if}
+          <!-- One row per group currently visible on the map: shape
+               encodes category, color encodes group. -->
+          {#each visibleGroups as g}
+            <li>
+              {#if g.shape === 'triangle'}
+                <span class="legend-shape triangle" style="border-bottom-color: {g.color};"></span>
+              {:else}
+                <span class="legend-shape {g.shape}" style="background: {g.color};"></span>
+              {/if}
+              {g.group}
+            </li>
+          {/each}
           {#if legendShows.ripe}<li><span class="ring1"></span> Ripe</li>{/if}
           {#if legendShows.possibly}<li><span class="ring2"></span> Possibly ripe</li>{/if}
           {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant</li>{/if}
@@ -946,7 +983,10 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.25rem;
+    /* 20 groups can fill the screen — cap and scroll. */
+    max-height: 50vh;
+    overflow-y: auto;
   }
   .legend .dot {
     display: inline-block;
