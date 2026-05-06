@@ -284,6 +284,7 @@
     dropPinLng = e.detail.lng;
     dropPinLat = e.detail.lat;
     showDropPin = true;
+    placingPin = false; // exit placement mode once a coord is picked
   }
 
   function handlePinSaved(_e: CustomEvent<{ id: string }>) {
@@ -299,15 +300,19 @@
     dropPinLat = null;
   }
 
-  /** Open the drop-pin modal with no preset coordinates — DropPinModal
-   *  starts in 'capturing' mode and uses GPS. Used by the desktop "+"
-   *  button since right-click works but isn't very discoverable. */
+  /** Desktop "+" button: enter placement mode rather than dropping a
+   *  pin at the user's current GPS location. The next click on empty
+   *  map area picks the coordinate; Escape cancels. */
+  let placingPin = false;
   function handleNewPinClick() {
-    dropPinLng = null;
-    dropPinLat = null;
-    showDropPin = true;
+    placingPin = true;
+  }
+  function handlePlacingKey(e: KeyboardEvent) {
+    if (placingPin && e.key === 'Escape') placingPin = false;
   }
 </script>
+
+<svelte:window on:keydown={handlePlacingKey} />
 
 <header>
   <h1>Forager</h1>
@@ -419,6 +424,7 @@
     {categoryOf}
     {labelOf}
     {symbolStyle}
+    placing={placingPin}
     hideLocate={!!selectedPinId}
     on:pinClick={handlePinClick}
     on:mapTap={handleMapTap}

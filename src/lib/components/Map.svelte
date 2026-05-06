@@ -22,6 +22,13 @@
   type SymbolStyle = 'circle' | 'shape' | 'letter' | 'emoji';
   export let symbolStyle: SymbolStyle = 'circle';
 
+  /** When true, the next click on empty map area fires mapTap (so the
+   *  parent can open the drop-pin flow at that coordinate). The map
+   *  also gets a crosshair cursor as a visual cue. Used by the desktop
+   *  "+ new pin" flow; on mobile the long-press gesture stays the
+   *  primary entry point. */
+  export let placing: boolean = false;
+
   export let pins: PinEffective[] = [];
   export let center: [number, number] = [42.4534, -76.4836]; // Cornell campus default
   export let zoom: number = 14;
@@ -328,6 +335,14 @@
       dispatch('mapTap', { lng: e.latlng.lng, lat: e.latlng.lat });
     });
 
+    // Placement mode: a regular click on empty map area picks the
+    // coordinate. The transparent hit-target circles on each pin have
+    // bubblingMouseEvents: false, so pin clicks don't get hijacked.
+    map.on('click', (e) => {
+      if (!placing) return;
+      dispatch('mapTap', { lng: e.latlng.lng, lat: e.latlng.lat });
+    });
+
     // Auto-locate on first map load (best-effort, browser will silently
     // refuse if permission is already denied or context is non-secure).
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
@@ -341,8 +356,11 @@
   });
 </script>
 
-<div class="map-wrap">
+<div class="map-wrap" class:placing>
   <div bind:this={mapEl} class="map" />
+  {#if placing}
+    <div class="placing-hint" role="status">Click on the map to place the pin · Esc to cancel</div>
+  {/if}
   {#if !hideLocate}
     <button
       class="locate"
@@ -380,6 +398,24 @@
   .map {
     width: 100%;
     height: 100%;
+  }
+  /* Crosshair cursor while placing a new pin so the user knows clicks
+     are armed. Targets the global Leaflet container class because the
+     SVG/canvas overlays paint above .map. */
+  .map-wrap.placing :global(.leaflet-container) { cursor: crosshair; }
+  .placing-hint {
+    position: absolute;
+    top: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    background: #3a5a3a;
+    color: white;
+    padding: 0.4rem 0.85rem;
+    border-radius: 0.35rem;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
   }
   .locate {
     position: absolute;
