@@ -111,6 +111,14 @@
    *  have a place to save tracks to. */
   export let showRecorder: boolean = false;
 
+  /** Saved-track polylines the user has chosen to keep visible on
+   *  the map. Each entry is rendered as a colored line. The id is
+   *  used to keep individual layers stable across re-renders. */
+  export let displayedTracks: Array<{
+    id: string;
+    points: Array<[number, number]>;
+  }> = [];
+
   /** Setting this prop animates the map to the given location. Parent
    *  passes a fresh object on each desired fly (e.g. after a geocode
    *  result is picked); we never null it back out — Svelte fires the
@@ -150,6 +158,11 @@
    *  this renders to a single canvas, so even ~10k circles stay
    *  performant; we down-sample if the input is much bigger. */
   let heatGroup: import('leaflet').LayerGroup | undefined;
+  /** Per-track polylines drawn on top of the basemap so the user can
+   *  see entire saved tracks as colored lines (separate from the
+   *  in-progress recording polyline above and from the density
+   *  heatmap below). One Polyline layer per track id. */
+  const trackLayers = new Map<string, import('leaflet').Polyline>();
   /** Cached leaflet module — set once in onMount so renderPins can
    *  run fully synchronously. Without this, every render had to
    *  re-resolve `import('leaflet')` (cached but still microtask-async),
@@ -214,6 +227,49 @@
   // for ESM compatibility) but visually similar — many overlapping
   // points → darker patch.
   $: if (map && LCache) renderHeat(heatPoints);
+  // Saved-track polylines.
+  $: if (map && LCache) renderTrackLayers(displayedTracks);
+
+  /** Pick a stable track color from the id hash so the same track
+   *  comes back the same color across reloads. Five colors, all
+   *  high-contrast against both light and satellite basemaps. */
+  function colorForTrackId(id: string): string {
+    const palette = ['#c14a3a', '#3a8db0', '#7a4a10', '#5a8a3a', '#984ea3'];
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+    return palette[h % palette.length];
+  }
+
+  function renderTrackLayers(tracks: Array<{ id: string; points: Array<[number, number]> }>) {
+    if (!map || !LCache) return;
+    const L = LCache;
+    const wantedIds = new Set(tracks.map((t) => t.id));
+    // Drop layers for tracks no longer in the displayed set.
+    for (const [id, layer] of trackLayers) {
+      if (!wantedIds.has(id)) {
+        layer.remove();
+        trackLayers.delete(id);
+      }
+    }
+    // Add or update the rest.
+    for (const t of tracks) {
+      if (t.points.length < 2) continue;
+      const existing = trackLayers.get(t.id);
+      if (existing) {
+        existing.setLatLngs(t.points);
+      } else {
+        const poly = L.polyline(t.points, {
+          color: colorForTrackId(t.id),
+          weight: 3,
+          opacity: 0.85,
+          lineJoin: 'round',
+          lineCap: 'round',
+          interactive: false
+        }).addTo(map);
+        trackLayers.set(t.id, poly);
+      }
+    }
+  }
 
   function renderHeat(points: Array<[number, number]>) {
     if (!map || !LCache) return;

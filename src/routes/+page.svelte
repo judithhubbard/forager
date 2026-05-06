@@ -15,8 +15,9 @@
     type PinCluster
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
-  import { listMyTrackPoints, importParsedTrack } from '$lib/services/trackService';
+  import { listMyTrackPoints, importParsedTrack, getTrackPoints } from '$lib/services/trackService';
   import { recording, stop as stopRecording } from '$lib/stores/recording';
+  import { displayedTrackIds, showTrack } from '$lib/stores/displayedTracks';
   import Map from '$lib/components/Map.svelte';
   import DropPinModal from '$lib/components/DropPinModal.svelte';
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
@@ -61,6 +62,31 @@
   // Hide heatmap when toggle is off OR the user signs out.
   $: shownHeatPoints = $settings.showHeatmap && $session ? heatPoints : [];
 
+  /** Cache of track-id → point list so flipping a track on/off
+   *  doesn't re-hit the network on the second toggle. */
+  let trackPointsCache = new Map<string, Array<[number, number]>>();
+  let displayedTrackPolylines: Array<{ id: string; points: Array<[number, number]> }> = [];
+  /** Whenever the displayedTrackIds set changes, fetch any missing
+   *  track points and rebuild the polylines list passed to Map. */
+  $: void rebuildDisplayedTracks($displayedTrackIds);
+  async function rebuildDisplayedTracks(ids: Set<string>) {
+    const out: Array<{ id: string; points: Array<[number, number]> }> = [];
+    for (const id of ids) {
+      let pts = trackPointsCache.get(id);
+      if (!pts) {
+        try {
+          pts = await getTrackPoints(id);
+          trackPointsCache.set(id, pts);
+        } catch (err) {
+          console.error('[+page] getTrackPoints failed', id, err);
+          continue;
+        }
+      }
+      if (pts.length > 1) out.push({ id, points: pts });
+    }
+    displayedTrackPolylines = out;
+  }
+
   /** Bound from <Map> so we can call clearRecorder() after a save. */
   let mapRef: { clearRecorder: () => void } | null = null;
   async function handleRecordSave(e: CustomEvent<{ title: string }>) {
@@ -77,11 +103,18 @@
           elevation_m: null
         }))
       };
-      await importParsedTrack(parsed, {
+      const newId = await importParsedTrack(parsed, {
         regionId: $activeRegion?.id ?? null,
         title: e.detail.title,
         visibility: 'private'
       });
+      // Seed the points cache with what we just had in memory so
+      // we don't have to round-trip to refetch — and add the new
+      // track to the displayed set so its polyline stays on the
+      // map until the user explicitly hides it.
+      const latlngs: Array<[number, number]> = snap.points.map((p) => [p.lat, p.lng]);
+      trackPointsCache.set(newId, latlngs);
+      showTrack(newId);
       mapRef?.clearRecorder();
       // Force the heatmap to refetch on its next render so the
       // points just saved show up immediately if the toggle is on.
@@ -756,6 +789,7 @@
     pins={filteredPins}
     {clusters}
     heatPoints={shownHeatPoints}
+    displayedTracks={displayedTrackPolylines}
     showRecorder={!!$session}
     {categoryOf}
     colorOf={colorOfPin}

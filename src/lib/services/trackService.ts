@@ -24,6 +24,32 @@ export type TrackRow = {
   updated_at: string;
 };
 
+/** Fetch the lat/lng path for a single track. Used when the user
+ *  toggles 'Show on map' on the /tracks page or after a fresh
+ *  save so the just-recorded track stays visible. */
+export async function getTrackPoints(trackId: string): Promise<Array<[number, number]>> {
+  const all: Array<[number, number]> = [];
+  const PAGE = 1000;
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await supabase
+      .from('v_track_points_latlng')
+      .select('lat, lng, recorded_at')
+      .eq('track_id', trackId)
+      .order('recorded_at', { ascending: true })
+      .range(offset, offset + PAGE - 1);
+    if (error) {
+      console.error('[trackService] getTrackPoints error:', error);
+      throw error;
+    }
+    const rows = (data ?? []) as Array<{ lat: number; lng: number }>;
+    for (const r of rows) {
+      if (Number.isFinite(r.lat) && Number.isFinite(r.lng)) all.push([r.lat, r.lng]);
+    }
+    if (rows.length < PAGE) break;
+  }
+  return all;
+}
+
 /** Pull every track point belonging to the signed-in user as
  *  flat [lat, lng] pairs — the format leaflet.heat consumes
  *  directly. Paginated since PostgREST caps each response at 1000

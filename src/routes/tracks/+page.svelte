@@ -18,6 +18,11 @@
     discard as discardRec,
     bufferedDistanceMeters
   } from '$lib/stores/recording';
+  import {
+    displayedTrackIds,
+    showTrack,
+    hideTrack
+  } from '$lib/stores/displayedTracks';
 
   let tracks: TrackRow[] = [];
   let loading = true;
@@ -144,6 +149,9 @@
     try {
       await remove(t.id);
       tracks = tracks.filter((x) => x.id !== t.id);
+      // Drop from the displayed set too — otherwise the polyline
+      // would linger until next reload.
+      hideTrack(t.id);
     } catch (e) {
       error = e instanceof Error ? e.message : 'Delete failed.';
     }
@@ -260,6 +268,7 @@
     <table>
       <thead>
         <tr>
+          <th>Show</th>
           <th>Title</th>
           <th>Date</th>
           <th>Distance</th>
@@ -272,6 +281,17 @@
       <tbody>
         {#each tracks as t}
           <tr>
+            <td>
+              <input
+                type="checkbox"
+                checked={$displayedTrackIds.has(t.id)}
+                on:change={(e) => {
+                  if ((e.currentTarget as HTMLInputElement).checked) showTrack(t.id);
+                  else hideTrack(t.id);
+                }}
+                title="Toggle this track on the map"
+              />
+            </td>
             <td>{t.title ?? '(untitled)'}</td>
             <td>{fmtDate(t.started_at)}</td>
             <td>{fmtDistance(t.distance_m)}</td>
