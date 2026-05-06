@@ -236,7 +236,6 @@
   }
 
   // Recorder overlay state — local to the controls UI.
-  let recTitle = '';
   let recSaving = false;
   let recError = '';
   function fmtElapsedShort(ms: number): string {
@@ -253,19 +252,27 @@
   // Tick once per second so the elapsed display updates while
   // recording. setInterval set up in onMount, cleared in onDestroy.
   let recTickInterval: ReturnType<typeof setInterval> | null = null;
-  function clickSave() {
+  /** Auto-title from the recording's start time. The user wanted
+   *  to skip the manual name step — most foragers just want their
+   *  trip stamped with when it happened. */
+  function autoTitle(startedAt: number | null): string {
+    const d = startedAt ? new Date(startedAt) : new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `Track ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  function clickStop() {
     if ($recording.points.length < 2) {
-      recError = 'Need at least 2 GPS points to save.';
+      // No usable trip — just discard silently.
+      discardRec();
       return;
     }
     recError = '';
     recSaving = true;
-    dispatch('recordSave', { title: recTitle.trim() || 'Recorded track' });
+    dispatch('recordSave', { title: autoTitle($recording.startedAt) });
   }
   /** Called by the parent after a successful save so the recorder
    *  resets cleanly. */
   export function clearRecorder(): void {
-    recTitle = '';
     recError = '';
     recSaving = false;
     discardRec();
@@ -711,46 +718,39 @@
     </div>
   {/if}
   {#if showRecorder}
-    <div class="recorder-overlay" class:active={$recording.status !== 'idle'}>
-      {#if $recording.status === 'idle'}
-        <button class="rec-btn rec-start" on:click={startRec} title="Start recording a track">
-          <span class="rec-dot-static"></span> Record track
-        </button>
-      {:else}
-        {@const elapsed =
-          $recording.startedAt
-            ? ($recording.endedAt ?? nowMs) - $recording.startedAt
-            : 0}
-        <div class="rec-status">
-          {#if $recording.status === 'recording'}
-            <span class="rec-dot-pulse" aria-hidden="true"></span>
-          {:else}
-            <span class="rec-paused-icon">⏸</span>
-          {/if}
-          <span class="rec-elapsed">{fmtElapsedShort(elapsed)}</span>
-          <span class="rec-stat">· {$recording.points.length} pt</span>
-        </div>
-        <div class="rec-controls">
-          {#if $recording.status === 'recording'}
-            <button on:click={pauseRec}>⏸</button>
-          {:else}
-            <button on:click={resumeRec}>▶</button>
-          {/if}
-          <input
-            type="text"
-            placeholder="Title"
-            bind:value={recTitle}
-            disabled={recSaving}
-          />
-          <button class="rec-save" on:click={clickSave} disabled={recSaving || $recording.points.length < 2}>
-            {recSaving ? '…' : '✓ Save'}
-          </button>
-          <button class="rec-discard" on:click={() => clearRecorder()} disabled={recSaving}>×</button>
-        </div>
-        {#if recError}<p class="rec-error">{recError}</p>{/if}
-        {#if $recording.error}<p class="rec-error">{$recording.error}</p>{/if}
+    {#if $recording.status === 'idle'}
+      <button class="rec-idle" on:click={startRec} title="Start recording a track">
+        <span class="rec-dot-static"></span>
+        Record
+      </button>
+    {:else}
+      {@const elapsed =
+        $recording.startedAt
+          ? ($recording.endedAt ?? nowMs) - $recording.startedAt
+          : 0}
+      <button
+        class="rec-active"
+        on:click={clickStop}
+        disabled={recSaving}
+        title={$recording.status === 'recording'
+          ? 'Recording — tap to stop and save.'
+          : 'Paused — tap to stop and save.'}
+      >
+        {#if $recording.status === 'recording'}
+          <span class="rec-dot-pulse" aria-hidden="true"></span>
+        {:else}
+          <span class="rec-paused-icon" aria-hidden="true">⏸</span>
+        {/if}
+        <span class="rec-elapsed">{fmtElapsedShort(elapsed)}</span>
+        <span class="rec-stop-icon" aria-hidden="true">⏹</span>
+      </button>
+      {#if $recording.error}
+        <div class="rec-error-overlay" role="status">{$recording.error}</div>
       {/if}
-    </div>
+      {#if recError}
+        <div class="rec-error-overlay" role="status">{recError}</div>
+      {/if}
+    {/if}
   {/if}
 </div>
 
@@ -882,49 +882,47 @@
   .rain-overlay.dry { background: #fdf4e3; border-color: #e8c97a; color: #7a4a10; }
   .rain-overlay.wet { background: #d4e9f5; border-color: #6fa9d0; color: #0e3b58; }
 
-  /* Recorder overlay — top-center; small idle button, expands to a
-     stats + controls bar while recording. */
-  .recorder-overlay {
+  /* Recorder lives bottom-left — small unobtrusive pill so the map
+     stays visible during a foraging walk. Stacks above the rain
+     chip so they don't collide. The active state shows a pulsing
+     red dot + elapsed time + a stop icon, single-tap to save. */
+  .rec-idle, .rec-active {
     position: absolute;
-    top: 0.75rem;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0.75rem;
+    bottom: 3.5rem;
     z-index: 1100;
-    background: white;
-    border: 1px solid #c7d0c7;
-    border-radius: 0.45rem;
-    padding: 0.3rem 0.55rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    max-width: calc(100vw - 1.5rem);
-  }
-  .recorder-overlay.active { background: #fbfdfa; border-color: #3a5a3a; }
-  .rec-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 0.4rem;
+    border: 1px solid #c7d0c7;
     background: white;
     color: #3a5a3a;
-    border: 0;
-    padding: 0.25rem 0.55rem;
     font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
     cursor: pointer;
-    border-radius: 0.3rem;
+    line-height: 1;
   }
-  .rec-btn:hover { background: #f0f5ef; }
+  .rec-idle:hover { background: #f0f5ef; }
+  .rec-active {
+    border-color: #c14a3a;
+    background: #fff3f0;
+    color: #1f2a1f;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .rec-active:hover { background: #ffe9e3; }
+  .rec-active:disabled { opacity: 0.65; cursor: default; }
   .rec-dot-static {
-    width: 0.65rem; height: 0.65rem; border-radius: 50%;
+    width: 0.6rem; height: 0.6rem; border-radius: 50%;
     background: #c14a3a;
-  }
-  .rec-status {
-    display: flex; align-items: center; gap: 0.35rem;
-    font-size: 0.85rem; color: #1f2a1f; font-weight: 600;
+    flex-shrink: 0;
   }
   .rec-dot-pulse {
-    width: 0.65rem; height: 0.65rem; border-radius: 50%;
+    width: 0.6rem; height: 0.6rem; border-radius: 50%;
     background: #c14a3a;
+    flex-shrink: 0;
     animation: rec-pulse 1.4s infinite;
     box-shadow: 0 0 0 0 rgba(193, 74, 58, 0.6);
   }
@@ -934,40 +932,20 @@
     100% { box-shadow: 0 0 0 0 rgba(193, 74, 58, 0); }
   }
   .rec-paused-icon { color: #7a4a10; }
-  .rec-elapsed { font-variant-numeric: tabular-nums; }
-  .rec-stat { color: #6b7a6b; font-weight: 400; font-size: 0.8rem; }
-  .rec-controls {
-    display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;
-  }
-  .rec-controls button {
-    background: white;
-    border: 1px solid #c7d0c7;
-    color: #3a5a3a;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.82rem;
-    cursor: pointer;
-  }
-  .rec-controls button:hover { background: #f0f5ef; }
-  .rec-controls button:disabled { opacity: 0.55; cursor: default; }
-  .rec-controls .rec-save {
-    background: #3a5a3a; color: white; border-color: #3a5a3a;
-  }
-  .rec-controls .rec-discard {
-    color: #b03030; border-color: #d6a3a3;
-  }
-  .rec-controls input[type='text'] {
-    flex: 1 1 8rem;
-    min-width: 7rem;
-    padding: 0.2rem 0.4rem;
-    border: 1px solid #c7d0c7;
-    border-radius: 0.25rem;
-    font-size: 0.82rem;
-  }
-  .rec-error {
-    margin: 0;
-    color: #b03030;
+  .rec-stop-icon { color: #b03030; font-size: 0.95rem; }
+  .rec-error-overlay {
+    position: absolute;
+    left: 0.75rem;
+    bottom: 6.25rem;
+    z-index: 1100;
+    max-width: 18rem;
+    background: #fff5f5;
+    border: 1px solid #d6a3a3;
+    color: #a02323;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.35rem;
     font-size: 0.78rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   }
   @media (max-width: 640px) {
     .locate {
