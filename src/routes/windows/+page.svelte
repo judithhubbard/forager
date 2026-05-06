@@ -437,6 +437,12 @@
         </div>
       {/each}
     </div>
+
+    <p class="attribution">
+      <strong>Source:</strong> {seedCitation}
+      Edits made here override the defaults; bars also stretch when
+      observations of that stage fall outside the predicted window.
+    </p>
   {/if}
 </main>
 
@@ -593,6 +599,16 @@
   main { padding: 1rem; max-width: 60rem; margin: 0 auto; }
   .intro { color: #4a554a; font-size: 0.9rem; margin: 0 0 1rem; }
   .error { color: #b03030; font-size: 0.9rem; }
+  .attribution {
+    margin: 1.25rem 0 0;
+    padding: 0.65rem 0.85rem;
+    background: #f5f8f5;
+    border: 1px solid #e1e8e1;
+    border-radius: 0.35rem;
+    font-size: 0.78rem;
+    color: #4a554a;
+    line-height: 1.5;
+  }
   .hint { color: #6b7a6b; }
   .muted { color: #8a948a; font-size: 0.85rem; }
   input[type='number'] { width: 4rem; padding: 0.2rem 0.35rem; border: 1px solid #c7d0c7; border-radius: 0.25rem; font-size: 0.85rem; }

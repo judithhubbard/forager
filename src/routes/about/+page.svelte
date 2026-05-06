@@ -57,6 +57,13 @@
     <li>
       <strong>Map tiles</strong> — © OpenStreetMap contributors.
     </li>
+    <li>
+      <strong>Default harvest windows</strong> — approximate per-species
+      flowering / ripening day-of-year ranges for USDA zones 5b/6a.
+      Compiled from USDA, USA-NPN, Cornell Cooperative Extension, and
+      foraging field guides; refined from logged observations. Edit
+      defaults on the <em>Harvest windows</em> page.
+    </li>
   </ul>
 </main>
 
