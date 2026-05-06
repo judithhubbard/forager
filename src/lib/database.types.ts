@@ -138,6 +138,78 @@ export type Database = {
           },
         ]
       }
+      watchlist: {
+        Row: {
+          id: string
+          user_id: string
+          species_id: string | null
+          pin_id: string | null
+          notify_email: boolean
+          notify_in_app: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          species_id?: string | null
+          pin_id?: string | null
+          notify_email?: boolean
+          notify_in_app?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          species_id?: string | null
+          pin_id?: string | null
+          notify_email?: boolean
+          notify_in_app?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "species"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "watchlist_pin_id_fkey"
+            columns: ["pin_id"]
+            isOneToOne: false
+            referencedRelation: "pins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          kind: 'ripe_now' | 'comment_reply' | 'correction' | 'system'
+          payload: Json
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          kind: 'ripe_now' | 'comment_reply' | 'correction' | 'system'
+          payload?: Json
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          kind?: 'ripe_now' | 'comment_reply' | 'correction' | 'system'
+          payload?: Json
+          read_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       hazards: {
         Row: {
           created_at: string

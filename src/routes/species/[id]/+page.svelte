@@ -4,10 +4,19 @@
   import { base } from '$app/paths';
   import { page } from '$app/stores';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
+  import { session } from '$lib/stores/auth';
+  import {
+    isWatchingSpecies,
+    watchSpecies,
+    unwatch,
+    type WatchlistRow
+  } from '$lib/services/watchlistService';
 
   let species: Species | null = null;
   let loading = true;
   let error = '';
+  let watching: WatchlistRow | null = null;
+  let watchBusy = false;
 
   $: speciesId = $page.params.id;
 
@@ -16,12 +25,41 @@
       const all = await listSpecies();
       species = all.find((s) => s.id === speciesId) ?? null;
       if (!species) error = 'Species not found.';
+      else if ($session) {
+        watching = await isWatchingSpecies(species.id);
+      }
     } catch (e) {
       error = e instanceof Error ? e.message : 'Could not load species.';
     } finally {
       loading = false;
     }
   });
+
+  async function toggleWatch() {
+    if (!species) return;
+    watchBusy = true;
+    try {
+      if (watching) {
+        await unwatch(watching.id);
+        watching = null;
+      } else {
+        const id = await watchSpecies(species.id);
+        watching = {
+          id,
+          user_id: $session?.user?.id ?? '',
+          species_id: species.id,
+          pin_id: null,
+          notify_email: true,
+          notify_in_app: true,
+          created_at: new Date().toISOString()
+        };
+      }
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Could not update watch.';
+    } finally {
+      watchBusy = false;
+    }
+  }
 
   function back() {
     if (history.length > 1) history.back();
@@ -48,6 +86,17 @@
     <p class="sci">{species.scientific_name}</p>
     {#if species.aliases?.length}
       <p class="aliases">Also known as: {species.aliases.join(', ')}</p>
+    {/if}
+
+    {#if $session}
+      <button
+        class="watch"
+        class:active={!!watching}
+        on:click={toggleWatch}
+        disabled={watchBusy}
+      >
+        {watching ? '★ Watching — tap to stop' : '☆ Watch · notify when ripe'}
+      </button>
     {/if}
 
     {#if species.forage_parts?.length}
@@ -161,4 +210,21 @@
   .attrib { color: #6b7a6b; font-size: 0.8rem; margin-top: 1.25rem; }
   .see-also { margin-top: 1.5rem; }
   .see-also a { color: #3a5a3a; }
+  .watch {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid #c7d0c7;
+    background: white;
+    color: #3a5a3a;
+    border-radius: 0.35rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .watch:hover { background: #f0f5ef; }
+  .watch.active {
+    background: #fff4e3;
+    border-color: #e8d3a6;
+    color: #7a4a10;
+  }
 </style>

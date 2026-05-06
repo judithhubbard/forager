@@ -87,6 +87,7 @@
       {/if}
       <a href={base + '/'} on:click={() => (open = false)}>Map</a>
       <a href={base + '/activity'} on:click={() => (open = false)}>Activity</a>
+      <a href={base + '/watchlist'} on:click={() => (open = false)}>Watchlist</a>
       <a href={base + '/windows'} on:click={() => (open = false)}>Harvest windows</a>
       <a href={base + '/how-to-use'} on:click={() => (open = false)}>How to use</a>
       <a href={base + '/about'} on:click={() => (open = false)}>About</a>

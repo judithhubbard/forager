@@ -43,6 +43,12 @@
     type AccessStatus
   } from '$lib/services/accessService';
   import {
+    isWatchingPin,
+    watchPin,
+    unwatch as unwatchRow,
+    type WatchlistRow
+  } from '$lib/services/watchlistService';
+  import {
     listByPin as listPhotos,
     signUrls,
     upload as uploadPhoto,
@@ -107,6 +113,45 @@
 
   let accessSaving = false;
   let accessError = '';
+
+  let watching: WatchlistRow | null = null;
+  let watchBusy = false;
+  async function refreshWatching(id: string) {
+    if (!$session) {
+      watching = null;
+      return;
+    }
+    try {
+      watching = await isWatchingPin(id);
+    } catch {
+      watching = null;
+    }
+  }
+  async function toggleWatchPin() {
+    if (!pin || !$session) return;
+    watchBusy = true;
+    try {
+      if (watching) {
+        await unwatchRow(watching.id);
+        watching = null;
+      } else {
+        const id = await watchPin(pin.id!);
+        watching = {
+          id,
+          user_id: $session.user?.id ?? '',
+          species_id: null,
+          pin_id: pin.id!,
+          notify_email: true,
+          notify_in_app: true,
+          created_at: new Date().toISOString()
+        };
+      }
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Could not update watch.';
+    } finally {
+      watchBusy = false;
+    }
+  }
   async function onAccessChange(e: Event) {
     if (!pin) return;
     const v = (e.currentTarget as HTMLSelectElement).value;
@@ -236,6 +281,7 @@
   $: if (pinId && pinId !== lastLoadedId) {
     lastLoadedId = pinId;
     load();
+    refreshWatching(pinId);
   }
 
   async function load() {
@@ -649,6 +695,19 @@
         </p>
       {/if}
 
+      {#if $session}
+        <div class="watch-row">
+          <button
+            class="watch-btn"
+            class:active={!!watching}
+            on:click={toggleWatchPin}
+            disabled={watchBusy}
+            title={watching ? 'Stop watching this pin' : 'Get notified when this pin is ripe'}
+          >
+            {watching ? '★ Watching' : '☆ Watch'}
+          </button>
+        </div>
+      {/if}
       {#if windows.length > 0}
         <div class="mini-timeline" title="Harvest window for this species. Edit on the Harvest windows page.">
           <div class="mini-months">
@@ -1270,6 +1329,22 @@
     color: #1f2a1f;
     padding: 0.05rem 0.45rem;
     border-radius: 0.45rem;
+  }
+  .watch-row { margin: 0.35rem 0; }
+  .watch-btn {
+    background: white;
+    border: 1px solid #c7d0c7;
+    color: #3a5a3a;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+  }
+  .watch-btn:hover { background: #f0f5ef; }
+  .watch-btn.active {
+    background: #fff4e3;
+    border-color: #e8d3a6;
+    color: #7a4a10;
   }
 
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
