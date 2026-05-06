@@ -66,11 +66,27 @@
     else goto('/');
   }
 
+  $: ogTitle = species?.common_name
+    ? `${species.common_name} · Forager`
+    : 'Forager';
+  $: ogDescription = species
+    ? `${species.common_name} (${species.scientific_name}) — edible parts, preparation methods, harvest tips, and safety notes for foragers.`
+    : 'A foragable species on Forager.';
+
   /** Pretty-print a snake_case forage_part or preparation_method. */
   function pretty(s: string): string {
     return s.replace(/_/g, ' ');
   }
 </script>
+
+<svelte:head>
+  <title>{ogTitle}</title>
+  <meta name="description" content={ogDescription} />
+  <meta property="og:title" content={ogTitle} />
+  <meta property="og:description" content={ogDescription} />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary" />
+</svelte:head>
 
 <header>
   <button class="back" on:click={back} aria-label="Back">← Back</button>
