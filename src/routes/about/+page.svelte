@@ -19,6 +19,27 @@
     See <a href="https://github.com/judithhubbard/forager" target="_blank" rel="noopener">the source repo</a>
     for design notes.
   </p>
+
+  <h2>Forage responsibly</h2>
+  <p>
+    Forager is a personal record-keeping tool, not a guarantee. You — not Forager,
+    not whoever logged the pin — are responsible for:
+  </p>
+  <ul class="disclaimer">
+    <li>
+      <strong>Identification.</strong> Misidentification can be dangerous,
+      especially with mushrooms. When in doubt, don't eat it.
+    </li>
+    <li>
+      <strong>Following local laws.</strong> Foraging is restricted in many
+      parks, preserves, and protected lands. Know the rules where you are.
+    </li>
+    <li>
+      <strong>Respecting property.</strong> A pin on the map doesn't grant
+      permission to enter private land. Confirm access before harvesting.
+    </li>
+  </ul>
+
   <h2>Data attribution</h2>
   <ul>
     <li>
@@ -46,5 +67,7 @@
   main { padding: 1.25rem 1rem; max-width: 36rem; margin: 0 auto; line-height: 1.5; color: #1f2a1f; }
   h2 { color: #3a5a3a; font-size: 1rem; margin: 1.5rem 0 0.5rem; }
   ul { padding-left: 1.25rem; }
+  ul.disclaimer { list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  ul.disclaimer li { border-left: 3px solid #3a5a3a; padding-left: 0.7rem; }
   a { color: #3a5a3a; }
 </style>

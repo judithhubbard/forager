@@ -15,8 +15,12 @@ const KEY = 'forager.settings.v1';
 
 interface Settings {
   basemap: Basemap;
+  /** ISO timestamp the user clicked "I understand" on the foraging
+   *  disclaimer. Null = never shown / never dismissed → modal will
+   *  appear on next map load. */
+  disclaimerAcceptedAt: string | null;
 }
-const DEFAULT: Settings = { basemap: 'osm-hot' };
+const DEFAULT: Settings = { basemap: 'osm-hot', disclaimerAcceptedAt: null };
 
 /** Migrate older saved values to the current option set. */
 function normalize(s: Partial<Settings>): Settings {
@@ -24,7 +28,7 @@ function normalize(s: Partial<Settings>): Settings {
     'osm-hot', 'satellite', 'topo', 'cyclosm', 'voyager', 'sentinel'
   ];
   const b = s.basemap && allowed.includes(s.basemap) ? s.basemap : DEFAULT.basemap;
-  return { basemap: b };
+  return { basemap: b, disclaimerAcceptedAt: s.disclaimerAcceptedAt ?? null };
 }
 
 function load(): Settings {

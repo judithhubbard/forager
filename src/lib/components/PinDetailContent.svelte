@@ -439,6 +439,15 @@
 
   /** Compute the trimmed timeline range for the mini-timeline: hugs the
    *  earliest stage start to latest stage end, padded by 14 days. */
+  function miniTodayDoy(): number {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    return Math.floor((now.getTime() - start.getTime()) / 86_400_000);
+  }
+  $: todayDoy = miniTodayDoy();
+  /** Trim hugs the species' fruiting windows but always extends to
+   *  cover today, so the red "now" line stays visible — important
+   *  for off-season species (e.g., a persimmon viewed in May). */
   $: miniRange = (() => {
     if (windows.length === 0) return { start: 1, end: 365, span: 364 };
     let lo = 365, hi = 1;
@@ -446,6 +455,8 @@
       if (w.start_doy < lo) lo = w.start_doy;
       if (w.end_doy > hi) hi = w.end_doy;
     }
+    lo = Math.min(lo, todayDoy);
+    hi = Math.max(hi, todayDoy);
     const start = Math.max(1, lo - 14);
     const end = Math.min(365, hi + 14);
     return { start, end, span: Math.max(1, end - start) };
@@ -453,12 +464,6 @@
   function miniPct(doy: number): number {
     return ((doy - miniRange.start) / miniRange.span) * 100;
   }
-  function miniTodayDoy(): number {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    return Math.floor((now.getTime() - start.getTime()) / 86_400_000);
-  }
-  $: todayDoy = miniTodayDoy();
   $: todayInRange = todayDoy >= miniRange.start && todayDoy <= miniRange.end;
 
   const MINI_MONTH_TICKS = [

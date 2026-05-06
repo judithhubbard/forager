@@ -6,7 +6,9 @@
   import { profile } from '$lib/stores/profile';
   import { isPlaceholderUsername } from '$lib/services/profileService';
   import { safeNext, encodeNext } from '$lib/utils/safeNext';
+  import { settings } from '$lib/stores/settings';
   import UsernameSetup from '$lib/components/UsernameSetup.svelte';
+  import Disclaimer from '$lib/components/Disclaimer.svelte';
 
   const PUBLIC_ROUTES = ['/login', '/register'];
 
@@ -52,6 +54,16 @@
     !routeIsPublic &&
     !!$profile &&
     isPlaceholderUsername($profile.username);
+
+  // One-time foraging-responsibility acknowledgment. Shown only after
+  // the user has cleared the username step, so it doesn't pile two
+  // modals on top of each other on a brand-new account.
+  $: needsDisclaimer =
+    !!$session &&
+    !routeIsPublic &&
+    !!$profile &&
+    !isPlaceholderUsername($profile.username) &&
+    !$settings.disclaimerAcceptedAt;
 </script>
 
 {#if $authLoading}
@@ -62,6 +74,8 @@
   <slot />
   {#if needsUsername && $profile}
     <UsernameSetup profile={$profile} />
+  {:else if needsDisclaimer}
+    <Disclaimer />
   {/if}
 {/if}
 
