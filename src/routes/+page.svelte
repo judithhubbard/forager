@@ -255,6 +255,9 @@
   }
 
   $: filteredPins = pins.filter((p) => {
+    // Category filter (Fruit trees / Brambles / Nuts / Mushrooms / Other).
+    const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
+    if (cat && !visibleCats.has(cat)) return false;
     // Species filter
     if (selectedSpeciesIds !== null) {
       if (!p.species_id || !selectedSpeciesIds.has(p.species_id)) return false;
