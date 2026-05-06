@@ -113,15 +113,13 @@
     return visibleCats.has(cat);
   });
   $: groupedSpecies = groupSpecies(filteredSpeciesList);
-  let filterStatus:
+  type FilterStatus =
     | 'all'
     | 'active'
     | 'possibly_ripe'
     | 'confirmed_ripe'
-    | 'confirmed_harvest'
-    | 'best_2_plus'
-    | 'best_3_plus'
-    | 'best_4_plus' = 'active';
+    | 'confirmed_harvest';
+  let filterStatus: FilterStatus = 'active';
   let showLegend = true;
 
   // Temporary symbol-style picker so the user can compare options live.
@@ -186,7 +184,7 @@
     Pawpaw:              '#bfef45', // lime
     Persimmon:           '#03a9f4', // sky blue
     Serviceberry:        '#42d4f4', // cyan
-    Walnut:              '#000075'  // navy
+    Walnut:              '#795548'  // warm wood-brown
   };
   function groupOfPin(p: PinEffective): string {
     const s = p.species_id ? speciesById[p.species_id] : null;
@@ -271,11 +269,43 @@
     if (filterStatus === 'possibly_ripe') return p.is_ripe_now === true;
     if (filterStatus === 'confirmed_ripe') return p.has_ripe_observation_this_year === true;
     if (filterStatus === 'confirmed_harvest') return p.has_ripe_observation_ever === true;
-    if (filterStatus === 'best_2_plus') return (p.best_harvest_quality ?? 0) >= 2;
-    if (filterStatus === 'best_3_plus') return (p.best_harvest_quality ?? 0) >= 3;
-    if (filterStatus === 'best_4_plus') return (p.best_harvest_quality ?? 0) >= 4;
     return true;
   });
+
+  /** Predicate for each filter-status option, used for counts shown in
+   *  the Show dropdown. The predicates apply to the species-filtered
+   *  pin set so the user sees how many of *currently visible species*
+   *  match each status — not the global region totals. */
+  function matchesStatus(p: PinEffective, status: FilterStatus): boolean {
+    if (status === 'all') return true;
+    const isActive = p.effective_status === 'active';
+    if (!isActive) return false;
+    if (status === 'active') return true;
+    if (status === 'possibly_ripe') return p.is_ripe_now === true;
+    if (status === 'confirmed_ripe') return p.has_ripe_observation_this_year === true;
+    if (status === 'confirmed_harvest') return p.has_ripe_observation_ever === true;
+    return false;
+  }
+  /** Pins after the species/category filters but before the status
+   *  filter — used as the denominator for counts in the dropdown. */
+  $: speciesFilteredPins = pins.filter((p) => {
+    if (selectedSpeciesIds === null) return true;
+    if (!p.species_id) return false;
+    return selectedSpeciesIds.has(p.species_id);
+  }).filter((p) => {
+    const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
+    return !cat || visibleCats.has(cat);
+  });
+  $: statusCounts = (() => {
+    const out: Record<FilterStatus, number> = {
+      all: 0, active: 0, possibly_ripe: 0, confirmed_ripe: 0, confirmed_harvest: 0
+    };
+    const statuses: FilterStatus[] = ['all', 'active', 'possibly_ripe', 'confirmed_ripe', 'confirmed_harvest'];
+    for (const p of speciesFilteredPins) {
+      for (const s of statuses) if (matchesStatus(p, s)) out[s]++;
+    }
+    return out;
+  })();
 
   // Reactive function so checkboxes re-render when selectedSpeciesIds changes.
   $: isSelected = (id: string) =>
@@ -485,7 +515,22 @@
           </div>
           <ul class="species-list">
             {#each groupedSpecies as [groupName, list]}
-              <li class="group-header">{groupName}</li>
+              {@const shape = shapeForGroup(groupName)}
+              {@const color = GROUP_COLORS[groupName] ?? '#6b7a6b'}
+              <li class="group-header">
+                {#if shape === 'triangle'}
+                  <span class="legend-shape triangle" style="border-bottom-color: {color};"></span>
+                {:else if shape === 'star'}
+                  <svg class="legend-shape" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true">
+                    <polygon
+                      points="7,1 8.6,5.5 13.5,5.5 9.5,8.5 11.1,13 7,10 2.9,13 4.5,8.5 0.5,5.5 5.4,5.5"
+                      fill={color} stroke="#1f2a1f" stroke-width="1" stroke-linejoin="round" />
+                  </svg>
+                {:else}
+                  <span class="legend-shape {shape}" style="background: {color};"></span>
+                {/if}
+                {groupName}
+              </li>
               {#each list as s}
                 <li class="indented">
                   <label>
@@ -494,10 +539,6 @@
                       checked={isSelected(s.id)}
                       on:change={() => toggleSpecies(s.id)}
                     />
-                    <span class="cat-dot" class:fruit={categoryBySpecies[s.id] === 'fruit'}
-                      class:nut={categoryBySpecies[s.id] === 'nut'}
-                      class:mushroom={categoryBySpecies[s.id] === 'mushroom'}
-                      class:other={categoryBySpecies[s.id] === 'other'}></span>
                     {s.common_name}
                     <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
                   </label>
@@ -511,14 +552,11 @@
     <label>
       Show:
       <select bind:value={filterStatus}>
-        <option value="all">All (incl. gone/dormant)</option>
-        <option value="active">Active</option>
-        <option value="possibly_ripe">Possibly ripe today</option>
-        <option value="confirmed_ripe">Confirmed ripe this year</option>
-        <option value="confirmed_harvest">Confirmed harvest history</option>
-        <option value="best_2_plus">Best harvest ≥ 2★</option>
-        <option value="best_3_plus">Best harvest ≥ 3★</option>
-        <option value="best_4_plus">Best harvest ≥ 4★</option>
+        <option value="all">All ({statusCounts.all}, incl. gone/dormant)</option>
+        <option value="active">Active ({statusCounts.active})</option>
+        <option value="possibly_ripe">Possibly ripe today ({statusCounts.possibly_ripe})</option>
+        <option value="confirmed_ripe">Confirmed ripe this year ({statusCounts.confirmed_ripe})</option>
+        <option value="confirmed_harvest">Confirmed harvest history ({statusCounts.confirmed_harvest})</option>
       </select>
     </label>
     <!-- Temporary symbol-style picker. Will be removed once a style is chosen. -->
@@ -548,35 +586,15 @@
   />
 
   {#if !selectedPinId}
-    {#if showLegend}
+    {#if showLegend && (legendShows.ripe || legendShows.possibly || legendShows.gone)}
+      <!-- Status legend only — species/groups are listed in the species
+           filter panel (each group header shows its shape + color). -->
       <div class="legend">
         <div class="legend-header">
-          <strong>Legend</strong>
+          <strong>Status</strong>
           <button class="legend-toggle" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
         </div>
         <ul>
-          <!-- One row per group currently visible on the map: shape
-               encodes category, color encodes group. -->
-          {#each visibleGroups as g}
-            <li>
-              {#if g.shape === 'triangle'}
-                <span class="legend-shape triangle" style="border-bottom-color: {g.color};"></span>
-              {:else if g.shape === 'star'}
-                <svg class="legend-shape" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                  <polygon
-                    points="7,1 8.6,5.5 13.5,5.5 9.5,8.5 11.1,13 7,10 2.9,13 4.5,8.5 0.5,5.5 5.4,5.5"
-                    fill={g.color}
-                    stroke="#1f2a1f"
-                    stroke-width="1"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              {:else}
-                <span class="legend-shape {g.shape}" style="background: {g.color};"></span>
-              {/if}
-              {g.group}
-            </li>
-          {/each}
           {#if legendShows.ripe}<li><span class="ring1"></span> Ripe</li>{/if}
           {#if legendShows.possibly}<li><span class="ring2"></span> Possibly ripe</li>{/if}
           {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant</li>{/if}
@@ -626,7 +644,7 @@
   header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.65rem;
     padding: 0.5rem 1rem;
     background: white;
     border-bottom: 1px solid #e1e8e1;
@@ -826,12 +844,19 @@
     padding: 0 0.5rem;
   }
   .species-panel li.group-header {
-    padding: 0.35rem 0.5rem 0.05rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.5rem 0.1rem;
     font-size: 0.74rem;
     font-weight: 600;
     color: #3a5a3a;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+  }
+  .species-panel li.group-header .legend-shape {
+    flex-shrink: 0;
+    margin-right: 0;
   }
   .species-panel li.group-header:first-child {
     padding-top: 0.1rem;
@@ -1015,10 +1040,10 @@
     vertical-align: middle;
   }
   .legend .dot.faded { opacity: 0.4; }
-  /* Shape glyphs in the legend match the map's category shapes. Using
-     a near-black fill since color encodes group, not category — these
-     are abstract shape markers, not literal pin colors. */
-  .legend .legend-shape {
+  /* Shape glyphs reused by both the status legend (status section) and
+     the species panel's group headers. Inline style sets the actual
+     fill color from the group palette. */
+  .legend-shape {
     display: inline-block;
     width: 0.8rem;
     height: 0.8rem;
@@ -1026,16 +1051,16 @@
     vertical-align: middle;
     background: #1f2a1f;
   }
-  .legend .legend-shape.circle { border-radius: 50%; }
-  .legend .legend-shape.square { border-radius: 1px; }
-  .legend .legend-shape.triangle {
+  .legend-shape.circle { border-radius: 50%; }
+  .legend-shape.square { border-radius: 1px; }
+  .legend-shape.triangle {
     width: 0; height: 0;
     background: transparent;
     border-left: 0.45rem solid transparent;
     border-right: 0.45rem solid transparent;
     border-bottom: 0.78rem solid #1f2a1f;
   }
-  .legend .legend-shape.diamond {
+  .legend-shape.diamond {
     transform: rotate(45deg);
     width: 0.6rem;
     height: 0.6rem;
