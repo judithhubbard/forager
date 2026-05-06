@@ -3,10 +3,10 @@
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
   import { recentRain, formatMm } from '$lib/services/weatherService';
-  // leaflet.heat is a side-effect import that attaches a
-  // heatLayer factory to the L namespace at runtime. No type
-  // export, so we cast the runtime L object where we use it.
-  import 'leaflet.heat';
+  // leaflet.heat is loaded dynamically below — see onMount. The
+  // plugin reads from a global `L` that doesn't exist under ESM
+  // unless we explicitly expose the leaflet module first, which
+  // a static side-effect import wouldn't allow us to sequence.
 
   type ForageCategory = 'fruit' | 'bramble' | 'nut' | 'mushroom' | 'other' | 'unknown';
 
@@ -127,6 +127,11 @@
   let markerLayer: import('leaflet').LayerGroup | undefined;
   let clusterLayer: import('leaflet').LayerGroup | undefined;
   let heatLayer: import('leaflet').Layer | undefined;
+  /** True once leaflet.heat has loaded and attached its factory.
+   *  The reactive that calls renderHeat watches this so a heatPoints
+   *  payload that arrived before the plugin finished loading still
+   *  paints once it's ready. */
+  let heatPluginReady = false;
   let userMarker: import('leaflet').CircleMarker | undefined;
   /** Cached leaflet module — set once in onMount so renderPins can
    *  run fully synchronously. Without this, every render had to
@@ -188,8 +193,11 @@
     renderClusters(clusters);
   }
   // Heatmap: build/replace the leaflet.heat layer whenever the
-  // points prop changes. Empty array means "no layer."
-  $: if (map && LCache) {
+  // points prop changes. Empty array means "no layer." Gated on
+  // heatPluginReady so a heatPoints payload that arrives before
+  // the plugin finishes its dynamic import doesn't trigger a
+  // ReferenceError to L.
+  $: if (map && LCache && heatPluginReady) {
     renderHeat(heatPoints);
   }
 
@@ -536,6 +544,17 @@
   onMount(async () => {
     const L = await import('leaflet');
     LCache = L; // unblocks renderPins so it can run synchronously
+    // Expose leaflet on the global so leaflet.heat (which reads
+    // from a global L on import) can extend it. Then load the
+    // plugin dynamically. Order matters here: globalThis assign
+    // BEFORE the import.
+    (globalThis as unknown as { L: typeof L }).L = L;
+    try {
+      await import('leaflet.heat');
+      heatPluginReady = true;
+    } catch (e) {
+      console.warn('[Map] leaflet.heat load failed', e);
+    }
 
     map = L.map(mapEl, {
       zoomControl: true,

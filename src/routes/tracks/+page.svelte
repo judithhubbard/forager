@@ -5,9 +5,19 @@
   import {
     listMine,
     importTrackFile,
+    importParsedTrack,
     remove,
     type TrackRow
   } from '$lib/services/trackService';
+  import {
+    recording,
+    start as startRec,
+    pause as pauseRec,
+    resume as resumeRec,
+    stop as stopRec,
+    discard as discardRec,
+    bufferedDistanceMeters
+  } from '$lib/stores/recording';
 
   let tracks: TrackRow[] = [];
   let loading = true;
@@ -15,6 +25,84 @@
   let uploading = false;
   let uploadError = '';
   let fileInput: HTMLInputElement;
+
+  // Live recorder state — driven by the global store. Title input
+  // appears when the user is about to save.
+  let saveTitle = '';
+  let saveBusy = false;
+  let saveError = '';
+  // Tick once a second so the elapsed-time display in the recorder
+  // panel updates while running. The points list itself updates via
+  // the store subscription; this is just for the duration counter.
+  let nowMs = Date.now();
+  let tickInterval: ReturnType<typeof setInterval> | null = null;
+  onMount(() => {
+    tickInterval = setInterval(() => (nowMs = Date.now()), 1000);
+    return () => {
+      if (tickInterval) clearInterval(tickInterval);
+    };
+  });
+
+  $: rec = $recording;
+  $: bufferedDist = bufferedDistanceMeters(rec);
+  $: elapsedMs =
+    rec.startedAt && (rec.status !== 'idle')
+      ? (rec.endedAt ?? nowMs) - rec.startedAt
+      : 0;
+
+  function fmtElapsed(ms: number): string {
+    if (ms <= 0) return '0:00';
+    const total = Math.floor(ms / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  async function saveRecording() {
+    if (rec.points.length < 2) {
+      saveError = 'Need at least 2 GPS points to save.';
+      return;
+    }
+    saveBusy = true;
+    saveError = '';
+    try {
+      const snap = stopRec();
+      // Convert recorded buffer to the shared parsed-track shape
+      // and reuse importParsedTrack so save logic stays in one
+      // place (distance, geometry, bulk insert, RLS rollback).
+      const parsed = {
+        title: saveTitle.trim() || 'Recorded track',
+        source: 'live' as const,
+        points: snap.points.map((p) => ({
+          lat: p.lat,
+          lng: p.lng,
+          recorded_at: new Date(p.ts).toISOString(),
+          elevation_m: null
+        }))
+      };
+      await importParsedTrack(parsed, {
+        regionId: $activeRegion?.id ?? null,
+        title: parsed.title,
+        visibility: 'private'
+      });
+      discardRec();
+      saveTitle = '';
+      await load();
+    } catch (e) {
+      saveError = e instanceof Error ? e.message : 'Save failed.';
+    } finally {
+      saveBusy = false;
+    }
+  }
+
+  function onDiscard() {
+    if (rec.points.length > 0 && !confirm('Throw away the in-progress recording?')) return;
+    discardRec();
+    saveTitle = '';
+    saveError = '';
+  }
 
   onMount(load);
 
@@ -99,6 +187,56 @@
     you can share them later from this page.
   </p>
 
+  <!-- Live recorder. Browser-side GPS via watchPosition; foreground
+       only on PWA, so backgrounding the tab pauses sampling. Buffer
+       persists in localStorage across reloads. -->
+  <section class="recorder" class:active={rec.status !== 'idle'}>
+    <header>
+      <span class="recorder-title">Record now</span>
+      {#if rec.status === 'recording'}
+        <span class="rec-dot" aria-hidden="true"></span>
+        <span>Recording</span>
+      {:else if rec.status === 'paused'}
+        <span class="rec-paused">⏸ Paused</span>
+      {/if}
+    </header>
+    {#if rec.status === 'idle'}
+      <p class="hint">
+        Start a track to log your foraging route. GPS samples every
+        few seconds while this tab is foregrounded; pause if you
+        want to skip a stretch.
+      </p>
+      <div class="rec-actions">
+        <button class="primary" on:click={startRec}>● Start recording</button>
+      </div>
+    {:else}
+      <p class="rec-stats">
+        <strong>{fmtElapsed(elapsedMs)}</strong>
+        · {rec.points.length} point{rec.points.length === 1 ? '' : 's'}
+        · {(bufferedDist / 1609.344).toFixed(2)} mi
+      </p>
+      {#if rec.error}<p class="error">{rec.error}</p>{/if}
+      <div class="rec-actions">
+        {#if rec.status === 'recording'}
+          <button on:click={pauseRec}>⏸ Pause</button>
+        {:else}
+          <button class="primary" on:click={resumeRec}>▶ Resume</button>
+        {/if}
+        <input
+          type="text"
+          placeholder="Title for this track (optional)"
+          bind:value={saveTitle}
+          disabled={saveBusy}
+        />
+        <button class="primary" on:click={saveRecording} disabled={saveBusy || rec.points.length < 2}>
+          {saveBusy ? 'Saving…' : '✓ Save'}
+        </button>
+        <button class="danger" on:click={onDiscard} disabled={saveBusy}>Discard</button>
+      </div>
+      {#if saveError}<p class="error">{saveError}</p>{/if}
+    {/if}
+  </section>
+
   <div class="upload">
     <input
       type="file"
@@ -176,6 +314,60 @@
     flex-wrap: wrap;
   }
   .upload input[type='file'] { font-size: 0.9rem; }
+
+  .recorder {
+    background: white;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.4rem;
+    padding: 0.85rem 0.95rem;
+    margin-bottom: 1rem;
+  }
+  .recorder.active { border-color: #3a5a3a; background: #fbfdfa; }
+  .recorder header {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.95rem; color: #3a5a3a; font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .recorder-title { color: #1f2a1f; }
+  .rec-dot {
+    width: 0.7rem; height: 0.7rem; border-radius: 50%;
+    background: #c14a3a;
+    animation: pulse 1.4s infinite;
+    box-shadow: 0 0 0 0 rgba(193, 74, 58, 0.6);
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(193, 74, 58, 0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(193, 74, 58, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(193, 74, 58, 0); }
+  }
+  .rec-paused { color: #7a4a10; }
+  .rec-stats { margin: 0.25rem 0 0.6rem; color: #1f2a1f; }
+  .rec-actions {
+    display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;
+  }
+  .rec-actions input[type='text'] {
+    flex: 1 1 14rem;
+    padding: 0.35rem 0.55rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.3rem;
+    font-size: 0.9rem;
+  }
+  .rec-actions button {
+    padding: 0.35rem 0.85rem;
+    border-radius: 0.3rem;
+    border: 1px solid #c7d0c7;
+    background: white;
+    color: #3a5a3a;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .rec-actions button.primary {
+    background: #3a5a3a; color: white; border-color: #3a5a3a;
+  }
+  .rec-actions button.danger {
+    color: #b03030; border-color: #d6a3a3;
+  }
+  .rec-actions button:disabled { opacity: 0.6; cursor: default; }
 
   table {
     width: 100%;

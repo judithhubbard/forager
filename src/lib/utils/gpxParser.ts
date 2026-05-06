@@ -23,7 +23,10 @@ export interface ParsedTrack {
    *  metadata name in that priority order). Null if none found. */
   title: string | null;
   points: ParsedTrackPoint[];
-  source: 'gpx' | 'kml';
+  /** Where the track came from. 'live' is reused by the in-app
+   *  recorder so importParsedTrack can be the single save path
+   *  for both file imports and live recordings. */
+  source: 'gpx' | 'kml' | 'live';
 }
 
 function isFiniteNumber(v: unknown): v is number {
