@@ -1,6 +1,11 @@
 -- Surface pins.visibility on v_pin_effective so the client can render
 -- a 🔒 badge / privacy toggle without a separate fetch. Same for
 -- observations.visibility on v_observation_with_pin.
+--
+-- IMPORTANT: `create or replace view` cannot rename or reorder
+-- existing columns — it can only ADD new columns at the END of the
+-- select list. The new visibility column is appended last in both
+-- views to keep PostgreSQL happy.
 
 create or replace view public.v_pin_effective as
   select
@@ -14,7 +19,6 @@ create or replace view public.v_pin_effective as
     p.location_accuracy_m,
     p.location_modified_by_user_at,
     p.status,
-    p.visibility,
     p.notes,
     p.import_source,
     p.import_external_id,
@@ -55,7 +59,8 @@ create or replace view public.v_pin_effective as
          and o.stage = 'ripe'::stage
          and o.quality_rating is not null
          and o.quality_rating > 0
-    ) as best_harvest_quality
+    ) as best_harvest_quality,
+    p.visibility
   from public.pins p
   join public.regions r on r.id = p.region_id;
 
@@ -72,7 +77,6 @@ create or replace view public.v_observation_with_pin as
     o.quality_rating,
     o.quality_notes,
     o.created_at,
-    o.visibility,
     p.region_id            as pin_region_id,
     p.display_name         as pin_display_name,
     p.status               as pin_status,
@@ -80,7 +84,8 @@ create or replace view public.v_observation_with_pin as
     s.common_name          as species_common_name,
     s.scientific_name      as species_scientific_name,
     pr.username            as user_username,
-    pr.display_name        as user_display_name
+    pr.display_name        as user_display_name,
+    o.visibility
   from public.observations o
   join public.pins p           on p.id = o.pin_id
   left join public.species s   on s.id = p.species_id
