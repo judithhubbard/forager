@@ -53,11 +53,11 @@
   const isTouch =
     typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
-  // Reactive update of markers when `pins` (or the symbol style) changes.
-  $: if (map && markerLayer) {
-    void symbolStyle; // re-render when the picker changes
-    renderPins(pins);
-  }
+  // Reactive update of markers when `pins` or the symbol style changes.
+  // symbolStyle is included in the condition (always truthy) so Svelte
+  // tracks it as a dependency — a bare `void symbolStyle` was getting
+  // optimized away and the markers didn't refresh on picker change.
+  $: if (map && markerLayer && symbolStyle) renderPins(pins);
 
   async function locateMe() {
     if (!map) return;
@@ -215,20 +215,14 @@
             interactive: false
           });
         }
-        const label = labelOf(pin);
-        if (label && 'bindTooltip' in marker) {
-          (marker as import('leaflet').CircleMarker).bindTooltip(
-            label,
-            { direction: 'top', offset: [0, -2], sticky: true }
-          );
-        }
         marker.addTo(markerLayer);
 
         // On touch devices the visual marker is too small for a finger
         // (≈12px diameter). Layer a transparent, larger circle on top
-        // that captures the tap. Visual stays the same; hit area
-        // roughly triples. Desktop keeps a smaller bonus for easier
-        // hovering.
+        // that captures the tap and the hover. Tooltip binds here too —
+        // the hit-target is always on top, so it catches mouseover for
+        // every symbol style without depending on whether the visual
+        // marker is interactive (divIcon variants are not).
         const hitR = isTouch ? baseR + 8 : baseR + 3;
         const hit = L.circleMarker([pin.lat, pin.lng], {
           radius: hitR,
@@ -242,6 +236,10 @@
         hit.on('click', () => {
           if (pin.id) dispatch('pinClick', { pinId: pin.id });
         });
+        const label = labelOf(pin);
+        if (label) {
+          hit.bindTooltip(label, { direction: 'top', offset: [0, -2], sticky: true });
+        }
         hit.addTo(markerLayer);
       }
     });
