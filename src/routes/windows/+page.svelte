@@ -238,6 +238,8 @@
   };
   function groupOf(s: Species): string {
     if (s.scientific_name === 'Prunus dulcis') return 'Almond';
+    // Each Rubus species is its own group on the timeline too.
+    if (s.scientific_name.startsWith('Rubus ')) return s.common_name;
     const genus = s.scientific_name.split(/\s+/)[0];
     return GROUP_LABELS[genus] ?? genus;
   }

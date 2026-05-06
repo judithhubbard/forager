@@ -83,6 +83,9 @@
   function groupOf(s: Species): string {
     // Specific species overrides (almond split out from other Prunus).
     if (s.scientific_name === 'Prunus dulcis') return 'Almond';
+    // Brambles split per species so raspberry / blackberry / wineberry
+    // each get their own color on the map.
+    if (s.scientific_name.startsWith('Rubus ')) return s.common_name;
     const genus = s.scientific_name.split(/\s+/)[0];
     return GROUP_LABELS[genus] ?? genus;
   }
@@ -167,7 +170,13 @@
     'Apple / Pear':      '#3cb44b', // green
     'Autumn olive':      '#808000', // olive
     Blueberry:           '#4363d8', // blue
-    Bramble:             '#800000', // maroon
+    // 'Bramble' is the fallback for any Rubus species without an
+    // explicit color. Each known Rubus gets its own group + hue.
+    Bramble:                '#800000', // maroon (fallback)
+    'Black raspberry':      '#4b1f6e', // deep purple
+    'Red raspberry':        '#e30b5c', // raspberry pink
+    'Wineberry':            '#d35400', // rust orange
+    'Allegheny blackberry': '#1a2540', // dark indigo
     'Cherry / Plum':     '#e6194b', // red
     Chestnut:            '#9a6324', // brown
     'Cornelian cherry':  '#ff8c42', // bright orange
@@ -587,7 +596,8 @@
   />
 
   {#if !selectedPinId}
-    {#if showLegend && (legendShows.ripe || legendShows.possibly || legendShows.gone)}
+    {@const hasStatusRows = legendShows.ripe || legendShows.possibly || legendShows.gone}
+    {#if hasStatusRows && showLegend}
       <!-- Status legend only — species/groups are listed in the species
            filter panel (each group header shows its shape + color). -->
       <div class="legend">
@@ -601,7 +611,10 @@
           {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Gone / dormant</li>{/if}
         </ul>
       </div>
-    {:else}
+    {:else if hasStatusRows}
+      <!-- Show the "Legend" button only when there's actually a status
+           legend hidden — clicking it when there's nothing to reveal
+           was the source of "the button does nothing." -->
       <button class="legend-show" on:click={() => (showLegend = true)}>Legend</button>
     {/if}
   {/if}
