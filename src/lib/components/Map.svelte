@@ -282,14 +282,27 @@
     if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     return `${m}:${String(s).padStart(2, '0')}`;
   }
-  /** Wall-clock store that ticks once per second. The earlier
-   *  setInterval-mutates-let approach was missing renders (the
-   *  user saw the elapsed counter jumping 0:00 → 0:03 → 0:09
-   *  instead of incrementing smoothly). A readable store guarantees
-   *  Svelte invalidates anywhere that reads $now. */
+  /** Wall-clock store. Ticks every 250ms so even if the browser
+   *  throttles the timer (background-tab penalties on desktop,
+   *  more aggressive throttling in iOS low-power mode), at least
+   *  one tick per second reaches us under most conditions. Also
+   *  snaps an immediate update when the tab regains visibility
+   *  so the elapsed counter doesn't sit on a stale value after
+   *  the user comes back from another app. */
   const now = readable(Date.now(), (set) => {
-    const id = setInterval(() => set(Date.now()), 1000);
-    return () => clearInterval(id);
+    const id = setInterval(() => set(Date.now()), 250);
+    const onVisible = () => {
+      if (typeof document !== 'undefined' && !document.hidden) set(Date.now());
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisible);
+    }
+    return () => {
+      clearInterval(id);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisible);
+      }
+    };
   });
   /** Auto-title from the recording's start time. The user wanted
    *  to skip the manual name step — most foragers just want their
