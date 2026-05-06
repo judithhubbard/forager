@@ -86,6 +86,13 @@
   let map: import('leaflet').Map | undefined;
   let markerLayer: import('leaflet').LayerGroup | undefined;
   let userMarker: import('leaflet').CircleMarker | undefined;
+  /** Cached leaflet module — set once in onMount so renderPins can
+   *  run fully synchronously. Without this, every render had to
+   *  re-resolve `import('leaflet')` (cached but still microtask-async),
+   *  which left a brief frame where clearLayers had already wiped
+   *  markers but the new ones hadn't yet been added — visible as a
+   *  blink during startup when pins arrived in multiple ticks. */
+  let LCache: typeof import('leaflet') | undefined;
 
   // Surface geolocation state so the user sees what's happening when they
   // tap the locate button — silent failures were a recurring source of
@@ -98,8 +105,10 @@
     typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
   // Reactive update of markers when `pins`, the selected pin, or the
-  // color resolver changes.
-  $: if (map && markerLayer) {
+  // color resolver changes. LCache must be set (we cache the
+  // dynamically-imported leaflet module on mount so renderPins can
+  // run fully synchronously and avoid the clear-then-add flash).
+  $: if (map && markerLayer && LCache) {
     void colorOf; // keep colorOf in the dependency set
     renderPins(pins, selectedPinId);
   }
@@ -154,10 +163,15 @@
     currentPins: PinEffective[],
     selectedId: string | null
   ) {
-    if (!markerLayer || !map) return;
-    markerLayer.clearLayers();
-    import('leaflet').then((L) => {
-      if (!markerLayer) return;
+    if (!markerLayer || !map || !LCache) return;
+    const L = LCache;
+    // Build the new marker batch into a fresh layer first, then swap
+    // it in via clear+addAll. The new markers exist before the old
+    // ones disappear, eliminating the brief "no pins" flash that
+    // happened when clearLayers ran sync but the marker loop was
+    // inside an async leaflet import.
+    const next = L.layerGroup();
+    {
       for (const pin of currentPins) {
         if (pin.lat == null || pin.lng == null) continue;
         const fill = colorOf ? colorOf(pin) : colorFor(pin);
@@ -180,7 +194,7 @@
             weight: 1.5,
             opacity: 0.35,
             interactive: false
-          }).addTo(markerLayer);
+          }).addTo(next);
           L.circleMarker([pin.lat, pin.lng], {
             radius: baseR + 7,
             color: '#1f6fe0',
@@ -188,7 +202,7 @@
             weight: 2.5,
             opacity: 1,
             interactive: false
-          }).addTo(markerLayer);
+          }).addTo(next);
         }
 
         // Add ripeness rings BEFORE the main marker (so they render
@@ -204,7 +218,7 @@
             weight: 2.5,
             opacity: 1.0,
             interactive: false
-          }).addTo(markerLayer);
+          }).addTo(next);
           L.circleMarker([pin.lat, pin.lng], {
             radius: baseR + 8.5,
             color: '#d57100',
@@ -212,7 +226,7 @@
             weight: 1.6,
             opacity: 0.65,
             interactive: false
-          }).addTo(markerLayer);
+          }).addTo(next);
         } else if (isPossibly) {
           L.circleMarker([pin.lat, pin.lng], {
             radius: baseR + 4,
@@ -222,7 +236,7 @@
             opacity: 0.55,
             dashArray: '3,3',
             interactive: false
-          }).addTo(markerLayer);
+          }).addTo(next);
         }
 
         // Main pin marker — shape varies by category (●■▲◆ for
@@ -244,7 +258,7 @@
           keyboard: false,
           interactive: false
         });
-        marker.addTo(markerLayer);
+        marker.addTo(next);
 
         // On touch devices the visual marker is too small for a finger
         // (≈12px diameter). Layer a transparent, larger circle on top
@@ -269,9 +283,14 @@
         if (label) {
           hit.bindTooltip(label, { direction: 'top', offset: [0, -2], sticky: true });
         }
-        hit.addTo(markerLayer);
+        hit.addTo(next);
       }
-    });
+    }
+    // Atomic swap: clear the old layer and immediately attach the
+    // already-built `next` group's children to it. The map never
+    // sees an empty marker layer.
+    markerLayer.clearLayers();
+    next.eachLayer((layer) => layer.addTo(markerLayer!));
   }
 
   /** SVG-as-HTML body for the "shape" style: circle/square/triangle/diamond
@@ -355,6 +374,7 @@
 
   onMount(async () => {
     const L = await import('leaflet');
+    LCache = L; // unblocks renderPins so it can run synchronously
 
     map = L.map(mapEl, {
       zoomControl: true,
