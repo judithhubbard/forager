@@ -8,6 +8,10 @@ import type { Database } from '$lib/database.types';
 export type Hazard = Database['public']['Tables']['hazards']['Row'];
 export type HazardType = Database['public']['Enums']['hazard_type'];
 
+// Access values still exist on the enum (Postgres can't drop them)
+// but a follow-up migration moves their meaning onto pins.access_status,
+// so the UI here only offers safety + plant-condition values. The
+// access_status column is presented separately (see accessService).
 export const HAZARD_TYPES: HazardType[] = [
   // Plant condition
   'sick',
@@ -17,11 +21,6 @@ export const HAZARD_TYPES: HazardType[] = [
   'unstable_terrain',
   'water_crossing',
   'traffic',
-  // Access
-  'out_of_reach',
-  'inaccessible',
-  'fenced',
-  'private_property',
   // Catch-all
   'other'
 ];

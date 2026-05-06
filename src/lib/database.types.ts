@@ -451,6 +451,7 @@ export type Database = {
       }
       pins: {
         Row: {
+          access_status: Database["public"]["Enums"]["access_status"] | null
           created_at: string
           created_by: string
           display_name: string | null
@@ -471,6 +472,7 @@ export type Database = {
           visibility: 'shared' | 'private'
         }
         Insert: {
+          access_status?: Database["public"]["Enums"]["access_status"] | null
           created_at?: string
           created_by: string
           display_name?: string | null
@@ -491,6 +493,7 @@ export type Database = {
           visibility?: 'shared' | 'private'
         }
         Update: {
+          access_status?: Database["public"]["Enums"]["access_status"] | null
           created_at?: string
           created_by?: string
           display_name?: string | null
@@ -977,6 +980,7 @@ export type Database = {
       }
       v_pin_effective: {
         Row: {
+          access_status: Database["public"]["Enums"]["access_status"] | null
           best_harvest_quality: number | null
           created_at: string | null
           created_by: string | null
@@ -2002,6 +2006,14 @@ export type Database = {
       }
     }
     Enums: {
+      access_status:
+        | "public_land"
+        | "private_with_permission"
+        | "private_no_permission"
+        | "fenced"
+        | "posted"
+        | "unmaintained"
+        | "dangerous_access"
       hazard_type:
         | "poison_ivy"
         | "ticks"

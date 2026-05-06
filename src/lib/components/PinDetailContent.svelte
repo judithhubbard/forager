@@ -35,6 +35,13 @@
   import { activeRegion } from '$lib/stores/activeRegion';
   import { settings } from '$lib/stores/settings';
   import {
+    ACCESS_STATUSES,
+    ACCESS_LABELS,
+    ACCESS_EMOJI,
+    setStatus as setAccessStatus,
+    type AccessStatus
+  } from '$lib/services/accessService';
+  import {
     listByPin as listPhotos,
     signUrls,
     upload as uploadPhoto,
@@ -96,6 +103,24 @@
 
   let pendingStatus: PinStatus | null = null;
   let statusSaving = false;
+
+  let accessSaving = false;
+  let accessError = '';
+  async function onAccessChange(e: Event) {
+    if (!pin) return;
+    const v = (e.currentTarget as HTMLSelectElement).value;
+    const next = v === '' ? null : (v as AccessStatus);
+    accessSaving = true;
+    accessError = '';
+    try {
+      await setAccessStatus(pin.id!, next);
+      pin = { ...pin, access_status: next };
+    } catch (err) {
+      accessError = err instanceof Error ? err.message : 'Could not save access status.';
+    } finally {
+      accessSaving = false;
+    }
+  }
   // needs_verification is set automatically by the 4-year auto-degrade rule;
   // not a manual choice. active = exists; gone = removed; dormant = unproductive.
   const STATUSES: PinStatus[] = ['active', 'gone', 'inaccessible', 'not_good'];
@@ -679,6 +704,29 @@
           >Move pin</button>
         {/if}
       </div>
+      <div class="access-row">
+        <span class="access-label">Access:</span>
+        {#if pin.created_by === $profile?.id || $activeRegion?.role === 'admin'}
+          <select
+            value={pin.access_status ?? ''}
+            on:change={onAccessChange}
+            disabled={accessSaving}
+            aria-label="Access status"
+          >
+            <option value="">— not set —</option>
+            {#each ACCESS_STATUSES as a}
+              <option value={a}>{ACCESS_EMOJI[a]} {ACCESS_LABELS[a]}</option>
+            {/each}
+          </select>
+        {:else if pin.access_status}
+          <span class="access-chip">
+            {ACCESS_EMOJI[pin.access_status]} {ACCESS_LABELS[pin.access_status]}
+          </span>
+        {:else}
+          <span class="muted">not set</span>
+        {/if}
+        {#if accessError}<span class="error">{accessError}</span>{/if}
+      </div>
       {#if pin.notes}
         <p class="notes">{pin.notes}</p>
       {/if}
@@ -1193,6 +1241,24 @@
     font-size: 0.78rem;
   }
   .status-edit-row select { font-size: 0.78rem; padding: 0.15rem 0.35rem; }
+  .access-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.35rem 0 0;
+    font-size: 0.82rem;
+    color: #4a554a;
+  }
+  .access-row select { font-size: 0.78rem; padding: 0.15rem 0.35rem; }
+  .access-label { color: #6b7a6b; }
+  .access-chip {
+    background: #f5f8f5;
+    border: 1px solid #d4ddd2;
+    color: #1f2a1f;
+    padding: 0.05rem 0.45rem;
+    border-radius: 0.45rem;
+  }
 
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
   .section-header h3 {
