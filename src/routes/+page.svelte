@@ -83,6 +83,10 @@
         visibility: 'private'
       });
       mapRef?.clearRecorder();
+      // Force the heatmap to refetch on its next render so the
+      // points just saved show up immediately if the toggle is on.
+      heatLoaded = false;
+      heatPoints = [];
     } catch (err) {
       console.error('[+page] save recording failed', err);
       alert(err instanceof Error ? err.message : 'Could not save the recording.');

@@ -145,6 +145,11 @@
    *  when the polyline doesn't exist yet; subsequent updates set
    *  latlngs in place to avoid layer churn. */
   let recordPolyline: import('leaflet').Polyline | undefined;
+  /** Heat layer — built from the user's track points as overlapping
+   *  low-opacity circle markers. preferCanvas:true on the map means
+   *  this renders to a single canvas, so even ~10k circles stay
+   *  performant; we down-sample if the input is much bigger. */
+  let heatGroup: import('leaflet').LayerGroup | undefined;
   /** Cached leaflet module — set once in onMount so renderPins can
    *  run fully synchronously. Without this, every render had to
    *  re-resolve `import('leaflet')` (cached but still microtask-async),
@@ -204,9 +209,38 @@
   $: if (map && clusterLayer && LCache) {
     renderClusters(clusters);
   }
-  // Heatmap intentionally a no-op for now — see commit log. Touch
-  // heatPoints so the linter doesn't flag the unused prop.
-  $: void heatPoints;
+  // Density visualization via overlapping low-opacity circles. Not
+  // a true Gaussian heatmap (we ditched the leaflet.heat plugin
+  // for ESM compatibility) but visually similar — many overlapping
+  // points → darker patch.
+  $: if (map && LCache) renderHeat(heatPoints);
+
+  function renderHeat(points: Array<[number, number]>) {
+    if (!map || !LCache) return;
+    if (heatGroup) {
+      heatGroup.remove();
+      heatGroup = undefined;
+    }
+    if (points.length === 0) return;
+    // Down-sample if the dataset is large enough to choke the
+    // canvas renderer on lower-end devices.
+    const MAX_RENDER = 8000;
+    const step = points.length > MAX_RENDER ? Math.ceil(points.length / MAX_RENDER) : 1;
+    const L = LCache;
+    const group = L.layerGroup();
+    for (let i = 0; i < points.length; i += step) {
+      const [lat, lng] = points[i];
+      L.circleMarker([lat, lng], {
+        radius: 9,
+        stroke: false,
+        fillColor: '#1a4a66',
+        fillOpacity: 0.18,
+        interactive: false
+      }).addTo(group);
+    }
+    heatGroup = group;
+    group.addTo(map);
+  }
 
   // Live track polyline: redraw on every store update.
   $: if (map && LCache) updateRecordedPath($recording.points);
