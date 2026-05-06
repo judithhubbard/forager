@@ -195,10 +195,18 @@
     return 'other';
   }
 
+  /** Day-of-year (1-based) from a YYYY-MM-DD string. Pure string parse
+   *  — no Date object — so a UTC midnight ISO does not get pulled into
+   *  the previous calendar day in a Western timezone. That bug was
+   *  rendering Jan 1 entries at the right edge of the prior year's
+   *  strip, looking like phantom Dec 31 observations. */
   function dateToDoy(iso: string): number {
-    const d = new Date(iso);
-    const start = new Date(d.getFullYear(), 0, 0);
-    return Math.floor((d.getTime() - start.getTime()) / 86400000);
+    const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+    if (!y || !m || !d) return 1;
+    const cumMonthStart = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+    let doy = cumMonthStart[m - 1] + d;
+    if (m > 2 && isLeapYear(y)) doy += 1;
+    return doy;
   }
 
   // SVG layout — viewBox-scaled to the row's full width. Left
@@ -214,6 +222,14 @@
   const AXIS_H = 14;
   const LANE_H = 9;        // per-species band; many lanes per region
   const LANE_GAP = 1;
+  /** Extra vertical space between species groups (e.g. between the
+   *  Hickory cluster and the Apple/Pear cluster) so groups read as
+   *  distinct sections. */
+  const GROUP_GAP = 5;
+  /** Width of the colored stripe at the very left of each lane that
+   *  encodes the species's group. Same hue across all lanes in the
+   *  group — visually clusters them. */
+  const GROUP_STRIPE_W = 4;
   const RAIN_H = 40;       // dedicated bar-chart lane (top)
   const TEMP_H = 50;       // dedicated min/max lane (below rain)
   const TRACK_GAP = 6;     // breathing room between major tracks
@@ -235,8 +251,20 @@
   const FREEZE_C = 0;        // 32°F
   const HOT_C = (80 - 32) * 5 / 9; // 80°F ≈ 26.7°C
 
-  function doyToX(doy: number): number {
-    return PAD_L + ((doy - 1) / 365) * PLOT_W;
+  function isLeapYear(y: number): boolean {
+    return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  }
+  function daysInYear(y: number): number {
+    return isLeapYear(y) ? 366 : 365;
+  }
+  /** Map day-of-year to x-pixel within the plot area, scaled so doy
+   *  1 is at the left edge and the last day of the year (365 or 366
+   *  for leap years) is at the right edge. Earlier hardcoded /365
+   *  produced a tiny gap on the right of non-leap years (Dec 31
+   *  rendered at 99.7%, leaving ~3px empty). */
+  function doyToX(doy: number, year: number): number {
+    const days = daysInYear(year);
+    return PAD_L + ((doy - 1) / (days - 1)) * PLOT_W;
   }
 
   const MONTH_STARTS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
@@ -354,6 +382,34 @@
     return colorForGroup(groupOf(s));
   }
 
+  /** Compute lane positions for a region, inserting an extra gap and
+   *  marking the boundary whenever the group changes. Returns the
+   *  total height the lane stack occupies, plus per-species layout
+   *  metadata used by the SVG render. */
+  type LaneSlot = {
+    sid: string;
+    y: number;
+    group: string;
+    color: string;
+    isFirstInGroup: boolean;
+  };
+  function computeLanes(sids: string[], lanesY: number): { slots: LaneSlot[]; height: number } {
+    const slots: LaneSlot[] = [];
+    let y = lanesY;
+    let prev: string | null = null;
+    for (const sid of sids) {
+      const s = speciesById[sid];
+      if (!s) continue;
+      const group = groupOf(s);
+      const first = group !== prev;
+      if (first && prev !== null) y += GROUP_GAP;
+      slots.push({ sid, y, group, color: colorForGroup(group), isFirstInGroup: first });
+      y += LANE_H + LANE_GAP;
+      prev = group;
+    }
+    return { slots, height: y - lanesY };
+  }
+
   function speciesLabel(speciesId: string): string {
     const s = speciesById[speciesId];
     return s ? s.common_name : '?';
@@ -387,11 +443,11 @@
     /** °C */
     lo: number;
   };
-  function tempDayRects(rows: DailyWeather[], yStart: number): TempRect[] {
+  function tempDayRects(rows: DailyWeather[], yStart: number, year: number): TempRect[] {
     const out: TempRect[] = [];
     const yHotEdge = tempToY(HOT_C, yStart);
     const yFreezeEdge = tempToY(FREEZE_C, yStart);
-    const dayW = PLOT_W / 365 + 0.6;
+    const dayW = PLOT_W / (daysInYear(year) - 1) + 0.6;
     for (const d of rows) {
       if (d.temp_max_c == null || d.temp_min_c == null) continue;
       const hi = Math.max(d.temp_max_c, d.temp_min_c);
@@ -399,7 +455,7 @@
       const yTop = tempToY(hi, yStart);
       const yBot = tempToY(lo, yStart);
       if (yBot - yTop < 0.2) continue;
-      const xCenter = doyToX(dateToDoy(d.date));
+      const xCenter = doyToX(dateToDoy(d.date), year);
       const x = xCenter - dayW / 2;
       const meta = { date: d.date, hi, lo };
       // Hot zone: y between yTop and yHotEdge (smaller y = higher temp)
@@ -435,7 +491,8 @@
    *  year's actual rects so deviations are visible. */
   function avgTempPolygon(
     doyAvg: Map<number, DoyAvg> | null,
-    yStart: number
+    yStart: number,
+    year: number
   ): string {
     if (!doyAvg) return '';
     const pairs = Array.from(doyAvg.entries())
@@ -445,7 +502,7 @@
     const top: string[] = [];
     const bot: string[] = [];
     for (const [doy, a] of pairs) {
-      const x = doyToX(doy);
+      const x = doyToX(doy, year);
       top.push(`${x.toFixed(1)},${tempToY(a.temp_max_c as number, yStart).toFixed(1)}`);
       bot.push(`${x.toFixed(1)},${tempToY(a.temp_min_c as number, yStart).toFixed(1)}`);
     }
@@ -544,17 +601,17 @@
     <div class="years">
       {#each yearsFor(rt) as year}
         {@const yWeather = weatherInYear(rt, year)}
-        {@const lanesH = allSids.length * (LANE_H + LANE_GAP)}
         {@const rainY = AXIS_H + 4}
         {@const tempY = rainY + RAIN_H + TRACK_GAP}
         {@const lanesY = tempY + TEMP_H + TRACK_GAP}
-        {@const totalH = lanesY + lanesH + 6}
         {@const yHi = tempToY(TEMP_HI_C, tempY)}
         {@const y80 = tempToY(HOT_C, tempY)}
         {@const y32 = tempToY(FREEZE_C, tempY)}
         {@const yLo = tempToY(TEMP_LO_C, tempY)}
-        {@const tempRects = tempDayRects(yWeather, tempY)}
+        {@const tempRects = tempDayRects(yWeather, tempY, year)}
         {@const doyAvg = year === currentYear ? computeDoyAverages(rt, currentYear) : null}
+        {@const laneLayout = computeLanes(allSids, lanesY)}
+        {@const totalH = lanesY + laneLayout.height + 6}
         <section class="year-row" class:current={year === currentYear}>
           <div class="year-label">
             {year}
@@ -563,8 +620,8 @@
           <svg viewBox="0 0 {W} {totalH}" preserveAspectRatio="none" class="year-svg" style="height: {totalH * 1.1}px;">
             <!-- Month axis -->
             {#each MONTH_STARTS as ms, i}
-              <text x={doyToX(ms) + 2} y={11} font-size="10" fill="#6b7a6b">{MONTH_LETTERS[i]}</text>
-              <line x1={doyToX(ms)} y1={AXIS_H} x2={doyToX(ms)} y2={totalH} stroke="#e1e8e1" stroke-width="0.5" />
+              <text x={doyToX(ms, year) + 2} y={11} font-size="10" fill="#6b7a6b">{MONTH_LETTERS[i]}</text>
+              <line x1={doyToX(ms, year)} y1={AXIS_H} x2={doyToX(ms, year)} y2={totalH} stroke="#e1e8e1" stroke-width="0.5" />
             {/each}
 
             <!-- Rain track at top: dedicated bar-chart lane.
@@ -582,7 +639,7 @@
                 {#if avg.rain_mm > 0.05}
                   {@const aBarH = Math.min(RAIN_H - 2, (Math.min(avg.rain_mm, RAIN_CAP_MM) / RAIN_CAP_MM) * (RAIN_H - 2))}
                   <rect
-                    x={doyToX(doy) - 1.0}
+                    x={doyToX(doy, year) - 1.0}
                     y={rainY + (RAIN_H - aBarH)}
                     width="2.2"
                     height={aBarH}
@@ -614,7 +671,7 @@
               {#if d.rain_mm > 0.05}
                 {@const barH = Math.min(RAIN_H - 2, (Math.min(d.rain_mm, RAIN_CAP_MM) / RAIN_CAP_MM) * (RAIN_H - 2))}
                 <rect
-                  x={doyToX(dateToDoy(d.date)) - 1.0}
+                  x={doyToX(dateToDoy(d.date), year) - 1.0}
                   y={rainY + (RAIN_H - barH)}
                   width="2.2"
                   height={barH}
@@ -636,7 +693,7 @@
               fill="#fbf9f3" stroke="#e8e3d4" stroke-width="0.5"
             />
             {#if doyAvg}
-              {@const avgPoly = avgTempPolygon(doyAvg, tempY)}
+              {@const avgPoly = avgTempPolygon(doyAvg, tempY, year)}
               {#if avgPoly}
                 <polygon points={avgPoly} fill="#9aa6a3" opacity="0.25" />
               {/if}
@@ -668,49 +725,73 @@
             <text x={PAD_L - 3} y={y32 + 3} text-anchor="end" font-size="8" fill="#3a6b8b">32°F</text>
             <text x={PAD_L - 3} y={yLo - 1} text-anchor="end" font-size="8" fill="#3a6b8b">−4°F</text>
 
-            <!-- All region species, one thin lane each. Window bands
-                 + observation markers if present. -->
-            {#each allSids as sid, idx}
-              {@const laneY = lanesY + idx * (LANE_H + LANE_GAP)}
-              {@const color = laneColor(sid)}
-              {@const sw = windowsForSpecies(rt, sid)}
-              {@const yObs = obsInYearForSpecies(rt, year, sid)}
-              <rect x={PAD_L} y={laneY} width={PLOT_W} height={LANE_H} fill={color} opacity="0.06">
-                <title>{speciesLabel(sid)}</title>
-              </rect>
-              {#each sw as w}
+            <!-- All region species, grouped by category → group, one
+                 lane each. A 4px-wide colored stripe at the very
+                 left of each lane shows the group color (so all
+                 Apple/Pear lanes share a hue, all Hickory share,
+                 etc.). Each lane is wrapped in a <g> with a <title>
+                 of the species name so hovering anywhere on the
+                 lane (not just over an obs tick) pops up the name. -->
+            {#each laneLayout.slots as slot}
+              {@const sw = windowsForSpecies(rt, slot.sid)}
+              {@const yObs = obsInYearForSpecies(rt, year, slot.sid)}
+              <g>
+                <title>{speciesLabel(slot.sid)} · {slot.group}</title>
+                <!-- Group color stripe at the left edge -->
                 <rect
-                  x={doyToX(w.start_doy)}
-                  y={laneY}
-                  width={Math.max(2, doyToX(w.end_doy) - doyToX(w.start_doy))}
+                  x={PAD_L}
+                  y={slot.y}
+                  width={GROUP_STRIPE_W}
                   height={LANE_H}
-                  fill={STAGE_COLORS[w.stage] ?? color}
-                  opacity="0.32"
+                  fill={slot.color}
+                  opacity="0.85"
                 />
-              {/each}
-              {#each yObs as o}
+                <!-- Lane background (faint group hue across full plot) -->
                 <rect
-                  x={doyToX(dateToDoy(o.observed_at)) - 1.4}
-                  y={laneY - 0.5}
-                  width="2.8"
-                  height={LANE_H + 1}
-                  fill={STAGE_COLORS[o.stage ?? ''] ?? color}
-                  stroke="#1f2a1f"
-                  stroke-width="0.4"
-                >
-                  <title>{speciesLabel(sid)} · {o.stage ?? '—'} · {o.observed_at?.slice(0, 10) ?? ''}{o.quality_rating != null ? ` · quality ${o.quality_rating}` : ''}{o.pin_display_name ? ` · ${o.pin_display_name}` : ''}</title>
-                </rect>
-              {/each}
-              <text x={W - PAD_R - 1} y={laneY + LANE_H - 1.5} text-anchor="end" font-size="8" fill="#4a554a">
-                {speciesLabel(sid)}
-              </text>
+                  x={PAD_L + GROUP_STRIPE_W + 1}
+                  y={slot.y}
+                  width={PLOT_W - GROUP_STRIPE_W - 1}
+                  height={LANE_H}
+                  fill={slot.color}
+                  opacity="0.06"
+                />
+                <!-- Stage-colored harvest-window bands -->
+                {#each sw as w}
+                  <rect
+                    x={Math.max(PAD_L + GROUP_STRIPE_W + 1, doyToX(w.start_doy, year))}
+                    y={slot.y}
+                    width={Math.max(2, doyToX(w.end_doy, year) - doyToX(w.start_doy, year))}
+                    height={LANE_H}
+                    fill={STAGE_COLORS[w.stage] ?? slot.color}
+                    opacity="0.32"
+                  />
+                {/each}
+                <!-- Observation markers -->
+                {#each yObs as o}
+                  <rect
+                    x={doyToX(dateToDoy(o.observed_at), year) - 1.4}
+                    y={slot.y - 0.5}
+                    width="2.8"
+                    height={LANE_H + 1}
+                    fill={STAGE_COLORS[o.stage ?? ''] ?? slot.color}
+                    stroke="#1f2a1f"
+                    stroke-width="0.4"
+                  >
+                    <title>{speciesLabel(slot.sid)} · {o.stage ?? '—'} · {o.observed_at?.slice(0, 10) ?? ''}{o.quality_rating != null ? ` · quality ${o.quality_rating}` : ''}{o.pin_display_name ? ` · ${o.pin_display_name}` : ''}</title>
+                  </rect>
+                {/each}
+                <!-- Right-edge species label -->
+                <text x={W - PAD_R - 1} y={slot.y + LANE_H - 1.5} text-anchor="end" font-size="8" fill="#4a554a">
+                  {speciesLabel(slot.sid)}
+                </text>
+              </g>
             {/each}
 
             <!-- Today marker on the current-year strip -->
             {#if year === currentYear}
               <line
-                x1={doyToX(todayDoy)} y1={AXIS_H}
-                x2={doyToX(todayDoy)} y2={totalH}
+                x1={doyToX(todayDoy, year)} y1={AXIS_H}
+                x2={doyToX(todayDoy, year)} y2={totalH}
                 stroke="#c14a3a" stroke-width="1" stroke-dasharray="2,2"
               />
             {/if}
