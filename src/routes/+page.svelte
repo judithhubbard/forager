@@ -24,17 +24,28 @@
    *   Set([…]) → show only listed species (empty set = show none) */
   let selectedSpeciesIds: Set<string> | null = null;
   let speciesPanelOpen = false;
-  /** Tab in the species panel — filters which species are LISTED (not which
-   *  are selected). Selection persists across tab switches. */
-  type SpeciesTab = 'all' | 'fruit' | 'nut' | 'mushroom' | 'other';
-  let speciesTab: SpeciesTab = 'all';
-  const SPECIES_TABS: { k: SpeciesTab; label: string }[] = [
-    { k: 'all',      label: 'All' },
+  /** Category filter for the species panel — checkboxes that turn each
+   *  category on/off. The set holds enabled categories; toggling one
+   *  excludes those species from the list (selection within hidden
+   *  categories is preserved across toggles). */
+  type SpeciesCat = 'fruit' | 'nut' | 'mushroom' | 'other';
+  const SPECIES_CATS: { k: SpeciesCat; label: string }[] = [
     { k: 'fruit',    label: 'Fruit' },
     { k: 'nut',      label: 'Nut' },
     { k: 'mushroom', label: 'Mushroom' },
     { k: 'other',    label: 'Other' }
   ];
+  /** Categories whose species are visible in the panel. Defaults to all
+   *  on (matches the previous "All" tab behavior). */
+  let visibleCats: Set<SpeciesCat> = new Set(['fruit', 'nut', 'mushroom', 'other']);
+  function toggleCat(k: SpeciesCat) {
+    const next = new Set(visibleCats);
+    if (next.has(k)) next.delete(k); else next.add(k);
+    visibleCats = next;
+  }
+  /** Canonical category order — drives both panel-list ordering and
+   *  the legend. */
+  const CAT_ORDER: SpeciesCat[] = ['fruit', 'nut', 'mushroom', 'other'];
 
   /** Friendly group label per genus. Falls back to the genus itself if not
    *  in the mapping. Drives the indented sub-list in the species panel.
@@ -74,7 +85,11 @@
     return GROUP_LABELS[genus] ?? genus;
   }
 
-  /** Group a flat species list by genus label, sorted alphabetically. */
+  /** Group a flat species list by genus label. Sorted by canonical
+   *  category order (fruit → nut → mushroom → other), then by group
+   *  label alphabetically within each category bucket. The category
+   *  for a group is taken from any of its species (they're all in the
+   *  same group, so they'll share a category). */
   function groupSpecies(list: Species[]): [string, Species[]][] {
     const m: Record<string, Species[]> = {};
     for (const s of list) {
@@ -82,12 +97,20 @@
       if (!m[g]) m[g] = [];
       m[g].push(s);
     }
-    return Object.entries(m).sort((a, b) => a[0].localeCompare(b[0]));
+    const groupCat = (sp: Species): SpeciesCat =>
+      (categoryBySpecies[sp.id] as SpeciesCat) ?? 'other';
+    return Object.entries(m).sort((a, b) => {
+      const ca = CAT_ORDER.indexOf(groupCat(a[1][0]));
+      const cb = CAT_ORDER.indexOf(groupCat(b[1][0]));
+      if (ca !== cb) return ca - cb;
+      return a[0].localeCompare(b[0]);
+    });
   }
 
-  $: filteredSpeciesList = speciesInRegion.filter(
-    (s) => speciesTab === 'all' || (categoryBySpecies[s.id] ?? 'other') === speciesTab
-  );
+  $: filteredSpeciesList = speciesInRegion.filter((s) => {
+    const cat = (categoryBySpecies[s.id] as SpeciesCat) ?? 'other';
+    return visibleCats.has(cat);
+  });
   $: groupedSpecies = groupSpecies(filteredSpeciesList);
   let filterStatus:
     | 'all'
@@ -397,19 +420,21 @@
             <button on:click={clearSpecies}>Clear</button>
             <button on:click={() => (speciesPanelOpen = false)}>Done</button>
           </div>
-          <div class="species-tabs" role="tablist">
-            {#each SPECIES_TABS as tab}
+          <div class="species-cats">
+            {#each SPECIES_CATS as cat}
               {@const count = speciesInRegion.filter(
-                (s) => tab.k === 'all' || (categoryBySpecies[s.id] ?? 'other') === tab.k
+                (s) => (categoryBySpecies[s.id] ?? 'other') === cat.k
               ).length}
-              {#if tab.k === 'all' || count > 0}
-                <button
-                  class="species-tab"
-                  class:active={speciesTab === tab.k}
-                  on:click={() => (speciesTab = tab.k)}
-                >
-                  {tab.label} <span class="count">{count}</span>
-                </button>
+              {#if count > 0}
+                <label class="cat-toggle">
+                  <input
+                    type="checkbox"
+                    checked={visibleCats.has(cat.k)}
+                    on:change={() => toggleCat(cat.k)}
+                  />
+                  {cat.label}
+                  <span class="count">{count}</span>
+                </label>
               {/if}
             {/each}
           </div>
@@ -705,39 +730,29 @@
     background: white;
     cursor: pointer;
   }
-  .species-tabs {
+  /* Category checkboxes — replaced the prior tab strip. Each category
+     toggles independently; the species list below reflects the union. */
+  .species-cats {
     flex: 0 0 auto;
     display: flex;
-    gap: 0.15rem;
-    padding: 0.35rem 0.4rem;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    padding: 0.4rem 0.55rem;
     border-bottom: 1px solid #ebefeb;
-    overflow-x: auto;
   }
-  .species-tab {
-    padding: 0.25rem 0.55rem;
-    font-size: 0.78rem;
-    border: 0;
-    background: transparent;
-    color: #4a554a;
-    cursor: pointer;
-    border-radius: 0.3rem;
-    white-space: nowrap;
+  .cat-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    color: #1f2a1f;
+    cursor: pointer;
   }
-  .species-tab .count {
+  .cat-toggle .count {
     color: #8a948a;
-    margin-left: 0;
     font-size: 0.72rem;
   }
-  .species-tab.active {
-    background: #3a5a3a;
-    color: white;
-  }
-  .species-tab.active .count {
-    color: rgba(255,255,255,0.8);
-  }
+  .cat-toggle input { margin: 0; }
   .species-panel ul {
     list-style: none;
     margin: 0;
