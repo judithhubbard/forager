@@ -810,7 +810,9 @@
     border: 1px solid #d0d8d0;
     border-radius: 0.4rem;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-    width: 18rem;
+    /* Sized to fit the longest species/group name without dead
+       horizontal space. Names beyond this clip with ellipsis. */
+    width: 14rem;
     max-height: 70vh;
     display: flex;
     flex-direction: column;
@@ -881,17 +883,22 @@
     padding-top: 0.1rem;
   }
   .species-panel li.indented {
-    padding-left: 1.4rem;
+    padding-left: 1.1rem;
   }
   .species-panel label {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     font-size: 0.82rem;
     line-height: 1.2;
     cursor: pointer;
-    padding: 0.1rem 0.2rem;
+    padding: 0.1rem 0.15rem;
     border-radius: 0.2rem;
+    /* Long species names truncate rather than expanding the panel. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }
   .species-panel label:hover {
     background: #f5f8f5;
