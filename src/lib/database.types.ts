@@ -78,6 +78,66 @@ export type Database = {
           },
         ]
       }
+      climate_zones: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          min_temp_f: number | null
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          min_temp_f?: number | null
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          min_temp_f?: number | null
+          name?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
+      region_climate_zones: {
+        Row: {
+          climate_zone_id: string
+          region_id: string
+          updated_at: string
+        }
+        Insert: {
+          climate_zone_id: string
+          region_id: string
+          updated_at?: string
+        }
+        Update: {
+          climate_zone_id?: string
+          region_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "region_climate_zones_climate_zone_id_fkey"
+            columns: ["climate_zone_id"]
+            isOneToOne: false
+            referencedRelation: "climate_zones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "region_climate_zones_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: true
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hazards: {
         Row: {
           created_at: string
@@ -678,6 +738,7 @@ export type Database = {
       }
       species_fruiting_windows: {
         Row: {
+          climate_zone_id: string | null
           created_by: string | null
           end_doy: number
           id: string
@@ -690,6 +751,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          climate_zone_id?: string | null
           created_by?: string | null
           end_doy: number
           id?: string
@@ -702,6 +764,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          climate_zone_id?: string | null
           created_by?: string | null
           end_doy?: number
           id?: string
