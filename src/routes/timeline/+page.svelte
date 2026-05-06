@@ -184,12 +184,23 @@
   const W = 1000;
   const PAD_L = 4, PAD_R = 4;
   const AXIS_H = 14;
-  const LANE_H = 12;       // per-species band
-  const LANE_GAP = 2;
-  const RAIN_H = 44;       // dedicated bar-chart lane
-  const TEMP_H = 50;       // dedicated min/max lane
-  const TRACK_GAP = 8;     // breathing room between major tracks
+  const LANE_H = 9;        // per-species band; many lanes per region
+  const LANE_GAP = 1;
+  const RAIN_H = 36;       // dedicated bar-chart lane (top)
+  const TEMP_H = 44;       // dedicated min/max lane (below rain)
+  const TRACK_GAP = 6;     // breathing room between major tracks
   const PLOT_W = W - PAD_L - PAD_R;
+  /** Fixed scale ceiling for rain bars (mm/day). Days above this
+   *  clip at the top of the lane. Yearly auto-scale was misleading
+   *  when one big winter snow event made all summer rain bars
+   *  invisible — fixed cap keeps normal-day bars at readable
+   *  heights all year. */
+  const RAIN_CAP_MM = 25;
+  /** Fixed temp range for the lane (°C) so winters don't squish
+   *  summer swings. Values outside clip. -20°C ≈ -4°F, 40°C ≈ 104°F. */
+  const TEMP_LO_C = -20;
+  const TEMP_HI_C = 40;
+  const TEMP_RANGE_C = TEMP_HI_C - TEMP_LO_C;
 
   function doyToX(doy: number): number {
     return PAD_L + ((doy - 1) / 365) * PLOT_W;
@@ -209,11 +220,15 @@
     return Array.from(y).sort((a, b) => b - a);
   }
 
-  function speciesIdsInYear(rt: RegionTimeline, year: number): string[] {
+  /** Every species relevant to this region: anything with harvest
+   *  windows defined for the region OR with at least one observation
+   *  on a pin in the region. Sorted by group label so related
+   *  species cluster (all Apple/Pear together, etc). */
+  function regionSpeciesIds(rt: RegionTimeline): string[] {
     const set = new Set<string>();
+    for (const w of rt.windows) set.add(w.species_id);
     for (const o of rt.observations) {
-      if (!o.observed_at || !o.species_id) continue;
-      if (new Date(o.observed_at).getFullYear() === year) set.add(o.species_id);
+      if (o.species_id) set.add(o.species_id);
     }
     return Array.from(set).sort((a, b) => {
       const sa = speciesById[a];
@@ -251,37 +266,26 @@
     return s ? s.common_name : '?';
   }
 
-  function computeYearStats(rows: DailyWeather[]) {
-    const tempVals: number[] = [];
-    let maxRain = 5;
-    for (const r of rows) {
-      if (r.temp_max_c != null) tempVals.push(r.temp_max_c);
-      if (r.temp_min_c != null) tempVals.push(r.temp_min_c);
-      if (r.rain_mm > maxRain) maxRain = r.rain_mm;
-    }
-    const tempLo = tempVals.length ? Math.min(...tempVals) : 0;
-    const tempHi = tempVals.length ? Math.max(...tempVals) : 30;
-    const tempRange = Math.max(1, tempHi - tempLo);
-    return { maxRain, tempLo, tempHi, tempRange, hasTemp: tempVals.length > 0 };
+  function hasWeatherData(rows: DailyWeather[]): boolean {
+    return rows.some((d) => d.temp_max_c != null || d.rain_mm > 0);
   }
 
-  /** Polyline points for either the daily max or the daily min temp.
-   *  field='max' → orange line at top of the track; field='min' →
-   *  blue line below it. Y is scaled to the year's combined min/max
-   *  range so both lines fit in the same lane. */
+  /** Polyline points for either the daily max or the daily min temp,
+   *  using the FIXED -20…40°C lane scale so winters don't squish
+   *  summer swings. Values outside the range are clipped to the lane
+   *  edges. */
   function tempPolyPoints(
     rows: DailyWeather[],
     yStart: number,
-    tempLo: number,
-    tempRange: number,
     field: 'max' | 'min'
   ): string {
     const parts: string[] = [];
     for (const d of rows) {
       const v = field === 'max' ? d.temp_max_c : d.temp_min_c;
       if (v == null) continue;
+      const clipped = Math.max(TEMP_LO_C, Math.min(TEMP_HI_C, v));
       const x = doyToX(dateToDoy(d.date));
-      const y = yStart + TEMP_H - ((v - tempLo) / tempRange) * TEMP_H;
+      const y = yStart + TEMP_H - ((clipped - TEMP_LO_C) / TEMP_RANGE_C) * TEMP_H;
       parts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
     }
     return parts.join(' ');
@@ -347,29 +351,28 @@
     </div>
 
     {#each regionTimelines as rt (rt.regionId)}
+      {@const allSids = regionSpeciesIds(rt)}
       <section class="region-block">
         <header class="region-head">
           <h2>{rt.regionName}</h2>
           <span class="region-meta">
-            {rt.observations.length} observation{rt.observations.length === 1 ? '' : 's'}
+            {rt.observations.length} observation{rt.observations.length === 1 ? '' : 's'} · {allSids.length} species
             {#if rt.weatherLoading}<span class="hint"> · loading weather…</span>{/if}
           </span>
         </header>
 
     <div class="years">
       {#each yearsFor(rt) as year}
-        {@const sids = speciesIdsInYear(rt, year)}
         {@const yWeather = weatherInYear(rt, year)}
-        {@const yStats = computeYearStats(yWeather)}
-        {@const lanesH = sids.length * (LANE_H + LANE_GAP)}
-        {@const rainY = AXIS_H + 4 + lanesH + TRACK_GAP}
+        {@const lanesH = allSids.length * (LANE_H + LANE_GAP)}
+        {@const rainY = AXIS_H + 4}
         {@const tempY = rainY + RAIN_H + TRACK_GAP}
-        {@const totalH = tempY + TEMP_H + 6}
+        {@const lanesY = tempY + TEMP_H + TRACK_GAP}
+        {@const totalH = lanesY + lanesH + 6}
         <section class="year-row" class:current={year === currentYear}>
           <div class="year-label">
             {year}
             {#if year === currentYear}<span class="cur-tag">current</span>{/if}
-            <span class="lane-count">{sids.length} species</span>
           </div>
           <svg viewBox="0 0 {W} {totalH}" preserveAspectRatio="none" class="year-svg" style="height: {totalH * 1.1}px;">
             <!-- Month axis -->
@@ -378,15 +381,71 @@
               <line x1={doyToX(ms)} y1={AXIS_H} x2={doyToX(ms)} y2={totalH} stroke="#e1e8e1" stroke-width="0.5" />
             {/each}
 
-            <!-- Per-species lanes: faded window band + observation ticks -->
-            {#each sids as sid, idx}
-              {@const laneY = AXIS_H + 4 + idx * (LANE_H + LANE_GAP)}
+            <!-- Rain track at top: dedicated bar-chart lane in blue.
+                 Fixed 25mm/day cap so a single big winter event
+                 doesn't make all the summer bars invisible. -->
+            <rect
+              x={PAD_L} y={rainY} width={PLOT_W} height={RAIN_H}
+              fill="#f3f8fc" stroke="#dde7ee" stroke-width="0.5"
+            />
+            {#if !hasWeatherData(yWeather) && rt.weather.length === 0}
+              <text x={W / 2} y={rainY + RAIN_H / 2 + 3} text-anchor="middle" font-size="9" fill="#8a948a" font-style="italic">
+                {rt.weatherLoading ? 'loading weather…' : 'no weather data'}
+              </text>
+            {/if}
+            {#each yWeather as d}
+              {#if d.rain_mm > 0.05}
+                {@const barH = Math.min(RAIN_H - 2, (Math.min(d.rain_mm, RAIN_CAP_MM) / RAIN_CAP_MM) * (RAIN_H - 2))}
+                <rect
+                  x={doyToX(dateToDoy(d.date)) - 1.0}
+                  y={rainY + (RAIN_H - barH)}
+                  width="2.2"
+                  height={barH}
+                  fill="#1a4a66"
+                  opacity="0.92"
+                >
+                  <title>{d.date} · {d.rain_mm.toFixed(1)}mm ({(d.rain_mm / 25.4).toFixed(2)}")</title>
+                </rect>
+              {/if}
+            {/each}
+            <text x={PAD_L + 4} y={rainY + 11} font-size="10" fill="#1a4a66" font-weight="600">rain</text>
+            <text x={W - PAD_R - 1} y={rainY + RAIN_H - 2} text-anchor="end" font-size="8" fill="#8a948a">
+              0…{RAIN_CAP_MM}mm/day
+            </text>
+
+            <!-- Temp track: max (orange) + min (cool blue) polylines
+                 on a fixed -20…40°C lane so winter doesn't squish
+                 summer swings. -->
+            <rect
+              x={PAD_L} y={tempY} width={PLOT_W} height={TEMP_H}
+              fill="#fbf9f3" stroke="#e8e3d4" stroke-width="0.5"
+            />
+            {#if hasWeatherData(yWeather)}
+              <polyline
+                points={tempPolyPoints(yWeather, tempY, 'min')}
+                fill="none" stroke="#3a8db0" stroke-width="1.2" opacity="0.85"
+              />
+              <polyline
+                points={tempPolyPoints(yWeather, tempY, 'max')}
+                fill="none" stroke="#d57100" stroke-width="1.2" opacity="0.95"
+              />
+            {/if}
+            <text x={PAD_L + 4} y={tempY + 11} font-size="10" fill="#7a4a10" font-weight="600">temp</text>
+            <text x={W - PAD_R - 1} y={tempY + 11} text-anchor="end" font-size="8" fill="#7a4a10">
+              104°F
+            </text>
+            <text x={W - PAD_R - 1} y={tempY + TEMP_H - 2} text-anchor="end" font-size="8" fill="#1a4a66">
+              −4°F
+            </text>
+
+            <!-- All region species, one thin lane each. Window bands
+                 + observation markers if present. -->
+            {#each allSids as sid, idx}
+              {@const laneY = lanesY + idx * (LANE_H + LANE_GAP)}
               {@const color = laneColor(sid)}
               {@const sw = windowsForSpecies(rt, sid)}
               {@const yObs = obsInYearForSpecies(rt, year, sid)}
-              <!-- Lane base (very faint fill so empty lanes still show) -->
               <rect x={PAD_L} y={laneY} width={PLOT_W} height={LANE_H} fill={color} opacity="0.06" />
-              <!-- Stage-colored window bands, transparent -->
               {#each sw as w}
                 <rect
                   x={doyToX(w.start_doy)}
@@ -397,7 +456,6 @@
                   opacity="0.32"
                 />
               {/each}
-              <!-- Observation markers -->
               {#each yObs as o}
                 <rect
                   x={doyToX(dateToDoy(o.observed_at)) - 1.4}
@@ -411,68 +469,10 @@
                   <title>{speciesLabel(sid)} · {o.stage ?? '—'} · {o.observed_at?.slice(0, 10) ?? ''}{o.quality_rating != null ? ` · quality ${o.quality_rating}` : ''}{o.pin_display_name ? ` · ${o.pin_display_name}` : ''}</title>
                 </rect>
               {/each}
-              <!-- Right-edge species label -->
               <text x={W - PAD_R - 1} y={laneY + LANE_H - 1.5} text-anchor="end" font-size="8" fill="#4a554a">
                 {speciesLabel(sid)}
               </text>
             {/each}
-
-            <!-- Rain track: dedicated bar-chart lane in blue -->
-            <rect
-              x={PAD_L} y={rainY} width={PLOT_W} height={RAIN_H}
-              fill="#f3f8fc" stroke="#dde7ee" stroke-width="0.5"
-            />
-            {#each yWeather as d}
-              {#if d.rain_mm > 0.05}
-                {@const barH = Math.min(RAIN_H - 2, (d.rain_mm / yStats.maxRain) * (RAIN_H - 2))}
-                <rect
-                  x={doyToX(dateToDoy(d.date)) - 0.9}
-                  y={rainY + (RAIN_H - barH)}
-                  width="2"
-                  height={barH}
-                  fill="#1a4a66"
-                  opacity="0.92"
-                >
-                  <title>{d.date} · {d.rain_mm.toFixed(1)}mm rain ({(d.rain_mm / 25.4).toFixed(2)}")</title>
-                </rect>
-              {/if}
-            {/each}
-            <text x={PAD_L + 4} y={rainY + 11} font-size="10" fill="#1a4a66" font-weight="600">rain</text>
-            <text x={W - PAD_R - 1} y={rainY + RAIN_H - 2} text-anchor="end" font-size="8" fill="#8a948a">
-              max {yStats.maxRain.toFixed(0)}mm/d
-            </text>
-
-            <!-- Temperature track: dedicated lane with max (orange)
-                 and min (cool blue) polylines, scaled to the year's
-                 combined range so seasonal swings are obvious. -->
-            <rect
-              x={PAD_L} y={tempY} width={PLOT_W} height={TEMP_H}
-              fill="#fbf9f3" stroke="#e8e3d4" stroke-width="0.5"
-            />
-            {#if yStats.hasTemp}
-              <!-- Min line drawn first so max sits on top. -->
-              <polyline
-                points={tempPolyPoints(yWeather, tempY, yStats.tempLo, yStats.tempRange, 'min')}
-                fill="none"
-                stroke="#3a8db0"
-                stroke-width="1.2"
-                opacity="0.85"
-              />
-              <polyline
-                points={tempPolyPoints(yWeather, tempY, yStats.tempLo, yStats.tempRange, 'max')}
-                fill="none"
-                stroke="#d57100"
-                stroke-width="1.2"
-                opacity="0.95"
-              />
-            {/if}
-            <text x={PAD_L + 4} y={tempY + 11} font-size="10" fill="#7a4a10" font-weight="600">temp</text>
-            <text x={W - PAD_R - 1} y={tempY + 11} text-anchor="end" font-size="8" fill="#7a4a10">
-              {fmtTempF(yStats.tempHi)}
-            </text>
-            <text x={W - PAD_R - 1} y={tempY + TEMP_H - 2} text-anchor="end" font-size="8" fill="#1a4a66">
-              {fmtTempF(yStats.tempLo)}
-            </text>
 
             <!-- Today marker on the current-year strip -->
             {#if year === currentYear}
@@ -552,7 +552,7 @@
     display: flex; flex-direction: column; gap: 0.2rem;
     padding-top: 0.1rem;
   }
-  .cur-tag, .lane-count { font-size: 0.7rem; font-weight: 500; color: #6b7a6b; }
+  .cur-tag { font-size: 0.7rem; font-weight: 500; color: #6b7a6b; }
   .year-svg {
     width: 100%;
     display: block;
