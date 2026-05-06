@@ -58,6 +58,11 @@
       <strong>Map tiles</strong> — © OpenStreetMap contributors.
     </li>
     <li>
+      <strong>Address search</strong> — geocoding by
+      <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">Nominatim</a>,
+      data © OpenStreetMap contributors.
+    </li>
+    <li>
       <strong>Default harvest windows</strong> — approximate per-species
       flowering / ripening day-of-year ranges for USDA zones 5b/6a.
       Compiled from USDA, USA-NPN, Cornell Cooperative Extension, and

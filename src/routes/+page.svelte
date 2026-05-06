@@ -14,6 +14,7 @@
   import DropPinModal from '$lib/components/DropPinModal.svelte';
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
+  import AddressSearch from '$lib/components/AddressSearch.svelte';
   import { settings } from '$lib/stores/settings';
   import { dataChange } from '$lib/stores/dataChange';
   import { colorForGroup, colorForCategoryFallback } from '$lib/utils/symbology';
@@ -23,6 +24,16 @@
   let showDropPin = false;
   let dropPinLng: number | null = null;
   let dropPinLat: number | null = null;
+  /** Set by the address-search dropdown; Map watches it and animates
+   *  a flyTo. Pass a fresh object on every selection so the reactive
+   *  block in Map sees a new reference. */
+  let mapFlyTo: { lng: number; lat: number; zoom?: number } | null = null;
+  function handleGeocodeSelect(
+    e: CustomEvent<{ lng: number; lat: number; zoom: number; label: string }>
+  ) {
+    const { lng, lat, zoom } = e.detail;
+    mapFlyTo = { lng, lat, zoom };
+  }
 
   let species: Species[] = [];
   /** Species filter:
@@ -509,6 +520,7 @@
 
 {#if $activeRegion}
   <div class="filterbar">
+    <AddressSearch on:select={handleGeocodeSelect} />
     <div class="species-filter">
       <button
         class="species-toggle"
@@ -608,6 +620,7 @@
     placing={placingPin || !!movingPinId}
     placingHint={movingPinId ? 'Click on the map to set the new location · Esc to cancel' : 'Click on the map to place the pin · Esc to cancel'}
     hideLocate={!!selectedPinId}
+    flyTo={mapFlyTo}
     on:pinClick={handlePinClick}
     on:mapTap={handleMapTap}
   />

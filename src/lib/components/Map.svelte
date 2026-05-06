@@ -77,6 +77,17 @@
   export let center: [number, number] = [42.4534, -76.4836]; // Cornell campus default
   export let zoom: number = 14;
 
+  /** Setting this prop animates the map to the given location. Parent
+   *  passes a fresh object on each desired fly (e.g. after a geocode
+   *  result is picked); we never null it back out — Svelte fires the
+   *  reactive block on each new reference. */
+  export let flyTo: { lng: number; lat: number; zoom?: number } | null = null;
+  let lastFlyTo: typeof flyTo = null;
+  $: if (map && flyTo && flyTo !== lastFlyTo) {
+    lastFlyTo = flyTo;
+    map.flyTo([flyTo.lat, flyTo.lng], flyTo.zoom ?? 14, { duration: 0.9 });
+  }
+
   const dispatch = createEventDispatcher<{
     pinClick: { pinId: string };
     mapTap: { lng: number; lat: number };
