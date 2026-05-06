@@ -2,6 +2,11 @@
 -- /timeline page can filter to only the day-precision observations
 -- (a "harvest in 2024" with year-only precision should not be
 -- pinned to Jan 1 on the timeline).
+--
+-- Postgres rejects create-or-replace-view if the column ORDER
+-- changes, so observed_precision is appended at the end of the
+-- existing column list — see comment in 20260506000005 for the
+-- same lesson learned about visibility.
 
 create or replace view public.v_observation_with_pin as
   select
@@ -9,7 +14,6 @@ create or replace view public.v_observation_with_pin as
     o.pin_id,
     o.user_id,
     o.observed_at,
-    o.observed_precision,
     o.stage,
     o.quality_rating,
     o.quality_notes,
@@ -22,7 +26,8 @@ create or replace view public.v_observation_with_pin as
     s.scientific_name      as species_scientific_name,
     pr.username            as user_username,
     pr.display_name        as user_display_name,
-    o.visibility
+    o.visibility,
+    o.observed_precision
   from public.observations o
   join public.pins p           on p.id = o.pin_id
   left join public.species s   on s.id = p.species_id
