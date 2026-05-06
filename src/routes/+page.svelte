@@ -248,7 +248,10 @@
     const status =
       p.effective_status === 'active' ? '' : ` [${p.effective_status}]`;
     const ripe = p.is_ripe_now ? '  · 🍒 ripe now' : '';
-    return `${name}${status}${ripe}`;
+    // Private marker on the tooltip so the user knows at a glance
+    // that other group members can't see this pin.
+    const priv = p.visibility === 'private' ? '  · 🔒 private' : '';
+    return `${name}${status}${ripe}${priv}`;
   }
 
   $: filteredPins = pins.filter((p) => {

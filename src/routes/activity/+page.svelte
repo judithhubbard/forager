@@ -80,6 +80,9 @@
               <p class="secondary">
                 <span class="date">{fmtDate(o.observed_at ?? o.created_at ?? '')}</span>
                 <span class="by">by {profileLabel({ username: o.user_username, display_name: o.user_display_name })}</span>
+                {#if o.visibility === 'private'}
+                  <span class="vis-tag" title="Only you can see this observation">🔒</span>
+                {/if}
                 {#if o.quality_rating}
                   <span class="quality">{'★'.repeat(o.quality_rating)}</span>
                 {/if}
@@ -174,6 +177,7 @@
   }
   .quality { color: #d57100; }
   .by { color: #6b7a6b; }
+  .vis-tag { color: #6b7a6b; font-size: 0.85em; }
   .notes {
     margin: 0.3rem 0 0;
     font-size: 0.85rem;
