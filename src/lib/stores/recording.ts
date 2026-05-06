@@ -128,7 +128,9 @@ function startWatch() {
         }
         return {
           ...s,
-          startedAt: s.startedAt ?? p.ts,
+          // startedAt is already set in start(); leave it alone so
+          // the elapsed-time display ticks from the click rather
+          // than from the first GPS fix.
           endedAt: p.ts,
           points: [...s.points, p],
           error: null
@@ -163,7 +165,11 @@ export function start(): void {
   const s = get(_store);
   if (s.status === 'recording') return;
   if (s.status === 'idle') {
-    _store.set({ ...emptyState(), status: 'recording' });
+    // Stamp startedAt at the click moment so the elapsed-time
+    // display ticks immediately. Without this, indoor / no-GPS
+    // sessions sat at 0:00 until the first fix arrived, which the
+    // user reasonably read as the timer being broken.
+    _store.set({ ...emptyState(), status: 'recording', startedAt: Date.now() });
   } else {
     _store.update((cur) => ({ ...cur, status: 'recording', error: null }));
   }
