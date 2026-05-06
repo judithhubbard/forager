@@ -114,38 +114,90 @@ export async function historicalWeather(
   const todayIso = new Date().toISOString().slice(0, 10);
   const currentYear = parseInt(todayIso.slice(0, 4), 10);
 
-  // Fan out per-year fetches in parallel — each request to Open-Meteo
-  // is small and independent, so 5 years come back in roughly the
-  // same wall-clock time as 1.
-  const yearTasks: Promise<DailyWeather[]>[] = [];
-  for (let year = startYear; year <= endYear; year++) {
-    const yStart = year === startYear ? startDate : `${year}-01-01`;
-    const yEnd =
-      year === endYear
-        ? (endDate < `${year}-12-31` ? endDate : `${year}-12-31`)
-        : `${year}-12-31`;
-    const fetcher = year < currentYear
-      ? fetchArchiveYear(lng, lat, yStart, yEnd)
-      : fetchForecastYear(lng, lat, yStart, yEnd);
-    yearTasks.push(
-      fetcher
-        .then((rows) => {
-          // eslint-disable-next-line no-console
-          console.log(
-            `[weather] ${year} ${yStart}…${yEnd}: ${rows.length} days, ` +
-              `${rows.filter((r) => r.rain_mm > 0).length} with rain, ` +
-              `${rows.filter((r) => r.temp_max_c != null).length} with temp`
-          );
-          return rows;
-        })
-        .catch((e) => {
-          console.warn(`[weather] ${year} fetch failed:`, e);
-          return [] as DailyWeather[];
-        })
-    );
+  // ONE multi-year archive call per region — Open-Meteo accepts long
+  // ranges in a single request and rate-limits aggressive bursts
+  // (we hit 429s when fanning out 5 years × N regions in parallel).
+  // The archive endpoint lags ~5 days behind today, so for the
+  // current year we patch the trailing days from the forecast
+  // endpoint.
+  const archiveEnd =
+    endDate >= todayIso
+      ? (() => {
+          // Cap archive end at ~6 days ago to stay within ERA5 latency.
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - 6);
+          const cutoffIso = cutoff.toISOString().slice(0, 10);
+          return cutoffIso < startDate ? startDate : cutoffIso;
+        })()
+      : endDate;
+
+  const all: DailyWeather[] = [];
+  try {
+    if (archiveEnd >= startDate) {
+      const rows = await fetchArchiveYear(lng, lat, startDate, archiveEnd);
+      all.push(...rows);
+      console.log(
+        `[weather] archive ${startDate}…${archiveEnd}: ${rows.length} days, ` +
+          `${rows.filter((r) => r.rain_mm > 0).length} with rain, ` +
+          `${rows.filter((r) => r.temp_max_c != null).length} with temp`
+      );
+    }
+  } catch (e) {
+    console.warn('[weather] archive fetch failed:', e);
   }
-  const yearResults = await Promise.all(yearTasks);
-  const all: DailyWeather[] = ([] as DailyWeather[]).concat(...yearResults);
+
+  // Patch trailing days (today minus archive lag → today) from the
+  // forecast endpoint, but only when the requested range reaches
+  // close to today.
+  if (endDate >= todayIso || archiveEnd < endDate) {
+    const forecastStart = (() => {
+      const d = new Date(archiveEnd);
+      d.setDate(d.getDate() + 1);
+      const iso = d.toISOString().slice(0, 10);
+      return iso > startDate ? iso : startDate;
+    })();
+    const forecastEnd = endDate > todayIso ? todayIso : endDate;
+    if (forecastStart <= forecastEnd) {
+      try {
+        const url =
+          `https://api.open-meteo.com/v1/forecast` +
+          `?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}` +
+          `&start_date=${forecastStart}&end_date=${forecastEnd}` +
+          `&daily=precipitation_sum,temperature_2m_max,temperature_2m_min` +
+          `&timezone=auto`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const body = (await res.json()) as {
+            daily?: {
+              time?: string[];
+              precipitation_sum?: (number | null)[];
+              temperature_2m_max?: (number | null)[];
+              temperature_2m_min?: (number | null)[];
+            };
+          };
+          const time = body.daily?.time ?? [];
+          const seen = new Set(all.map((r) => r.date));
+          let added = 0;
+          for (const [i, d] of time.entries()) {
+            if (seen.has(d)) continue;
+            if (d < forecastStart || d > forecastEnd) continue;
+            all.push({
+              date: d,
+              rain_mm: body.daily?.precipitation_sum?.[i] ?? 0,
+              temp_max_c: body.daily?.temperature_2m_max?.[i] ?? null,
+              temp_min_c: body.daily?.temperature_2m_min?.[i] ?? null
+            });
+            added++;
+          }
+          console.log(`[weather] forecast ${forecastStart}…${forecastEnd}: ${added} days added`);
+        }
+      } catch (e) {
+        console.warn('[weather] forecast fetch failed:', e);
+      }
+    }
+  }
+
+  all.sort((a, b) => a.date.localeCompare(b.date));
   histCache.set(cacheKey, all);
   return all;
 }
