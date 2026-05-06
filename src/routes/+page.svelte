@@ -11,6 +11,7 @@
   import PinDetailContent from '$lib/components/PinDetailContent.svelte';
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
   import { settings } from '$lib/stores/settings';
+  import { dataChange } from '$lib/stores/dataChange';
 
   let pins: PinEffective[] = [];
   let pinsLoading = false;
@@ -389,7 +390,13 @@
   }
 
   // Reload pins + species when active region changes.
-  $: if ($activeRegion) loadAll($activeRegion.id);
+  // Refetch on activeRegion change AND on any pin/observation
+  // mutation elsewhere in the app (e.g., adding an observation in
+  // the pin panel updates ripeness on the map).
+  $: if ($activeRegion) {
+    void $dataChange;
+    loadAll($activeRegion.id);
+  }
 
   // Deep-link: /?pin=ID opens that pin's detail panel on load. Used by
   // the harvest-windows drill-down to "Open pin" → land here.

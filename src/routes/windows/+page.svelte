@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$lib/utils/nav';
   import { activeRegion } from '$lib/stores/activeRegion';
+  import { dataChange } from '$lib/stores/dataChange';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import { supabase } from '$lib/supabase';
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
@@ -96,7 +97,13 @@
   // Re-run load whenever the active region (re)loads. Replaces an
   // earlier onMount(load), which captured $activeRegion exactly once
   // and missed the case where the region store hadn't populated yet.
-  $: if ($activeRegion) loadFor($activeRegion.id);
+  // Refetch on activeRegion change AND on any observation/pin
+  // mutation elsewhere in the app (so a verified-harvest tick added
+  // from the pin panel shows up on the timeline immediately).
+  $: if ($activeRegion) {
+    void $dataChange;
+    loadFor($activeRegion.id);
+  }
 
   async function loadFor(regionId: string) {
     loading = true;

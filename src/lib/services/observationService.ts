@@ -3,6 +3,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '$lib/supabase';
 import { enqueue } from './outbox';
+import { bumpDataChange } from '$lib/stores/dataChange';
 import type { Database } from '$lib/database.types';
 
 export type Observation = Database['public']['Tables']['observations']['Row'];
@@ -118,6 +119,7 @@ export async function create(input: CreateObservationInput): Promise<string> {
       }
     }
   });
+  bumpDataChange();
   return id;
 }
 
@@ -136,6 +138,7 @@ export async function remove(id: string): Promise<void> {
       }
     }
   });
+  bumpDataChange();
 }
 
 /** Group observations by year for the year-over-year UI (PLAN §3.4). */

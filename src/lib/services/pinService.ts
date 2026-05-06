@@ -4,6 +4,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '$lib/supabase';
 import { enqueue } from './outbox';
+import { bumpDataChange } from '$lib/stores/dataChange';
 import type { Database } from '$lib/database.types';
 
 export type Pin = Database['public']['Tables']['pins']['Row'];
@@ -67,6 +68,7 @@ export async function create(input: CreatePinInput): Promise<string> {
       }
     }
   });
+  bumpDataChange();
   return id;
 }
 
@@ -158,6 +160,7 @@ export async function updateVisibility(pinId: string, visibility: Visibility): P
       }
     }
   });
+  bumpDataChange();
 }
 
 /** Update the stored status of a pin. */
@@ -175,4 +178,5 @@ export async function updateStatus(pinId: string, status: PinStatus): Promise<vo
       }
     }
   });
+  bumpDataChange();
 }
