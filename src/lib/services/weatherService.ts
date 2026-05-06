@@ -85,10 +85,19 @@ export interface DailyWeather {
 
 const histCache = new Map<string, DailyWeather[]>();
 
-/** Open-Meteo's archive goes back to 1940 with ~5 days of latency.
- *  For the most-recent few days we fall back to the forecast API
- *  with past_days set, then merge the two. Returns one row per day
- *  in the requested range, in ascending date order. */
+/** Daily weather across a multi-year span. We call Open-Meteo
+ *  per-year because earlier multi-year requests appeared to come
+ *  back partially populated (most of each year's days had null
+ *  values from the archive endpoint, leaving the rendered chart
+ *  mostly empty). Per-year calls are reliable and the cache means
+ *  the only repeat cost is during the first paint.
+ *
+ *  Endpoint mix:
+ *  - For complete past years, archive-api (ERA5 reanalysis, ~5-day
+ *    latency, 1940-present).
+ *  - For the current (in-progress) year, the regular forecast
+ *    endpoint with past_days set so we get up-to-yesterday data
+ *    even though the archive lags. */
 export async function historicalWeather(
   lng: number,
   lat: number,
@@ -100,67 +109,131 @@ export async function historicalWeather(
   const hit = histCache.get(cacheKey);
   if (hit) return hit;
 
-  const archiveUrl =
+  const startYear = parseInt(startDate.slice(0, 4), 10);
+  const endYear = parseInt(endDate.slice(0, 4), 10);
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const currentYear = parseInt(todayIso.slice(0, 4), 10);
+
+  const all: DailyWeather[] = [];
+  for (let year = startYear; year <= endYear; year++) {
+    const yStart = year === startYear ? startDate : `${year}-01-01`;
+    const yEnd =
+      year === endYear
+        ? (endDate < `${year}-12-31` ? endDate : `${year}-12-31`)
+        : `${year}-12-31`;
+    try {
+      const rows =
+        year < currentYear
+          ? await fetchArchiveYear(lng, lat, yStart, yEnd)
+          : await fetchForecastYear(lng, lat, yStart, yEnd);
+      all.push(...rows);
+      // eslint-disable-next-line no-console
+      console.log(
+        `[weather] ${year} ${yStart}…${yEnd}: ${rows.length} days, ` +
+          `${rows.filter((r) => r.rain_mm > 0).length} with rain, ` +
+          `${rows.filter((r) => r.temp_max_c != null).length} with temp`
+      );
+    } catch (e) {
+      console.warn(`[weather] ${year} fetch failed:`, e);
+    }
+  }
+  histCache.set(cacheKey, all);
+  return all;
+}
+
+async function fetchArchiveYear(
+  lng: number,
+  lat: number,
+  startDate: string,
+  endDate: string
+): Promise<DailyWeather[]> {
+  const url =
     `https://archive-api.open-meteo.com/v1/archive` +
     `?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}` +
     `&start_date=${startDate}&end_date=${endDate}` +
     `&daily=precipitation_sum,temperature_2m_max,temperature_2m_min` +
     `&timezone=auto`;
-  const archiveRes = await fetch(archiveUrl);
-  if (!archiveRes.ok) {
-    throw new Error(`historical weather fetch ${archiveRes.status}`);
-  }
-  const archive = (await archiveRes.json()) as {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`archive ${res.status}`);
+  const body = (await res.json()) as {
     daily?: {
-      time: string[];
-      precipitation_sum: number[];
-      temperature_2m_max: number[];
-      temperature_2m_min: number[];
+      time?: string[];
+      precipitation_sum?: (number | null)[];
+      temperature_2m_max?: (number | null)[];
+      temperature_2m_min?: (number | null)[];
     };
+    error?: boolean;
+    reason?: string;
   };
-
-  // Today's date in the local TZ — the comparison below is a string
-  // compare so YYYY-MM-DD ordering is fine.
-  const todayIso = new Date().toISOString().slice(0, 10);
-
-  const out: DailyWeather[] = (archive.daily?.time ?? []).map((d, i) => ({
+  if (body.error) throw new Error(body.reason ?? 'archive returned error');
+  const time = body.daily?.time ?? [];
+  return time.map((d, i) => ({
     date: d,
-    rain_mm: archive.daily?.precipitation_sum[i] ?? 0,
-    temp_max_c: archive.daily?.temperature_2m_max[i] ?? null,
-    temp_min_c: archive.daily?.temperature_2m_min[i] ?? null
+    rain_mm: body.daily?.precipitation_sum?.[i] ?? 0,
+    temp_max_c: body.daily?.temperature_2m_max?.[i] ?? null,
+    temp_min_c: body.daily?.temperature_2m_min?.[i] ?? null
   }));
+}
 
-  // Patch in the very recent days (archive lags ~5 days) via the
-  // forecast endpoint. Cheap if endDate is well in the past — skip.
-  if (endDate >= todayIso) {
-    const recentUrl =
+/** Current-year fetch. Forecast endpoint with past_days walks back
+ *  from today; we then trim to the requested window. The forecast
+ *  endpoint caps past_days at ~92, so for a year that's still
+ *  within its first ~3 months this works. For years deeper in we
+ *  fall back to the archive endpoint via fetchArchiveYear. */
+async function fetchForecastYear(
+  lng: number,
+  lat: number,
+  startDate: string,
+  endDate: string
+): Promise<DailyWeather[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const earliestForecast = new Date();
+  earliestForecast.setDate(earliestForecast.getDate() - 92);
+  const earliestForecastIso = earliestForecast.toISOString().slice(0, 10);
+  // If startDate is older than what forecast can reach, split the
+  // year between archive (older portion) and forecast (recent).
+  let archivePart: DailyWeather[] = [];
+  if (startDate < earliestForecastIso) {
+    const archiveEnd = new Date(earliestForecast);
+    archiveEnd.setDate(archiveEnd.getDate() - 1);
+    const archiveEndIso = archiveEnd.toISOString().slice(0, 10);
+    archivePart = await fetchArchiveYear(lng, lat, startDate, archiveEndIso);
+  }
+  const forecastStart = startDate < earliestForecastIso ? earliestForecastIso : startDate;
+  const forecastEnd = endDate > today ? today : endDate;
+  let forecastPart: DailyWeather[] = [];
+  if (forecastStart <= forecastEnd) {
+    const url =
       `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}` +
-      `&past_days=10&forecast_days=1` +
+      `&start_date=${forecastStart}&end_date=${forecastEnd}` +
+      `&past_days=92&forecast_days=1` +
       `&daily=precipitation_sum,temperature_2m_max,temperature_2m_min` +
       `&timezone=auto`;
-    try {
-      const recentRes = await fetch(recentUrl);
-      if (recentRes.ok) {
-        const recent = (await recentRes.json()) as typeof archive;
-        const seen = new Set(out.map((r) => r.date));
-        for (const [i, d] of (recent.daily?.time ?? []).entries()) {
-          if (seen.has(d)) continue;
-          if (d < startDate || d > endDate) continue;
-          out.push({
-            date: d,
-            rain_mm: recent.daily?.precipitation_sum[i] ?? 0,
-            temp_max_c: recent.daily?.temperature_2m_max[i] ?? null,
-            temp_min_c: recent.daily?.temperature_2m_min[i] ?? null
-          });
-        }
-        out.sort((a, b) => a.date.localeCompare(b.date));
-      }
-    } catch {
-      // Best-effort patch; the archive part is enough on its own.
+    const res = await fetch(url);
+    if (res.ok) {
+      const body = (await res.json()) as {
+        daily?: {
+          time?: string[];
+          precipitation_sum?: (number | null)[];
+          temperature_2m_max?: (number | null)[];
+          temperature_2m_min?: (number | null)[];
+        };
+      };
+      const time = body.daily?.time ?? [];
+      forecastPart = time
+        .map((d, i) => ({
+          date: d,
+          rain_mm: body.daily?.precipitation_sum?.[i] ?? 0,
+          temp_max_c: body.daily?.temperature_2m_max?.[i] ?? null,
+          temp_min_c: body.daily?.temperature_2m_min?.[i] ?? null
+        }))
+        .filter((r) => r.date >= forecastStart && r.date <= forecastEnd);
     }
   }
-
-  histCache.set(cacheKey, out);
-  return out;
+  // Merge, dedupe by date (forecast wins because it's fresher), sort.
+  const byDate = new Map<string, DailyWeather>();
+  for (const r of archivePart) byDate.set(r.date, r);
+  for (const r of forecastPart) byDate.set(r.date, r);
+  return Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
 }
