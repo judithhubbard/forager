@@ -540,6 +540,32 @@
    *  that compute the day from cursor x and update this. */
   let tooltip: { x: number; y: number; lines: string[] } | null = null;
 
+  /** Per-(region, year) view mode. 'all' shows every species
+   *  relevant to the region (the default), 'observed' filters to
+   *  only species the user has logged in that specific year. */
+  type YearMode = 'all' | 'observed';
+  let yearMode = new Map<string, YearMode>();
+  function modeKey(regionId: string, year: number) { return `${regionId}:${year}`; }
+  function getMode(regionId: string, year: number): YearMode {
+    return yearMode.get(modeKey(regionId, year)) ?? 'all';
+  }
+  function toggleMode(regionId: string, year: number) {
+    const next: YearMode = getMode(regionId, year) === 'all' ? 'observed' : 'all';
+    yearMode = new Map(yearMode).set(modeKey(regionId, year), next);
+  }
+  /** Filter the region-wide species list to only those with at least
+   *  one observation in the given year (preserving the canonical
+   *  category → group sort order). */
+  function observedSidsInYear(rt: RegionTimeline, year: number, allSids: string[]): string[] {
+    const seen = new Set<string>();
+    for (const o of rt.observations) {
+      if (!o.observed_at || !o.species_id) continue;
+      if (new Date(o.observed_at).getFullYear() !== year) continue;
+      seen.add(o.species_id);
+    }
+    return allSids.filter((sid) => seen.has(sid));
+  }
+
   function onTrackHover(
     e: MouseEvent,
     track: 'rain' | 'temp',
@@ -685,12 +711,24 @@
         {@const yLo = tempToY(TEMP_LO_C, tempY)}
         {@const tempRects = tempDayRects(yWeather, tempY, year)}
         {@const doyAvg = computeDoyAverages(rt, year)}
-        {@const laneLayout = computeLanes(allSids, lanesY)}
+        {@const mode = getMode(rt.regionId, year)}
+        {@const visibleSids = mode === 'observed' ? observedSidsInYear(rt, year, allSids) : allSids}
+        {@const laneLayout = computeLanes(visibleSids, lanesY)}
         {@const totalH = lanesY + laneLayout.height + 6}
         <section class="year-row" class:current={year === currentYear}>
           <div class="year-label">
             {year}
             {#if year === currentYear}<span class="cur-tag">current</span>{/if}
+            <button
+              class="mode-btn"
+              class:active={mode === 'observed'}
+              on:click={() => toggleMode(rt.regionId, year)}
+              title={mode === 'all'
+                ? 'Showing every species in the region. Click to filter to species you observed this year.'
+                : 'Showing only species you observed this year. Click to show all region species.'}
+            >
+              {mode === 'all' ? 'All' : 'Obs'}
+            </button>
           </div>
           <svg viewBox="0 0 {W} {totalH}" preserveAspectRatio="none" class="year-svg" style="height: {totalH * 1.1}px;">
             <!-- Month axis -->
@@ -946,6 +984,19 @@
     padding-top: 0.1rem;
   }
   .cur-tag { font-size: 0.7rem; font-weight: 500; color: #6b7a6b; }
+  .mode-btn {
+    align-self: flex-start;
+    margin-top: 0.2rem;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.7rem;
+    background: white;
+    color: #4a554a;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.25rem;
+    cursor: pointer;
+  }
+  .mode-btn:hover { background: #f0f5ef; }
+  .mode-btn.active { background: #fff4e3; border-color: #e8d3a6; color: #7a4a10; }
   .year-svg {
     width: 100%;
     display: block;
