@@ -378,7 +378,15 @@
    *  80°F).
    *
    *  Returns shape: { x, y, w, h, zone } per rect. */
-  type TempRect = { x: number; y: number; w: number; h: number; zone: 'cool' | 'warm' | 'hot' };
+  type TempRect = {
+    x: number; y: number; w: number; h: number;
+    zone: 'cool' | 'warm' | 'hot';
+    date: string;
+    /** °C */
+    hi: number;
+    /** °C */
+    lo: number;
+  };
   function tempDayRects(rows: DailyWeather[], yStart: number): TempRect[] {
     const out: TempRect[] = [];
     const yHotEdge = tempToY(HOT_C, yStart);
@@ -393,23 +401,24 @@
       if (yBot - yTop < 0.2) continue;
       const xCenter = doyToX(dateToDoy(d.date));
       const x = xCenter - dayW / 2;
+      const meta = { date: d.date, hi, lo };
       // Hot zone: y between yTop and yHotEdge (smaller y = higher temp)
       if (hi > HOT_C) {
         const top = yTop;
         const bot = Math.min(yHotEdge, yBot);
-        if (bot > top) out.push({ x, y: top, w: dayW, h: bot - top, zone: 'hot' });
+        if (bot > top) out.push({ x, y: top, w: dayW, h: bot - top, zone: 'hot', ...meta });
       }
       // Warm zone: between yHotEdge and yFreezeEdge
       if (hi > FREEZE_C && lo < HOT_C) {
         const top = Math.max(yHotEdge, yTop);
         const bot = Math.min(yFreezeEdge, yBot);
-        if (bot > top) out.push({ x, y: top, w: dayW, h: bot - top, zone: 'warm' });
+        if (bot > top) out.push({ x, y: top, w: dayW, h: bot - top, zone: 'warm', ...meta });
       }
       // Cool zone: y between yFreezeEdge and yBot
       if (lo < FREEZE_C) {
         const top = Math.max(yFreezeEdge, yTop);
         const bot = yBot;
-        if (bot > top) out.push({ x, y: top, w: dayW, h: bot - top, zone: 'cool' });
+        if (bot > top) out.push({ x, y: top, w: dayW, h: bot - top, zone: 'cool', ...meta });
       }
     }
     return out;
@@ -579,7 +588,9 @@
                     height={aBarH}
                     fill="#88a8c0"
                     opacity="0.45"
-                  />
+                  >
+                    <title>typical {avg.rain_mm.toFixed(1)} mm ({(avg.rain_mm / 25.4).toFixed(2)} in) on day {doy}</title>
+                  </rect>
                 {/if}
               {/each}
             {/if}
@@ -636,7 +647,9 @@
                   x={r.x} y={r.y} width={r.w} height={r.h}
                   fill={ZONE_COLOR[r.zone]}
                   opacity="0.85"
-                />
+                >
+                  <title>{r.date} · low {fmtTempF(r.lo)} / high {fmtTempF(r.hi)}</title>
+                </rect>
               {/each}
               <!-- Threshold reference lines on top of the bars -->
               <line x1={PAD_L} y1={y32} x2={W - PAD_R} y2={y32} stroke="#5e7a8b" stroke-width="0.6" stroke-dasharray="3,2" opacity="0.6" />
