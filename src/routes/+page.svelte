@@ -294,14 +294,23 @@
     dropPinLng = null;
     dropPinLat = null;
   }
+
+  /** Open the drop-pin modal with no preset coordinates — DropPinModal
+   *  starts in 'capturing' mode and uses GPS. Used by the desktop "+"
+   *  button since right-click works but isn't very discoverable. */
+  function handleNewPinClick() {
+    dropPinLng = null;
+    dropPinLat = null;
+    showDropPin = true;
+  }
 </script>
 
 <header>
   <h1>Forager</h1>
+  {#if $activeRegion}
+    <span class="region-badge">{$activeRegion.name}</span>
+  {/if}
   <div class="meta">
-    {#if $activeRegion}
-      <span class="region">{$activeRegion.name}</span>
-    {/if}
     {#if pinsLoading}
       <span class="hint">Loading…</span>
     {/if}
@@ -425,6 +434,15 @@
   <main class="loading"><p>Loading…</p></main>
 {/if}
 
+{#if $activeRegion && !selectedPinId}
+  <button
+    class="new-pin-fab"
+    on:click={handleNewPinClick}
+    aria-label="New pin"
+    title="Add a new pin"
+  >+</button>
+{/if}
+
 {#if showDropPin && $activeRegion}
   <DropPinModal
     regionId={$activeRegion.id}
@@ -489,12 +507,41 @@
     align-items: center;
     gap: 0.75rem;
     font-size: 0.85rem;
+    margin-left: auto;
   }
-  .region {
-    color: #4a554a;
-    padding: 0.2rem 0.6rem;
-    background: #eaf2ea;
-    border-radius: 1rem;
+  /* Active region sits next to the title, in a small bordered chip. */
+  .region-badge {
+    padding: 0.15rem 0.55rem;
+    border: 1px solid #c7d0c7;
+    background: #f5f8f5;
+    border-radius: 0.35rem;
+    font-size: 0.78rem;
+    color: #3a5a3a;
+    line-height: 1.2;
+  }
+  /* Floating "+" pin button — desktop only. On touch devices the
+     long-press gesture takes its place, so we hide it via the
+     coarse-pointer media query to avoid clutter on phones. */
+  .new-pin-fab {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    border: 0;
+    background: #3a5a3a;
+    color: white;
+    font-size: 2rem;
+    line-height: 1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 600;
+    display: none;
+  }
+  .new-pin-fab:active { background: #2a4a2a; }
+  @media (pointer: fine) {
+    .new-pin-fab { display: inline-flex; align-items: center; justify-content: center; }
   }
   .hint {
     color: #6b7a6b;
