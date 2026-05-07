@@ -34,7 +34,8 @@
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
   import AddressSearch from '$lib/components/AddressSearch.svelte';
   import SignupBanner from '$lib/components/SignupBanner.svelte';
-  import { settings } from '$lib/stores/settings';
+  import { settings, setMapLayer, type MapLayerKey } from '$lib/stores/settings';
+  import { profile } from '$lib/stores/profile';
   import {
     enabledIds,
     setEnabled as setSpeciesEnabled,
@@ -303,6 +304,25 @@
     | 'confirmed_ripe'
     | 'confirmed_harvest';
   let filterStatus: FilterStatus = 'active';
+  /** Per-pin source category for the layers panel. Today the
+   *  friend-graph doesn't exist yet, so 'friends' is unreachable;
+   *  the toggle stays in the UI as a no-op until that lands. */
+  type PinSource = 'mine' | 'friends' | 'group' | 'public';
+  $: myUserId = $profile?.id ?? null;
+  function sourceOf(p: PinEffective): PinSource {
+    if (myUserId && p.created_by === myUserId) return 'mine';
+    if (p.visibility === 'public') return 'public';
+    return 'group';
+  }
+  let layersPanelOpen = false;
+  function onLayerToggle(key: MapLayerKey, e: Event) {
+    setMapLayer(key, (e.currentTarget as HTMLInputElement).checked);
+  }
+  /** Brief 'X / Y on' summary for the panel button. */
+  $: layersOnCount = (() => {
+    const m = $settings.mapLayers;
+    return [m.mine, m.friends, m.group, m.public].filter(Boolean).length;
+  })();
   let showLegend = true;
 
   /** Cookbook filter — show only species whose preparation_methods
@@ -470,6 +490,8 @@
   }
 
   $: filteredPins = pins.filter((p) => {
+    // Layer-source filter (mine / friends / group / public).
+    if (!$settings.mapLayers[sourceOf(p)]) return false;
     // Category filter (Fruit trees / Brambles / Nuts / Mushrooms / Other).
     const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
     if (cat && !visibleCats.has(cat)) return false;
@@ -984,6 +1006,58 @@
         </select>
       </label>
     {/if}
+    {#if $session}
+      <div class="layers-filter">
+        <button
+          class="layers-toggle"
+          on:click={() => (layersPanelOpen = !layersPanelOpen)}
+          title="Show or hide pin sources on the map"
+        >
+          Layers: {layersOnCount}/4
+          <span class="caret">{layersPanelOpen ? '▴' : '▾'}</span>
+        </button>
+        {#if layersPanelOpen}
+          <div class="layers-panel">
+            <label class="layer-row">
+              <input
+                type="checkbox"
+                checked={$settings.mapLayers.mine}
+                on:change={(e) => onLayerToggle('mine', e)}
+              />
+              <span class="layer-name">Mine</span>
+              <span class="layer-hint">Pins I created</span>
+            </label>
+            <label class="layer-row">
+              <input
+                type="checkbox"
+                checked={$settings.mapLayers.friends}
+                on:change={(e) => onLayerToggle('friends', e)}
+              />
+              <span class="layer-name">Friends</span>
+              <span class="layer-hint">No-op until friend graph ships</span>
+            </label>
+            <label class="layer-row">
+              <input
+                type="checkbox"
+                checked={$settings.mapLayers.group}
+                on:change={(e) => onLayerToggle('group', e)}
+              />
+              <span class="layer-name">Group</span>
+              <span class="layer-hint">Region members' pins</span>
+            </label>
+            <label class="layer-row">
+              <input
+                type="checkbox"
+                checked={$settings.mapLayers.public}
+                on:change={(e) => onLayerToggle('public', e)}
+              />
+              <span class="layer-name">Public</span>
+              <span class="layer-hint">City inventories + community-shared</span>
+            </label>
+          </div>
+        {/if}
+      </div>
+    {/if}
     <div class="filterbar-spacer"></div>
     {#if capHit}
       <span class="cap-hit" title="More pins exist than fit in one fetch — zoom in for the rest.">
@@ -1218,6 +1292,55 @@
      new row left-aligned, which is fine — better than crowding the
      species/show controls. */
   .filterbar-spacer { flex: 1 1 auto; }
+
+  /* Layers panel — same shape as the species filter dropdown
+     so the two read as a pair. Authed users only. */
+  .layers-filter { position: relative; }
+  .layers-toggle {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.3rem;
+    background: white;
+    color: #1f2a1f;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .layers-toggle .caret {
+    color: #6b7a6b;
+    font-size: 0.7rem;
+  }
+  .layers-panel {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    z-index: 1100;
+    background: white;
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    padding: 0.4rem;
+    min-width: 14rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .layer-row {
+    display: grid;
+    grid-template-columns: 1.1rem 4rem 1fr;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.35rem;
+    border-radius: 0.2rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .layer-row:hover { background: #f5f8f5; }
+  .layer-row input { width: 0.95rem; height: 0.95rem; margin: 0; }
+  .layer-name { color: #1f2a1f; font-weight: 500; }
+  .layer-hint { color: #8a948a; font-size: 0.75rem; }
   .cap-hit {
     display: inline-flex;
     align-items: center;

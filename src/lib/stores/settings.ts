@@ -40,14 +40,28 @@ interface Settings {
    *  multiple tracks are visible; flip off when comparing two
    *  routes' shapes (the gradient steals attention from the lines). */
   colorTracksByDate: boolean;
+  /** Per-source visibility toggles for the map's pin layer. Each
+   *  pin gets categorized as mine / friends / group / public; this
+   *  filter lets the user mute one or more categories at a time
+   *  without otherwise touching the species or status filters.
+   *  All on by default; a basemap-only view is achievable by
+   *  flipping all four off. */
+  mapLayers: {
+    mine: boolean;
+    friends: boolean;
+    group: boolean;
+    public: boolean;
+  };
 }
+export type MapLayerKey = 'mine' | 'friends' | 'group' | 'public';
 const DEFAULT: Settings = {
   basemap: 'osm-hot',
   disclaimerAcceptedAt: null,
   colorBy: 'group',
   defaultPhotoLicense: 'CC-BY-SA-4.0',
   showHeatmap: false,
-  colorTracksByDate: true
+  colorTracksByDate: true,
+  mapLayers: { mine: true, friends: true, group: true, public: true }
 };
 
 const ALLOWED_LICENSES: PhotoLicense[] = [
@@ -75,7 +89,13 @@ function normalize(s: Partial<Settings>): Settings {
     showHeatmap: !!s.showHeatmap,
     // Default true so existing users get the gradient by default;
     // explicit false from saved state turns it off.
-    colorTracksByDate: s.colorTracksByDate !== false
+    colorTracksByDate: s.colorTracksByDate !== false,
+    mapLayers: {
+      mine:    s.mapLayers?.mine    !== false,
+      friends: s.mapLayers?.friends !== false,
+      group:   s.mapLayers?.group   !== false,
+      public:  s.mapLayers?.public  !== false
+    }
   };
 }
 
@@ -121,5 +141,12 @@ export function setShowHeatmap(v: boolean): void {
 
 export function setColorTracksByDate(v: boolean): void {
   settings.update((s) => ({ ...s, colorTracksByDate: v }));
+}
+
+export function setMapLayer(key: MapLayerKey, v: boolean): void {
+  settings.update((s) => ({
+    ...s,
+    mapLayers: { ...s.mapLayers, [key]: v }
+  }));
 }
 
