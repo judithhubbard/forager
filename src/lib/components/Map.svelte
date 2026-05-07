@@ -933,9 +933,20 @@
       if (viewportTimer) clearTimeout(viewportTimer);
       viewportTimer = setTimeout(fireViewportChange, 300);
     });
-    // Fire once after first render so the parent gets the initial
-    // viewport without waiting for a user pan.
-    setTimeout(fireViewportChange, 100);
+    // Fire once after the map is genuinely ready so the parent
+    // gets the initial viewport. The earlier setTimeout(_, 100)
+    // sometimes ran before Leaflet had sized the container, so
+    // map.getBounds() returned a degenerate bbox and the first
+    // fetch returned zero pins (the next user-zoom would then
+    // fire moveend with the proper bbox and finally load data —
+    // 'I have to zoom to trigger it'). whenReady fires once the
+    // map is loaded and sized; size invalidation forces a re-layout
+    // in case the container's CSS settled after Leaflet measured.
+    map.whenReady(() => {
+      if (!map) return;
+      map.invalidateSize();
+      fireViewportChange();
+    });
 
     // Long-press (or right-click on desktop) on empty map area: emit
     // mapTap. Marker clicks still don't bubble here. Using contextmenu
