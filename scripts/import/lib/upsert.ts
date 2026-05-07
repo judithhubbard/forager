@@ -224,9 +224,14 @@ export async function bulkUpsertImportedPins(
   const raws = args.rows.map((r) => JSON.stringify(r.raw ?? {}));
 
   const rows = await sql<{ id: string; inserted: boolean }[]>`
+    -- visibility='public' for all imports. The bulk update path
+    -- always represents authoritative external/curated data
+    -- (municipal tree inventories, Cornell datasets) — that's the
+    -- whole point of the public layer. Migration 16 / 20260507000003
+    -- backfilled rows that pre-date this default.
     insert into public.pins (
       region_id, created_by, species_id,
-      location, status,
+      location, status, visibility,
       import_source, import_external_id, import_raw
     )
     select
@@ -235,6 +240,7 @@ export async function bulkUpsertImportedPins(
       t.species_id::uuid,
       ST_SetSRID(ST_MakePoint(t.lng, t.lat), 4326)::geography,
       'active'::pin_status,
+      'public'::text,
       ${args.sourceId},
       t.external_id,
       t.raw::jsonb

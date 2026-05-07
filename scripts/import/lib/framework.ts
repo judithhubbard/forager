@@ -231,6 +231,14 @@ export async function runImport<F>(config: ImportConfig<F>): Promise<void> {
       });
     }
 
+    // The visibility-gate trigger from migration 15 blocks
+    // visibility='public' writes unless auth.uid() belongs to a
+    // global admin. The import script connects as the database owner
+    // via SUPABASE_DB_URL, so auth.uid() is NULL and the trigger
+    // would block every row. Disable for the bulk insert (and
+    // re-enable in a finally block below) — same pattern migration 16
+    // used for the bootstrap promote-to-public update.
+    await sql`alter table public.pins disable trigger tg_gate_public_pins`;
     const BATCH = 500;
     for (let i = 0; i < matched.length; i += BATCH) {
       const slice = matched.slice(i, i + BATCH);
@@ -251,6 +259,9 @@ export async function runImport<F>(config: ImportConfig<F>): Promise<void> {
         });
       }
     }
+    // Re-enable the visibility-gate trigger so future row-level
+    // writes by non-admin users are still rejected.
+    await sql`alter table public.pins enable trigger tg_gate_public_pins`;
 
     await finishImportRun(sql, runId, summary);
     await sql`select pg_advisory_unlock(hashtext(${`${regionId}:${config.sourceId}`}))`;
