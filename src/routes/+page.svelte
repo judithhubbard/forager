@@ -612,6 +612,30 @@
     if (want && want !== selectedPinId) selectedPinId = want;
   }
 
+  // Deep-link: /?species=ID narrows the species filter to just that
+  // species. Used by the "Show pins of this species on the map" link
+  // on /species/[id]. We apply once per param value (the lastApplied
+  // gate stops re-fires) and only after species are loaded so the
+  // userPreferences materialization knows the full id set. Authed
+  // only — the persistent prefs store has nowhere to write for anon.
+  let lastSpeciesParam: string | null = null;
+  $: {
+    const want = $page.url.searchParams.get('species');
+    if (
+      want &&
+      want !== lastSpeciesParam &&
+      species.length > 0 &&
+      $session &&
+      species.some((s) => s.id === want)
+    ) {
+      lastSpeciesParam = want;
+      setExplicitSpecies(
+        new Set([want]),
+        species.map((s) => s.id)
+      );
+    }
+  }
+
   async function loadAll(regionId: string) {
     pinsLoading = true;
     try {
