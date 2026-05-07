@@ -18,7 +18,8 @@
     "import:cornell-bg": "tsx scripts/import/cornell-bg.ts",
     "import:nyc-trees": "tsx scripts/import/nyc-trees.ts",
     "import:chicago-trees": "tsx scripts/import/chicago-trees.ts",
-    "import:wikidata": "tsx scripts/import/wikidata-pull.ts"
+    "import:wikidata": "tsx scripts/import/wikidata-pull.ts",
+    "wikipedia:summaries": "tsx scripts/import/wikipedia-summaries.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.0",
