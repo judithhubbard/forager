@@ -733,6 +733,25 @@
             {watching ? '★ Watching' : '☆ Watch'}
           </button>
           <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
+          <select
+            class="status-select"
+            value={pendingStatus ?? ''}
+            on:change={onStatusSelect}
+            disabled={statusSaving}
+            title="Change pin status"
+          >
+            <option value="">{statusSaving ? 'Saving…' : 'change status…'}</option>
+            {#each STATUSES as s}
+              {#if s !== pin.status}<option value={s}>{statusLabel(s)}</option>{/if}
+            {/each}
+          </select>
+          {#if pin.created_by === $profile?.id || $activeRegion?.role === 'admin'}
+            <button
+              class="watch-btn"
+              on:click={() => dispatch('requestMove', { pinId })}
+              title="Click on the map to set a new location"
+            >Move pin</button>
+          {/if}
         </div>
       {:else}
         <div class="watch-row">
@@ -775,27 +794,6 @@
               <div class="mini-today" style={`left: ${miniPct(todayDoy)}%`}></div>
             {/if}
           </div>
-        </div>
-      {/if}
-      {#if $session}
-        <div class="status-edit-row">
-          <select
-            value={pendingStatus ?? ''}
-            on:change={onStatusSelect}
-            disabled={statusSaving}
-          >
-            <option value="">{statusSaving ? 'Saving…' : 'change status…'}</option>
-            {#each STATUSES as s}
-              {#if s !== pin.status}<option value={s}>{statusLabel(s)}</option>{/if}
-            {/each}
-          </select>
-          {#if pin.created_by === $profile?.id || $activeRegion?.role === 'admin'}
-            <button
-              class="inline"
-              on:click={() => dispatch('requestMove', { pinId })}
-              title="Click on the map to set a new location"
-            >Move pin</button>
-          {/if}
         </div>
       {/if}
       <div class="access-row">
@@ -1390,7 +1388,24 @@
     padding: 0.05rem 0.45rem;
     border-radius: 0.45rem;
   }
-  .watch-row { margin: 0.35rem 0; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .watch-row {
+    margin: 0.35rem 0;
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  /* Status select sized to match the surrounding watch-btn pills
+     so the row reads as one cluster of related controls. */
+  .watch-row .status-select {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.82rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.3rem;
+    background: white;
+    color: #3a5a3a;
+    cursor: pointer;
+  }
   .watch-btn {
     background: white;
     border: 1px solid #c7d0c7;
