@@ -25,6 +25,7 @@
     "import:usda-zones": "tsx scripts/import/usda-zones.ts",
     "backfill:pin-zones": "tsx scripts/import/backfill-pin-zones.ts",
     "stamp:jk-prefs": "tsx scripts/import/stamp-jk-prefs.ts",
+    "regen:usda-zones-static": "tsx scripts/import/regen-usda-zones-static.ts",
     "import:wikidata": "tsx scripts/import/wikidata-pull.ts",
     "import:wikidata-images": "tsx scripts/import/wikidata-images.ts",
     "wikipedia:summaries": "tsx scripts/import/wikipedia-summaries.ts"
@@ -35,6 +36,7 @@
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@types/leaflet": "^1.9.0",
     "dotenv": "^16.4.0",
+    "mapshaper": "^0.7.10",
     "postgres": "^3.4.0",
     "prettier": "^3.2.0",
     "prettier-plugin-svelte": "^3.2.0",
