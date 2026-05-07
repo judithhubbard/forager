@@ -116,6 +116,14 @@
    *  $settings.showHeatmap. */
   export let heatPoints: Array<[number, number]> = [];
 
+  /** Pin density heat points: flat [lat, lng] pairs from individual
+   *  pins inside the current viewport. Rendered as overlapping
+   *  low-opacity orange circles for a true blobby heatmap; the
+   *  earlier grid-cluster approach drew rigid tile circles that
+   *  the user (rightly) called terrible. Populated by +page.svelte
+   *  when $settings.showPinHeatmap is on. */
+  export let pinHeatPoints: Array<[number, number]> = [];
+
   /** Show the live track-recorder controls + path overlay. Parent
    *  passes true for signed-in viewers; signed-out viewers don't
    *  have a place to save tracks to. */
@@ -250,14 +258,22 @@
   $: if (map && markerLayer && LCache) {
     renderPins(pins, selectedPinId, colorOf, categoryOf);
   }
-  // Cluster layer renders one of two ways depending on the
-  // pinHeatmap toggle: numbered count dots (default) or weighted
-  // heat circles (pinHeatmap=true). Same data, different rendering;
-  // the toggle answers "where" instead of "how many."
+  // Cluster layer renders numbered count dots when pinHeatmap is
+  // off; cleared when pinHeatmap is on (heat dots are drawn from
+  // pinHeatPoints in a separate reactive below).
   $: if (map && clusterLayer && LCache) {
-    if (pinHeatmap) renderClusterHeatmap(clusters);
-    else renderClusters(clusters);
+    if (pinHeatmap) {
+      // Clear numbered dots so they don't sit under the heat layer.
+      clusterLayer.clearLayers();
+    } else {
+      renderClusters(clusters);
+    }
   }
+  // Pin density heatmap from individual pin coordinates: small
+  // overlapping orange circles, same canvas-rendered approach as
+  // the user-track heatmap. Real blobby gradient.
+  let pinHeatGroup: import('leaflet').LayerGroup | undefined;
+  $: if (map && LCache) renderPinHeat(pinHeatmap ? pinHeatPoints : []);
   // Density visualization via overlapping low-opacity circles. Not
   // a true Gaussian heatmap (we ditched the leaflet.heat plugin
   // for ESM compatibility) but visually similar — many overlapping
@@ -762,76 +778,39 @@
     }).addTo(selectionLayer);
   }
 
-  /** Pin-density heatmap: each cluster renders as a pair of orange
-   *  circles sized in METERS (not pixels) so they scale with the
-   *  basemap as you zoom. The radius is keyed off the server's
-   *  cluster eps for the current zoom — that's the cell size pins
-   *  were grouped into — so circles roughly fill their own cell
-   *  without overlapping the next one over.
+  /** True pin-density heatmap: each individual pin coordinate
+   *  becomes a small low-opacity orange circle (canvas-rendered).
+   *  Where pins are dense, the overlapping circles compound into
+   *  a darker patch; sparse areas show isolated dots. Same approach
+   *  as the user-track heatmap (renderHeat above), just orange
+   *  instead of blue.
    *
-   *  Earlier version used L.circleMarker (pixel-based radius), which
-   *  meant at low zoom dozens of cluster centroids in a small screen
-   *  area all rendered as fixed-pixel circles that visually stacked
-   *  on top of each other. Now neighboring clusters tile their cells
-   *  cleanly. */
-  function renderClusterHeatmap(currentClusters: ClusterPoint[]) {
-    if (!clusterLayer || !map || !LCache) return;
-    const L = LCache;
-    const next = L.layerGroup();
-    const zoom = map.getZoom();
-    const epsDeg = clusterEpsForZoomLocal(zoom);
-    for (const c of currentClusters) {
-      if (c.count_pins < 1) continue;
-      // Cell-size in meters depends on latitude: 1° lat ≈ 111 km
-      // everywhere, but 1° lng shrinks toward the poles by cos(lat).
-      // Earlier code used 111 km for both axes and got overlap at
-      // mid-latitudes — Toronto (43.6°N) has 1° lng ≈ 80 km, so
-      // a circle sized for 111-km cells overflowed the actual
-      // lng cell. Use the smaller of the two so the circle never
-      // exceeds half the cell width on either axis.
-      const latRad = (c.centroid_lat * Math.PI) / 180;
-      const cellMetersLat = epsDeg * 111_000;
-      const cellMetersLng = epsDeg * 111_000 * Math.cos(latRad);
-      const cellMeters = Math.min(cellMetersLat, cellMetersLng);
-      // Cap the OUTER halo at cellMeters/2 so two full-density
-      // adjacent cells render as touching but not overlapping
-      // circles. Inner core is 60% of outer for soft falloff;
-      // intensity from log(count) modulates from 30% to 100%.
-      const intensity = Math.min(1, Math.log10(c.count_pins + 1) / 4);
-      const outerMax = cellMeters / 2;
-      const outer = outerMax * (0.3 + intensity * 0.7);
-      const inner = outer * 0.6;
-      // Outer halo
-      L.circle([c.centroid_lat, c.centroid_lng], {
-        radius: outer,
-        stroke: false,
-        fillColor: '#d57100',
-        fillOpacity: 0.12,
-        interactive: false
-      }).addTo(next);
-      // Inner core — slightly more opaque, smaller
-      L.circle([c.centroid_lat, c.centroid_lng], {
-        radius: inner,
-        stroke: false,
-        fillColor: '#d57100',
-        fillOpacity: 0.35,
-        interactive: false
-      }).addTo(next);
+   *  Replaces the earlier grid-cluster heatmap, which drew rigid
+   *  tile circles that looked like '100 stacked rings' in dense
+   *  cities — exactly the visual the user objected to. */
+  function renderPinHeat(points: Array<[number, number]>) {
+    if (!map || !LCache) return;
+    if (pinHeatGroup) {
+      pinHeatGroup.remove();
+      pinHeatGroup = undefined;
     }
-    clusterLayer.clearLayers();
-    next.eachLayer((layer) => layer.addTo(clusterLayer!));
-  }
-
-  /** Local copy of the eps schedule from pinService.clusterEpsForZoom
-   *  — duplicated here rather than imported because Map should not
-   *  reach into service modules. Keep both in sync. */
-  function clusterEpsForZoomLocal(zoom: number): number {
-    if (zoom < 4)  return 2.0;
-    if (zoom < 6)  return 0.6;
-    if (zoom < 8)  return 0.2;
-    if (zoom < 10) return 0.06;
-    if (zoom < 12) return 0.02;
-    return 0.005;
+    if (points.length === 0) return;
+    const MAX_RENDER = 8000;
+    const step = points.length > MAX_RENDER ? Math.ceil(points.length / MAX_RENDER) : 1;
+    const L = LCache;
+    const group = L.layerGroup();
+    for (let i = 0; i < points.length; i += step) {
+      const [lat, lng] = points[i];
+      L.circleMarker([lat, lng], {
+        radius: 9,
+        stroke: false,
+        fillColor: '#d57100',
+        fillOpacity: 0.18,
+        interactive: false
+      }).addTo(group);
+    }
+    pinHeatGroup = group;
+    group.addTo(map);
   }
 
   /** Render aggregated cluster points: a labeled circle per cluster,

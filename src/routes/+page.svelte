@@ -721,20 +721,42 @@
    *  in-region; public-scoped otherwise. Uses cluster aggregates at
    *  low zoom so a continental view doesn't render tens of thousands
    *  of points. The viewportSeq guard discards stale responses when
-   *  the user pans fast. */
+   *  the user pans fast. When the pin-heatmap toggle is on, we
+   *  always fetch individual pins (capped high) and pass coordinates
+   *  to the Map's heat-dot renderer instead of going through clusters
+   *  — clusters give a tile-circle visual that the user (rightly)
+   *  found terrible. */
+  let pinHeatPoints: Array<[number, number]> = [];
   async function fetchForViewport(bbox: Bbox, zoom: number): Promise<void> {
     const seq = ++viewportSeq;
     pinsLoading = true;
     const region = $activeRegion;
     const useRegion = !!$session && !!region;
+    const heatmapOn = $settings.showPinHeatmap;
     try {
-      if (zoom < CLUSTER_BELOW_ZOOM) {
+      if (heatmapOn) {
+        // Heatmap mode: always fetch individual pins, cap high so
+        // the heat layer paints a real density gradient. Skip
+        // cluster aggregates entirely.
+        const cap = 2000;
+        const p = useRegion && region
+          ? await listRegionPins(region.id, bbox, cap)
+          : await listPublicPins(bbox, cap);
+        if (seq !== viewportSeq) return;
+        pinHeatPoints = p
+          .filter((x) => x.lat != null && x.lng != null)
+          .map((x) => [x.lat as number, x.lng as number]);
+        pins = [];
+        clusters = [];
+        capHit = false;
+      } else if (zoom < CLUSTER_BELOW_ZOOM) {
         const c = useRegion && region
           ? await listRegionPinClusters(region.id, bbox, clusterEpsForZoom(zoom))
           : await listPublicPinClusters(bbox, clusterEpsForZoom(zoom));
         if (seq !== viewportSeq) return;
         clusters = c;
         pins = [];
+        pinHeatPoints = [];
         capHit = false;
       } else {
         const cap = useRegion ? 1000 : 500;
@@ -744,10 +766,7 @@
         if (seq !== viewportSeq) return;
         pins = p;
         clusters = [];
-        // Surface the cap hit so the badge below the filter bar
-        // can tell the user 'showing 500, zoom in for the rest'.
-        // We don't know the true total without a separate count
-        // query — just signal that there's more than what's drawn.
+        pinHeatPoints = [];
         capHit = p.length >= cap;
         capValue = cap;
       }
@@ -756,11 +775,15 @@
       if (seq === viewportSeq) {
         pins = [];
         clusters = [];
+        pinHeatPoints = [];
       }
     } finally {
       if (seq === viewportSeq) pinsLoading = false;
     }
   }
+  // Re-fire the viewport fetch when the heatmap toggle flips so the
+  // appropriate dataset (heat dots vs clusters/individuals) loads.
+  $: if ($settings.showPinHeatmap !== undefined) void refetchViewport();
 
   async function handleViewportChange(
     e: CustomEvent<{ bbox: Bbox; zoom: number }>
@@ -983,6 +1006,7 @@
     pins={filteredPins}
     {clusters}
     pinHeatmap={$settings.showPinHeatmap}
+    {pinHeatPoints}
     heatPoints={shownHeatPoints}
     displayedTracks={displayedTrackPolylines}
     showRecorder={!!$session}
