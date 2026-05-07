@@ -848,6 +848,7 @@
 
 <svelte:window on:keydown={handlePlacingKey} />
 
+<div class="map-page">
 <header>
   <h1>Forager</h1>
   {#if $activeRegion}
@@ -1027,6 +1028,7 @@
 {:else if $regionsLoading}
   <main class="loading"><p>Loading…</p></main>
 {/if}
+</div>
 
 {#if $activeRegion && !selectedPinId}
   <button
@@ -1065,6 +1067,17 @@
 {/if}
 
 <style>
+  /* Flex column so the map auto-fills whatever vertical space is
+     left after header + banner + filter bar, instead of relying on
+     a hardcoded calc(100vh - 100px) that broke when the SignupBanner
+     was added for anon viewers (the banner pushed the map below the
+     viewport, hiding the attribution + zoom chip). */
+  .map-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
   header {
     display: flex;
     align-items: center;

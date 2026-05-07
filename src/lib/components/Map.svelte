@@ -1151,8 +1151,14 @@
   .map-wrap {
     position: relative;
     width: 100%;
-    /* Header (56) + filter bar (~44) ≈ 100. Use flex-fill if more bars get added. */
-    height: calc(100vh - 100px);
+    /* Fills remaining vertical space when the parent is a flex
+     * column (see .map-page in +page.svelte). Older code used a
+     * hardcoded calc(100vh - 100px), which broke once the
+     * SignupBanner appeared above the map for anon viewers — the
+     * banner pushed the map's bottom edge below the viewport so
+     * the attribution + zoom chip were invisible. */
+    flex: 1 1 auto;
+    min-height: 0;
   }
   .map {
     width: 100%;
