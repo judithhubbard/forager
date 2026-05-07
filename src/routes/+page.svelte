@@ -1000,6 +1000,7 @@
     {pinDensityBuckets}
     heatPoints={shownHeatPoints}
     displayedTracks={displayedTrackPolylines}
+    colorTracksByDate={$settings.colorTracksByDate}
     showRecorder={!!$session}
     {categoryOf}
     colorOf={colorOfPin}

@@ -14,7 +14,7 @@
     showTrack,
     hideTrack
   } from '$lib/stores/displayedTracks';
-  import { settings, setShowHeatmap } from '$lib/stores/settings';
+  import { settings, setShowHeatmap, setColorTracksByDate } from '$lib/stores/settings';
 
   let tracks: TrackRow[] = [];
   let loading = true;
@@ -135,8 +135,9 @@
    *  AND syncs the on-map displayedTrackIds to that subset — the
    *  user wanted one button to control both 'which tracks am I
    *  looking at here' and 'which tracks paint on the map.' */
-  type DateFilter = 'all' | '24h' | '7d' | '30d' | 'year' | 'favorites';
+  type DateFilter = 'none' | 'all' | '24h' | '7d' | '30d' | 'year' | 'favorites';
   const FILTER_OPTIONS: { k: DateFilter; label: string }[] = [
+    { k: 'none',      label: 'None' },
     { k: 'all',       label: 'All' },
     { k: '24h',       label: '24h' },
     { k: '7d',        label: '7 days' },
@@ -155,6 +156,7 @@
 
   $: filteredTracks = (() => {
     if (dateFilter === 'all') return tracks;
+    if (dateFilter === 'none') return [];
     if (dateFilter === 'favorites') return tracks.filter((t) => t.is_favorite);
     const cutoff = Date.now() - FILTER_MS[dateFilter];
     return tracks.filter((t) => {
@@ -229,6 +231,9 @@
   function onHeatmapToggle(e: Event) {
     setShowHeatmap((e.currentTarget as HTMLInputElement).checked);
   }
+  function onColorByDateToggle(e: Event) {
+    setColorTracksByDate((e.currentTarget as HTMLInputElement).checked);
+  }
 
   function back() {
     if (history.length > 1) history.back();
@@ -270,6 +275,16 @@
     />
     Show foraging heatmap on map
     <span class="muted">— a density layer built from your saved tracks</span>
+  </label>
+
+  <label class="heatmap-toggle">
+    <input
+      type="checkbox"
+      checked={$settings.colorTracksByDate}
+      on:change={onColorByDateToggle}
+    />
+    Color tracks by date
+    <span class="muted">— newer red, older blue (off = solid red)</span>
   </label>
 
   {#if loading}

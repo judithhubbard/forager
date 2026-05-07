@@ -138,6 +138,12 @@
     startedAt?: string | null;
   }> = [];
 
+  /** When true, tracks render with the red→blue recency gradient.
+   *  When false, all tracks render solid red — useful when comparing
+   *  two routes' shapes and the gradient steals attention from
+   *  the lines themselves. Toggled from the /tracks page. */
+  export let colorTracksByDate: boolean = true;
+
   /** Setting this prop animates the map to the given location. Parent
    *  passes a fresh object on each desired fly (e.g. after a geocode
    *  result is picked); we never null it back out — Svelte fires the
@@ -340,7 +346,9 @@
 
     for (const t of tracks) {
       if (t.points.length < 2) continue;
-      const color = colorForRecency(t.startedAt, lo, hi);
+      const color = colorTracksByDate
+        ? colorForRecency(t.startedAt, lo, hi)
+        : '#c14a3a';
       const existing = trackLayers.get(t.id);
       if (existing) {
         existing.setLatLngs(t.points);
@@ -381,7 +389,7 @@
   }
   $: trackLegendNewest = relTime(trackTimeMax);
   $: trackLegendOldest = relTime(trackTimeMin);
-  $: showTrackLegend = trackTimeCount >= 2;
+  $: showTrackLegend = colorTracksByDate && trackTimeCount >= 2;
 
   function renderHeat(points: Array<[number, number]>) {
     if (!map || !LCache) return;

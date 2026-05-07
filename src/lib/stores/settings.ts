@@ -34,13 +34,20 @@ interface Settings {
    *  tracks) overlaid on the map. Defaults off to keep the initial
    *  paint clean. */
   showHeatmap: boolean;
+  /** When true, displayed tracks render with the red→blue recency
+   *  gradient. When false, all tracks render in a single solid red.
+   *  Defaults true since the gradient is most users' value-add when
+   *  multiple tracks are visible; flip off when comparing two
+   *  routes' shapes (the gradient steals attention from the lines). */
+  colorTracksByDate: boolean;
 }
 const DEFAULT: Settings = {
   basemap: 'osm-hot',
   disclaimerAcceptedAt: null,
   colorBy: 'group',
   defaultPhotoLicense: 'CC-BY-SA-4.0',
-  showHeatmap: false
+  showHeatmap: false,
+  colorTracksByDate: true
 };
 
 const ALLOWED_LICENSES: PhotoLicense[] = [
@@ -65,7 +72,10 @@ function normalize(s: Partial<Settings>): Settings {
     disclaimerAcceptedAt: s.disclaimerAcceptedAt ?? null,
     colorBy: cb,
     defaultPhotoLicense: lic,
-    showHeatmap: !!s.showHeatmap
+    showHeatmap: !!s.showHeatmap,
+    // Default true so existing users get the gradient by default;
+    // explicit false from saved state turns it off.
+    colorTracksByDate: s.colorTracksByDate !== false
   };
 }
 
@@ -107,5 +117,9 @@ export function setDefaultPhotoLicense(lic: PhotoLicense): void {
 
 export function setShowHeatmap(v: boolean): void {
   settings.update((s) => ({ ...s, showHeatmap: v }));
+}
+
+export function setColorTracksByDate(v: boolean): void {
+  settings.update((s) => ({ ...s, colorTracksByDate: v }));
 }
 
