@@ -120,6 +120,41 @@ export async function fetchOpenDataApiJson(opts: {
   return all;
 }
 
+/** CKAN DataStore API (used by Toronto's open.toronto.ca, lots of
+ *  Canadian/UK municipal portals). Endpoint shape:
+ *  https://<host>/api/3/action/datastore_search?resource_id=<uuid>
+ *  Response: { result: { records: [...], _links: { next, ... } } }.
+ *  Page via the cursor-style _links.next path until exhausted. */
+export async function fetchCkanDataStore(opts: {
+  /** Base URL like 'https://ckan0.cf.opendata.inter.prod-toronto.ca'. */
+  baseUrl: string;
+  resourceId: string;
+  pageSize?: number;
+}): Promise<Record<string, unknown>[]> {
+  const all: Record<string, unknown>[] = [];
+  const limit = opts.pageSize ?? 32000;
+  let nextPath: string | null =
+    `/api/3/action/datastore_search?resource_id=${opts.resourceId}&limit=${limit}`;
+  while (nextPath) {
+    const url = `${opts.baseUrl}${nextPath}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`CKAN fetch ${res.status} on ${url}`);
+    const body = (await res.json()) as {
+      success?: boolean;
+      result?: {
+        records?: Record<string, unknown>[];
+        _links?: { next?: string };
+      };
+    };
+    const records = body.result?.records ?? [];
+    all.push(...records);
+    process.stdout.write(`  fetched ${records.length} (total ${all.length})\n`);
+    if (records.length === 0) break;
+    nextPath = body.result?._links?.next ?? null;
+  }
+  return all;
+}
+
 /** Per-city configuration + plug-in feature mapper. */
 export interface ImportConfig<F> {
   sourceId: string;
