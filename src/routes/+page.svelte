@@ -301,8 +301,7 @@
     | 'all'
     | 'active'
     | 'possibly_ripe'
-    | 'confirmed_ripe'
-    | 'confirmed_harvest';
+    | 'productive';
   let filterStatus: FilterStatus = 'active';
   /** Per-pin source category for the layers panel. Today the
    *  friend-graph doesn't exist yet, so 'friends' is unreachable;
@@ -514,8 +513,7 @@
     if (filterStatus === 'active') return true;
 
     if (filterStatus === 'possibly_ripe') return p.is_ripe_now === true;
-    if (filterStatus === 'confirmed_ripe') return p.has_ripe_observation_this_year === true;
-    if (filterStatus === 'confirmed_harvest') return p.has_ripe_observation_ever === true;
+    if (filterStatus === 'productive') return p.has_ripe_observation_ever === true;
     return true;
   });
 
@@ -529,8 +527,7 @@
     if (!isActive) return false;
     if (status === 'active') return true;
     if (status === 'possibly_ripe') return p.is_ripe_now === true;
-    if (status === 'confirmed_ripe') return p.has_ripe_observation_this_year === true;
-    if (status === 'confirmed_harvest') return p.has_ripe_observation_ever === true;
+    if (status === 'productive') return p.has_ripe_observation_ever === true;
     return false;
   }
   /** Pins after the species/category filters but before the status
@@ -548,9 +545,9 @@
   });
   $: statusCounts = (() => {
     const out: Record<FilterStatus, number> = {
-      all: 0, active: 0, possibly_ripe: 0, confirmed_ripe: 0, confirmed_harvest: 0
+      all: 0, active: 0, possibly_ripe: 0, productive: 0
     };
-    const statuses: FilterStatus[] = ['all', 'active', 'possibly_ripe', 'confirmed_ripe', 'confirmed_harvest'];
+    const statuses: FilterStatus[] = ['all', 'active', 'possibly_ripe', 'productive'];
     for (const p of speciesFilteredPins) {
       for (const s of statuses) if (matchesStatus(p, s)) out[s]++;
     }
@@ -763,29 +760,42 @@
     const useRegion = !!$session && !!region;
     try {
       if (zoom < CLUSTER_BELOW_ZOOM) {
-        // Heatmap mode (always at zoom < 13): aggregated density
-        // buckets via the pre-computed grid, optionally combined
-        // with live region-pin aggregation for authed users.
-        const buckets = useRegion && region
-          ? await listRegionPinDensity(region.id, bbox, zoom)
-          : await listPublicPinDensity(bbox, zoom);
+        // Heatmap mode (zoom < 13): always use the public density
+        // grid. Imported region pins (Ithaca, NYC, Boston…) all carry
+        // visibility='public', so they're already in the public grid;
+        // querying the per-region grid in addition would double-count
+        // them at every cell. User-created private/shared pins are
+        // rare in this view and only contribute meaningfully at zoom
+        // ≥ 13 where the merge below pulls them in.
+        const buckets = await listPublicPinDensity(bbox, zoom);
         if (seq !== viewportSeq) return;
         pinDensityBuckets = buckets;
         pins = [];
         clusters = [];
         capHit = false;
       } else {
-        // Individual-pin mode (zoom ≥ 13): markers + tooltips.
-        const cap = useRegion ? 1000 : 500;
-        const p = useRegion && region
-          ? await listRegionPins(region.id, bbox, cap)
-          : await listPublicPins(bbox, cap);
+        // Individual-pin mode (zoom ≥ 13): authed users get their
+        // region pins ∪ the public layer (dedup by id) so panning
+        // outside their region still shows the global public dataset.
+        const ownCap = 1000;
+        const pubCap = 500;
+        const [own, pub] = await Promise.all([
+          useRegion && region ? listRegionPins(region.id, bbox, ownCap) : Promise.resolve([]),
+          listPublicPins(bbox, pubCap)
+        ]);
         if (seq !== viewportSeq) return;
-        pins = p;
+        // PinEffective.id is typed nullable (view-derived) but is in
+        // practice never null — coalesce to '' for the Set key just to
+        // keep TypeScript happy without a runtime branch.
+        const seen = new Set<string>();
+        const merged: PinEffective[] = [];
+        for (const p of own) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
+        for (const p of pub) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
+        pins = merged;
         clusters = [];
         pinDensityBuckets = [];
-        capHit = p.length >= cap;
-        capValue = cap;
+        capHit = own.length >= ownCap || pub.length >= pubCap;
+        capValue = ownCap + pubCap;
       }
     } catch (err) {
       console.error('[+page] fetchForViewport error', err);
@@ -990,9 +1000,8 @@
       <select bind:value={filterStatus}>
         <option value="all">All ({statusCounts.all})</option>
         <option value="active">Active ({statusCounts.active})</option>
-        <option value="possibly_ripe">Possibly ripe today ({statusCounts.possibly_ripe})</option>
-        <option value="confirmed_ripe">Confirmed ripe this year ({statusCounts.confirmed_ripe})</option>
-        <option value="confirmed_harvest">Confirmed harvest history ({statusCounts.confirmed_harvest})</option>
+        <option value="possibly_ripe">Ripe today ({statusCounts.possibly_ripe})</option>
+        <option value="productive">Productive ({statusCounts.productive})</option>
       </select>
     </label>
     {#if availableCookbookMethods.length > 0}
