@@ -504,6 +504,22 @@ These are explicitly *approximations*. The first season of use will surface bad 
 - Mushroom modeling: rough date ranges in v1, refined by observation.
 - Default "near you" radius: 5 km, user-configurable.
 
+### 5.10 Phenology beyond Ithaca — sourcing windows for new zones
+
+After the public-tier expansion (Phase 2) the dataset spans 60+ US cities across USDA zones 3a–11a. The Ithaca windows (curated by hand, technically tagged "5b" but really just one location's empirical data) cannot be honestly extrapolated to other zones via latitude-band shifting or zone-code matching:
+
+- USDA zones encode annual minimum temperature, not phenology. Two locations in the same zone (Seattle/Boston, both 8a-ish) have wildly different growing seasons due to coastal vs continental climate, elevation, and rainfall.
+- One curated location's data isn't a zone-wide signal. Generalizing Ithaca's windows to "everywhere in zone 5b" is a leap; combining that with a latitude shift to reach zone 7b is two leaps.
+
+**Current behavior (post-Phase 2):** pins outside Ithaca have null fruiting windows. The "Ripe today" filter returns no matches for those pins (the slim `public_pins_bbox` returns `is_ripe_now=false`). This is honest — better than fabricating plausible-sounding windows.
+
+**Two upgrade paths to defensible per-zone windows:**
+
+1. **USA-NPN ingestion.** USA National Phenology Network exposes thousands of species observations across the US with research-quality timestamps. Pull species × ~100km grid → empirical windows for fruiting/flowering. Reuse-friendly license. Best per-species precision but limited to the species USA-NPN tracks.
+2. **iNaturalist research-grade observation mining.** Open API exposes millions of observations with photos, dates, and locations. Filter to research-grade ripe/fruiting observations, aggregate by species × ~100km grid. Massive coverage; messier signal than USA-NPN; requires more aggregation logic. Both can run together — USA-NPN as the high-confidence layer, iNaturalist filling gaps.
+
+Either path lands as a `scripts/import/phenology-from-*.ts` script that populates `species_fruiting_windows` per `climate_zone_id` (or `region_id`, depending on Phase 1A cutover state), with `notes` recording the source so observed-vs-derived is auditable.
+
 ---
 
 ## 6. Dataset Ingestion
