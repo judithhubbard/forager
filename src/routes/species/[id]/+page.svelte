@@ -77,6 +77,34 @@
   function pretty(s: string): string {
     return s.replace(/_/g, ' ');
   }
+
+  /** Parse an attribution string into rendered segments. The
+   *  Wikidata pull script writes 'Wikidata: Qxxx · Wikipedia: <url>',
+   *  but the field is also free-form for hand-curated values, so
+   *  fall through unchanged when no recognized prefix is present. */
+  type AttribPart =
+    | { kind: 'text'; value: string }
+    | { kind: 'link'; label: string; href: string };
+  function parseAttribution(s: string): AttribPart[] {
+    const parts: AttribPart[] = [];
+    for (const seg of s.split('·').map((x) => x.trim()).filter(Boolean)) {
+      const wd = seg.match(/^Wikidata:\s*(Q\d+)$/i);
+      const wp = seg.match(/^Wikipedia:\s*(https?:\/\/\S+)$/i);
+      if (wd) {
+        parts.push({
+          kind: 'link',
+          label: `Wikidata ${wd[1]}`,
+          href: `https://www.wikidata.org/wiki/${wd[1]}`
+        });
+      } else if (wp) {
+        parts.push({ kind: 'link', label: 'Wikipedia', href: wp[1] });
+      } else {
+        parts.push({ kind: 'text', value: seg });
+      }
+    }
+    return parts;
+  }
+  $: attribParts = species?.attribution ? parseAttribution(species.attribution) : [];
 </script>
 
 <svelte:head>
@@ -172,8 +200,18 @@
       </p>
     </section>
 
-    {#if species.attribution}
-      <p class="attrib">Source: {species.attribution}</p>
+    {#if attribParts.length}
+      <p class="attrib">
+        Source:
+        {#each attribParts as p, i}
+          {#if i > 0}<span class="sep"> · </span>{/if}
+          {#if p.kind === 'link'}
+            <a href={p.href} target="_blank" rel="noopener noreferrer">{p.label}</a>
+          {:else}
+            <span>{p.value}</span>
+          {/if}
+        {/each}
+      </p>
     {/if}
 
     <p class="see-also">
