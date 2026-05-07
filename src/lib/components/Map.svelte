@@ -758,36 +758,48 @@
     }).addTo(selectionLayer);
   }
 
-  /** Pin-density heatmap: render each cluster centroid as a pair of
-   *  overlapping low-opacity orange circles whose radii scale by
-   *  log(count_pins), so a 5-pin cluster shows a small soft glow
-   *  and a 5000-pin cluster shows a large bright one. Density reads
-   *  immediately without numbers. Uses the canvas renderer (the
-   *  map was created with preferCanvas:true) so even hundreds of
-   *  overlapping circles stay performant. */
+  /** Pin-density heatmap: each cluster renders as a pair of orange
+   *  circles sized in METERS (not pixels) so they scale with the
+   *  basemap as you zoom. The radius is keyed off the server's
+   *  cluster eps for the current zoom — that's the cell size pins
+   *  were grouped into — so circles roughly fill their own cell
+   *  without overlapping the next one over.
+   *
+   *  Earlier version used L.circleMarker (pixel-based radius), which
+   *  meant at low zoom dozens of cluster centroids in a small screen
+   *  area all rendered as fixed-pixel circles that visually stacked
+   *  on top of each other. Now neighboring clusters tile their cells
+   *  cleanly. */
   function renderClusterHeatmap(currentClusters: ClusterPoint[]) {
     if (!clusterLayer || !map || !LCache) return;
     const L = LCache;
     const next = L.layerGroup();
+    const zoom = map.getZoom();
+    const epsDeg = clusterEpsForZoomLocal(zoom);
+    // Convert eps from degrees to meters at typical mid-latitudes
+    // (1° lat ≈ 111 km). lng degrees shrink toward the poles but
+    // for visual sizing this approximation reads correctly.
+    const cellMeters = epsDeg * 111_000;
     for (const c of currentClusters) {
       if (c.count_pins < 1) continue;
-      // log-scaled radius in pixels: 1→8, 10→16, 100→24, 1000→32,
-      // 10000→40. The two-circle stack (inner brighter, outer
-      // softer) gives a Gaussian-ish falloff without needing a
-      // real heatmap shader. Color stays in the orange family so
-      // it doesn't fight with the green-on-cream basemap.
-      const r = Math.min(40, 8 + Math.log10(c.count_pins + 1) * 8);
+      // Radius modulated by log(count). Min 40% of half-cell, max
+      // 100% — denser cells fill their cell, sparser ones leave
+      // visual room around them. Cap at 80% so adjacent full-cell
+      // circles still leave a thin gap rather than touching.
+      const intensity = Math.min(1, Math.log10(c.count_pins + 1) / 4);
+      const inner = (cellMeters / 2) * (0.4 + intensity * 0.4);
+      const outer = inner * 1.6;
       // Outer halo
-      L.circleMarker([c.centroid_lat, c.centroid_lng], {
-        radius: r * 1.6,
+      L.circle([c.centroid_lat, c.centroid_lng], {
+        radius: outer,
         stroke: false,
         fillColor: '#d57100',
         fillOpacity: 0.12,
         interactive: false
       }).addTo(next);
       // Inner core — slightly more opaque, smaller
-      L.circleMarker([c.centroid_lat, c.centroid_lng], {
-        radius: r,
+      L.circle([c.centroid_lat, c.centroid_lng], {
+        radius: inner,
         stroke: false,
         fillColor: '#d57100',
         fillOpacity: 0.35,
@@ -796,6 +808,18 @@
     }
     clusterLayer.clearLayers();
     next.eachLayer((layer) => layer.addTo(clusterLayer!));
+  }
+
+  /** Local copy of the eps schedule from pinService.clusterEpsForZoom
+   *  — duplicated here rather than imported because Map should not
+   *  reach into service modules. Keep both in sync. */
+  function clusterEpsForZoomLocal(zoom: number): number {
+    if (zoom < 4)  return 1.0;
+    if (zoom < 6)  return 0.3;
+    if (zoom < 8)  return 0.1;
+    if (zoom < 10) return 0.03;
+    if (zoom < 12) return 0.01;
+    return 0.003;
   }
 
   /** Render aggregated cluster points: a labeled circle per cluster,
