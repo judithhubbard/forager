@@ -344,11 +344,10 @@
   /** Available 'Make' methods with the per-method *active* pin count
    *  in the current viewport. Uses active_count from bboxSummary so
    *  the number stays consistent with the Show dropdown's default
-   *  Active filter — otherwise an inactive-heavy species could show
-   *  e.g. "syrup (369)" while Active shows (133), which is just
-   *  confusing. Derived from speciesInRegion (which unions
-   *  summary-only species so capped pins don't hide methods).
-   *  Sorted by count desc so most-stocked methods come first. */
+   *  Active filter, and applies the same species/category gates so
+   *  hidden categories or disabled species don't sneak into the
+   *  Make total when they're absent from the All total. Sorted by
+   *  count desc so most-stocked methods come first. */
   $: availableCookbookMethods = (() => {
     const counts = new Map<string, number>();
     const activeBySpecies = new Map<string, number>();
@@ -358,8 +357,11 @@
     for (const s of speciesInRegion) {
       const methods = s.preparation_methods ?? [];
       if (methods.length === 0) continue;
-      // Fall back to in-memory pin count when bboxSummary hasn't
-      // loaded yet (heatmap mode, pre-first-fetch).
+      // Same gates the Show counts use — keeps the two consistent
+      // when the user has hidden categories or disabled species.
+      if ($disabledIds.has(s.id)) continue;
+      const cat = (categoryBySpecies[s.id] ?? null) as SpeciesCat | null;
+      if (cat && !visibleCats.has(cat)) continue;
       const c = activeBySpecies.get(s.id)
         ?? pins.filter((p) => p.species_id === s.id && p.effective_status === 'active').length;
       if (c === 0) continue;
