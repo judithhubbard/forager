@@ -925,7 +925,7 @@
                       checked={isSelected(s.id)}
                       on:change={() => toggleSpecies(s.id)}
                     />
-                    {s.common_name}
+                    <span class="sp-name">{s.common_name}</span>
                     <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
                   </label>
                 </li>
@@ -1302,16 +1302,24 @@
     cursor: pointer;
     padding: 0.1rem 0.15rem;
     border-radius: 0.2rem;
-    /* Long species names truncate rather than expanding the panel. */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     min-width: 0;
   }
   .species-panel label:hover {
     background: #f5f8f5;
   }
+  /* The species name is the only flex child allowed to shrink and
+     truncate. The count is fixed-width on the right; without
+     flex-shrink:0 a long name (e.g. 'Serviceberry (unspecified)')
+     pushed the count off the right edge of the panel. */
+  .species-panel .sp-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .species-panel .count {
+    flex-shrink: 0;
     color: #8a948a;
     margin-left: auto;
     font-size: 0.75rem;
