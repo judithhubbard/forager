@@ -8,6 +8,10 @@
 -- gates pin.visibility = 'public' (added in 20260506000015). Anyone
 -- without that flag still cannot mutate species rows.
 
+-- Idempotent: drop-if-exists guards against a partial earlier
+-- application that left the policy in place.
+drop policy if exists species_update_admin on public.species;
+
 create policy species_update_admin on public.species
   for update
   to authenticated
