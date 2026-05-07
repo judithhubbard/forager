@@ -23,6 +23,7 @@
     showTrack,
     hideTrack
   } from '$lib/stores/displayedTracks';
+  import { formatElapsed } from '$lib/utils/formatTime';
 
   let tracks: TrackRow[] = [];
   let loading = true;
@@ -55,15 +56,6 @@
       ? (rec.endedAt ?? nowMs) - rec.startedAt
       : 0;
 
-  function fmtElapsed(ms: number): string {
-    if (ms <= 0) return '0:00';
-    const total = Math.floor(ms / 1000);
-    const h = Math.floor(total / 3600);
-    const m = Math.floor((total % 3600) / 60);
-    const s = total % 60;
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${m}:${String(s).padStart(2, '0')}`;
-  }
 
   async function saveRecording() {
     if (rec.points.length < 2) {
@@ -224,7 +216,7 @@
       </div>
     {:else}
       <p class="rec-stats">
-        <strong>{fmtElapsed(elapsedMs)}</strong>
+        <strong>{formatElapsed(elapsedMs)}</strong>
         · {rec.points.length} point{rec.points.length === 1 ? '' : 's'}
         · {(bufferedDist / 1609.344).toFixed(2)} mi
       </p>

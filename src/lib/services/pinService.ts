@@ -186,21 +186,9 @@ export async function listRipeNow(regionId: string): Promise<PinEffective[]> {
   );
 }
 
-/** Haversine distance between two lng/lat points in meters. */
-export function haversineMeters(
-  a: { lng: number; lat: number },
-  b: { lng: number; lat: number }
-): number {
-  const R = 6371000;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
-}
+/** Re-export of the shared object-shape haversine. Lives at this
+ *  path only because the ripe page imports it from here. */
+export { haversineBetween as haversineMeters } from '$lib/utils/distance';
 
 /** A single pin via the effective view. */
 export async function getEffective(id: string): Promise<PinEffective | null> {

@@ -13,6 +13,7 @@
   import { importParsedTrack } from '$lib/services/trackService';
   import { showTrack } from '$lib/stores/displayedTracks';
   import { activeRegion } from '$lib/stores/activeRegion';
+  import { formatElapsed, autoTrackTitle } from '$lib/utils/formatTime';
 
   const now = readable(Date.now(), (set) => {
     const id = setInterval(() => set(Date.now()), 250);
@@ -38,23 +39,7 @@
   let elapsedLabel = '0:00';
   $: {
     const ms = rec.startedAt ? (rec.endedAt ?? $now) - rec.startedAt : 0;
-    elapsedLabel = fmtElapsed(ms);
-  }
-
-  function fmtElapsed(ms: number): string {
-    if (ms <= 0) return '0:00';
-    const total = Math.floor(ms / 1000);
-    const h = Math.floor(total / 3600);
-    const m = Math.floor((total % 3600) / 60);
-    const s = total % 60;
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${m}:${String(s).padStart(2, '0')}`;
-  }
-
-  function autoTitle(startedAt: number | null): string {
-    const d = startedAt ? new Date(startedAt) : new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `Track ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    elapsedLabel = formatElapsed(ms);
   }
 
   async function handleStop() {
@@ -68,7 +53,7 @@
     try {
       const snap = stopRec();
       const parsed = {
-        title: autoTitle(snap.startedAt),
+        title: autoTrackTitle(snap.startedAt),
         source: 'live' as const,
         points: snap.points.map((p) => ({
           lat: p.lat,

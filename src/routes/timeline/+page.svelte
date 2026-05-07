@@ -950,7 +950,6 @@
   .leg-band  { display: inline-block; width: 1rem; height: 0.55rem; border-radius: 1px; opacity: 0.7; }
   .leg-tick  { display: inline-block; width: 0.25rem; height: 0.85rem; }
   .leg-sep   { color: #c7d0c7; }
-  .leg-hint  { color: #6b7a6b; font-style: italic; }
 
   .region-block {
     margin: 1rem 0 1.5rem;
