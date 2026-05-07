@@ -242,17 +242,26 @@ interface CsvSchema {
   iCommon: number;    // common name (optional)
   iLat: number;
   iLng: number;
-  iId: number;        // tree id (optional)
+  iId: number;        // dataset's "tree_ID" — often 'NA' in Dryad, fall back to iCityId
+  iCityId: number;    // city's own ID; reliably populated and unique per row
 }
 
 function detectSchema(header: string[]): CsvSchema {
   return {
     iSci:    findCol(header, ['scientific_name', 'sci_name', 'latin_name', 'species_sci', 'spc_latin', 'botanical_name', 'genus_species']),
     iCommon: findCol(header, ['common_name', 'spc_common', 'name_common']),
-    iLat:    findCol(header, ['latitude', 'lat']),
-    iLng:    findCol(header, ['longitude', 'lng', 'lon', 'long']),
-    iId:     findCol(header, ['tree_id', 'treeid', 'objectid', 'object_id', 'id'])
+    iLat:    findCol(header, ['latitude_coordinate', 'latitude', 'lat']),
+    iLng:    findCol(header, ['longitude_coordinate', 'longitude', 'lng', 'lon', 'long']),
+    iId:     findCol(header, ['tree_id', 'treeid', 'objectid', 'object_id', 'id']),
+    iCityId: findCol(header, ['city_id', 'cityid'])
   };
+}
+
+/** Treat Dryad's 'NA' sentinel and empty strings as "no value". */
+function nonEmpty(s: string | undefined): string {
+  if (!s) return '';
+  const t = s.trim();
+  return (t === '' || t === 'NA') ? '' : t;
 }
 
 interface ParsedRow {
@@ -300,11 +309,18 @@ async function streamCsvFiltered(
     const lat = Number(fields[schema!.iLat]);
     const lng = Number(fields[schema!.iLng]);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-    const id = schema!.iId >= 0 ? fields[schema!.iId] : '';
+    // Prefer tree_ID, fall back to city_ID (reliably unique per row),
+    // last resort lat/lng. Many Dryad files have tree_ID='NA' for
+    // every row, so the tree_ID branch alone would collapse the file
+    // to a single externalId and dedupe it to one pin.
+    const treeId = schema!.iId    >= 0 ? nonEmpty(fields[schema!.iId])    : '';
+    const cityId = schema!.iCityId >= 0 ? nonEmpty(fields[schema!.iCityId]) : '';
+    const externalId =
+      treeId || cityId || `${lng.toFixed(6)},${lat.toFixed(6)}`;
     const raw: Record<string, string> = {};
     for (let i = 0; i < header.length; i++) raw[header[i]] = fields[i] ?? '';
     rows.push({
-      externalId: id || `${lng.toFixed(6)},${lat.toFixed(6)}`,
+      externalId,
       scientificName: sciRaw.trim(),
       commonName: schema!.iCommon >= 0 ? fields[schema!.iCommon] : undefined,
       lng,
