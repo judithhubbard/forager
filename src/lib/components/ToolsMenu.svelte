@@ -15,7 +15,6 @@
     setBasemap,
     setColorBy,
     setDefaultPhotoLicense,
-    setShowHeatmap,
     type Basemap,
     type ColorBy,
     type PhotoLicense
@@ -86,9 +85,6 @@
   }
   function onPhotoLicenseChange(e: Event) {
     setDefaultPhotoLicense((e.currentTarget as HTMLSelectElement).value as PhotoLicense);
-  }
-  function onHeatmapToggle(e: Event) {
-    setShowHeatmap((e.currentTarget as HTMLInputElement).checked);
   }
   function onRegionChange(e: Event) {
     setActiveRegionId((e.currentTarget as HTMLSelectElement).value);
@@ -172,18 +168,6 @@
               </label>
             </div>
           {/if}
-          <div class="settings-block">
-            {#if $session}
-              <label class="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={$settings.showHeatmap}
-                  on:change={onHeatmapToggle}
-                />
-                Show foraging heatmap
-              </label>
-            {/if}
-          </div>
         </div>
       {/if}
 
@@ -301,13 +285,6 @@
     border: 1px solid #c7d0c7;
     border-radius: 0.25rem;
     background: white;
-    font-size: 0.85rem;
-  }
-  .checkbox-row {
-    flex-direction: row !important;
-    align-items: center;
-    gap: 0.4rem !important;
-    color: #1f2a1f;
     font-size: 0.85rem;
   }
 </style>

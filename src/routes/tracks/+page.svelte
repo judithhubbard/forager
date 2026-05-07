@@ -5,26 +5,15 @@
   import {
     listMine,
     importTrackFile,
-    importParsedTrack,
     remove,
     type TrackRow
   } from '$lib/services/trackService';
   import {
-    recording,
-    start as startRec,
-    pause as pauseRec,
-    resume as resumeRec,
-    stop as stopRec,
-    discard as discardRec,
-    bufferedDistanceMeters
-  } from '$lib/stores/recording';
-  import {
     displayedTrackIds,
     showTrack,
-    hideTrack,
-    clearAll as clearDisplayed
+    hideTrack
   } from '$lib/stores/displayedTracks';
-  import { formatElapsed } from '$lib/utils/formatTime';
+  import { settings, setShowHeatmap } from '$lib/stores/settings';
 
   let tracks: TrackRow[] = [];
   let loading = true;
@@ -32,75 +21,6 @@
   let uploading = false;
   let uploadError = '';
   let fileInput: HTMLInputElement;
-
-  // Live recorder state — driven by the global store. Title input
-  // appears when the user is about to save.
-  let saveTitle = '';
-  let saveBusy = false;
-  let saveError = '';
-  // Tick once a second so the elapsed-time display in the recorder
-  // panel updates while running. The points list itself updates via
-  // the store subscription; this is just for the duration counter.
-  let nowMs = Date.now();
-  let tickInterval: ReturnType<typeof setInterval> | null = null;
-  onMount(() => {
-    tickInterval = setInterval(() => (nowMs = Date.now()), 1000);
-    return () => {
-      if (tickInterval) clearInterval(tickInterval);
-    };
-  });
-
-  $: rec = $recording;
-  $: bufferedDist = bufferedDistanceMeters(rec);
-  $: elapsedMs =
-    rec.startedAt && (rec.status !== 'idle')
-      ? (rec.endedAt ?? nowMs) - rec.startedAt
-      : 0;
-
-
-  async function saveRecording() {
-    if (rec.points.length < 2) {
-      saveError = 'Need at least 2 GPS points to save.';
-      return;
-    }
-    saveBusy = true;
-    saveError = '';
-    try {
-      const snap = stopRec();
-      // Convert recorded buffer to the shared parsed-track shape
-      // and reuse importParsedTrack so save logic stays in one
-      // place (distance, geometry, bulk insert, RLS rollback).
-      const parsed = {
-        title: saveTitle.trim() || 'Recorded track',
-        source: 'live' as const,
-        points: snap.points.map((p) => ({
-          lat: p.lat,
-          lng: p.lng,
-          recorded_at: new Date(p.ts).toISOString(),
-          elevation_m: null
-        }))
-      };
-      await importParsedTrack(parsed, {
-        regionId: $activeRegion?.id ?? null,
-        title: parsed.title,
-        visibility: 'private'
-      });
-      discardRec();
-      saveTitle = '';
-      await load();
-    } catch (e) {
-      saveError = e instanceof Error ? e.message : 'Save failed.';
-    } finally {
-      saveBusy = false;
-    }
-  }
-
-  function onDiscard() {
-    if (rec.points.length > 0 && !confirm('Throw away the in-progress recording?')) return;
-    discardRec();
-    saveTitle = '';
-    saveError = '';
-  }
 
   onMount(load);
 
@@ -147,17 +67,16 @@
     try {
       await remove(t.id);
       tracks = tracks.filter((x) => x.id !== t.id);
-      // Drop from the displayed set too — otherwise the polyline
-      // would linger until next reload.
       hideTrack(t.id);
     } catch (e) {
       error = e instanceof Error ? e.message : 'Delete failed.';
     }
   }
 
-  /** Date-range filter for the track list. Tracks the rolling window
-   *  (or "all"). Persisted within the page only — fresh visit defaults
-   *  to All so the user sees their full library on landing. */
+  /** Date-range chip. Selecting a chip both filters the visible list
+   *  AND syncs the on-map displayedTrackIds to that subset — the
+   *  user wanted one button to control both 'which tracks am I
+   *  looking at here' and 'which tracks paint on the map.' */
   type DateFilter = 'all' | '24h' | '7d' | '30d' | 'year';
   const FILTER_OPTIONS: { k: DateFilter; label: string }[] = [
     { k: 'all',  label: 'All' },
@@ -173,6 +92,8 @@
     'year': 365 * 24 * 60 * 60 * 1000
   };
   let dateFilter: DateFilter = 'all';
+  let lastSyncedFilter: DateFilter | null = null;
+
   $: filteredTracks = (() => {
     if (dateFilter === 'all') return tracks;
     const cutoff = Date.now() - FILTER_MS[dateFilter];
@@ -181,23 +102,53 @@
       return Number.isFinite(ts) && ts >= cutoff;
     });
   })();
-  function showAllFiltered() {
-    for (const t of filteredTracks) showTrack(t.id);
+
+  /** When the user picks a chip, sync displayedTrackIds: show all
+   *  tracks in the new filter, hide the rest. Re-applies on every
+   *  chip change. The lastSyncedFilter guard lets a user manually
+   *  toggle individual rows after picking a chip without those
+   *  toggles being immediately overwritten. */
+  $: if (
+    !loading &&
+    tracks.length > 0 &&
+    dateFilter !== lastSyncedFilter
+  ) {
+    lastSyncedFilter = dateFilter;
+    const wantedIds = new Set(filteredTracks.map((t) => t.id));
+    for (const t of tracks) {
+      if (wantedIds.has(t.id)) showTrack(t.id);
+      else hideTrack(t.id);
+    }
   }
-  function hideAllFiltered() {
-    // Only hide tracks that are currently in the filtered view —
-    // gives the user a per-window "untoggle these" without
-    // wiping unrelated selections. clearDisplayed wipes everything
-    // and is exposed through the "hide all" button in the All view.
-    for (const t of filteredTracks) hideTrack(t.id);
-  }
-  $: allShownInFilter =
-    filteredTracks.length > 0 &&
-    filteredTracks.every((t) => $displayedTrackIds.has(t.id));
+
+  /** Group filtered tracks by month-year, in date-descending order
+   *  (months come back from listMine sorted desc, so we just walk
+   *  in order). Section headers help with browsing a long list. */
+  $: groupedTracks = (() => {
+    const groups: { label: string; rows: TrackRow[] }[] = [];
+    for (const t of filteredTracks) {
+      if (!t.started_at) continue;
+      const d = new Date(t.started_at);
+      const label = d.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long'
+      });
+      const last = groups[groups.length - 1];
+      if (last && last.label === label) last.rows.push(t);
+      else groups.push({ label, rows: [t] });
+    }
+    return groups;
+  })();
 
   function fmtDate(iso: string | null): string {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString();
+    const d = new Date(iso);
+    // Within the section the year is in the header, so day + month
+    // is enough on the row itself.
+    return d.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric'
+    });
   }
   function fmtDistance(m: number | null): string {
     if (m == null) return '—';
@@ -215,6 +166,10 @@
     return `${h}h ${m}m`;
   }
 
+  function onHeatmapToggle(e: Event) {
+    setShowHeatmap((e.currentTarget as HTMLInputElement).checked);
+  }
+
   function back() {
     if (history.length > 1) history.back();
     else goto('/');
@@ -229,59 +184,10 @@
 <main>
   <p class="lead">
     Upload GPS tracks from a foraging outing — most watches and tracking
-    apps export GPX or KML files. Tracks default to <strong>private</strong>;
-    you can share them later from this page.
+    apps export GPX or KML files. To record live, tap
+    <strong>● Record</strong> in the bottom-left of the map. Tracks
+    default to <strong>private</strong>; you can share them later.
   </p>
-
-  <!-- Live recorder. Browser-side GPS via watchPosition; foreground
-       only on PWA, so backgrounding the tab pauses sampling. Buffer
-       persists in localStorage across reloads. -->
-  <section class="recorder" class:active={rec.status !== 'idle'}>
-    <header>
-      <span class="recorder-title">Record now</span>
-      {#if rec.status === 'recording'}
-        <span class="rec-dot" aria-hidden="true"></span>
-        <span>Recording</span>
-      {:else if rec.status === 'paused'}
-        <span class="rec-paused">⏸ Paused</span>
-      {/if}
-    </header>
-    {#if rec.status === 'idle'}
-      <p class="hint">
-        Start a track to log your foraging route. GPS samples every
-        few seconds while this tab is foregrounded; pause if you
-        want to skip a stretch.
-      </p>
-      <div class="rec-actions">
-        <button class="primary" on:click={startRec}>● Start recording</button>
-      </div>
-    {:else}
-      <p class="rec-stats">
-        <strong>{formatElapsed(elapsedMs)}</strong>
-        · {rec.points.length} point{rec.points.length === 1 ? '' : 's'}
-        · {(bufferedDist / 1609.344).toFixed(2)} mi
-      </p>
-      {#if rec.error}<p class="error">{rec.error}</p>{/if}
-      <div class="rec-actions">
-        {#if rec.status === 'recording'}
-          <button on:click={pauseRec}>⏸ Pause</button>
-        {:else}
-          <button class="primary" on:click={resumeRec}>▶ Resume</button>
-        {/if}
-        <input
-          type="text"
-          placeholder="Title for this track (optional)"
-          bind:value={saveTitle}
-          disabled={saveBusy}
-        />
-        <button class="primary" on:click={saveRecording} disabled={saveBusy || rec.points.length < 2}>
-          {saveBusy ? 'Saving…' : '✓ Save'}
-        </button>
-        <button class="danger" on:click={onDiscard} disabled={saveBusy}>Discard</button>
-      </div>
-      {#if saveError}<p class="error">{saveError}</p>{/if}
-    {/if}
-  </section>
 
   <div class="upload">
     <input
@@ -296,72 +202,68 @@
     {#if uploadError}<p class="error">{uploadError}</p>{/if}
   </div>
 
+  <label class="heatmap-toggle">
+    <input
+      type="checkbox"
+      checked={$settings.showHeatmap}
+      on:change={onHeatmapToggle}
+    />
+    Show foraging heatmap on map
+    <span class="muted">— a density layer built from your saved tracks</span>
+  </label>
+
   {#if loading}
     <p class="hint">Loading…</p>
   {:else if error}
     <p class="error">{error}</p>
   {:else if tracks.length === 0}
-    <p class="hint">No tracks yet. Drop a GPX or KML file above to import one.</p>
+    <p class="hint">No tracks yet. Drop a GPX or KML file above to import one, or tap Record on the map.</p>
   {:else}
-    <div class="track-toolbar">
-      <div class="filter-chips" role="radiogroup" aria-label="Date range">
-        {#each FILTER_OPTIONS as opt}
-          <button
-            type="button"
-            class="chip"
-            class:active={dateFilter === opt.k}
-            on:click={() => (dateFilter = opt.k)}
-            role="radio"
-            aria-checked={dateFilter === opt.k}
-          >{opt.label}</button>
-        {/each}
-      </div>
-      <div class="bulk">
+    <div class="filter-chips" role="radiogroup" aria-label="Date range">
+      {#each FILTER_OPTIONS as opt}
         <button
           type="button"
-          class="bulk-btn"
-          on:click={showAllFiltered}
-          disabled={filteredTracks.length === 0 || allShownInFilter}
-        >Show all on map</button>
-        <button
-          type="button"
-          class="bulk-btn"
-          on:click={hideAllFiltered}
-          disabled={filteredTracks.length === 0 ||
-            !filteredTracks.some((t) => $displayedTrackIds.has(t.id))}
-        >Hide all</button>
-      </div>
+          class="chip"
+          class:active={dateFilter === opt.k}
+          on:click={() => (dateFilter = opt.k)}
+          role="radio"
+          aria-checked={dateFilter === opt.k}
+        >{opt.label}</button>
+      {/each}
     </div>
     {#if filteredTracks.length === 0}
       <p class="hint">No tracks in this window.</p>
     {:else}
-      <ul class="track-list" aria-label="Saved tracks">
-        {#each filteredTracks as t}
-          <li class="track-row" class:on={$displayedTrackIds.has(t.id)}>
-            <label class="show-toggle" title="Toggle this track on the map">
-              <input
-                type="checkbox"
-                checked={$displayedTrackIds.has(t.id)}
-                on:change={(e) => onShowToggle(e, t.id)}
-              />
-              <span class="sr-only">Show on map</span>
-            </label>
-            <div class="track-main">
-              <div class="track-title">
-                {t.title ?? '(untitled)'}
-                <span class="src src-{t.source}">{t.source}</span>
-                {#if t.visibility !== 'private'}
-                  <span class="vis">{t.visibility}</span>
-                {/if}
+      {#each groupedTracks as g}
+        <h2 class="group-label">{g.label}</h2>
+        <ul class="track-list" aria-label={'Tracks from ' + g.label}>
+          {#each g.rows as t}
+            <li class="track-row" class:on={$displayedTrackIds.has(t.id)}>
+              <label class="show-toggle" title="Show / hide this track on the map">
+                <input
+                  type="checkbox"
+                  checked={$displayedTrackIds.has(t.id)}
+                  on:change={(e) => onShowToggle(e, t.id)}
+                />
+                <span class="sr-only">Show on map</span>
+              </label>
+              <div class="track-main">
+                <div class="track-title">
+                  {t.title ?? '(untitled)'}
+                  <span class="src src-{t.source}">{t.source}</span>
+                  {#if t.visibility !== 'private'}
+                    <span class="vis">{t.visibility}</span>
+                  {/if}
+                </div>
+                <div class="track-meta">
+                  {fmtDate(t.started_at)} · {fmtDistance(t.distance_m)} · {fmtDuration(t.started_at, t.ended_at)}
+                </div>
               </div>
-              <div class="track-meta">
-                {fmtDate(t.started_at)} · {fmtDistance(t.distance_m)} · {fmtDuration(t.started_at, t.ended_at)}
-              </div>
-            </div>
-            <button class="rm" on:click={() => onDelete(t)} aria-label="Delete track">×</button>
-          </li>
-        {/each}
-      </ul>
+              <button class="rm" on:click={() => onDelete(t)} aria-label="Delete track">×</button>
+            </li>
+          {/each}
+        </ul>
+      {/each}
     {/if}
   {/if}
 </main>
@@ -378,6 +280,7 @@
   main { padding: 1.25rem 1rem 3rem; max-width: 56rem; margin: 0 auto; color: #1f2a1f; }
   .lead { color: #4a554a; line-height: 1.5; margin: 0 0 1rem; }
   .hint { color: #6b7a6b; }
+  .muted { color: #6b7a6b; font-weight: 400; }
   .error { color: #b03030; }
 
   .upload {
@@ -385,7 +288,7 @@
     border: 1px solid #c7d0c7;
     border-radius: 0.4rem;
     padding: 0.75rem 0.85rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.85rem;
     display: flex;
     align-items: center;
     gap: 0.85rem;
@@ -393,71 +296,19 @@
   }
   .upload input[type='file'] { font-size: 0.9rem; }
 
-  .recorder {
-    background: white;
-    border: 1px solid #c7d0c7;
-    border-radius: 0.4rem;
-    padding: 0.85rem 0.95rem;
+  .heatmap-toggle {
+    display: flex; align-items: center; gap: 0.4rem;
     margin-bottom: 1rem;
-  }
-  .recorder.active { border-color: #3a5a3a; background: #fbfdfa; }
-  .recorder header {
-    display: flex; align-items: center; gap: 0.6rem;
-    font-size: 0.95rem; color: #3a5a3a; font-weight: 600;
-    margin-bottom: 0.4rem;
-  }
-  .recorder-title { color: #1f2a1f; }
-  .rec-dot {
-    width: 0.7rem; height: 0.7rem; border-radius: 50%;
-    background: #c14a3a;
-    animation: pulse 1.4s infinite;
-    box-shadow: 0 0 0 0 rgba(193, 74, 58, 0.6);
-  }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(193, 74, 58, 0.6); }
-    70% { box-shadow: 0 0 0 8px rgba(193, 74, 58, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(193, 74, 58, 0); }
-  }
-  .rec-paused { color: #7a4a10; }
-  .rec-stats { margin: 0.25rem 0 0.6rem; color: #1f2a1f; }
-  .rec-actions {
-    display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;
-  }
-  .rec-actions input[type='text'] {
-    flex: 1 1 14rem;
-    padding: 0.35rem 0.55rem;
-    border: 1px solid #c7d0c7;
-    border-radius: 0.3rem;
     font-size: 0.9rem;
-  }
-  .rec-actions button {
-    padding: 0.35rem 0.85rem;
-    border-radius: 0.3rem;
-    border: 1px solid #c7d0c7;
-    background: white;
     color: #3a5a3a;
     cursor: pointer;
-    font-size: 0.9rem;
   }
-  .rec-actions button.primary {
-    background: #3a5a3a; color: white; border-color: #3a5a3a;
-  }
-  .rec-actions button.danger {
-    color: #b03030; border-color: #d6a3a3;
-  }
-  .rec-actions button:disabled { opacity: 0.6; cursor: default; }
+  .heatmap-toggle input { margin: 0; }
 
-  /* Toolbar above the list — filter chips on the left, bulk
-     show/hide on the right. */
-  .track-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0.25rem 0 0.5rem;
+  .filter-chips {
+    display: inline-flex; gap: 0.3rem; flex-wrap: wrap;
+    margin-bottom: 0.5rem;
   }
-  .filter-chips { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; }
   .chip {
     padding: 0.2rem 0.65rem;
     border: 1px solid #c7d0c7;
@@ -469,18 +320,17 @@
   }
   .chip:hover { background: #f0f5ef; }
   .chip.active { background: #3a5a3a; color: white; border-color: #3a5a3a; }
-  .bulk { display: inline-flex; gap: 0.4rem; flex-wrap: wrap; }
-  .bulk-btn {
-    background: white; color: #3a5a3a;
-    border: 1px solid #c7d0c7; border-radius: 0.3rem;
-    padding: 0.25rem 0.6rem; font-size: 0.8rem;
-    cursor: pointer;
-  }
-  .bulk-btn:hover:not(:disabled) { background: #f0f5ef; }
-  .bulk-btn:disabled { opacity: 0.5; cursor: default; }
 
-  /* Compact one-line-per-track list. Replaces the earlier 8-column
-     table that was too wide on phones and too sparse on desktop. */
+  /* Month-year grouping headers above each section of the list. */
+  .group-label {
+    margin: 1rem 0 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #6b7a6b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
   .track-list { list-style: none; margin: 0; padding: 0;
     background: white; border: 1px solid #e1e8e1; border-radius: 0.4rem; overflow: hidden; }
   .track-row {
