@@ -70,6 +70,17 @@ async function flush() {
   // Reset the buffer NOW; if more mutations land during the await,
   // they queue into a fresh buffer and trigger another flush.
   pendingFlush = new Map();
+  // Anon users don't have user_species_preferences rows to write
+  // to. Treat the flush as a successful no-op so the local state
+  // sticks for the session (the species filter still works in the
+  // UI), but no upsertMany is attempted that would throw 'Not
+  // signed in' and trigger the rollback that wipes the local state
+  // back to all-enabled — exactly the bug that made Clear briefly
+  // hide pins and then re-show them.
+  if (lastUserId === null) {
+    for (const p of batch) lastConfirmed.set(p.speciesId, p.enabled);
+    return;
+  }
   try {
     await upsertMany(batch);
     // On success, fold this batch into lastConfirmed so future rollbacks
@@ -120,11 +131,16 @@ function clearLocal(): void {
   _store.set(emptyState());
 }
 
+/** Mirrors the signed-in user id as the auth store updates.
+ *  Module-scoped (rather than block-scoped inside the browser
+ *  guard) so flush() can check whether a server upsert is even
+ *  possible — anon users have no row to write to. */
+let lastUserId: string | null = null;
+
 if (browser) {
   // Reload preferences whenever the signed-in user changes; clear
   // them on sign-out so a fresh sign-in doesn't leak the previous
   // user's settings.
-  let lastUserId: string | null = null;
   session.subscribe((s) => {
     const uid = s?.user?.id ?? null;
     if (uid === lastUserId) return;

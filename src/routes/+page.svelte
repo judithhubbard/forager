@@ -310,15 +310,30 @@
    *  available methods is derived from the species catalog so newly
    *  curated methods automatically appear. */
   let cookbookFilter = '';
+  /** Available 'Make' methods are derived from species that ACTUALLY
+   *  have at least one pin in the current viewport — not the whole
+   *  catalog. So 'wine' won't appear in the dropdown when you're
+   *  looking at a part of town that has no grape / cherry / black
+   *  raspberry pins. Earlier behavior listed every method any
+   *  species in the catalog supports, which let the user pick
+   *  things that would empty the map. */
   $: availableCookbookMethods = (() => {
+    const visibleSpeciesIds = new Set(pins.map((p) => p.species_id).filter(Boolean));
     const seen = new Set<string>();
     for (const s of species) {
+      if (!visibleSpeciesIds.has(s.id)) continue;
       for (const m of s.preparation_methods ?? []) {
         if (m && m.trim()) seen.add(m.trim());
       }
     }
     return Array.from(seen).sort();
   })();
+  // If the user picked a method and then panned away from species
+  // that support it, clear the filter so it doesn't silently keep
+  // hiding everything.
+  $: if (cookbookFilter && !availableCookbookMethods.includes(cookbookFilter)) {
+    cookbookFilter = '';
+  }
   /** Set of species_ids whose preparation_methods include cookbookFilter.
    *  null when no cookbook filter is active. Computed once per change
    *  rather than per pin in the filter loop. */
@@ -947,7 +962,7 @@
     </label>
     {#if availableCookbookMethods.length > 0}
       <label>
-        Make from:
+        Make:
         <select bind:value={cookbookFilter}>
           <option value="">— anything —</option>
           {#each availableCookbookMethods as m}
