@@ -321,7 +321,7 @@
   /** Brief 'X / Y on' summary for the panel button. */
   $: layersOnCount = (() => {
     const m = $settings.mapLayers;
-    return [m.mine, m.friends, m.group, m.public].filter(Boolean).length;
+    return [m.mine, m.friends, m.group, m.public, m.tracks].filter(Boolean).length;
   })();
   let showLegend = true;
 
@@ -988,7 +988,7 @@
     <label>
       Show:
       <select bind:value={filterStatus}>
-        <option value="all">All ({statusCounts.all}, incl. Gone / Inaccessible / Not good)</option>
+        <option value="all">All ({statusCounts.all})</option>
         <option value="active">Active ({statusCounts.active})</option>
         <option value="possibly_ripe">Possibly ripe today ({statusCounts.possibly_ripe})</option>
         <option value="confirmed_ripe">Confirmed ripe this year ({statusCounts.confirmed_ripe})</option>
@@ -1013,7 +1013,7 @@
           on:click={() => (layersPanelOpen = !layersPanelOpen)}
           title="Show or hide pin sources on the map"
         >
-          Layers: {layersOnCount}/4
+          Layers: {layersOnCount}/5
           <span class="caret">{layersPanelOpen ? '▴' : '▾'}</span>
         </button>
         {#if layersPanelOpen}
@@ -1054,6 +1054,15 @@
               <span class="layer-name">Public</span>
               <span class="layer-hint">City inventories + community-shared</span>
             </label>
+            <label class="layer-row">
+              <input
+                type="checkbox"
+                checked={$settings.mapLayers.tracks}
+                on:change={(e) => onLayerToggle('tracks', e)}
+              />
+              <span class="layer-name">Tracks</span>
+              <span class="layer-hint">Saved track polylines</span>
+            </label>
           </div>
         {/if}
       </div>
@@ -1073,7 +1082,7 @@
     {clusters}
     {pinDensityBuckets}
     heatPoints={shownHeatPoints}
-    displayedTracks={displayedTrackPolylines}
+    displayedTracks={$settings.mapLayers.tracks ? displayedTrackPolylines : []}
     colorTracksByDate={$settings.colorTracksByDate}
     showRecorder={!!$session}
     {categoryOf}

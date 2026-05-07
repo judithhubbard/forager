@@ -51,9 +51,10 @@ interface Settings {
     friends: boolean;
     group: boolean;
     public: boolean;
+    tracks: boolean;
   };
 }
-export type MapLayerKey = 'mine' | 'friends' | 'group' | 'public';
+export type MapLayerKey = 'mine' | 'friends' | 'group' | 'public' | 'tracks';
 const DEFAULT: Settings = {
   basemap: 'osm-hot',
   disclaimerAcceptedAt: null,
@@ -61,7 +62,7 @@ const DEFAULT: Settings = {
   defaultPhotoLicense: 'CC-BY-SA-4.0',
   showHeatmap: false,
   colorTracksByDate: true,
-  mapLayers: { mine: true, friends: true, group: true, public: true }
+  mapLayers: { mine: true, friends: true, group: true, public: true, tracks: true }
 };
 
 const ALLOWED_LICENSES: PhotoLicense[] = [
@@ -94,7 +95,8 @@ function normalize(s: Partial<Settings>): Settings {
       mine:    s.mapLayers?.mine    !== false,
       friends: s.mapLayers?.friends !== false,
       group:   s.mapLayers?.group   !== false,
-      public:  s.mapLayers?.public  !== false
+      public:  s.mapLayers?.public  !== false,
+      tracks:  s.mapLayers?.tracks  !== false
     }
   };
 }
