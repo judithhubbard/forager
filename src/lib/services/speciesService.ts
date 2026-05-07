@@ -3,7 +3,13 @@
 import { supabase } from '$lib/supabase';
 import type { Database } from '$lib/database.types';
 
-export type Species = Database['public']['Tables']['species']['Row'];
+/** Species row + the image columns added in 20260506000028. The
+ *  generated database.types.ts hasn't been regenerated, so we
+ *  extend the row type here. Same pattern as profile.is_global_admin. */
+export type Species = Database['public']['Tables']['species']['Row'] & {
+  image_url: string | null;
+  image_attribution: string | null;
+};
 
 let cache: Species[] | null = null;
 
@@ -15,7 +21,7 @@ export async function listAll(): Promise<Species[]> {
     console.error('[speciesService] listAll error:', error);
     throw error;
   }
-  cache = data ?? [];
+  cache = (data ?? []) as unknown as Species[];
   return cache;
 }
 
@@ -52,7 +58,7 @@ export async function updateCuration(
     throw error;
   }
   cache = null;
-  return data as Species;
+  return data as unknown as Species;
 }
 
 /** Client-side filter for typeahead. Matches common_name, scientific_name, aliases. */

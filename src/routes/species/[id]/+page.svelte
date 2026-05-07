@@ -129,6 +129,30 @@
   }
   $: attribParts = species?.attribution ? parseAttribution(species.attribution) : [];
 
+  /** Parse the species.image_attribution string into structured
+   *  parts. The wikidata-images script emits 'Author · License ·
+   *  https://commons.wikimedia.org/...'. Hand-curated rows might
+   *  use a different shape, so we recognize URLs anywhere and
+   *  treat the rest as text. */
+  type ImgAttribPart =
+    | { kind: 'text'; value: string }
+    | { kind: 'link'; label: string; href: string };
+  function parseImgAttribution(s: string): ImgAttribPart[] {
+    const parts: ImgAttribPart[] = [];
+    for (const seg of s.split('·').map((x) => x.trim()).filter(Boolean)) {
+      const url = seg.match(/^(https?:\/\/\S+)$/);
+      if (url) {
+        parts.push({ kind: 'link', label: 'source', href: url[1] });
+      } else {
+        parts.push({ kind: 'text', value: seg });
+      }
+    }
+    return parts;
+  }
+  $: imgAttribParts = species?.image_attribution
+    ? parseImgAttribution(species.image_attribution)
+    : [];
+
   /** Inline curation UI — visible only to global admins. The Edit
    *  button populates these draft fields from the loaded species,
    *  Save calls updateCuration and folds the response back into
@@ -222,6 +246,28 @@
     <p class="sci">{species.scientific_name}</p>
     {#if species.aliases?.length}
       <p class="aliases">Also known as: {species.aliases.join(', ')}</p>
+    {/if}
+
+    {#if species.image_url}
+      <figure class="hero">
+        <img
+          src={species.image_url}
+          alt={species.common_name + ' — ' + species.scientific_name}
+          loading="lazy"
+        />
+        {#if imgAttribParts.length}
+          <figcaption>
+            {#each imgAttribParts as p, i}
+              {#if i > 0}<span class="sep"> · </span>{/if}
+              {#if p.kind === 'link'}
+                <a href={p.href} target="_blank" rel="noopener noreferrer">{p.label}</a>
+              {:else}
+                <span>{p.value}</span>
+              {/if}
+            {/each}
+          </figcaption>
+        {/if}
+      </figure>
     {/if}
 
     {#if $session}
@@ -390,6 +436,33 @@
   .error { color: #b03030; }
   .sci { font-style: italic; color: #4a554a; margin: 0.1rem 0 0.4rem; }
   .aliases { color: #6b7a6b; font-size: 0.9rem; margin-top: 0; }
+
+  /* Hero image — rendered between the title block and the action
+     row. Wikimedia Commons mostly delivers vertical or square
+     thumbnails; cap height to keep the page readable on phones. */
+  .hero {
+    margin: 0.85rem 0 0.6rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hero img {
+    width: 100%;
+    max-height: 22rem;
+    object-fit: cover;
+    border-radius: 0.4rem;
+    background: #f0f5ef;
+    display: block;
+  }
+  .hero figcaption {
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    color: #6b7a6b;
+    line-height: 1.4;
+  }
+  .hero figcaption a { color: #3a5a3a; }
+  .hero figcaption .sep { color: #8a948a; }
   section { margin-top: 1.25rem; }
   h2 { color: #3a5a3a; font-size: 1rem; margin: 0 0 0.45rem; }
   .prose { margin: 0; }
