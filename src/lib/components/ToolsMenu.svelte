@@ -3,6 +3,7 @@
   import { base } from '$app/paths';
   import { page } from '$app/stores';
   import { signOut } from '$lib/services/authService';
+  import { session } from '$lib/stores/auth';
   import {
     activeRegion,
     activeRegionId,
@@ -119,15 +120,20 @@
       {/if}
 
       <!-- Core navigation. The Map link is hidden when the user is
-           already on the map page since it would be a no-op. -->
+           already on the map page since it would be a no-op. The
+           personal-data pages (Activity, Watchlist, My tracks etc.)
+           are authed-only because they read user-scoped data and
+           would just show 'sign in to use this' for anon. -->
       {#if !isOnMap}
         <a href={base + '/'} on:click={closeMenu}>Map</a>
       {/if}
-      <a href={base + '/activity'} on:click={closeMenu}>Activity</a>
-      <a href={base + '/watchlist'} on:click={closeMenu}>Watchlist</a>
-      <a href={base + '/timeline'} on:click={closeMenu}>Year history</a>
-      <a href={base + '/tracks'} on:click={closeMenu}>My tracks</a>
-      <a href={base + '/windows'} on:click={closeMenu}>Harvest windows</a>
+      {#if $session}
+        <a href={base + '/activity'} on:click={closeMenu}>Activity</a>
+        <a href={base + '/watchlist'} on:click={closeMenu}>Watchlist</a>
+        <a href={base + '/timeline'} on:click={closeMenu}>Year history</a>
+        <a href={base + '/tracks'} on:click={closeMenu}>My tracks</a>
+        <a href={base + '/windows'} on:click={closeMenu}>Harvest windows</a>
+      {/if}
 
       <hr />
 
@@ -158,25 +164,29 @@
               </select>
             </label>
           </div>
+          {#if $session}
+            <div class="settings-block">
+              <label>
+                Photo license
+                <select value={$settings.defaultPhotoLicense} on:change={onPhotoLicenseChange}>
+                  {#each PHOTO_LICENSE_OPTIONS as o}
+                    <option value={o.value}>{o.label}</option>
+                  {/each}
+                </select>
+              </label>
+            </div>
+          {/if}
           <div class="settings-block">
-            <label>
-              Photo license
-              <select value={$settings.defaultPhotoLicense} on:change={onPhotoLicenseChange}>
-                {#each PHOTO_LICENSE_OPTIONS as o}
-                  <option value={o.value}>{o.label}</option>
-                {/each}
-              </select>
-            </label>
-          </div>
-          <div class="settings-block">
-            <label class="checkbox-row">
-              <input
-                type="checkbox"
-                checked={$settings.showHeatmap}
-                on:change={onHeatmapToggle}
-              />
-              Show foraging heatmap
-            </label>
+            {#if $session}
+              <label class="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={$settings.showHeatmap}
+                  on:change={onHeatmapToggle}
+                />
+                Show foraging heatmap
+              </label>
+            {/if}
             <label class="checkbox-row">
               <input
                 type="checkbox"
@@ -208,7 +218,12 @@
         <a href={base + '/admin'} on:click={closeMenu}>Admin</a>
       {/if}
       <hr />
-      <button on:click={handleSignOut}>Sign out</button>
+      {#if $session}
+        <button on:click={handleSignOut}>Sign out</button>
+      {:else}
+        <a href={base + '/login'} on:click={closeMenu}>Sign in</a>
+        <a href={base + '/register'} on:click={closeMenu}>Sign up free</a>
+      {/if}
     </div>
   {/if}
 </div>

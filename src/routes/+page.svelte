@@ -859,11 +859,8 @@
     {/if}
     {#if $session}
       <a class="link ripe-link" href={base + '/ripe'}>Ripe now</a>
-      <ToolsMenu />
-    {:else}
-      <a class="link small" href={base + '/about'}>About</a>
-      <a class="link small" href={base + '/sources'}>Sources</a>
     {/if}
+    <ToolsMenu />
   </div>
 </header>
 
