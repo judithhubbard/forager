@@ -15,9 +15,25 @@
   import { activeRegion } from '$lib/stores/activeRegion';
   import { formatElapsed, autoTrackTitle } from '$lib/utils/formatTime';
 
+  // Gated on recording state — only ticks while a recording is
+   // active so the layout-mounted badge doesn't burn a 250ms timer
+   // on every page across the whole app.
   const now = readable(Date.now(), (set) => {
-    const id = setInterval(() => set(Date.now()), 250);
-    return () => clearInterval(id);
+    let id: ReturnType<typeof setInterval> | null = null;
+    const unsub = recording.subscribe((rec) => {
+      const active = rec.status !== 'idle';
+      if (active && id == null) {
+        id = setInterval(() => set(Date.now()), 250);
+        set(Date.now());
+      } else if (!active && id != null) {
+        clearInterval(id);
+        id = null;
+      }
+    });
+    return () => {
+      unsub();
+      if (id != null) clearInterval(id);
+    };
   });
 
   let saving = false;

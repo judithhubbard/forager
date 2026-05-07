@@ -194,8 +194,16 @@
    *  user can flip per-observation. Reset every time the form opens
    *  so it tracks the current pin. */
   let formVisibility: 'shared' | 'private' = 'shared';
-  $: if (formOpen && pin) {
-    formVisibility = (pin.visibility as 'shared' | 'private') ?? 'shared';
+  /** Reset formVisibility only on the false→true transition of
+   *  formOpen. The earlier reactive fired whenever `pin` got a new
+   *  reference (e.g. after refetch on save) and silently overwrote
+   *  whatever the user had picked mid-edit. */
+  let prevFormOpen = false;
+  $: {
+    if (formOpen && !prevFormOpen && pin) {
+      formVisibility = (pin.visibility as 'shared' | 'private') ?? 'shared';
+    }
+    prevFormOpen = formOpen;
   }
   // Year/month/day form fields — three selects avoids the native date
   // input's flaky keyboard handling on Chrome/Mac (the dd kept resetting).
@@ -512,7 +520,7 @@
   async function deleteObservation(o: Observation) {
     if (!confirm('Delete this observation?')) return;
     try {
-      await removeObservation(o.id);
+      await removeObservation(o.id, o.pin_id);
       observations = await listByPin(pinId);
       pin = await getEffective(pinId);
       dispatch('statusChanged');
@@ -938,9 +946,11 @@
         <p class="hint">No observations yet.</p>
       {:else}
         {#each years as yr}
+          {@const yearObs = byYear.get(yr) ?? []}
           <h4 class="year">{yr}</h4>
           <ul class="obs-list">
-            {#each byYear.get(yr) ?? [] as o}
+            {#each yearObs as o}
+              {@const obsPhotos = photosByObs.get(o.id) ?? []}
               <li>
                 <span class="stage" style="background: {stageColor(o.stage)}">{o.stage}</span>
                 <span class="date">{fmtObservation(o)}</span>
@@ -962,9 +972,9 @@
                 >📷</button>
                 <button class="obs-delete" on:click={() => deleteObservation(o)} aria-label="Delete observation">×</button>
                 {#if o.quality_notes}<p class="obs-notes">{o.quality_notes}</p>{/if}
-                {#if (photosByObs.get(o.id)?.length ?? 0) > 0}
+                {#if obsPhotos.length > 0}
                   <div class="obs-photos">
-                    {#each photosByObs.get(o.id) ?? [] as p}
+                    {#each obsPhotos as p}
                       <button class="obs-thumb" on:click={() => openLightbox(p)} aria-label="Open photo">
                         {#if thumbUrls.get(p.thumbnail_path)}
                           <img src={thumbUrls.get(p.thumbnail_path)} alt={p.caption ?? 'Photo'} loading="lazy" />

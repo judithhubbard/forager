@@ -3,7 +3,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '$lib/supabase';
 import { enqueue } from './outbox';
-import { bumpDataChange } from '$lib/stores/dataChange';
+import { bumpDataChange, bumpPinChanged } from '$lib/stores/dataChange';
 import type { Database } from '$lib/database.types';
 
 export type Observation = Database['public']['Tables']['observations']['Row'];
@@ -119,12 +119,15 @@ export async function create(input: CreateObservationInput): Promise<string> {
       }
     }
   });
-  bumpDataChange();
+  bumpPinChanged(input.pinId);
   return id;
 }
 
-/** Delete an observation by id. RLS allows owners to delete their own. */
-export async function remove(id: string): Promise<void> {
+/** Delete an observation by id. RLS allows owners to delete their own.
+ *  Pass pinId when known (the pin-detail panel has it from the row)
+ *  so the page can refresh just that one pin instead of the whole
+ *  region. Falls back to a coarse data-change bump otherwise. */
+export async function remove(id: string, pinId?: string): Promise<void> {
   await enqueue({
     id,
     entityType: 'observation',
@@ -138,7 +141,8 @@ export async function remove(id: string): Promise<void> {
       }
     }
   });
-  bumpDataChange();
+  if (pinId) bumpPinChanged(pinId);
+  else bumpDataChange();
 }
 
 /** Group observations by year for the year-over-year UI (PLAN §3.4). */

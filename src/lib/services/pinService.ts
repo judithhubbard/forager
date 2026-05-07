@@ -4,7 +4,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '$lib/supabase';
 import { enqueue } from './outbox';
-import { bumpDataChange } from '$lib/stores/dataChange';
+import { bumpDataChange, bumpPinChanged } from '$lib/stores/dataChange';
 import type { Database } from '$lib/database.types';
 
 export type Pin = Database['public']['Tables']['pins']['Row'];
@@ -221,7 +221,7 @@ export async function updateVisibility(pinId: string, visibility: Visibility): P
       }
     }
   });
-  bumpDataChange();
+  bumpPinChanged(pinId);
 }
 
 /** Move a pin to a new lng/lat. Owner-or-admin only via RLS. Used
@@ -250,7 +250,7 @@ export async function updateLocation(
       }
     }
   });
-  bumpDataChange();
+  bumpPinChanged(pinId);
 }
 
 /** Update the stored status of a pin. */
@@ -268,5 +268,5 @@ export async function updateStatus(pinId: string, status: PinStatus): Promise<vo
       }
     }
   });
-  bumpDataChange();
+  bumpPinChanged(pinId);
 }

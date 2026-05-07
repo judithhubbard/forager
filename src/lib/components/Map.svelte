@@ -4,6 +4,7 @@
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
   import { recentRain, formatMm } from '$lib/services/weatherService';
+  import { formatElapsed, autoTrackTitle } from '$lib/utils/formatTime';
   import {
     recording,
     start as startRec,
@@ -341,47 +342,47 @@
     const ms = $recording.startedAt
       ? ($recording.endedAt ?? $now) - $recording.startedAt
       : 0;
-    elapsedLabel = fmtElapsedShort(ms);
+    elapsedLabel = formatElapsed(ms);
   }
-  function fmtElapsedShort(ms: number): string {
-    if (ms <= 0) return '0:00';
-    const total = Math.floor(ms / 1000);
-    const h = Math.floor(total / 3600);
-    const m = Math.floor((total % 3600) / 60);
-    const s = total % 60;
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${m}:${String(s).padStart(2, '0')}`;
-  }
-  /** Wall-clock store. Ticks every 250ms so even if the browser
-   *  throttles the timer (background-tab penalties on desktop,
-   *  more aggressive throttling in iOS low-power mode), at least
-   *  one tick per second reaches us under most conditions. Also
-   *  snaps an immediate update when the tab regains visibility
-   *  so the elapsed counter doesn't sit on a stale value after
-   *  the user comes back from another app. */
+  /** Wall-clock store, gated on recording state — only ticks while
+   *  a recording is active. Earlier version ran a permanent 250ms
+   *  setInterval whether or not anyone needed it; auditors flagged
+   *  this as a constant background cost on every page load.
+   *
+   *  When recording starts: subscribe → start interval. When it
+   *  stops: unsubscribe → clear interval. Visibility-snap kept so
+   *  the counter doesn't stale after the user backgrounds the tab. */
   const now = readable(Date.now(), (set) => {
-    const id = setInterval(() => set(Date.now()), 250);
-    const onVisible = () => {
-      if (typeof document !== 'undefined' && !document.hidden) set(Date.now());
-    };
-    if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', onVisible);
-    }
+    let id: ReturnType<typeof setInterval> | null = null;
+    let visListener: (() => void) | null = null;
+    const unsubFromRecording = recording.subscribe((rec) => {
+      const active = rec.status !== 'idle';
+      if (active && id == null) {
+        id = setInterval(() => set(Date.now()), 250);
+        visListener = () => {
+          if (typeof document !== 'undefined' && !document.hidden) set(Date.now());
+        };
+        if (typeof document !== 'undefined') {
+          document.addEventListener('visibilitychange', visListener);
+        }
+        set(Date.now());
+      } else if (!active && id != null) {
+        clearInterval(id);
+        id = null;
+        if (visListener && typeof document !== 'undefined') {
+          document.removeEventListener('visibilitychange', visListener);
+          visListener = null;
+        }
+      }
+    });
     return () => {
-      clearInterval(id);
-      if (typeof document !== 'undefined') {
-        document.removeEventListener('visibilitychange', onVisible);
+      unsubFromRecording();
+      if (id != null) clearInterval(id);
+      if (visListener && typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', visListener);
       }
     };
   });
-  /** Auto-title from the recording's start time. The user wanted
-   *  to skip the manual name step — most foragers just want their
-   *  trip stamped with when it happened. */
-  function autoTitle(startedAt: number | null): string {
-    const d = startedAt ? new Date(startedAt) : new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `Track ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
   function clickStop() {
     if ($recording.points.length < 2) {
       // No usable trip — just discard silently.
@@ -390,7 +391,7 @@
     }
     recError = '';
     recSaving = true;
-    dispatch('recordSave', { title: autoTitle($recording.startedAt) });
+    dispatch('recordSave', { title: autoTrackTitle($recording.startedAt) });
   }
   /** Called by the parent after a successful save so the recorder
    *  resets cleanly. */

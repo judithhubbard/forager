@@ -9,6 +9,7 @@
     listPublicPins,
     listPublicPinClusters,
     clusterEpsForZoom,
+    getEffective as getEffectivePin,
     updateLocation as updatePinLocation,
     type PinEffective,
     type Bbox,
@@ -34,7 +35,7 @@
     setExplicitSet as setExplicitSpecies,
     enableAll as enableAllSpecies
   } from '$lib/stores/userPreferences';
-  import { dataChange } from '$lib/stores/dataChange';
+  import { dataChange, pinChanged } from '$lib/stores/dataChange';
   import { colorForGroup, colorForCategoryFallback } from '$lib/utils/symbology';
 
   let pins: PinEffective[] = [];
@@ -75,21 +76,26 @@
    *  track points and rebuild the polylines list passed to Map. */
   $: void rebuildDisplayedTracks($displayedTrackIds);
   async function rebuildDisplayedTracks(ids: Set<string>) {
-    const out: { id: string; points: [number, number][] }[] = [];
-    for (const id of ids) {
-      let pts = trackPointsCache.get(id);
-      if (!pts) {
+    // Fan out missing-track fetches in parallel — earlier serial
+    // loop blocked each track on the previous one.
+    const idArr = Array.from(ids);
+    const fetched = await Promise.all(
+      idArr.map(async (id) => {
+        const cached = trackPointsCache.get(id);
+        if (cached) return { id, points: cached };
         try {
-          pts = await getTrackPoints(id);
+          const pts = await getTrackPoints(id);
           trackPointsCache.set(id, pts);
+          return { id, points: pts };
         } catch (err) {
           console.error('[+page] getTrackPoints failed', id, err);
-          continue;
+          return null;
         }
-      }
-      if (pts.length > 1) out.push({ id, points: pts });
-    }
-    displayedTrackPolylines = out;
+      })
+    );
+    displayedTrackPolylines = fetched.filter(
+      (t): t is TrackPolyline => t !== null && t.points.length > 1
+    );
   }
 
   /** Bound from <Map> so we can call clearRecorder() after a save. */
@@ -121,10 +127,10 @@
       trackPointsCache.set(newId, latlngs);
       showTrack(newId);
       mapRef?.clearRecorder();
-      // Force the heatmap to refetch on its next render so the
-      // points just saved show up immediately if the toggle is on.
-      heatLoaded = false;
-      heatPoints = [];
+      // Append directly to heatPoints rather than forcing a full
+      // refetch — saves a paginated round-trip through up to 50k
+      // existing points just to surface the freshly-saved track.
+      if (heatLoaded) heatPoints = [...heatPoints, ...latlngs];
     } catch (err) {
       console.error('[+page] save recording failed', err);
       alert(err instanceof Error ? err.message : 'Could not save the recording.');
@@ -534,6 +540,38 @@
     loadAnonSpecies();
   }
 
+  // Granular update: when a single pin changes (observation logged,
+  // status flipped, location moved), patch just that pin in the
+  // local pins array instead of refetching the whole region. The
+  // version counter on pinChanged makes the reactive fire on every
+  // change even if the same pin id is bumped repeatedly.
+  let lastPinChangeV = -1;
+  $: if ($pinChanged && $pinChanged.v !== lastPinChangeV && $activeRegion) {
+    lastPinChangeV = $pinChanged.v;
+    void patchOnePin($pinChanged.pinId);
+  }
+  async function patchOnePin(pinId: string) {
+    try {
+      const fresh = await getEffectivePin(pinId);
+      if (!fresh) {
+        // Pin was deleted — drop from local state.
+        pins = pins.filter((p) => p.id !== pinId);
+        return;
+      }
+      const idx = pins.findIndex((p) => p.id === pinId);
+      if (idx === -1) {
+        // New-to-this-page pin — append.
+        pins = [...pins, fresh];
+      } else {
+        const next = pins.slice();
+        next[idx] = fresh;
+        pins = next;
+      }
+    } catch (err) {
+      console.error('[+page] patchOnePin failed', err);
+    }
+  }
+
   // Deep-link: /?pin=ID opens that pin's detail panel on load. Used by
   // the harvest-windows drill-down to "Open pin" → land here.
   $: {
@@ -610,8 +648,10 @@
   }
 
   function onPanelStatusChanged() {
-    // A status change in the open pin should refresh the map.
-    if ($activeRegion) loadAll($activeRegion.id);
+    // No-op: pinService.updateStatus already calls bumpPinChanged,
+    // which triggers patchOnePin via the reactive above. Earlier
+    // code here also fired a region-wide loadAll, doubling the
+    // round-trip and the render churn.
   }
 
   async function handleMapTap(e: CustomEvent<{ lng: number; lat: number }>) {
