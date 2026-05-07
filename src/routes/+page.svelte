@@ -341,28 +341,33 @@
    *  available methods is derived from the species catalog so newly
    *  curated methods automatically appear. */
   let cookbookFilter = '';
-  /** Available 'Make' methods are derived from species that ACTUALLY
-   *  have at least one pin in the current viewport — not the whole
-   *  catalog. So 'wine' won't appear in the dropdown when you're
-   *  looking at a part of town that has no grape / cherry / black
-   *  raspberry pins. Earlier behavior listed every method any
-   *  species in the catalog supports, which let the user pick
-   *  things that would empty the map. */
+  /** Available 'Make' methods, with the per-method pin count in the
+   *  current viewport. Derived from speciesInRegion (which unions
+   *  summary-only species so capped pins don't hide methods) and
+   *  summaryCountFor (server-accurate counts from bboxSummary,
+   *  unaffected by the 500-pin fetch cap). Sorted by count desc so
+   *  the most useful methods come first. */
   $: availableCookbookMethods = (() => {
-    const visibleSpeciesIds = new Set(pins.map((p) => p.species_id).filter(Boolean));
-    const seen = new Set<string>();
-    for (const s of species) {
-      if (!visibleSpeciesIds.has(s.id)) continue;
-      for (const m of s.preparation_methods ?? []) {
-        if (m && m.trim()) seen.add(m.trim());
+    const counts = new Map<string, number>();
+    for (const s of speciesInRegion) {
+      const methods = s.preparation_methods ?? [];
+      if (methods.length === 0) continue;
+      const c = summaryCountFor(s.id);
+      if (c === 0) continue;
+      for (const m of methods) {
+        const key = m?.trim();
+        if (!key) continue;
+        counts.set(key, (counts.get(key) ?? 0) + c);
       }
     }
-    return Array.from(seen).sort();
+    return Array.from(counts.entries())
+      .map(([method, count]) => ({ method, count }))
+      .sort((a, b) => b.count - a.count || a.method.localeCompare(b.method));
   })();
   // If the user picked a method and then panned away from species
   // that support it, clear the filter so it doesn't silently keep
   // hiding everything.
-  $: if (cookbookFilter && !availableCookbookMethods.includes(cookbookFilter)) {
+  $: if (cookbookFilter && !availableCookbookMethods.some((m) => m.method === cookbookFilter)) {
     cookbookFilter = '';
   }
   /** Set of species_ids whose preparation_methods include cookbookFilter.
@@ -1097,7 +1102,7 @@
         <select bind:value={cookbookFilter}>
           <option value="">— anything —</option>
           {#each availableCookbookMethods as m}
-            <option value={m}>{m.replace(/_/g, ' ')}</option>
+            <option value={m.method}>{m.method.replace(/_/g, ' ')} ({m.count})</option>
           {/each}
         </select>
       </label>

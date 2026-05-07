@@ -79,6 +79,10 @@
   }>();
 
   let pin: PinEffective | null = null;
+  // Migration 24 added climate_zone_code to v_pin_effective. Generated
+  // types haven't been regenerated yet, so cast through unknown to
+  // surface the value reactively without a runtime branch.
+  $: zoneCode = (pin as unknown as { climate_zone_code: string | null } | null)?.climate_zone_code ?? null;
   let species: Species | null = null;
   let observations: ObservationWithUser[] = [];
   let allSpecies: Species[] = [];
@@ -1093,6 +1097,9 @@
       <h3>Reference</h3>
       <ul class="meta">
         <li><strong>ID:</strong> <code>{shortId}</code> <span class="muted">share to identify this pin</span></li>
+        {#if zoneCode}
+          <li><strong>Climate zone:</strong> USDA {zoneCode}</li>
+        {/if}
         {#if pin.import_source}
           <li>
             <strong>Source:</strong> {pin.import_source}
