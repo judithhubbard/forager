@@ -390,6 +390,12 @@
   $: trackLegendNewest = relTime(trackTimeMax);
   $: trackLegendOldest = relTime(trackTimeMin);
   $: showTrackLegend = colorTracksByDate && trackTimeCount >= 2;
+  /** When all visible tracks are from the same day the gradient
+   *  collapses (newest === oldest), and the legend would read
+   *  'today · gradient · today' which is meaningless. Detect and
+   *  render a single label in that case. */
+  $: singleDateLegend =
+    trackLegendNewest === trackLegendOldest;
 
   function renderHeat(points: Array<[number, number]>) {
     if (!map || !LCache) return;
@@ -1106,9 +1112,14 @@
   {/if}
   {#if showTrackLegend}
     <div class="track-legend" title="Tracks colored by date — newest red, oldest blue">
-      <span class="track-legend-label">{trackLegendNewest}</span>
-      <span class="track-legend-bar" aria-hidden="true"></span>
-      <span class="track-legend-label">{trackLegendOldest}</span>
+      {#if singleDateLegend}
+        <span class="track-legend-bar single" aria-hidden="true"></span>
+        <span class="track-legend-label">{trackLegendNewest}</span>
+      {:else}
+        <span class="track-legend-label">{trackLegendNewest}</span>
+        <span class="track-legend-bar" aria-hidden="true"></span>
+        <span class="track-legend-label">{trackLegendOldest}</span>
+      {/if}
     </div>
   {/if}
   {#if rainTotalMm !== null}
@@ -1327,11 +1338,19 @@
     pointer-events: none;
   }
 
+  /* Track recency legend. Sits in the bottom-left stack just
+     above the recorder pill so it visually associates with the
+     track-recording controls. z-index 600 puts it under the
+     pin-detail panel (z-700), so opening that panel covers the
+     legend instead of the legend covering the panel like the old
+     z-1100 did. Position re-checks both rec states (idle is at
+     bottom 3.5rem, active is taller) — sit at 6rem so we clear
+     either. */
   .track-legend {
     position: absolute;
-    top: 3.6rem; /* clear of the 2.5rem locate button + 0.75rem top + spacing */
-    right: 0.75rem;
-    z-index: 1100;
+    bottom: 6rem;
+    left: 0.75rem;
+    z-index: 600;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -1357,6 +1376,13 @@
       hsl(120, 75%, 44%),
       hsl(240, 75%, 38%)
     );
+  }
+  /* Single-date case (all visible tracks from the same day): show
+     a small solid red swatch instead of the gradient, since 'newest
+     vs oldest' isn't meaningful. */
+  .track-legend-bar.single {
+    width: 12px;
+    background: hsl(0, 75%, 50%);
   }
   .track-legend-label {
     white-space: nowrap;
