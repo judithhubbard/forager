@@ -395,6 +395,17 @@
     }
   }
 
+  /** Triggered when the user picks a value from the status select.
+   *  Saves immediately rather than requiring a follow-up 'Set X'
+   *  button click — the dropdown's only choices are valid statuses
+   *  to apply, so the pick IS the intent. */
+  async function onStatusSelect(e: Event) {
+    const v = (e.currentTarget as HTMLSelectElement).value;
+    if (!v) return;  // user re-selected the placeholder; do nothing
+    pendingStatus = v as PinStatus;
+    await saveStatus();
+  }
+
   async function loadPhotos() {
     photos = await listPhotos(pinId);
     if (photos.length === 0) {
@@ -768,17 +779,16 @@
       {/if}
       {#if $session}
         <div class="status-edit-row">
-          <select bind:value={pendingStatus}>
-            <option value={null}>change status…</option>
+          <select
+            value={pendingStatus ?? ''}
+            on:change={onStatusSelect}
+            disabled={statusSaving}
+          >
+            <option value="">{statusSaving ? 'Saving…' : 'change status…'}</option>
             {#each STATUSES as s}
               {#if s !== pin.status}<option value={s}>{statusLabel(s)}</option>{/if}
             {/each}
           </select>
-          {#if pendingStatus}
-            <button class="inline" on:click={saveStatus} disabled={statusSaving}>
-              {statusSaving ? '…' : `Set ${statusLabel(pendingStatus)}`}
-            </button>
-          {/if}
           {#if pin.created_by === $profile?.id || $activeRegion?.role === 'admin'}
             <button
               class="inline"
