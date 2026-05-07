@@ -21,6 +21,7 @@ export type TrackRow = {
   visibility: 'private' | 'shared' | 'public';
   title: string | null;
   notes: string | null;
+  is_favorite: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -96,7 +97,7 @@ export async function listByIds(ids: string[]): Promise<TrackRow[]> {
     console.error('[trackService] listByIds error:', error);
     throw error;
   }
-  return (data ?? []) as TrackRow[];
+  return (data ?? []) as unknown as TrackRow[];
 }
 
 export async function listMine(): Promise<TrackRow[]> {
@@ -108,7 +109,7 @@ export async function listMine(): Promise<TrackRow[]> {
     console.error('[trackService] listMine error:', error);
     throw error;
   }
-  return (data ?? []) as TrackRow[];
+  return (data ?? []) as unknown as TrackRow[];
 }
 
 
@@ -241,9 +242,19 @@ export async function remove(trackId: string): Promise<void> {
 
 export async function updateMeta(
   trackId: string,
-  patch: { title?: string | null; notes?: string | null; visibility?: 'private' | 'shared' | 'public' }
+  patch: {
+    title?: string | null;
+    notes?: string | null;
+    visibility?: 'private' | 'shared' | 'public';
+    is_favorite?: boolean;
+  }
 ): Promise<void> {
-  const { error } = await supabase.from('tracks').update(patch).eq('id', trackId);
+  // Cast through unknown — the generated Database type doesn't yet
+  // know about is_favorite (regen lag).
+  const { error } = await supabase
+    .from('tracks')
+    .update(patch as unknown as Record<string, never>)
+    .eq('id', trackId);
   if (error) {
     console.error('[trackService] updateMeta error:', error);
     throw error;

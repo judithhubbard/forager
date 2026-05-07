@@ -6,6 +6,7 @@
     listMine,
     importTrackFile,
     remove,
+    updateMeta,
     type TrackRow
   } from '$lib/services/trackService';
   import {
@@ -73,19 +74,77 @@
     }
   }
 
+  /** Inline rename. editingId tracks which row's title is editable;
+   *  draftTitle is the in-flight value. Submit on Enter or on blur,
+   *  cancel on Escape. */
+  let editingId: string | null = null;
+  let draftTitle = '';
+  function startRename(t: TrackRow) {
+    editingId = t.id;
+    draftTitle = t.title ?? '';
+  }
+  function cancelRename() {
+    editingId = null;
+    draftTitle = '';
+  }
+  async function commitRename(t: TrackRow) {
+    const next = draftTitle.trim();
+    if (!next || next === (t.title ?? '')) {
+      cancelRename();
+      return;
+    }
+    try {
+      await updateMeta(t.id, { title: next });
+      tracks = tracks.map((x) => (x.id === t.id ? { ...x, title: next } : x));
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Rename failed.';
+    } finally {
+      cancelRename();
+    }
+  }
+  function onTitleKey(e: KeyboardEvent, t: TrackRow) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void commitRename(t);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelRename();
+    }
+  }
+
+  /** Toggle the per-track favorite flag. Optimistic local update;
+   *  reverts to the prior value if the server write fails. */
+  async function toggleFavorite(t: TrackRow) {
+    const next = !t.is_favorite;
+    tracks = tracks.map((x) => (x.id === t.id ? { ...x, is_favorite: next } : x));
+    try {
+      await updateMeta(t.id, { is_favorite: next });
+    } catch (e) {
+      tracks = tracks.map((x) => (x.id === t.id ? { ...x, is_favorite: !next } : x));
+      error = e instanceof Error ? e.message : 'Could not update favorite.';
+    }
+  }
+
+  /** Svelte action to focus an element when it mounts. Replaces the
+   *  raw autofocus attribute (which trips an a11y warning). */
+  function focusOnMount(node: HTMLElement) {
+    node.focus();
+  }
+
   /** Date-range chip. Selecting a chip both filters the visible list
    *  AND syncs the on-map displayedTrackIds to that subset — the
    *  user wanted one button to control both 'which tracks am I
    *  looking at here' and 'which tracks paint on the map.' */
-  type DateFilter = 'all' | '24h' | '7d' | '30d' | 'year';
+  type DateFilter = 'all' | '24h' | '7d' | '30d' | 'year' | 'favorites';
   const FILTER_OPTIONS: { k: DateFilter; label: string }[] = [
-    { k: 'all',  label: 'All' },
-    { k: '24h',  label: '24h' },
-    { k: '7d',   label: '7 days' },
-    { k: '30d',  label: '30 days' },
-    { k: 'year', label: 'Year' }
+    { k: 'all',       label: 'All' },
+    { k: '24h',       label: '24h' },
+    { k: '7d',        label: '7 days' },
+    { k: '30d',       label: '30 days' },
+    { k: 'year',      label: 'Year' },
+    { k: 'favorites', label: '★ Favorites' }
   ];
-  const FILTER_MS: Record<Exclude<DateFilter, 'all'>, number> = {
+  const FILTER_MS: Record<'24h' | '7d' | '30d' | 'year', number> = {
     '24h':  24 * 60 * 60 * 1000,
     '7d':   7 * 24 * 60 * 60 * 1000,
     '30d':  30 * 24 * 60 * 60 * 1000,
@@ -96,6 +155,7 @@
 
   $: filteredTracks = (() => {
     if (dateFilter === 'all') return tracks;
+    if (dateFilter === 'favorites') return tracks.filter((t) => t.is_favorite);
     const cutoff = Date.now() - FILTER_MS[dateFilter];
     return tracks.filter((t) => {
       const ts = t.started_at ? new Date(t.started_at).getTime() : NaN;
@@ -251,19 +311,50 @@
                   />
                   <span class="sr-only">Show on map</span>
                 </label>
+                <button
+                  class="star"
+                  class:on={t.is_favorite}
+                  on:click={() => toggleFavorite(t)}
+                  aria-label={t.is_favorite ? 'Unstar' : 'Star'}
+                  title={t.is_favorite ? 'Starred' : 'Star this track'}
+                >{t.is_favorite ? '★' : '☆'}</button>
                 <div class="track-main">
                   <div class="track-title">
-                    {t.title ?? '(untitled)'}
+                    {#if editingId === t.id}
+                      <input
+                        class="title-input"
+                        bind:value={draftTitle}
+                        on:keydown={(e) => onTitleKey(e, t)}
+                        on:blur={() => commitRename(t)}
+                        use:focusOnMount
+                      />
+                    {:else}
+                      <button
+                        type="button"
+                        class="title-text"
+                        on:dblclick={() => startRename(t)}
+                        title="Double-click to rename"
+                      >{t.title ?? '(untitled)'}</button>
+                    {/if}
                     <span class="src src-{t.source}">{t.source}</span>
                     {#if t.visibility !== 'private'}
                       <span class="vis">{t.visibility}</span>
                     {/if}
+                    <button
+                      class="row-act"
+                      on:click={() => startRename(t)}
+                      aria-label="Rename track"
+                      title="Rename">✎</button>
+                    <button
+                      class="row-act danger"
+                      on:click={() => onDelete(t)}
+                      aria-label="Delete track"
+                      title="Delete">×</button>
                   </div>
                   <div class="track-meta">
                     {fmtDate(t.started_at)} · {fmtDistance(t.distance_m)} · {fmtDuration(t.started_at, t.ended_at)}
                   </div>
                 </div>
-                <button class="rm" on:click={() => onDelete(t)} aria-label="Delete track">×</button>
               </li>
             {/each}
           </ul>
@@ -369,38 +460,86 @@
     background: white; border: 1px solid #e1e8e1; border-radius: 0.4rem; overflow: hidden; }
   .track-row {
     display: flex; align-items: center; gap: 0.55rem;
-    padding: 0.4rem 0.65rem;
+    padding: 0.45rem 0.7rem;
     border-top: 1px solid #f0f5ef;
   }
   .track-row:first-child { border-top: 0; }
   .track-row.on { background: #f7faf6; }
-  .show-toggle { display: inline-flex; align-items: center; cursor: pointer; }
+  .show-toggle { display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
   .show-toggle input { width: 1rem; height: 1rem; margin: 0; }
+  /* Star button — sits between the show-checkbox and the title.
+     Slightly larger than the .row-act buttons because it's a
+     primary affordance, not a maintenance one. */
+  .star {
+    background: transparent;
+    border: 0;
+    color: #c7d0c7;
+    width: 1.6rem; height: 1.6rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    line-height: 1;
+    font-size: 1.1rem;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .star:hover { color: #d57100; }
+  .star.on { color: #d57100; }
   .sr-only {
     position: absolute; width: 1px; height: 1px;
     overflow: hidden; clip: rect(0 0 0 0);
   }
   .track-main { flex: 1; min-width: 0; line-height: 1.25; }
+  /* Title row holds title + chips + action buttons. The actions
+     cluster after the chips (next to LIVE / GPX) instead of being
+     pinned to the row's far right edge — that was unreachable on
+     wide browsers without a long mouse trip. */
   .track-title {
     display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
     color: #1f2a1f; font-size: 0.92rem; font-weight: 500;
   }
-  .track-meta { color: #6b7a6b; font-size: 0.78rem; margin-top: 0.05rem; }
+  /* Title text rendered as a transparent button so the dblclick
+     handler attaches to a focusable element (a11y-clean) — visually
+     identical to plain text. */
+  .title-text {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: text;
+  }
+  .title-input {
+    flex: 0 1 16rem; min-width: 6rem;
+    padding: 0.15rem 0.35rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.25rem;
+    color: #1f2a1f;
+    font-family: inherit;
+  }
+  .track-meta { color: #6b7a6b; font-size: 0.78rem; margin-top: 0.1rem; }
   .src { padding: 0.02rem 0.38rem; border-radius: 0.3rem; font-size: 0.7rem;
     background: #eef3ed; border: 1px solid #d4ddd2; color: #4a554a;
     text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
   .src-live { background: #fff4e3; border-color: #e8d3a6; color: #7a4a10; }
   .vis { font-size: 0.72rem; color: #6b7a6b; text-transform: uppercase; letter-spacing: 0.04em; }
-  .rm {
+  /* Per-row action buttons (rename / delete). Compact, transparent
+     by default, light hover. Live next to the source chip so they're
+     a tiny mouse hop from the title rather than across the row. */
+  .row-act {
     background: transparent;
-    border: 1px solid #d6c0c0;
-    color: #b03030;
-    width: 1.6rem;
-    height: 1.6rem;
-    border-radius: 0.3rem;
+    border: 0;
+    color: #6b7a6b;
+    width: 1.5rem; height: 1.5rem;
+    border-radius: 0.25rem;
     cursor: pointer;
     line-height: 1;
-    flex-shrink: 0;
+    font-size: 0.95rem;
+    padding: 0;
   }
-  .rm:hover { background: #fdf2f2; }
+  .row-act:hover { background: #ebefeb; color: #1f2a1f; }
+  .row-act.danger { color: #b03030; }
+  .row-act.danger:hover { background: #fdf2f2; color: #b03030; }
 </style>
