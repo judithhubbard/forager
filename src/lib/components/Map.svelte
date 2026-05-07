@@ -115,11 +115,13 @@
   export let showRecorder: boolean = false;
 
   /** Saved-track polylines the user has chosen to keep visible on
-   *  the map. Each entry is rendered as a colored line. The id is
-   *  used to keep individual layers stable across re-renders. */
+   *  the map. Each entry is rendered as a colored line; color is
+   *  derived from `startedAt` so the user can see at a glance
+   *  which tracks are recent (red) vs old (dark blue). */
   export let displayedTracks: Array<{
     id: string;
     points: Array<[number, number]>;
+    startedAt?: string | null;
   }> = [];
 
   /** Setting this prop animates the map to the given location. Parent
@@ -251,36 +253,79 @@
   // Saved-track polylines.
   $: if (map && LCache) renderTrackLayers(displayedTracks);
 
-  /** Pick a stable track color from the id hash so the same track
-   *  comes back the same color across reloads. Five colors, all
-   *  high-contrast against both light and satellite basemaps. */
-  function colorForTrackId(id: string): string {
-    const palette = ['#c14a3a', '#3a8db0', '#7a4a10', '#5a8a3a', '#984ea3'];
-    let h = 0;
-    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-    return palette[h % palette.length];
+  /** Min/max started_at across the *currently displayed* tracks, in
+   *  ms epoch. Drives the recency-gradient color scale and the
+   *  legend swatch. Updated by renderTrackLayers; reactive bindings
+   *  in the template read these directly. */
+  let trackTimeMin: number | null = null;
+  let trackTimeMax: number | null = null;
+  let trackTimeCount = 0;
+
+  /** Color a track by recency: newest = red (hue 0°), oldest = dark
+   *  blue (hue 240°). Using a relative scale across the visible set
+   *  keeps the gradient legible regardless of how the user filters.
+   *  Tracks with no started_at fall back to a neutral brown so they
+   *  don't claim a position on the gradient. */
+  function colorForRecency(
+    startedAt: string | null | undefined,
+    minMs: number | null,
+    maxMs: number | null
+  ): string {
+    if (!startedAt) return '#7a4a10';
+    const ts = Date.parse(startedAt);
+    if (!Number.isFinite(ts) || minMs == null || maxMs == null) return '#7a4a10';
+    if (maxMs === minMs) return 'hsl(0, 75%, 48%)'; // single track or all same date → red
+    // Newest at the top of the range (t=0, red); oldest at the
+    // bottom (t=1, blue). Slight darkening at the older end gives
+    // a sense of fade.
+    const t = Math.max(0, Math.min(1, (maxMs - ts) / (maxMs - minMs)));
+    const hue = t * 240;
+    const lightness = 50 - t * 12;
+    return `hsl(${hue.toFixed(0)}, 75%, ${lightness.toFixed(0)}%)`;
   }
 
-  function renderTrackLayers(tracks: Array<{ id: string; points: Array<[number, number]> }>) {
+  function renderTrackLayers(tracks: Array<{ id: string; points: Array<[number, number]>; startedAt?: string | null }>) {
     if (!map || !LCache) return;
     const L = LCache;
     const wantedIds = new Set(tracks.map((t) => t.id));
-    // Drop layers for tracks no longer in the displayed set.
     for (const [id, layer] of trackLayers) {
       if (!wantedIds.has(id)) {
         layer.remove();
         trackLayers.delete(id);
       }
     }
-    // Add or update the rest.
+    // Compute the current time range so colors are relative to
+    // the displayed set. min/max are stored on the component so
+    // the legend swatch can mirror them.
+    let lo: number | null = null;
+    let hi: number | null = null;
+    let n = 0;
+    for (const t of tracks) {
+      if (!t.startedAt) continue;
+      const ms = Date.parse(t.startedAt);
+      if (!Number.isFinite(ms)) continue;
+      n++;
+      if (lo == null || ms < lo) lo = ms;
+      if (hi == null || ms > hi) hi = ms;
+    }
+    trackTimeMin = lo;
+    trackTimeMax = hi;
+    trackTimeCount = n;
+
     for (const t of tracks) {
       if (t.points.length < 2) continue;
+      const color = colorForRecency(t.startedAt, lo, hi);
       const existing = trackLayers.get(t.id);
       if (existing) {
         existing.setLatLngs(t.points);
+        // Always re-apply the color: the relative gradient shifts
+        // whenever a track is added, removed, or its filter window
+        // changes, so a previously-orange track might need to
+        // become red because the older one was hidden.
+        existing.setStyle({ color });
       } else {
         const poly = L.polyline(t.points, {
-          color: colorForTrackId(t.id),
+          color,
           weight: 3,
           opacity: 0.85,
           lineJoin: 'round',
@@ -291,6 +336,26 @@
       }
     }
   }
+
+  /** Friendly relative-time label for the legend endpoints, e.g.
+   *  "today", "3 days ago", "2 mo ago", "1 yr ago". Avoids dragging
+   *  in a date library for two strings. */
+  function relTime(ms: number | null): string {
+    if (ms == null) return '';
+    const diff = Date.now() - ms;
+    if (diff < 0) return 'today';
+    const day = 86_400_000;
+    const days = diff / day;
+    if (days < 1) return 'today';
+    if (days < 2) return 'yesterday';
+    if (days < 14) return `${Math.round(days)} days ago`;
+    if (days < 60) return `${Math.round(days / 7)} wk ago`;
+    if (days < 365) return `${Math.round(days / 30)} mo ago`;
+    return `${(days / 365).toFixed(days < 730 ? 1 : 0)} yr ago`;
+  }
+  $: trackLegendNewest = relTime(trackTimeMax);
+  $: trackLegendOldest = relTime(trackTimeMin);
+  $: showTrackLegend = trackTimeCount >= 2;
 
   function renderHeat(points: Array<[number, number]>) {
     if (!map || !LCache) return;
@@ -931,6 +996,13 @@
   {#if locationError}
     <div class="loc-error" role="status">{locationError}</div>
   {/if}
+  {#if showTrackLegend}
+    <div class="track-legend" title="Tracks colored by date — newest red, oldest blue">
+      <span class="track-legend-label">{trackLegendNewest}</span>
+      <span class="track-legend-bar" aria-hidden="true"></span>
+      <span class="track-legend-label">{trackLegendOldest}</span>
+    </div>
+  {/if}
   {#if rainTotalMm !== null}
     <div
       class="rain-overlay"
@@ -1101,6 +1173,47 @@
   }
   .rain-overlay.dry { background: #fdf4e3; border-color: #e8c97a; color: #7a4a10; }
   .rain-overlay.wet { background: #d4e9f5; border-color: #6fa9d0; color: #0e3b58; }
+
+  /* Recency-color legend for displayed tracks. Lives below the
+     locate button (top-right) since the bottom-left is already
+     stacked with rain + recorder + status legend. Only visible
+     when ≥2 tracks are showing — a single track has no gradient
+     to interpret. */
+  .track-legend {
+    position: absolute;
+    top: 3.6rem; /* clear of the 2.5rem locate button + 0.75rem top + spacing */
+    right: 0.75rem;
+    z-index: 1100;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.55rem;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    font-size: 0.7rem;
+    color: #4a554a;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    pointer-events: none;
+  }
+  .track-legend-bar {
+    display: inline-block;
+    width: 56px;
+    height: 6px;
+    border-radius: 3px;
+    /* Match colorForRecency: hue 0 (red) → 240 (blue), with the
+       same lightness fade applied at the older end. */
+    background: linear-gradient(
+      to right,
+      hsl(0, 75%, 50%),
+      hsl(120, 75%, 44%),
+      hsl(240, 75%, 38%)
+    );
+  }
+  .track-legend-label {
+    white-space: nowrap;
+    color: #4a554a;
+  }
 
   /* Recorder lives bottom-left — small unobtrusive pill so the map
      stays visible during a foraging walk. Stacks above the rain

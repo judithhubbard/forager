@@ -16,7 +16,12 @@
     type PinCluster
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
-  import { listMyTrackPoints, importParsedTrack, getTrackPoints } from '$lib/services/trackService';
+  import {
+    listMyTrackPoints,
+    importParsedTrack,
+    getTrackPoints,
+    listByIds as listTracksByIds
+  } from '$lib/services/trackService';
   import { recording, stop as stopRecording } from '$lib/stores/recording';
   import { displayedTrackIds, showTrack } from '$lib/stores/displayedTracks';
   // Renamed from `Map` because the bare name shadows the JS Map
@@ -69,16 +74,38 @@
   /** Cache of track-id → point list so flipping a track on/off
    *  doesn't re-hit the network on the second toggle. */
   type LatLng = [number, number];
-  type TrackPolyline = { id: string; points: LatLng[] };
+  type TrackPolyline = { id: string; points: LatLng[]; startedAt: string | null };
   let trackPointsCache: Map<string, LatLng[]> = new Map();
+  /** Cache of track-id → started_at timestamp so the recency
+   *  gradient (newest = red, oldest = dark blue) can be computed
+   *  in Map without each track needing its own query. Filled in
+   *  one batched .in('id', ids) round-trip per rebuild. */
+  let trackStartedAtCache: Map<string, string | null> = new Map();
   let displayedTrackPolylines: TrackPolyline[] = [];
   /** Whenever the displayedTrackIds set changes, fetch any missing
    *  track points and rebuild the polylines list passed to Map. */
   $: void rebuildDisplayedTracks($displayedTrackIds);
   async function rebuildDisplayedTracks(ids: Set<string>) {
+    const idArr = Array.from(ids);
+    // Batch-fetch metadata for any displayed track we don't yet
+    // have a started_at for. Single round-trip; cheap because the
+    // tracks row is small (no points).
+    const missingMeta = idArr.filter((id) => !trackStartedAtCache.has(id));
+    if (missingMeta.length > 0) {
+      try {
+        const rows = await listTracksByIds(missingMeta);
+        for (const r of rows) trackStartedAtCache.set(r.id, r.started_at);
+        // Mark ids that didn't come back so we don't re-query forever
+        // (e.g. a track was deleted but the displayed-id set is stale).
+        for (const id of missingMeta) {
+          if (!trackStartedAtCache.has(id)) trackStartedAtCache.set(id, null);
+        }
+      } catch (err) {
+        console.error('[+page] track meta fetch failed', err);
+      }
+    }
     // Fan out missing-track fetches in parallel — earlier serial
     // loop blocked each track on the previous one.
-    const idArr = Array.from(ids);
     const fetched = await Promise.all(
       idArr.map(async (id) => {
         const cached = trackPointsCache.get(id);
@@ -93,9 +120,9 @@
         }
       })
     );
-    displayedTrackPolylines = fetched.filter(
-      (t): t is TrackPolyline => t !== null && t.points.length > 1
-    );
+    displayedTrackPolylines = fetched
+      .filter((t): t is { id: string; points: LatLng[] } => t !== null && t.points.length > 1)
+      .map((t) => ({ ...t, startedAt: trackStartedAtCache.get(t.id) ?? null }));
   }
 
   /** Bound from <Map> so we can call clearRecorder() after a save. */
@@ -125,6 +152,12 @@
       // map until the user explicitly hides it.
       const latlngs: [number, number][] = snap.points.map((p) => [p.lat, p.lng]);
       trackPointsCache.set(newId, latlngs);
+      // Seed the started_at cache too — snap.startedAt is ms epoch.
+      // Avoids a follow-up listByIds round trip just to color the
+      // freshly-saved polyline.
+      if (snap.startedAt) {
+        trackStartedAtCache.set(newId, new Date(snap.startedAt).toISOString());
+      }
       showTrack(newId);
       mapRef?.clearRecorder();
       // Append directly to heatPoints rather than forcing a full

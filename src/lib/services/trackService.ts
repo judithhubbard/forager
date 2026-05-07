@@ -82,6 +82,23 @@ export async function listMyTrackPoints(): Promise<Array<[number, number]>> {
   return all;
 }
 
+/** Fetch metadata for a known set of track ids. Used by the main
+ *  map page so the recency-color of a displayed polyline can be
+ *  computed from each track's started_at. Single round-trip; the
+ *  caller deduplicates against a local cache. */
+export async function listByIds(ids: string[]): Promise<TrackRow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('tracks')
+    .select('*')
+    .in('id', ids);
+  if (error) {
+    console.error('[trackService] listByIds error:', error);
+    throw error;
+  }
+  return (data ?? []) as TrackRow[];
+}
+
 export async function listMine(): Promise<TrackRow[]> {
   const { data, error } = await supabase
     .from('tracks')
