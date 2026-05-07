@@ -43,9 +43,13 @@
       // Accept either the UUID or a slug of the scientific name.
       // External links (search results, shared URLs) read better
       // with slugs; internal links can keep using the UUID.
+      // Slugify the param too so 'cornus_mas', 'Cornus mas',
+      // 'cornus-mas', and 'Cornus%20mas' (auto-decoded by SvelteKit)
+      // all collapse to the same comparison key.
+      const paramSlug = slugify(speciesParam);
       species =
         all.find((s) => s.id === speciesParam) ??
-        all.find((s) => slugify(s.scientific_name) === speciesParam.toLowerCase()) ??
+        all.find((s) => slugify(s.scientific_name) === paramSlug) ??
         null;
       if (!species) error = 'Species not found.';
       else if ($session) {
