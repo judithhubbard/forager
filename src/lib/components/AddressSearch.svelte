@@ -16,6 +16,19 @@
   let inflight: AbortController | null = null;
   let highlightIdx = -1;
 
+  /** Parse "lat, lng" / "lat lng" patterns. Accepts comma, space, or
+   *  whitespace separators; signed decimals. Returns null when the
+   *  query looks like a place name instead. */
+  function parseLatLng(s: string): { lat: number; lng: number } | null {
+    const m = s.trim().match(/^(-?\d{1,2}(?:\.\d+)?)[\s,]+(-?\d{1,3}(?:\.\d+)?)$/);
+    if (!m) return null;
+    const lat = parseFloat(m[1]);
+    const lng = parseFloat(m[2]);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return { lat, lng };
+  }
+
   // 300ms keystroke debounce — Nominatim's TOS asks for ~1 req/sec
   // per IP. Debouncing also keeps the dropdown from flickering as
   // the user types.
@@ -25,6 +38,24 @@
     if (!query.trim()) {
       results = [];
       open = false;
+      loading = false;
+      return;
+    }
+    // Direct lat/long entry: bypass Nominatim and offer a single
+    // synthetic result the user confirms by click or Enter.
+    const coord = parseLatLng(query);
+    if (coord) {
+      results = [{
+        place_id: -1,
+        display_name: `${coord.lat}, ${coord.lng}`,
+        lat: coord.lat,
+        lng: coord.lng,
+        bbox: null,
+        type: 'coordinate',
+        importance: 1
+      }];
+      open = true;
+      highlightIdx = 0;
       loading = false;
       return;
     }
