@@ -1061,6 +1061,9 @@
   {#if currentZoom != null}
     <div class="zoom-chip" title="Current zoom level">z{currentZoom}</div>
   {/if}
+  <div class="build-chip" title="Build (git short SHA) — useful for reporting issues / spotting stale caches">
+    {__BUILD_REV__}
+  </div>
   {#if placing}
     <div class="placing-hint" role="status">{placingHint}</div>
   {/if}
@@ -1294,6 +1297,21 @@
     font-size: 0.7rem;
     color: #4a554a;
     font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  /* Build SHA — sits next to zoom chip. Same look, just one row up. */
+  .build-chip {
+    position: absolute;
+    bottom: 3rem;
+    right: 0.5rem;
+    z-index: 600;
+    padding: 0.1rem 0.4rem;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #d0d8d0;
+    border-radius: 0.3rem;
+    font-size: 0.65rem;
+    color: #6b7a6b;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     pointer-events: none;
   }
 
