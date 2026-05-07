@@ -24,12 +24,29 @@
   let watching: WatchlistRow | null = null;
   let watchBusy = false;
 
-  $: speciesId = $page.params.id;
+  $: speciesParam = $page.params.id ?? '';
+
+  /** Slugify a scientific name for URL matching: lowercase,
+   *  whitespace + punctuation → hyphens, collapse runs. So
+   *  "Cornus mas" → "cornus-mas", "Rubus × neglectus" →
+   *  "rubus-neglectus". Pure helper, deterministic. */
+  function slugify(s: string): string {
+    return s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
 
   onMount(async () => {
     try {
       const all = await listSpecies();
-      species = all.find((s) => s.id === speciesId) ?? null;
+      // Accept either the UUID or a slug of the scientific name.
+      // External links (search results, shared URLs) read better
+      // with slugs; internal links can keep using the UUID.
+      species =
+        all.find((s) => s.id === speciesParam) ??
+        all.find((s) => slugify(s.scientific_name) === speciesParam.toLowerCase()) ??
+        null;
       if (!species) error = 'Species not found.';
       else if ($session) {
         watching = await isWatchingSpecies(species.id);
