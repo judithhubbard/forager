@@ -7,14 +7,17 @@
   import {
     listPublicPins,
     listPublicPinDensity,
+    listPublicPinSummary,
     listRegionPins,
     listRegionPinDensity,
+    listRegionPinSummary,
     getEffective as getEffectivePin,
     updateLocation as updatePinLocation,
     type PinEffective,
     type Bbox,
     type PinCluster,
-    type PinDensityBucket
+    type PinDensityBucket,
+    type PinBboxSummaryRow
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import {
@@ -186,6 +189,13 @@
    *  dropdown appends a '+' to its counts when this is set so the
    *  user knows the numbers are floors, not totals. */
   let capHit = false;
+  /** Server-side per-species count summary for the current viewport.
+   *  Populated alongside the pin fetch and used to drive accurate
+   *  totals in the Show dropdown and per-species counts in the
+   *  filter panel. NOT subject to the 500-pin fetch cap, so the
+   *  user sees real numbers even when the visible pin set is
+   *  truncated. Empty array = no summary loaded yet. */
+  let bboxSummary: PinBboxSummaryRow[] = [];
   let showDropPin = false;
   let dropPinLng: number | null = null;
   let dropPinLat: number | null = null;
@@ -550,9 +560,38 @@
     const out: Record<FilterStatus, number> = {
       all: 0, active: 0, possibly_ripe: 0, productive: 0
     };
-    const statuses: FilterStatus[] = ['all', 'active', 'possibly_ripe', 'productive'];
+    // possibly_ripe and productive depend on per-pin booleans only
+    // available in the heavier v_pin_effective view. Count those from
+    // the in-memory pin set; the '+' suffix on the dropdown still
+    // signals capHit. all and active come from the server-side
+    // summary when available so they're accurate even when the pin
+    // fetch is capped.
     for (const p of speciesFilteredPins) {
-      for (const s of statuses) if (matchesStatus(p, s)) out[s]++;
+      if (matchesStatus(p, 'possibly_ripe')) out.possibly_ripe++;
+      if (matchesStatus(p, 'productive'))    out.productive++;
+    }
+    if (bboxSummary.length > 0) {
+      for (const r of bboxSummary) {
+        // Apply the same species/category/cookbook gates the in-memory
+        // path applies, so the dropdown counts match what the species
+        // panel offers. A null species_id can't be filtered by these
+        // species-level predicates, so it's always included.
+        if (r.species_id) {
+          if ($disabledIds.has(r.species_id)) continue;
+          const cat = (categoryBySpecies[r.species_id] ?? null) as SpeciesCat | null;
+          if (cat && !visibleCats.has(cat)) continue;
+          if (cookbookSpeciesIds !== null && !cookbookSpeciesIds.has(r.species_id)) continue;
+        } else if (cookbookSpeciesIds !== null) {
+          continue;
+        }
+        out.all    += r.total_count;
+        out.active += r.active_count;
+      }
+    } else {
+      for (const p of speciesFilteredPins) {
+        if (matchesStatus(p, 'all'))    out.all++;
+        if (matchesStatus(p, 'active')) out.active++;
+      }
     }
     return out;
   })();
@@ -620,7 +659,11 @@
     fruit: 0, nut: 1, mushroom: 2, greens: 3, other: 4, unknown: 5
   };
   $: speciesInRegion = (() => {
+    // Union of species ids appearing in the fetched pin set AND in
+    // the server-side summary, so species whose individual pins fell
+    // outside the 500-pin cap still appear in the filter panel.
     const ids = new Set(pins.map((p) => p.species_id).filter(Boolean));
+    for (const r of bboxSummary) if (r.species_id) ids.add(r.species_id);
     return species
       .filter((s) => ids.has(s.id))
       .sort((a, b) => {
@@ -630,6 +673,20 @@
         return a.scientific_name.localeCompare(b.scientific_name);
       });
   })();
+  /** Server-accurate per-species pin count for the species panel.
+   *  Falls back to the in-memory count from `pins` when the summary
+   *  hasn't loaded yet (heatmap mode, pre-first-fetch, error). */
+  $: speciesCountById = (() => {
+    if (bboxSummary.length === 0) return null;
+    const m = new Map<string, number>();
+    for (const r of bboxSummary) if (r.species_id) m.set(r.species_id, r.total_count);
+    return m;
+  })();
+  function summaryCountFor(speciesId: string): number {
+    const fromSummary = speciesCountById?.get(speciesId);
+    if (fromSummary !== undefined) return fromSummary;
+    return pins.filter((p) => p.species_id === speciesId).length;
+  }
 
   $: if (!$regionsLoading && $session && $myRegions.length === 0) {
     goto('/no-regions', { replaceState: true });
@@ -776,15 +833,20 @@
         pins = [];
         clusters = [];
         capHit = false;
+        bboxSummary = [];
       } else {
         // Individual-pin mode (zoom ≥ 13): authed users get their
         // region pins ∪ the public layer (dedup by id) so panning
         // outside their region still shows the global public dataset.
+        // The summary RPCs run in parallel for accurate counts even
+        // when the pin lists hit their caps.
         const ownCap = 1000;
         const pubCap = 500;
-        const [own, pub] = await Promise.all([
+        const [own, pub, ownSum, pubSum] = await Promise.all([
           useRegion && region ? listRegionPins(region.id, bbox, ownCap) : Promise.resolve([]),
-          listPublicPins(bbox, pubCap)
+          listPublicPins(bbox, pubCap),
+          useRegion && region ? listRegionPinSummary(region.id, bbox) : Promise.resolve([] as PinBboxSummaryRow[]),
+          listPublicPinSummary(bbox)
         ]);
         if (seq !== viewportSeq) return;
         // PinEffective.id is typed nullable (view-derived) but is in
@@ -798,6 +860,28 @@
         clusters = [];
         pinDensityBuckets = [];
         capHit = own.length >= ownCap || pub.length >= pubCap;
+        // Merge per-species summary rows. The same species might
+        // appear in both region and public sets (imports live in
+        // both); region rows take precedence since they include the
+        // user's own non-public contributions on top of the imports.
+        const summaryById = new Map<string | null, PinBboxSummaryRow>();
+        for (const r of pubSum) summaryById.set(r.species_id, r);
+        for (const r of ownSum) {
+          const existing = summaryById.get(r.species_id);
+          if (existing) {
+            // The intersection (imports) shows up in both — keep the
+            // larger of the two counts rather than summing, since
+            // summing would double-count public imports.
+            summaryById.set(r.species_id, {
+              species_id: r.species_id,
+              active_count: Math.max(existing.active_count, r.active_count),
+              total_count: Math.max(existing.total_count, r.total_count)
+            });
+          } else {
+            summaryById.set(r.species_id, r);
+          }
+        }
+        bboxSummary = [...summaryById.values()];
       }
     } catch (err) {
       console.error('[+page] fetchForViewport error', err);
@@ -805,6 +889,7 @@
         pins = [];
         clusters = [];
         pinDensityBuckets = [];
+        bboxSummary = [];
       }
     } finally {
       if (seq === viewportSeq) pinsLoading = false;
@@ -988,7 +1073,7 @@
                       on:change={() => toggleSpecies(s.id)}
                     />
                     <span class="sp-name">{s.common_name}</span>
-                    <span class="count">({pins.filter((p) => p.species_id === s.id).length})</span>
+                    <span class="count">({summaryCountFor(s.id)})</span>
                   </label>
                 </li>
               {/each}
@@ -1000,8 +1085,8 @@
     <label>
       Show:
       <select bind:value={filterStatus}>
-        <option value="all">All ({statusCounts.all}{capHit ? '+' : ''})</option>
-        <option value="active">Active ({statusCounts.active}{capHit ? '+' : ''})</option>
+        <option value="all">All ({statusCounts.all})</option>
+        <option value="active">Active ({statusCounts.active})</option>
         <option value="possibly_ripe">Ripe today ({statusCounts.possibly_ripe}{capHit ? '+' : ''})</option>
         <option value="productive">Productive ({statusCounts.productive}{capHit ? '+' : ''})</option>
       </select>

@@ -145,6 +145,59 @@ export async function listPublicPins(
   return (data ?? []) as PinEffective[];
 }
 
+/** Per-species and per-status counts for the public layer in a bbox.
+ *  Server-side aggregate, NOT subject to the 500-pin fetch cap — use
+ *  this when you need accurate totals (filter panel counts, Show
+ *  dropdown 'All' / 'Active') even though the visible-pin set was
+ *  truncated. Cheap query; safe to call on every viewport change. */
+export interface PinBboxSummaryRow {
+  species_id: string | null;
+  active_count: number;
+  total_count: number;
+}
+export async function listPublicPinSummary(
+  bbox: Bbox
+): Promise<PinBboxSummaryRow[]> {
+  const [west, south, east, north] = bbox;
+  const { data, error } = await supabase.rpc(
+    'public_pins_bbox_summary' as never,
+    {
+      p_min_lng: west,
+      p_min_lat: south,
+      p_max_lng: east,
+      p_max_lat: north
+    } as never
+  );
+  if (error) {
+    console.error('[pinService] listPublicPinSummary error:', error);
+    throw error;
+  }
+  return (data ?? []) as unknown as PinBboxSummaryRow[];
+}
+
+/** Authed analog: per-species counts for a single region in a bbox. */
+export async function listRegionPinSummary(
+  regionId: string,
+  bbox: Bbox
+): Promise<PinBboxSummaryRow[]> {
+  const [west, south, east, north] = bbox;
+  const { data, error } = await supabase.rpc(
+    'region_pins_bbox_summary' as never,
+    {
+      p_region_id: regionId,
+      p_min_lng: west,
+      p_min_lat: south,
+      p_max_lng: east,
+      p_max_lat: north
+    } as never
+  );
+  if (error) {
+    console.error('[pinService] listRegionPinSummary error:', error);
+    throw error;
+  }
+  return (data ?? []) as unknown as PinBboxSummaryRow[];
+}
+
 /** Authed analog of listPublicPins: pins inside a bbox, scoped to one
  *  region. RLS still enforces membership; non-members get an empty
  *  set rather than an error. Used by the main map's viewport-driven
