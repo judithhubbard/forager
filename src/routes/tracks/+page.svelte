@@ -234,35 +234,40 @@
     {#if filteredTracks.length === 0}
       <p class="hint">No tracks in this window.</p>
     {:else}
-      {#each groupedTracks as g}
-        <h2 class="group-label">{g.label}</h2>
-        <ul class="track-list" aria-label={'Tracks from ' + g.label}>
-          {#each g.rows as t}
-            <li class="track-row" class:on={$displayedTrackIds.has(t.id)}>
-              <label class="show-toggle" title="Show / hide this track on the map">
-                <input
-                  type="checkbox"
-                  checked={$displayedTrackIds.has(t.id)}
-                  on:change={(e) => onShowToggle(e, t.id)}
-                />
-                <span class="sr-only">Show on map</span>
-              </label>
-              <div class="track-main">
-                <div class="track-title">
-                  {t.title ?? '(untitled)'}
-                  <span class="src src-{t.source}">{t.source}</span>
-                  {#if t.visibility !== 'private'}
-                    <span class="vis">{t.visibility}</span>
-                  {/if}
+      {#each groupedTracks as g, i}
+        <details class="group" open={i === 0}>
+          <summary class="group-label">
+            <span class="group-name">{g.label}</span>
+            <span class="group-count">{g.rows.length}</span>
+          </summary>
+          <ul class="track-list" aria-label={'Tracks from ' + g.label}>
+            {#each g.rows as t}
+              <li class="track-row" class:on={$displayedTrackIds.has(t.id)}>
+                <label class="show-toggle" title="Show / hide this track on the map">
+                  <input
+                    type="checkbox"
+                    checked={$displayedTrackIds.has(t.id)}
+                    on:change={(e) => onShowToggle(e, t.id)}
+                  />
+                  <span class="sr-only">Show on map</span>
+                </label>
+                <div class="track-main">
+                  <div class="track-title">
+                    {t.title ?? '(untitled)'}
+                    <span class="src src-{t.source}">{t.source}</span>
+                    {#if t.visibility !== 'private'}
+                      <span class="vis">{t.visibility}</span>
+                    {/if}
+                  </div>
+                  <div class="track-meta">
+                    {fmtDate(t.started_at)} · {fmtDistance(t.distance_m)} · {fmtDuration(t.started_at, t.ended_at)}
+                  </div>
                 </div>
-                <div class="track-meta">
-                  {fmtDate(t.started_at)} · {fmtDistance(t.distance_m)} · {fmtDuration(t.started_at, t.ended_at)}
-                </div>
-              </div>
-              <button class="rm" on:click={() => onDelete(t)} aria-label="Delete track">×</button>
-            </li>
-          {/each}
-        </ul>
+                <button class="rm" on:click={() => onDelete(t)} aria-label="Delete track">×</button>
+              </li>
+            {/each}
+          </ul>
+        </details>
       {/each}
     {/if}
   {/if}
@@ -321,15 +326,44 @@
   .chip:hover { background: #f0f5ef; }
   .chip.active { background: #3a5a3a; color: white; border-color: #3a5a3a; }
 
-  /* Month-year grouping headers above each section of the list. */
+  /* Month-year groups are collapsible <details> blocks. Newest
+     opens by default; older months collapse so a long history
+     doesn't push everything off the screen. */
+  .group { margin: 0.4rem 0; }
   .group-label {
-    margin: 1rem 0 0.35rem;
-    font-size: 0.78rem;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #6b7a6b;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    color: #3a5a3a;
+    background: #f5f8f5;
+    border: 1px solid #e1e8e1;
+    border-radius: 0.35rem;
+    user-select: none;
   }
+  /* Hide the default disclosure triangle and add our own caret so
+     the open/closed state is consistent across browsers. */
+  .group-label::-webkit-details-marker { display: none; }
+  .group-label::before {
+    content: '▸';
+    color: #6b7a6b;
+    font-size: 0.75rem;
+    width: 0.85rem;
+    text-align: center;
+    transition: transform 0.15s;
+  }
+  .group[open] > .group-label::before { transform: rotate(90deg); }
+  .group-name { flex: 1; }
+  .group-count {
+    color: #6b7a6b;
+    font-weight: 500;
+    font-size: 0.78rem;
+  }
+  .group .track-list { margin-top: 0.4rem; }
 
   .track-list { list-style: none; margin: 0; padding: 0;
     background: white; border: 1px solid #e1e8e1; border-radius: 0.4rem; overflow: hidden; }
