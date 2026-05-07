@@ -206,6 +206,10 @@
   // "the button does nothing" reports.
   let locating = false;
   let locationError = '';
+  /** Live current map zoom (rounded). Bound to the small zoom chip
+   *  in the corner. Updated on every zoomend so the indicator
+   *  tracks the actual zoom rather than the initial prop. */
+  let currentZoom: number | null = null;
 
   // Persistent rain chip in the corner of the map: shows the past
   // 7 days of rainfall at the map's current center. Rain is broadly
@@ -1006,7 +1010,9 @@
         b.getEast(),
         b.getNorth()
       ];
-      dispatch('viewportChange', { bbox, zoom: map.getZoom() });
+      const z = map.getZoom();
+      currentZoom = Math.round(z);
+      dispatch('viewportChange', { bbox, zoom: z });
       const c = map.getCenter();
       void refreshMapRain(c.lng, c.lat);
     };
@@ -1060,6 +1066,9 @@
 
 <div class="map-wrap" class:placing>
   <div bind:this={mapEl} class="map" />
+  {#if currentZoom != null}
+    <div class="zoom-chip" title="Current zoom level">z{currentZoom}</div>
+  {/if}
   {#if placing}
     <div class="placing-hint" role="status">{placingHint}</div>
   {/if}
@@ -1271,6 +1280,25 @@
      stacked with rain + recorder + status legend. Only visible
      when ≥2 tracks are showing — a single track has no gradient
      to interpret. */
+  /* Small zoom indicator. Bottom-right above Leaflet's attribution
+     so it stays out of the way of all the other corner UI. Useful
+     for users figuring out 'why is the map showing this' and for
+     reporting issues like 'overlap at zoom N'. */
+  .zoom-chip {
+    position: absolute;
+    bottom: 1.6rem;
+    right: 0.5rem;
+    z-index: 600;
+    padding: 0.1rem 0.4rem;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #d0d8d0;
+    border-radius: 0.3rem;
+    font-size: 0.7rem;
+    color: #4a554a;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
   .track-legend {
     position: absolute;
     top: 3.6rem; /* clear of the 2.5rem locate button + 0.75rem top + spacing */
