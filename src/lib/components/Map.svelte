@@ -168,7 +168,7 @@
   let selectionLayer: import('leaflet').LayerGroup | undefined;
   let lastSelectedId: string | null = null;
   let clusterLayer: import('leaflet').LayerGroup | undefined;
-  let userMarker: import('leaflet').CircleMarker | undefined;
+  let userMarker: import('leaflet').LayerGroup | undefined;
   /** Polyline drawn from the live recorder's buffered points so the
    *  user can watch their track grow as they walk. Recreated only
    *  when the polyline doesn't exist yet; subsequent updates set
@@ -436,16 +436,48 @@
         const { latitude, longitude } = pos.coords;
         map.setView([latitude, longitude], 15);
         if (userMarker) userMarker.remove();
+        const accuracyM = pos.coords.accuracy;
         // Lazy import L only inside async/onMount to avoid SSR issues.
         import('leaflet').then((leaflet) => {
           if (!map) return;
-          userMarker = leaflet.circleMarker([latitude, longitude], {
-            radius: 8,
+          const group = leaflet.layerGroup();
+          // Accuracy halo: real-meters radius circle so the user
+          // sees how confident the fix is. Only drawn when accuracy
+          // looks usable (a 5km halo from a bad indoor fix would
+          // dominate the screen).
+          if (Number.isFinite(accuracyM) && accuracyM > 0 && accuracyM < 1000) {
+            leaflet.circle([latitude, longitude], {
+              radius: accuracyM,
+              color: '#3a8df0',
+              fillColor: '#3a8df0',
+              fillOpacity: 0.12,
+              weight: 1,
+              opacity: 0.5,
+              interactive: false
+            }).addTo(group);
+          }
+          // Outer white halo + inner bright blue dot, classic
+          // Google-Maps style. The white ring stops the dot from
+          // disappearing against blue tiles (water on satellite,
+          // OSM-HOT's roads).
+          leaflet.circleMarker([latitude, longitude], {
+            radius: 11,
+            color: '#ffffff',
+            fillColor: '#ffffff',
+            fillOpacity: 1,
+            weight: 0,
+            interactive: false
+          }).addTo(group);
+          leaflet.circleMarker([latitude, longitude], {
+            radius: 7,
             color: '#1a64d6',
-            fillColor: '#3a8df0',
-            fillOpacity: 0.8,
-            weight: 2
-          }).addTo(map);
+            fillColor: '#1f7af5',
+            fillOpacity: 1,
+            weight: 1.5,
+            interactive: false
+          }).addTo(group);
+          group.addTo(map);
+          userMarker = group;
         });
       },
       (err) => {
