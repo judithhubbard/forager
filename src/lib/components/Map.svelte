@@ -776,20 +776,23 @@
     const next = L.layerGroup();
     const zoom = map.getZoom();
     const epsDeg = clusterEpsForZoomLocal(zoom);
-    // Convert eps from degrees to meters at typical mid-latitudes
-    // (1° lat ≈ 111 km). lng degrees shrink toward the poles but
-    // for visual sizing this approximation reads correctly.
-    const cellMeters = epsDeg * 111_000;
     for (const c of currentClusters) {
       if (c.count_pins < 1) continue;
-      // Geometry constraint: circle radii are absolute meters and
-      // adjacent grid cells are cellMeters apart center-to-center.
+      // Cell-size in meters depends on latitude: 1° lat ≈ 111 km
+      // everywhere, but 1° lng shrinks toward the poles by cos(lat).
+      // Earlier code used 111 km for both axes and got overlap at
+      // mid-latitudes — Toronto (43.6°N) has 1° lng ≈ 80 km, so
+      // a circle sized for 111-km cells overflowed the actual
+      // lng cell. Use the smaller of the two so the circle never
+      // exceeds half the cell width on either axis.
+      const latRad = (c.centroid_lat * Math.PI) / 180;
+      const cellMetersLat = epsDeg * 111_000;
+      const cellMetersLng = epsDeg * 111_000 * Math.cos(latRad);
+      const cellMeters = Math.min(cellMetersLat, cellMetersLng);
       // Cap the OUTER halo at cellMeters/2 so two full-density
       // adjacent cells render as touching but not overlapping
-      // circles (the user complaint was rings stacking on top
-      // of each other). Inner core is 60% of outer for a soft
-      // falloff; intensity from log(count) modulates from 30%
-      // to 100% of the cap.
+      // circles. Inner core is 60% of outer for soft falloff;
+      // intensity from log(count) modulates from 30% to 100%.
       const intensity = Math.min(1, Math.log10(c.count_pins + 1) / 4);
       const outerMax = cellMeters / 2;
       const outer = outerMax * (0.3 + intensity * 0.7);
