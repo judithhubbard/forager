@@ -230,6 +230,35 @@ export async function listPublicPinClusters(
   return (data ?? []) as PinCluster[];
 }
 
+/** Authed analog of listPublicPinDensity: combines the pre-computed
+ *  public pin_density_grid with a live aggregation of the user's
+ *  region-private pins, so every fetch reflects the current pin set
+ *  (no triggers needed; pin add/remove just changes what the next
+ *  fetch returns). */
+export async function listRegionPinDensity(
+  regionId: string,
+  bbox: Bbox,
+  zoom: number
+): Promise<PinDensityBucket[]> {
+  const [west, south, east, north] = bbox;
+  const { data, error } = await supabase.rpc(
+    'region_pins_density' as never,
+    {
+      p_region_id: regionId,
+      p_min_lng: west,
+      p_min_lat: south,
+      p_max_lng: east,
+      p_max_lat: north,
+      p_zoom: Math.round(zoom)
+    } as never
+  );
+  if (error) {
+    console.error('[pinService] listRegionPinDensity error:', error);
+    throw error;
+  }
+  return (data ?? []) as unknown as PinDensityBucket[];
+}
+
 /** Map a zoom level to its density-grid band. Mirrors the server's
  *  band_for_zoom in migration 36 — keep in sync. The client needs
  *  this to know the cell size when rendering the heatmap rectangles. */

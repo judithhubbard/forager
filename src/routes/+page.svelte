@@ -6,11 +6,9 @@
   import { session } from '$lib/stores/auth';
   import {
     listPublicPins,
-    listPublicPinClusters,
     listPublicPinDensity,
     listRegionPins,
-    listRegionPinClusters,
-    clusterEpsForZoom,
+    listRegionPinDensity,
     getEffective as getEffectivePin,
     updateLocation as updatePinLocation,
     type PinEffective,
@@ -728,39 +726,32 @@
    *  to the Map's heat-dot renderer instead of going through clusters
    *  — clusters give a tile-circle visual that the user (rightly)
    *  found terrible. */
-  /** Pre-aggregated density buckets for the heatmap. Each carries
-   *  a count_pins so the renderer can weight opacity. Fetched from
-   *  the pin_density_grid via public_pins_density — covers ALL
-   *  public pins in the bbox, not just up to a cap. */
+  /** Pre-aggregated density buckets for the heatmap (zoom < 13).
+   *  For authed users in a region, includes BOTH the pre-computed
+   *  public pin_density_grid AND a live aggregation of region-
+   *  private pins — so adding or removing a pin shows up on the
+   *  next viewport fetch automatically, no triggers needed. */
   let pinDensityBuckets: PinDensityBucket[] = [];
   async function fetchForViewport(bbox: Bbox, zoom: number): Promise<void> {
     const seq = ++viewportSeq;
     pinsLoading = true;
     const region = $activeRegion;
     const useRegion = !!$session && !!region;
-    const heatmapOn = $settings.showPinHeatmap;
     try {
-      if (heatmapOn) {
-        // Heatmap mode: query the pre-computed density grid. No cap
-        // because the grid already aggregates 35k+ public pins down
-        // to a small number of buckets per zoom band. The server
-        // picks the right band from p_zoom.
-        const buckets = await listPublicPinDensity(bbox, zoom);
+      if (zoom < CLUSTER_BELOW_ZOOM) {
+        // Heatmap mode (always at zoom < 13): aggregated density
+        // buckets via the pre-computed grid, optionally combined
+        // with live region-pin aggregation for authed users.
+        const buckets = useRegion && region
+          ? await listRegionPinDensity(region.id, bbox, zoom)
+          : await listPublicPinDensity(bbox, zoom);
         if (seq !== viewportSeq) return;
         pinDensityBuckets = buckets;
         pins = [];
         clusters = [];
         capHit = false;
-      } else if (zoom < CLUSTER_BELOW_ZOOM) {
-        const c = useRegion && region
-          ? await listRegionPinClusters(region.id, bbox, clusterEpsForZoom(zoom))
-          : await listPublicPinClusters(bbox, clusterEpsForZoom(zoom));
-        if (seq !== viewportSeq) return;
-        clusters = c;
-        pins = [];
-        pinDensityBuckets = [];
-        capHit = false;
       } else {
+        // Individual-pin mode (zoom ≥ 13): markers + tooltips.
         const cap = useRegion ? 1000 : 500;
         const p = useRegion && region
           ? await listRegionPins(region.id, bbox, cap)
@@ -783,9 +774,6 @@
       if (seq === viewportSeq) pinsLoading = false;
     }
   }
-  // Re-fire the viewport fetch when the heatmap toggle flips so the
-  // appropriate dataset (heat dots vs clusters/individuals) loads.
-  $: if ($settings.showPinHeatmap !== undefined) void refetchViewport();
 
   async function handleViewportChange(
     e: CustomEvent<{ bbox: Bbox; zoom: number }>
@@ -1007,7 +995,6 @@
     bind:this={mapRef}
     pins={filteredPins}
     {clusters}
-    pinHeatmap={$settings.showPinHeatmap}
     {pinDensityBuckets}
     heatPoints={shownHeatPoints}
     displayedTracks={displayedTrackPolylines}

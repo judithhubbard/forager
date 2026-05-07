@@ -103,12 +103,6 @@
   };
   export let clusters: ClusterPoint[] = [];
 
-  /** When true, render cluster centroids as a weighted heat layer
-   *  (overlapping low-opacity orange circles, larger for higher
-   *  count_pins) instead of as numbered count dots. Useful for
-   *  spotting density at a glance at low zoom. Has no effect at
-   *  high zoom because individual pins are rendered then. */
-  export let pinHeatmap: boolean = false;
 
   /** Foraging heatmap points: flat [lat, lng] pairs from the user's
    *  uploaded tracks. Rendered as a leaflet.heat density layer when
@@ -263,22 +257,16 @@
   $: if (map && markerLayer && LCache) {
     renderPins(pins, selectedPinId, colorOf, categoryOf);
   }
-  // Cluster layer renders numbered count dots when pinHeatmap is
-  // off; cleared when pinHeatmap is on (heat dots are drawn from
-  // pinHeatPoints in a separate reactive below).
+  // Heatmap is the default low-zoom view. Cluster numbered-dot
+  // rendering is no longer wired (the parent only sends density
+  // buckets at low zoom now); we keep the function for potential
+  // future toggle. Always clear the cluster layer so any stray
+  // markers from earlier renders don't sit under the heat tiles.
   $: if (map && clusterLayer && LCache) {
-    if (pinHeatmap) {
-      // Clear numbered dots so they don't sit under the heat layer.
-      clusterLayer.clearLayers();
-    } else {
-      renderClusters(clusters);
-    }
+    clusterLayer.clearLayers();
   }
-  // Pin density heatmap from individual pin coordinates: small
-  // overlapping orange circles, same canvas-rendered approach as
-  // the user-track heatmap. Real blobby gradient.
   let pinHeatGroup: import('leaflet').LayerGroup | undefined;
-  $: if (map && LCache) renderPinHeat(pinHeatmap ? pinDensityBuckets : []);
+  $: if (map && LCache) renderPinHeat(pinDensityBuckets);
   // Density visualization via overlapping low-opacity circles. Not
   // a true Gaussian heatmap (we ditched the leaflet.heat plugin
   // for ESM compatibility) but visually similar — many overlapping
