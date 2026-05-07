@@ -19,3 +19,7 @@ data/raw/
 # Supabase CLI artifacts
 supabase/.temp/
 supabase/.branches/
+
+# Wikipedia-extracts dump for manual curation reference (CC BY-SA;
+# regenerable via npm run wikipedia:summaries -- --full --out data/wikipedia-extracts.txt)
+data/wikipedia-extracts.txt
