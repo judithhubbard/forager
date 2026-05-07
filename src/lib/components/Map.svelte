@@ -125,6 +125,7 @@
     count_pins: number;
     centroid_lng: number;
     centroid_lat: number;
+    cell_eps: number;
   };
   export let pinDensityBuckets: DensityBucket[] = [];
 
@@ -796,10 +797,11 @@
     if (buckets.length === 0) return;
     const L = LCache;
     const group = L.layerGroup();
-    const zoom = map.getZoom();
-    const eps = densityEpsForZoom(zoom);
-    const halfEps = eps / 2;
     for (const b of buckets) {
+      // Each bucket carries its own cell_eps so we never use stale
+      // sizing if the user zoomed across a band boundary while a
+      // fetch was in flight.
+      const halfEps = b.cell_eps / 2;
       const bounds: [[number, number], [number, number]] = [
         [b.centroid_lat - halfEps, b.centroid_lng - halfEps],
         [b.centroid_lat + halfEps, b.centroid_lng + halfEps]
@@ -827,17 +829,6 @@
     return `hsl(${hue.toFixed(0)}, 90%, ${lightness.toFixed(0)}%)`;
   }
 
-  /** Mirrors pinService.densityBandForZoom + densityEpsForBand
-   *  without importing them — Map keeps its own copy on principle.
-   *  Update both if the server's band schedule (migration 36)
-   *  changes. */
-  function densityEpsForZoom(zoom: number): number {
-    if (zoom < 6) return 0.5;
-    if (zoom < 8) return 0.1;
-    if (zoom < 10) return 0.02;
-    if (zoom < 12) return 0.005;
-    return 0.001;
-  }
 
   /** Render aggregated cluster points: a labeled circle per cluster,
    *  sized roughly logarithmically by count_pins so 5 vs 5000 reads

@@ -30,11 +30,14 @@ export interface PinCluster {
 
 /** A pre-aggregated density bucket from the pin_density_grid table.
  *  Returned by public_pins_density. Each bucket represents one cell
- *  at the chosen zoom band and carries an exact pin count. */
+ *  at the chosen zoom band and carries an exact pin count plus the
+ *  cell's eps (the band's grid size in degrees) so the client can
+ *  size the rectangle correctly without mirroring the band schedule. */
 export interface PinDensityBucket {
   count_pins: number;
   centroid_lng: number;
   centroid_lat: number;
+  cell_eps: number;
 }
 
 export interface CreatePinInput {
