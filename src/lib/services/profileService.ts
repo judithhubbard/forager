@@ -3,7 +3,14 @@
 import { supabase } from '$lib/supabase';
 import type { Database } from '$lib/database.types';
 
-export type Profile = Database['public']['Tables']['profiles']['Row'];
+/** Profile row + the admin flag added in 20260506000015. The
+ *  generated database.types.ts doesn't include is_global_admin
+ *  yet (types regen lags schema), so we extend the row shape here.
+ *  Always fetched as part of getMine so the admin-only edit
+ *  affordances on /species/[id] can render synchronously. */
+export type Profile = Database['public']['Tables']['profiles']['Row'] & {
+  is_global_admin: boolean;
+};
 
 /** A username is "real" once the user has chosen one — anything that
  *  still matches the `user_<8hex>` placeholder pattern was auto-issued
@@ -28,16 +35,20 @@ export async function getMine(): Promise<Profile | null> {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
   if (!userId) return null;
+  // Cast through unknown because the generated Database type
+  // doesn't yet know about is_global_admin; the column was added
+  // in 20260506000015 but the supabase types regen lags. Same
+  // story in update() below.
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select('*, is_global_admin')
     .eq('id', userId)
     .maybeSingle();
   if (error) {
     console.error('[profileService] getMine error:', error);
     throw error;
   }
-  return data;
+  return data as unknown as Profile | null;
 }
 
 export async function isAvailable(candidate: string): Promise<boolean> {
@@ -68,7 +79,7 @@ export async function update(input: UpdateProfileInput): Promise<Profile> {
     .from('profiles')
     .update(patch)
     .eq('id', userId)
-    .select()
+    .select('*, is_global_admin')
     .single();
   if (error) {
     // Surface unique-violation as a typed error so the UI can show
@@ -79,7 +90,7 @@ export async function update(input: UpdateProfileInput): Promise<Profile> {
     console.error('[profileService] update error:', error);
     throw error;
   }
-  return data;
+  return data as unknown as Profile;
 }
 
 export class UsernameTakenError extends Error {

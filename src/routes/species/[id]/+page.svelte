@@ -3,8 +3,14 @@
   import { goto } from '$lib/utils/nav';
   import { base } from '$app/paths';
   import { page } from '$app/stores';
-  import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
+  import {
+    listAll as listSpecies,
+    updateCuration,
+    type Species,
+    type SpeciesCurationPatch
+  } from '$lib/services/speciesService';
   import { session } from '$lib/stores/auth';
+  import { profile } from '$lib/stores/profile';
   import {
     isWatchingSpecies,
     watchSpecies,
@@ -105,6 +111,75 @@
     return parts;
   }
   $: attribParts = species?.attribution ? parseAttribution(species.attribution) : [];
+
+  /** Inline curation UI — visible only to global admins. The Edit
+   *  button populates these draft fields from the loaded species,
+   *  Save calls updateCuration and folds the response back into
+   *  `species` so the read view picks up the new values without
+   *  a reload. RLS gate is server-side; the UI just hides the
+   *  affordance for non-admins to keep the page clean. */
+  $: isAdmin = $profile?.is_global_admin === true;
+  let editing = false;
+  let saving = false;
+  let saveError = '';
+  let draftForageParts = '';
+  let draftPrepMethods = '';
+  let draftUsageNotes = '';
+  let draftHarvestTips = '';
+  let draftToxicityNotes = '';
+  let draftSafetyNotes = '';
+
+  function startEdit(): void {
+    if (!species) return;
+    draftForageParts = (species.forage_parts ?? []).join(', ');
+    draftPrepMethods = (species.preparation_methods ?? []).join(', ');
+    draftUsageNotes = species.usage_notes ?? '';
+    draftHarvestTips = species.harvest_tips ?? '';
+    draftToxicityNotes = species.toxicity_notes ?? '';
+    draftSafetyNotes = species.safety_notes ?? '';
+    saveError = '';
+    editing = true;
+  }
+  function cancelEdit(): void {
+    editing = false;
+    saveError = '';
+  }
+  /** Comma-list → trimmed, deduped lowercase array. The empty
+   *  string maps to []. Used for both forage_parts and
+   *  preparation_methods which are stored as text[]. */
+  function parseList(raw: string): string[] {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const s of raw.split(',')) {
+      const v = s.trim().toLowerCase();
+      if (!v || seen.has(v)) continue;
+      seen.add(v);
+      out.push(v);
+    }
+    return out;
+  }
+  async function saveEdit(): Promise<void> {
+    if (!species) return;
+    saving = true;
+    saveError = '';
+    try {
+      const patch: SpeciesCurationPatch = {
+        forage_parts: parseList(draftForageParts),
+        preparation_methods: parseList(draftPrepMethods),
+        usage_notes: draftUsageNotes.trim() || null,
+        harvest_tips: draftHarvestTips.trim() || null,
+        toxicity_notes: draftToxicityNotes.trim() || null,
+        safety_notes: draftSafetyNotes.trim()
+      };
+      const updated = await updateCuration(species.id, patch);
+      species = updated;
+      editing = false;
+    } catch (e) {
+      saveError = e instanceof Error ? e.message : 'Save failed.';
+    } finally {
+      saving = false;
+    }
+  }
 </script>
 
 <svelte:head>
@@ -133,64 +208,124 @@
     {/if}
 
     {#if $session}
-      <button
-        class="watch"
-        class:active={!!watching}
-        on:click={toggleWatch}
-        disabled={watchBusy}
-      >
-        {watching ? '★ Watching — tap to stop' : '☆ Watch · notify when ripe'}
-      </button>
+      <div class="actions">
+        <button
+          class="watch"
+          class:active={!!watching}
+          on:click={toggleWatch}
+          disabled={watchBusy}
+        >
+          {watching ? '★ Watching — tap to stop' : '☆ Watch · notify when ripe'}
+        </button>
+        {#if isAdmin && !editing}
+          <button class="edit-btn" on:click={startEdit}>✎ Edit (admin)</button>
+        {/if}
+      </div>
     {/if}
 
-    {#if species.forage_parts?.length}
-      <section>
-        <h2>Edible parts</h2>
-        <div class="chips">
-          {#each species.forage_parts as part}
-            <span class="chip">{pretty(part)}</span>
-          {/each}
+    {#if editing}
+      <form class="edit-form" on:submit|preventDefault={saveEdit}>
+        <p class="edit-help">
+          Curating from a source like Wikipedia? Read it, then write your own short
+          statements here. Don't paste source text — facts aren't copyrighted; expression is.
+        </p>
+        <label>
+          Edible parts
+          <input
+            type="text"
+            bind:value={draftForageParts}
+            placeholder="comma-separated: fruit, leaf, flower, …"
+          />
+          <span class="hint-inline">enum-ish: fruit · nut · flower · leaf · mushroom · root · bark · seed · sap</span>
+        </label>
+        <label>
+          Preparation methods
+          <input
+            type="text"
+            bind:value={draftPrepMethods}
+            placeholder="raw, jam, dried, pickle, syrup, …"
+          />
+        </label>
+        <label>
+          Uses
+          <textarea rows="3" bind:value={draftUsageNotes}
+            placeholder="When/how to harvest. What to make."></textarea>
+        </label>
+        <label>
+          Harvest tips
+          <textarea rows="3" bind:value={draftHarvestTips}
+            placeholder="Tools, technique, what to look for."></textarea>
+        </label>
+        <label>
+          Toxicity notes
+          <textarea rows="2" bind:value={draftToxicityNotes}
+            placeholder="Parts to avoid. Prep cautions."></textarea>
+        </label>
+        <label>
+          Safety (one-line summary shown in pin panel)
+          <input type="text" bind:value={draftSafetyNotes}
+            placeholder="e.g. 'Pits are toxic — only eat the flesh.'" />
+        </label>
+        {#if saveError}<p class="error">{saveError}</p>{/if}
+        <div class="edit-actions">
+          <button type="submit" class="primary" disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button type="button" on:click={cancelEdit} disabled={saving}>Cancel</button>
         </div>
-      </section>
+      </form>
     {/if}
 
-    {#if species.preparation_methods?.length}
-      <section>
-        <h2>Preparation</h2>
-        <div class="chips">
-          {#each species.preparation_methods as method}
-            <span class="chip method">{pretty(method)}</span>
-          {/each}
-        </div>
-      </section>
-    {/if}
+    {#if !editing}
+      {#if species.forage_parts?.length}
+        <section>
+          <h2>Edible parts</h2>
+          <div class="chips">
+            {#each species.forage_parts as part}
+              <span class="chip">{pretty(part)}</span>
+            {/each}
+          </div>
+        </section>
+      {/if}
 
-    {#if species.usage_notes}
-      <section>
-        <h2>Uses</h2>
-        <p class="prose">{species.usage_notes}</p>
-      </section>
-    {/if}
+      {#if species.preparation_methods?.length}
+        <section>
+          <h2>Preparation</h2>
+          <div class="chips">
+            {#each species.preparation_methods as method}
+              <span class="chip method">{pretty(method)}</span>
+            {/each}
+          </div>
+        </section>
+      {/if}
 
-    {#if species.harvest_tips}
-      <section>
-        <h2>Harvest tips</h2>
-        <p class="prose">{species.harvest_tips}</p>
-      </section>
-    {/if}
+      {#if species.usage_notes}
+        <section>
+          <h2>Uses</h2>
+          <p class="prose">{species.usage_notes}</p>
+        </section>
+      {/if}
 
-    {#if species.toxicity_notes}
-      <section class="warn">
-        <h2>Toxicity</h2>
-        <p class="prose">{species.toxicity_notes}</p>
-      </section>
-    {/if}
+      {#if species.harvest_tips}
+        <section>
+          <h2>Harvest tips</h2>
+          <p class="prose">{species.harvest_tips}</p>
+        </section>
+      {/if}
 
-    {#if species.safety_notes}
-      <section class="warn">
-        <h2>Safety</h2>
-        <p class="prose">{species.safety_notes}</p>
-      </section>
+      {#if species.toxicity_notes}
+        <section class="warn">
+          <h2>Toxicity</h2>
+          <p class="prose">{species.toxicity_notes}</p>
+        </section>
+      {/if}
+
+      {#if species.safety_notes}
+        <section class="warn">
+          <h2>Safety</h2>
+          <p class="prose">{species.safety_notes}</p>
+        </section>
+      {/if}
     {/if}
 
     <section class="disclaimer">
@@ -281,4 +416,69 @@
     border-color: #e8d3a6;
     color: #7a4a10;
   }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+  .edit-btn {
+    padding: 0.4rem 0.85rem;
+    border: 1px solid #c7d0c7;
+    background: #f5f8f5;
+    color: #3a5a3a;
+    border-radius: 0.35rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .edit-btn:hover { background: #ebefeb; }
+
+  /* Admin curation form. Reuses the Forager green-on-white palette
+     so it doesn't visually shout 'admin tool'. */
+  .edit-form {
+    margin-top: 1rem;
+    padding: 0.85rem 0.95rem;
+    background: #fafcf6;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.45rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .edit-help {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #4a554a;
+    background: #fff7e6;
+    border: 1px solid #e8d3a6;
+    padding: 0.4rem 0.55rem;
+    border-radius: 0.3rem;
+    line-height: 1.4;
+  }
+  .edit-form label {
+    display: flex; flex-direction: column; gap: 0.2rem;
+    font-size: 0.85rem; color: #3a5a3a; font-weight: 600;
+  }
+  .edit-form input[type='text'],
+  .edit-form textarea {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.9rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.35rem;
+    font-family: inherit;
+    color: #1f2a1f;
+    font-weight: 400;
+  }
+  .edit-form textarea { resize: vertical; line-height: 1.45; }
+  .hint-inline { color: #6b7a6b; font-weight: 400; font-size: 0.78rem; }
+  .edit-actions { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
+  .edit-actions button {
+    padding: 0.45rem 0.95rem;
+    font-size: 0.9rem;
+    border-radius: 0.35rem;
+    border: 1px solid #c7d0c7;
+    background: white;
+    color: #3a5a3a;
+    cursor: pointer;
+  }
+  .edit-actions button.primary {
+    background: #3a5a3a; color: white; border-color: #3a5a3a;
+  }
+  .edit-actions button:disabled { opacity: 0.6; cursor: default; }
 </style>
