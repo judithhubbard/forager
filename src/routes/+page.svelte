@@ -174,10 +174,15 @@
   // resolves after a newer one doesn't clobber the visible layer.
   let viewportSeq = 0;
   // Zoom threshold below which we render aggregate cluster dots
-  // instead of individual pins. Matches the eps schedule in
-  // clusterEpsForZoom: at zoom < 11 a single cluster covers ~5km, so
-  // individual marker rendering would be hopeless anyway.
-  const CLUSTER_BELOW_ZOOM = 11;
+  // instead of individual pins. Bumped from 11 → 13 because the
+  // anon individual-pin cap (500) gets hit easily in dense areas
+  // even at zoom 11 — better to keep showing accurate cluster
+  // counts than a silently truncated individual-pin set.
+  const CLUSTER_BELOW_ZOOM = 13;
+  /** When the individual-pin fetch hits its cap, capture the cap
+   *  value so the map can show 'showing X of N+ here, zoom in'. */
+  let capHit = false;
+  let capValue = 0;
   let showDropPin = false;
   let dropPinLng: number | null = null;
   let dropPinLat: number | null = null;
@@ -715,13 +720,21 @@
         if (seq !== viewportSeq) return;
         clusters = c;
         pins = [];
+        capHit = false;
       } else {
+        const cap = useRegion ? 1000 : 500;
         const p = useRegion && region
-          ? await listRegionPins(region.id, bbox, 1000)
-          : await listPublicPins(bbox, 500);
+          ? await listRegionPins(region.id, bbox, cap)
+          : await listPublicPins(bbox, cap);
         if (seq !== viewportSeq) return;
         pins = p;
         clusters = [];
+        // Surface the cap hit so the badge below the filter bar
+        // can tell the user 'showing 500, zoom in for the rest'.
+        // We don't know the true total without a separate count
+        // query — just signal that there's more than what's drawn.
+        capHit = p.length >= cap;
+        capValue = cap;
       }
     } catch (err) {
       console.error('[+page] fetchForViewport error', err);
@@ -944,6 +957,11 @@
       </label>
     {/if}
     <div class="filterbar-spacer"></div>
+    {#if capHit}
+      <span class="cap-hit" title="More pins exist than fit in one fetch — zoom in for the rest.">
+        showing {capValue}+ · zoom in for more
+      </span>
+    {/if}
     <AddressSearch on:select={handleGeocodeSelect} />
   </div>
 
@@ -1158,6 +1176,17 @@
      new row left-aligned, which is fine — better than crowding the
      species/show controls. */
   .filterbar-spacer { flex: 1 1 auto; }
+  .cap-hit {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    background: #fff4e3;
+    border: 1px solid #e8d3a6;
+    color: #7a4a10;
+    border-radius: 1rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
 
   /* Multi-select species filter */
   .species-filter {

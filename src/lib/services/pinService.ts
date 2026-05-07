@@ -218,16 +218,20 @@ export async function listPublicPinClusters(
   return (data ?? []) as PinCluster[];
 }
 
-/** Pick a sensible cluster eps (in degrees) based on map zoom. At
- *  low zooms we want big clusters (continent-scale views shouldn't
- *  spew hundreds of dots); at high zooms each pin stands alone. */
+/** Pick a sensible cluster eps (in degrees) based on map zoom.
+ *  Tuned so that at every zoom level you see *separate* per-city
+ *  / per-neighborhood clusters — the earlier (5.0° at zoom < 4)
+ *  values were so loose that all East-Coast cities collapsed into
+ *  one mega-cluster whose centroid landed in open ocean and was
+ *  invisible. At very high zooms eps is tight enough that each
+ *  pin essentially stands alone. */
 export function clusterEpsForZoom(zoom: number): number {
-  if (zoom < 4)  return 5.0;
-  if (zoom < 6)  return 1.5;
-  if (zoom < 8)  return 0.5;
-  if (zoom < 10) return 0.15;
-  if (zoom < 12) return 0.05;
-  return 0.01;
+  if (zoom < 4)  return 1.0;   // continent: cities stay distinct (~111 km eps)
+  if (zoom < 6)  return 0.3;   // multi-state: neighborhoods stay distinct
+  if (zoom < 8)  return 0.1;   // metro: districts stay distinct
+  if (zoom < 10) return 0.03;  // city: blocks stay distinct
+  if (zoom < 12) return 0.01;  // neighborhood: ~1km clusters
+  return 0.003;                // street: nearly individual
 }
 
 /** Pins currently in their ripe window (and not gone/dormant). */
