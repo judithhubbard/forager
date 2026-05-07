@@ -37,6 +37,11 @@ export interface SpeciesCurationPatch {
   harvest_tips?: string | null;
   toxicity_notes?: string | null;
   safety_notes?: string;
+  /** Direct image URL — typically a Wikimedia Commons thumbnail
+   *  but any public URL works. Pair with image_attribution. */
+  image_url?: string | null;
+  /** Free-form credit line. Required if image_url is set. */
+  image_attribution?: string | null;
 }
 
 /** Update curatable fields on a species. Server-side enforcement
@@ -47,9 +52,12 @@ export async function updateCuration(
   speciesId: string,
   patch: SpeciesCurationPatch
 ): Promise<Species> {
+  // Cast through Record<string, unknown>: image_url / image_attribution
+  // are not in the generated Database type yet (regen lag), so the
+  // typed update() rejects them. Same pattern as profileService.
   const { data, error } = await supabase
     .from('species')
-    .update(patch)
+    .update(patch as unknown as Record<string, never>)
     .eq('id', speciesId)
     .select()
     .single();

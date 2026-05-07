@@ -815,35 +815,44 @@
         <p class="notes">{pin.notes}</p>
       {/if}
 
-      {#if species && (species.preparation_methods?.length || species.usage_notes || species.harvest_tips || species.toxicity_notes || species.safety_notes)}
+      {#if species && (species.image_url || species.preparation_methods?.length || species.usage_notes || species.harvest_tips || species.toxicity_notes || species.safety_notes)}
         <div class="about-species">
           <div class="about-head">
             <strong>About this species</strong>
             <a class="more-link" href={base + '/species/' + species.id}>More →</a>
           </div>
-          {#if species.forage_parts?.length}
-            <div class="about-row">
-              <span class="about-label">Edible:</span>
-              <span class="about-chips">
-                {#each species.forage_parts as part}
-                  <span class="about-chip">{part.replace(/_/g, ' ')}</span>
-                {/each}
-              </span>
+          <div class="about-body">
+            {#if species.image_url}
+              <a class="about-thumb" href={base + '/species/' + species.id} title="Open species page">
+                <img src={species.image_url} alt={species.common_name} loading="lazy" />
+              </a>
+            {/if}
+            <div class="about-detail">
+              {#if species.forage_parts?.length}
+                <div class="about-row">
+                  <span class="about-label">Edible:</span>
+                  <span class="about-chips">
+                    {#each species.forage_parts as part}
+                      <span class="about-chip">{part.replace(/_/g, ' ')}</span>
+                    {/each}
+                  </span>
+                </div>
+              {/if}
+              {#if species.preparation_methods?.length}
+                <div class="about-row">
+                  <span class="about-label">Uses:</span>
+                  <span class="about-chips">
+                    {#each species.preparation_methods as m}
+                      <span class="about-chip about-chip-method">{m.replace(/_/g, ' ')}</span>
+                    {/each}
+                  </span>
+                </div>
+              {/if}
+              {#if species.safety_notes}
+                <p class="about-safety">{species.safety_notes}</p>
+              {/if}
             </div>
-          {/if}
-          {#if species.preparation_methods?.length}
-            <div class="about-row">
-              <span class="about-label">Uses:</span>
-              <span class="about-chips">
-                {#each species.preparation_methods as m}
-                  <span class="about-chip about-chip-method">{m.replace(/_/g, ' ')}</span>
-                {/each}
-              </span>
-            </div>
-          {/if}
-          {#if species.safety_notes}
-            <p class="about-safety">{species.safety_notes}</p>
-          {/if}
+          </div>
         </div>
       {/if}
     </section>
@@ -1156,6 +1165,25 @@
   .about-head strong { color: #3a5a3a; font-weight: 600; }
   .about-head .more-link { color: #3a5a3a; font-size: 0.8rem; text-decoration: none; }
   .about-head .more-link:hover { text-decoration: underline; }
+  /* Two-column body when an image exists, single-column otherwise.
+     Thumb is fixed-width and floats left; detail flexes to fill. */
+  .about-body { display: flex; gap: 0.6rem; align-items: flex-start; }
+  .about-thumb {
+    flex-shrink: 0;
+    width: 5rem;
+    height: 5rem;
+    border-radius: 0.3rem;
+    overflow: hidden;
+    background: #ebefeb;
+    display: block;
+  }
+  .about-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .about-detail { flex: 1; min-width: 0; }
   .about-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem; margin: 0.18rem 0; }
   .about-label { color: #6b7a6b; font-size: 0.78rem; }
   .about-chips { display: inline-flex; flex-wrap: wrap; gap: 0.25rem; }

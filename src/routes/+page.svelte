@@ -299,6 +299,32 @@
   let filterStatus: FilterStatus = 'active';
   let showLegend = true;
 
+  /** Cookbook filter — show only species whose preparation_methods
+   *  include the chosen value. Empty string = no filter. The list of
+   *  available methods is derived from the species catalog so newly
+   *  curated methods automatically appear. */
+  let cookbookFilter = '';
+  $: availableCookbookMethods = (() => {
+    const seen = new Set<string>();
+    for (const s of species) {
+      for (const m of s.preparation_methods ?? []) {
+        if (m && m.trim()) seen.add(m.trim());
+      }
+    }
+    return Array.from(seen).sort();
+  })();
+  /** Set of species_ids whose preparation_methods include cookbookFilter.
+   *  null when no cookbook filter is active. Computed once per change
+   *  rather than per pin in the filter loop. */
+  $: cookbookSpeciesIds = (() => {
+    if (!cookbookFilter) return null;
+    const out = new Set<string>();
+    for (const s of species) {
+      if ((s.preparation_methods ?? []).includes(cookbookFilter)) out.add(s.id);
+    }
+    return out;
+  })();
+
 
   let selectedPinId: string | null = null;
 
@@ -428,6 +454,10 @@
     if (selectedSpeciesIds !== null) {
       if (!p.species_id || !selectedSpeciesIds.has(p.species_id)) return false;
     }
+    // Cookbook filter — pin's species must have the chosen prep method.
+    if (cookbookSpeciesIds !== null) {
+      if (!p.species_id || !cookbookSpeciesIds.has(p.species_id)) return false;
+    }
     // Status filter — progressively narrower
     if (filterStatus === 'all') return true;
 
@@ -467,6 +497,9 @@
   }).filter((p) => {
     const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
     return !cat || visibleCats.has(cat);
+  }).filter((p) => {
+    if (cookbookSpeciesIds === null) return true;
+    return p.species_id ? cookbookSpeciesIds.has(p.species_id) : false;
   });
   $: statusCounts = (() => {
     const out: Record<FilterStatus, number> = {
@@ -882,6 +915,17 @@
         <option value="confirmed_harvest">Confirmed harvest history ({statusCounts.confirmed_harvest})</option>
       </select>
     </label>
+    {#if availableCookbookMethods.length > 0}
+      <label>
+        Make from:
+        <select bind:value={cookbookFilter}>
+          <option value="">— anything —</option>
+          {#each availableCookbookMethods as m}
+            <option value={m}>{m.replace(/_/g, ' ')}</option>
+          {/each}
+        </select>
+      </label>
+    {/if}
     <div class="filterbar-spacer"></div>
     <AddressSearch on:select={handleGeocodeSelect} />
   </div>

@@ -169,6 +169,8 @@
   let draftHarvestTips = '';
   let draftToxicityNotes = '';
   let draftSafetyNotes = '';
+  let draftImageUrl = '';
+  let draftImageAttribution = '';
 
   function startEdit(): void {
     if (!species) return;
@@ -178,12 +180,20 @@
     draftHarvestTips = species.harvest_tips ?? '';
     draftToxicityNotes = species.toxicity_notes ?? '';
     draftSafetyNotes = species.safety_notes ?? '';
+    draftImageUrl = species.image_url ?? '';
+    draftImageAttribution = species.image_attribution ?? '';
     saveError = '';
     editing = true;
   }
   function cancelEdit(): void {
     editing = false;
     saveError = '';
+  }
+  /** Hide the image preview if the URL fails to load. svelte-check
+   *  trips on inline TS casts in event handlers, hence the helper. */
+  function hidePreviewOnError(e: Event): void {
+    const img = e.currentTarget as HTMLImageElement;
+    img.style.display = 'none';
   }
   /** Comma-list → trimmed, deduped lowercase array. The empty
    *  string maps to []. Used for both forage_parts and
@@ -210,7 +220,9 @@
         usage_notes: draftUsageNotes.trim() || null,
         harvest_tips: draftHarvestTips.trim() || null,
         toxicity_notes: draftToxicityNotes.trim() || null,
-        safety_notes: draftSafetyNotes.trim()
+        safety_notes: draftSafetyNotes.trim(),
+        image_url: draftImageUrl.trim() || null,
+        image_attribution: draftImageAttribution.trim() || null
       };
       const updated = await updateCuration(species.id, patch);
       species = updated;
@@ -328,6 +340,22 @@
           Safety (one-line summary shown in pin panel)
           <input type="text" bind:value={draftSafetyNotes}
             placeholder="e.g. 'Pits are toxic — only eat the flesh.'" />
+        </label>
+        <label>
+          Image URL
+          <input type="url" bind:value={draftImageUrl}
+            placeholder="https://commons.wikimedia.org/wiki/Special:FilePath/...?width=600" />
+          <span class="hint-inline">A direct image URL. Wikimedia Commons file paths (auto-filled by the import script) work well.</span>
+        </label>
+        {#if draftImageUrl}
+          <div class="img-preview">
+            <img src={draftImageUrl} alt="preview" on:error={hidePreviewOnError} />
+          </div>
+        {/if}
+        <label>
+          Image attribution (required if image is set — license + author + source link)
+          <textarea rows="2" bind:value={draftImageAttribution}
+            placeholder="Author Name · CC BY-SA 4.0 · https://commons.wikimedia.org/wiki/File:..."></textarea>
         </label>
         {#if saveError}<p class="error">{saveError}</p>{/if}
         <div class="edit-actions">
@@ -557,6 +585,14 @@
   }
   .edit-form textarea { resize: vertical; line-height: 1.45; }
   .hint-inline { color: #6b7a6b; font-weight: 400; font-size: 0.78rem; }
+  .img-preview {
+    margin: -0.2rem 0 0.2rem;
+    background: #ebefeb;
+    border-radius: 0.3rem;
+    overflow: hidden;
+    max-width: 16rem;
+  }
+  .img-preview img { width: 100%; height: auto; display: block; max-height: 10rem; object-fit: cover; }
   .edit-actions { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
   .edit-actions button {
     padding: 0.45rem 0.95rem;
