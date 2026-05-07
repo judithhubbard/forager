@@ -241,19 +241,17 @@ export async function listRegionPinDensity(
   zoom: number
 ): Promise<PinDensityBucket[]> {
   const [west, south, east, north] = bbox;
-  const { data, error } = await supabase
-    .rpc(
-      'region_pins_density' as never,
-      {
-        p_region_id: regionId,
-        p_min_lng: west,
-        p_min_lat: south,
-        p_max_lng: east,
-        p_max_lat: north,
-        p_zoom: Math.round(zoom)
-      } as never
-    )
-    .range(0, 19999);
+  const { data, error } = await supabase.rpc(
+    'region_pins_density_json' as never,
+    {
+      p_region_id: regionId,
+      p_min_lng: west,
+      p_min_lat: south,
+      p_max_lng: east,
+      p_max_lat: north,
+      p_zoom: Math.round(zoom)
+    } as never
+  );
   if (error) {
     console.error('[pinService] listRegionPinDensity error:', error);
     throw error;
@@ -289,24 +287,21 @@ export async function listPublicPinDensity(
   zoom: number
 ): Promise<PinDensityBucket[]> {
   const [west, south, east, north] = bbox;
-  // .range(0, 19999) overrides PostgREST's default db-max-rows
-  // (1000) so dense bbox queries don't get silently truncated.
-  // Symptom of the truncation: a clean north-south cutoff line
-  // where eastern cells stopped rendering — that's where the
-  // row counter hit the limit, ordered by primary key (band, bx,
-  // by) which sorts west → east.
-  const { data, error } = await supabase
-    .rpc(
-      'public_pins_density' as never,
-      {
-        p_min_lng: west,
-        p_min_lat: south,
-        p_max_lng: east,
-        p_max_lat: north,
-        p_zoom: Math.round(zoom)
-      } as never
-    )
-    .range(0, 19999);
+  // _json variant returns the bucket array as a single jsonb row,
+  // bypassing PostgREST's db-max-rows cap that was silently
+  // truncating dense bbox queries to 1000 rows. The truncation
+  // ordered by primary key (band, bx, by), so eastern cells got
+  // dropped — visible as a clean north-south cutoff line.
+  const { data, error } = await supabase.rpc(
+    'public_pins_density_json' as never,
+    {
+      p_min_lng: west,
+      p_min_lat: south,
+      p_max_lng: east,
+      p_max_lat: north,
+      p_zoom: Math.round(zoom)
+    } as never
+  );
   if (error) {
     console.error('[pinService] listPublicPinDensity error:', error);
     throw error;
