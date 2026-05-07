@@ -739,6 +739,7 @@
                  doesn't make all the summer bars invisible. -->
             <rect
               class="hover-track"
+              role="presentation"
               x={PAD_L} y={rainY} width={PLOT_W} height={RAIN_H}
               fill="#f3f8fc" stroke="#dde7ee" stroke-width="0.5"
               on:mousemove={(e) => onTrackHover(e, 'rain', year, yWeather)}
@@ -801,6 +802,7 @@
                  thresholds for reference. -->
             <rect
               class="hover-track"
+              role="presentation"
               x={PAD_L} y={tempY} width={PLOT_W} height={TEMP_H}
               fill="#fbf9f3" stroke="#e8e3d4" stroke-width="0.5"
               on:mousemove={(e) => onTrackHover(e, 'temp', year, yWeather)}
