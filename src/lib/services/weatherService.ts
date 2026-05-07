@@ -136,11 +136,6 @@ export async function historicalWeather(
     if (archiveEnd >= startDate) {
       const rows = await fetchArchiveYear(lng, lat, startDate, archiveEnd);
       all.push(...rows);
-      console.log(
-        `[weather] archive ${startDate}…${archiveEnd}: ${rows.length} days, ` +
-          `${rows.filter((r) => r.rain_mm > 0).length} with rain, ` +
-          `${rows.filter((r) => r.temp_max_c != null).length} with temp`
-      );
     }
   } catch (e) {
     console.warn('[weather] archive fetch failed:', e);
@@ -177,7 +172,6 @@ export async function historicalWeather(
           };
           const time = body.daily?.time ?? [];
           const seen = new Set(all.map((r) => r.date));
-          let added = 0;
           for (const [i, d] of time.entries()) {
             if (seen.has(d)) continue;
             if (d < forecastStart || d > forecastEnd) continue;
@@ -187,9 +181,7 @@ export async function historicalWeather(
               temp_max_c: body.daily?.temperature_2m_max?.[i] ?? null,
               temp_min_c: body.daily?.temperature_2m_min?.[i] ?? null
             });
-            added++;
           }
-          console.log(`[weather] forecast ${forecastStart}…${forecastEnd}: ${added} days added`);
         }
       } catch (e) {
         console.warn('[weather] forecast fetch failed:', e);
