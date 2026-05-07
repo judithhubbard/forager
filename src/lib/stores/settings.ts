@@ -34,6 +34,12 @@ interface Settings {
    *  tracks) overlaid on the map. Defaults off to keep the initial
    *  paint clean. */
   showHeatmap: boolean;
+  /** Show the USDA Plant Hardiness Zones overlay (color-coded
+   *  polygons spanning the conterminous US). Defaults off — most
+   *  users only need it occasionally to confirm "what zone am I
+   *  foraging in" when looking at a new area. ~600 KB fetch on
+   *  first enable; cached afterward. */
+  showZones: boolean;
   /** When true, displayed tracks render with the red→blue recency
    *  gradient. When false, all tracks render in a single solid red.
    *  Defaults true since the gradient is most users' value-add when
@@ -61,6 +67,7 @@ const DEFAULT: Settings = {
   colorBy: 'group',
   defaultPhotoLicense: 'CC-BY-SA-4.0',
   showHeatmap: false,
+  showZones: false,
   colorTracksByDate: true,
   mapLayers: { mine: true, friends: true, group: true, public: true, tracks: true }
 };
@@ -88,6 +95,7 @@ function normalize(s: Partial<Settings>): Settings {
     colorBy: cb,
     defaultPhotoLicense: lic,
     showHeatmap: !!s.showHeatmap,
+    showZones: !!s.showZones,
     // Default true so existing users get the gradient by default;
     // explicit false from saved state turns it off.
     colorTracksByDate: s.colorTracksByDate !== false,
@@ -139,6 +147,10 @@ export function setDefaultPhotoLicense(lic: PhotoLicense): void {
 
 export function setShowHeatmap(v: boolean): void {
   settings.update((s) => ({ ...s, showHeatmap: v }));
+}
+
+export function setShowZones(v: boolean): void {
+  settings.update((s) => ({ ...s, showZones: v }));
 }
 
 export function setColorTracksByDate(v: boolean): void {

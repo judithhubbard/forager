@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import { readable } from 'svelte/store';
+  import { base } from '$app/paths';
   import 'leaflet/dist/leaflet.css';
   import type { PinEffective } from '$lib/services/pinService';
   import { recentRain, formatMm } from '$lib/services/weatherService';
@@ -143,6 +144,11 @@
    *  two routes' shapes and the gradient steals attention from
    *  the lines themselves. Toggled from the /tracks page. */
   export let colorTracksByDate: boolean = true;
+  /** When true, fetch and render the USDA Plant Hardiness Zones
+   *  overlay (one-time fetch from /usda-zones.geojson, ~2 MB on the
+   *  wire / ~600 KB gzipped). Lazy-loaded — toggle off keeps the
+   *  initial map paint unaffected. */
+  export let showZones: boolean = false;
 
   /** Setting this prop animates the map to the given location. Parent
    *  passes a fresh object on each desired fly (e.g. after a geocode
@@ -277,6 +283,12 @@
   }
   let pinHeatGroup: import('leaflet').LayerGroup | undefined;
   $: if (map && LCache) renderPinHeat(pinDensityBuckets);
+
+  // USDA hardiness zone overlay. Polygon GeoJSON cached after first
+  // fetch; toggle on/off just adds/removes the layer.
+  let zonesLayer: import('leaflet').GeoJSON | undefined;
+  let zonesGeoJsonCache: GeoJSON.FeatureCollection | null = null;
+  $: if (map && LCache) renderZones(showZones);
   // Density visualization via overlapping low-opacity circles. Not
   // a true Gaussian heatmap (we ditched the leaflet.heat plugin
   // for ESM compatibility) but visually similar — many overlapping
@@ -828,6 +840,61 @@
     }
     pinHeatGroup = group;
     group.addTo(map);
+  }
+
+  /** USDA hardiness zone polygons rendered as a translucent overlay.
+   *  Lazy-loaded: GeoJSON is fetched only when showZones flips on
+   *  for the first time (cached in zonesGeoJsonCache afterward).
+   *  Color ramp goes blue (cold zones, 3a) → green (mid, 6a) → red
+   *  (warm, 11a) so the visual matches what users intuit about the
+   *  map. Low fillOpacity keeps the basemap readable underneath. */
+  async function renderZones(visible: boolean) {
+    if (!map || !LCache) return;
+    if (!visible) {
+      if (zonesLayer) {
+        map.removeLayer(zonesLayer);
+        zonesLayer = undefined;
+      }
+      return;
+    }
+    if (zonesLayer) return; // already rendered
+    if (!zonesGeoJsonCache) {
+      try {
+        const res = await fetch(`${base}/usda-zones.geojson`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        zonesGeoJsonCache = await res.json();
+      } catch (err) {
+        console.error('[Map] failed to load USDA zones', err);
+        return;
+      }
+    }
+    if (!zonesGeoJsonCache) return;
+    zonesLayer = LCache.geoJSON(zonesGeoJsonCache, {
+      style: (f) => {
+        const code = (f?.properties as { zone?: string } | null)?.zone ?? '';
+        return {
+          fillColor: zoneColor(code),
+          fillOpacity: 0.25,
+          color: zoneColor(code),
+          opacity: 0.5,
+          weight: 0.6
+        };
+      },
+      onEachFeature: (f, layer) => {
+        const code = (f.properties as { zone?: string } | null)?.zone ?? '?';
+        layer.bindTooltip(`USDA Zone ${code}`, { sticky: true });
+      }
+    }).addTo(map);
+  }
+
+  /** Map zone code (e.g. '5b', '7a') to a perceptually-graded color.
+   *  Numeric part [3..11] mapped to hue 240° (blue) → 0° (red). */
+  function zoneColor(code: string): string {
+    const n = parseInt(code, 10);
+    if (!Number.isFinite(n)) return '#888';
+    const t = Math.max(0, Math.min(1, (n - 3) / (11 - 3)));
+    const hue = 240 * (1 - t); // blue cold, red warm
+    return `hsl(${hue}, 70%, 50%)`;
   }
 
   /** Gold → orange → red color ramp. Tuned so even a single-pin

@@ -37,7 +37,7 @@
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
   import AddressSearch from '$lib/components/AddressSearch.svelte';
   import SignupBanner from '$lib/components/SignupBanner.svelte';
-  import { settings, setMapLayer, type MapLayerKey } from '$lib/stores/settings';
+  import { settings, setMapLayer, setShowZones, type MapLayerKey } from '$lib/stores/settings';
   import { profile } from '$lib/stores/profile';
   import {
     enabledIds,
@@ -328,6 +328,9 @@
   let layersPanelOpen = false;
   function onLayerToggle(key: MapLayerKey, e: Event) {
     setMapLayer(key, (e.currentTarget as HTMLInputElement).checked);
+  }
+  function onZonesToggle(e: Event) {
+    setShowZones((e.currentTarget as HTMLInputElement).checked);
   }
   /** Brief 'X / Y on' summary for the panel button. */
   $: layersOnCount = (() => {
@@ -1175,6 +1178,15 @@
               <span class="layer-name">Tracks</span>
               <span class="layer-hint">Saved track polylines</span>
             </label>
+            <label class="layer-row">
+              <input
+                type="checkbox"
+                checked={$settings.showZones}
+                on:change={onZonesToggle}
+              />
+              <span class="layer-name">USDA zones</span>
+              <span class="layer-hint">Plant Hardiness overlay (US only)</span>
+            </label>
           </div>
         {/if}
       </div>
@@ -1191,6 +1203,7 @@
     heatPoints={shownHeatPoints}
     displayedTracks={$settings.mapLayers.tracks ? displayedTrackPolylines : []}
     colorTracksByDate={$settings.colorTracksByDate}
+    showZones={$settings.showZones}
     showRecorder={!!$session}
     {categoryOf}
     colorOf={colorOfPin}
