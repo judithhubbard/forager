@@ -984,6 +984,7 @@
     bind:this={mapRef}
     pins={filteredPins}
     {clusters}
+    pinHeatmap={$settings.showPinHeatmap}
     heatPoints={shownHeatPoints}
     displayedTracks={displayedTrackPolylines}
     showRecorder={!!$session}

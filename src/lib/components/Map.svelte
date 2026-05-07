@@ -103,6 +103,13 @@
   };
   export let clusters: ClusterPoint[] = [];
 
+  /** When true, render cluster centroids as a weighted heat layer
+   *  (overlapping low-opacity orange circles, larger for higher
+   *  count_pins) instead of as numbered count dots. Useful for
+   *  spotting density at a glance at low zoom. Has no effect at
+   *  high zoom because individual pins are rendered then. */
+  export let pinHeatmap: boolean = false;
+
   /** Foraging heatmap points: flat [lat, lng] pairs from the user's
    *  uploaded tracks. Rendered as a leaflet.heat density layer when
    *  non-empty. Computed in +page.svelte and gated by
@@ -239,11 +246,13 @@
   $: if (map && markerLayer && LCache) {
     renderPins(pins, selectedPinId, colorOf, categoryOf);
   }
-  // Same atomic-swap pattern for the cluster layer so cluster count
-  // dots update in sync with whatever the parent fetched for the
-  // current viewport.
+  // Cluster layer renders one of two ways depending on the
+  // pinHeatmap toggle: numbered count dots (default) or weighted
+  // heat circles (pinHeatmap=true). Same data, different rendering;
+  // the toggle answers "where" instead of "how many."
   $: if (map && clusterLayer && LCache) {
-    renderClusters(clusters);
+    if (pinHeatmap) renderClusterHeatmap(clusters);
+    else renderClusters(clusters);
   }
   // Density visualization via overlapping low-opacity circles. Not
   // a true Gaussian heatmap (we ditched the leaflet.heat plugin
@@ -747,6 +756,46 @@
       opacity: 1,
       interactive: false
     }).addTo(selectionLayer);
+  }
+
+  /** Pin-density heatmap: render each cluster centroid as a pair of
+   *  overlapping low-opacity orange circles whose radii scale by
+   *  log(count_pins), so a 5-pin cluster shows a small soft glow
+   *  and a 5000-pin cluster shows a large bright one. Density reads
+   *  immediately without numbers. Uses the canvas renderer (the
+   *  map was created with preferCanvas:true) so even hundreds of
+   *  overlapping circles stay performant. */
+  function renderClusterHeatmap(currentClusters: ClusterPoint[]) {
+    if (!clusterLayer || !map || !LCache) return;
+    const L = LCache;
+    const next = L.layerGroup();
+    for (const c of currentClusters) {
+      if (c.count_pins < 1) continue;
+      // log-scaled radius in pixels: 1→8, 10→16, 100→24, 1000→32,
+      // 10000→40. The two-circle stack (inner brighter, outer
+      // softer) gives a Gaussian-ish falloff without needing a
+      // real heatmap shader. Color stays in the orange family so
+      // it doesn't fight with the green-on-cream basemap.
+      const r = Math.min(40, 8 + Math.log10(c.count_pins + 1) * 8);
+      // Outer halo
+      L.circleMarker([c.centroid_lat, c.centroid_lng], {
+        radius: r * 1.6,
+        stroke: false,
+        fillColor: '#d57100',
+        fillOpacity: 0.12,
+        interactive: false
+      }).addTo(next);
+      // Inner core — slightly more opaque, smaller
+      L.circleMarker([c.centroid_lat, c.centroid_lng], {
+        radius: r,
+        stroke: false,
+        fillColor: '#d57100',
+        fillOpacity: 0.35,
+        interactive: false
+      }).addTo(next);
+    }
+    clusterLayer.clearLayers();
+    next.eachLayer((layer) => layer.addTo(clusterLayer!));
   }
 
   /** Render aggregated cluster points: a labeled circle per cluster,

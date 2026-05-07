@@ -34,13 +34,21 @@ interface Settings {
    *  tracks) overlaid on the map. Defaults off to keep the initial
    *  paint clean. */
   showHeatmap: boolean;
+  /** At cluster-zoom (zoom < CLUSTER_BELOW_ZOOM in +page.svelte),
+   *  render cluster centroids as a weighted heat layer instead of
+   *  numbered count dots. Useful for spotting density at a glance;
+   *  the count dots tell you "how many," the heatmap tells you
+   *  "where." Off by default. Has no effect at high zoom (already
+   *  showing individual pins). */
+  showPinHeatmap: boolean;
 }
 const DEFAULT: Settings = {
   basemap: 'osm-hot',
   disclaimerAcceptedAt: null,
   colorBy: 'group',
   defaultPhotoLicense: 'CC-BY-SA-4.0',
-  showHeatmap: false
+  showHeatmap: false,
+  showPinHeatmap: false
 };
 
 const ALLOWED_LICENSES: PhotoLicense[] = [
@@ -65,7 +73,8 @@ function normalize(s: Partial<Settings>): Settings {
     disclaimerAcceptedAt: s.disclaimerAcceptedAt ?? null,
     colorBy: cb,
     defaultPhotoLicense: lic,
-    showHeatmap: !!s.showHeatmap
+    showHeatmap: !!s.showHeatmap,
+    showPinHeatmap: !!s.showPinHeatmap
   };
 }
 
@@ -107,4 +116,8 @@ export function setDefaultPhotoLicense(lic: PhotoLicense): void {
 
 export function setShowHeatmap(v: boolean): void {
   settings.update((s) => ({ ...s, showHeatmap: v }));
+}
+
+export function setShowPinHeatmap(v: boolean): void {
+  settings.update((s) => ({ ...s, showPinHeatmap: v }));
 }

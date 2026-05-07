@@ -15,6 +15,7 @@
     setColorBy,
     setDefaultPhotoLicense,
     setShowHeatmap,
+    setShowPinHeatmap,
     type Basemap,
     type ColorBy,
     type PhotoLicense
@@ -88,6 +89,9 @@
   }
   function onHeatmapToggle(e: Event) {
     setShowHeatmap((e.currentTarget as HTMLInputElement).checked);
+  }
+  function onPinHeatmapToggle(e: Event) {
+    setShowPinHeatmap((e.currentTarget as HTMLInputElement).checked);
   }
   function onRegionChange(e: Event) {
     setActiveRegionId((e.currentTarget as HTMLSelectElement).value);
@@ -172,6 +176,14 @@
                 on:change={onHeatmapToggle}
               />
               Show foraging heatmap
+            </label>
+            <label class="checkbox-row">
+              <input
+                type="checkbox"
+                checked={$settings.showPinHeatmap}
+                on:change={onPinHeatmapToggle}
+              />
+              Pin density heatmap (zoomed out)
             </label>
           </div>
         </div>
