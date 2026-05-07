@@ -190,6 +190,22 @@ export async function listRipeNow(regionId: string): Promise<PinEffective[]> {
  *  path only because the ripe page imports it from here. */
 export { haversineBetween as haversineMeters } from '$lib/utils/distance';
 
+/** Batch fetch of multiple pins by id via the effective view. One
+ *  round-trip; avoids N+1 patterns where a page wants effective
+ *  rows for a small set of known pin ids (e.g. watchlist). */
+export async function getEffectiveMany(ids: string[]): Promise<PinEffective[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('v_pin_effective')
+    .select('*')
+    .in('id', ids);
+  if (error) {
+    console.error('[pinService] getEffectiveMany error:', error);
+    throw error;
+  }
+  return (data ?? []) as PinEffective[];
+}
+
 /** A single pin via the effective view. */
 export async function getEffective(id: string): Promise<PinEffective | null> {
   const { data, error } = await supabase

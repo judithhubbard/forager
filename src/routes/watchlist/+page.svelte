@@ -8,7 +8,7 @@
     type WatchlistRow
   } from '$lib/services/watchlistService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
-  import { getEffective, type PinEffective } from '$lib/services/pinService';
+  import { getEffectiveMany, type PinEffective } from '$lib/services/pinService';
 
   let rows: WatchlistRow[] = [];
   let speciesById: Record<string, Species> = {};
@@ -25,9 +25,11 @@
       // Fetch each watched pin individually — small N (most users
       // watch ≤ 20 things), no point in batching.
       const pinIds = list.map((r) => r.pin_id).filter((x): x is string => !!x);
-      const pinResults = await Promise.all(pinIds.map((id) => getEffective(id)));
+      // Single batch query — earlier code did one network round-trip
+      // per watched pin, which got slow as the watchlist grew.
+      const pinResults = await getEffectiveMany(pinIds);
       pinById = Object.fromEntries(
-        pinResults.filter((p): p is PinEffective => !!p).map((p) => [p.id!, p])
+        pinResults.filter((p): p is PinEffective => !!p?.id).map((p) => [p.id as string, p])
       );
     } catch (e) {
       error = e instanceof Error ? e.message : 'Could not load watchlist.';

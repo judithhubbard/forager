@@ -71,10 +71,12 @@
     }
   };
   let tileLayer: import('leaflet').TileLayer | undefined;
-  $: if (map && basemap) applyBasemap(basemap);
+  let lastBasemap: Basemap | null = null;
+  $: if (map && basemap && basemap !== lastBasemap) applyBasemap(basemap);
   async function applyBasemap(b: Basemap) {
     const L = await import('leaflet');
     if (!map) return;
+    lastBasemap = b;
     const cfg = BASEMAPS[b];
     if (tileLayer) tileLayer.remove();
     tileLayer = L.tileLayer(cfg.url, {

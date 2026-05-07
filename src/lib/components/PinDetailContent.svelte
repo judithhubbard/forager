@@ -329,12 +329,18 @@
             .select('stage, start_doy, end_doy')
             .eq('species_id', pin.species_id)
             .eq('region_id', pin.region_id),
+          // Cap to the most-recent 500 observations of this species
+          // on other pins. The mini-timeline only renders ticks for
+          // the current visible year window, so an unbounded query
+          // pulled rows we never display.
           supabase
             .from('v_observation_with_pin')
             .select('stage, observed_at, pin_id')
             .eq('species_id', pin.species_id)
             .eq('pin_region_id', pin.region_id)
             .neq('pin_id', pin.id)
+            .order('observed_at', { ascending: false })
+            .limit(500)
         ]);
         windows = winRes.data ?? [];
         otherSpeciesObs = (otherObsRes.data ?? []) as OtherObs[];
