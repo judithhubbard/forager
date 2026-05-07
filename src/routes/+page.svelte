@@ -38,6 +38,7 @@
   import { profile } from '$lib/stores/profile';
   import {
     enabledIds,
+    disabledIds,
     setEnabled as setSpeciesEnabled,
     setExplicitSet as setExplicitSpecies,
     enableAll as enableAllSpecies
@@ -495,9 +496,11 @@
     const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
     if (cat && !visibleCats.has(cat)) return false;
     // Species filter
-    if (selectedSpeciesIds !== null) {
-      if (!p.species_id || !selectedSpeciesIds.has(p.species_id)) return false;
-    }
+    // Species filter uses the deny-list ($disabledIds): a species the
+    // user hasn't expressed an opinion on stays visible, which matters
+    // for the public layer (NYC street trees, etc. that aren't in the
+    // user's Ithaca-scoped opt-in list).
+    if (p.species_id && $disabledIds.has(p.species_id)) return false;
     // Cookbook filter — pin's species must have the chosen prep method.
     if (cookbookSpeciesIds !== null) {
       if (!p.species_id || !cookbookSpeciesIds.has(p.species_id)) return false;
@@ -533,9 +536,8 @@
   /** Pins after the species/category filters but before the status
    *  filter — used as the denominator for counts in the dropdown. */
   $: speciesFilteredPins = pins.filter((p) => {
-    if (selectedSpeciesIds === null) return true;
-    if (!p.species_id) return false;
-    return selectedSpeciesIds.has(p.species_id);
+    // Same deny-list semantics as filteredPins above.
+    return !(p.species_id && $disabledIds.has(p.species_id));
   }).filter((p) => {
     const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
     return !cat || visibleCats.has(cat);

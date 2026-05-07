@@ -173,6 +173,20 @@ export const enabledIds = derived(_store, (s): Set<string> | null => {
   return out;
 });
 
+/** Set of species_ids the user has *explicitly* disabled. A species not
+ *  appearing in prefs at all is implicitly enabled — important for the
+ *  public layer, where pinning species the user has never seen (NYC
+ *  street trees, etc.) should not be hidden by their Ithaca-only opt-in
+ *  list. Use this for filtering pins on the map; use enabledIds for
+ *  driving the filter-panel UI which is scoped to a known catalog. */
+export const disabledIds = derived(_store, (s): Set<string> => {
+  const out = new Set<string>();
+  for (const [id, enabled] of s.prefs) {
+    if (!enabled) out.add(id);
+  }
+  return out;
+});
+
 /** Toggle a single species. If the user is currently in the
  *  default-all-enabled state, this materializes a row so the OFF
  *  state can be persisted. */
