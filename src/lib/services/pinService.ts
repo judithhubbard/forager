@@ -133,6 +133,67 @@ export async function listPublicPins(
   return (data ?? []) as PinEffective[];
 }
 
+/** Authed analog of listPublicPins: pins inside a bbox, scoped to one
+ *  region. RLS still enforces membership; non-members get an empty
+ *  set rather than an error. Used by the main map's viewport-driven
+ *  fetch path so big regions (Toronto-public-scale: 30k+ pins) don't
+ *  paginate the whole region just to render the visible viewport. */
+export async function listRegionPins(
+  regionId: string,
+  bbox: Bbox,
+  maxRows: number = 1000
+): Promise<PinEffective[]> {
+  const [west, south, east, north] = bbox;
+  // Cast the RPC name through unknown — the generated Database type
+  // doesn't know about region_pins_bbox until types are regenerated
+  // post-migration. Same pattern used for region_pins_clusters and
+  // for is_global_admin elsewhere.
+  const { data, error } = await supabase.rpc(
+    'region_pins_bbox' as never,
+    {
+      p_region_id: regionId,
+      p_min_lng: west,
+      p_min_lat: south,
+      p_max_lng: east,
+      p_max_lat: north,
+      p_max_rows: maxRows
+    } as never
+  );
+  if (error) {
+    console.error('[pinService] listRegionPins error:', error);
+    throw error;
+  }
+  return (data ?? []) as unknown as PinEffective[];
+}
+
+/** Authed analog of listPublicPinClusters: cluster aggregates inside
+ *  a bbox, scoped to one region. Uses the same epsDeg→zoom mapping
+ *  as the public path (clusterEpsForZoom). */
+export async function listRegionPinClusters(
+  regionId: string,
+  bbox: Bbox,
+  epsDeg: number = 0.05
+): Promise<PinCluster[]> {
+  const [west, south, east, north] = bbox;
+  const { data, error } = await supabase.rpc(
+    'region_pins_clusters' as never,
+    {
+      p_region_id: regionId,
+      p_min_lng: west,
+      p_min_lat: south,
+      p_max_lng: east,
+      p_max_lat: north,
+      p_eps_deg: epsDeg,
+      p_minpoints: 1
+    } as never
+  );
+  if (error) {
+    console.error('[pinService] listRegionPinClusters error:', error);
+    throw error;
+  }
+  return (data ?? []) as unknown as PinCluster[];
+}
+
 /** ST_ClusterDBSCAN-aggregated cluster points for the public dataset.
  *  epsDeg is the cluster radius in degrees (rough rule of thumb:
  *  one degree of latitude ≈ 111km, so 0.05° ≈ 5km — appropriate for

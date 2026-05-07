@@ -5,9 +5,10 @@
   import { activeRegion, regionsLoading, myRegions } from '$lib/stores/activeRegion';
   import { session } from '$lib/stores/auth';
   import {
-    listByRegion,
     listPublicPins,
     listPublicPinClusters,
+    listRegionPins,
+    listRegionPinClusters,
     clusterEpsForZoom,
     getEffective as getEffectivePin,
     updateLocation as updatePinLocation,
@@ -590,20 +591,20 @@
     goto('/no-regions', { replaceState: true });
   }
 
-  // Reload pins + species when active region changes.
-  // Refetch on activeRegion change AND on any pin/observation
-  // mutation elsewhere in the app (e.g., adding an observation in
-  // the pin panel updates ripeness on the map).
-  // Anonymous (signed-out) viewers go down a separate code path:
-  // there's no region, just the public dataset fetched by viewport
-  // bbox via the moveend → handleViewportChange handler below.
+  // Both authed (region-scoped) and anon (public-scoped) paths now
+  // fetch pins viewport-driven via handleViewportChange. The reactive
+  // here only ensures the species catalog is loaded and re-fires the
+  // current-viewport fetch when activeRegion or dataChange changes.
+  // The Map component dispatches its first viewportChange on mount,
+  // which kicks off the initial pin fetch automatically.
   $: if ($activeRegion) {
     void $dataChange;
-    loadAll($activeRegion.id);
+    loadSpeciesCatalog();
+    void refetchViewport();
   } else if (!$session && !$regionsLoading) {
     void $dataChange;
-    // Initial species fetch (the viewport-driven loader fetches pins).
-    loadAnonSpecies();
+    loadSpeciesCatalog();
+    void refetchViewport();
   }
 
   // Granular update: when a single pin changes (observation logged,
@@ -669,57 +670,61 @@
     }
   }
 
-  async function loadAll(regionId: string) {
-    pinsLoading = true;
-    try {
-      [pins, species] = await Promise.all([listByRegion(regionId), listSpecies()]);
-    } catch (err) {
-      console.error('[+page] loadAll error', err);
-      pins = [];
-      species = [];
-    } finally {
-      pinsLoading = false;
-    }
-  }
-
-  /** Anon: just the species catalog, fetched once. The pin layer is
-   *  driven by viewport-change events from Map.svelte. */
-  async function loadAnonSpecies() {
+  /** Species catalog — cheap, cached at the service layer, used by
+   *  both authed and anon. Pins are no longer fetched here. */
+  async function loadSpeciesCatalog() {
     try {
       species = await listSpecies();
     } catch (err) {
-      console.error('[+page] loadAnonSpecies error', err);
+      console.error('[+page] loadSpeciesCatalog error', err);
       species = [];
     }
   }
 
-  /** Anon viewport-driven fetch. At zoom >= CLUSTER_BELOW_ZOOM we ask
-   *  for individual pins; below that we ask for cluster aggregates so
-   *  a continental viewport never tries to render thousands of dots.
-   *  The viewportSeq guard discards stale in-flight responses (e.g.
-   *  user pans fast, three requests in flight, only the freshest
-   *  result should win). */
-  async function handleViewportChange(
-    e: CustomEvent<{ bbox: Bbox; zoom: number }>
-  ) {
-    if ($session && $activeRegion) return; // authed users use region path
+  /** Last bbox + zoom received from Map's viewportChange event. We
+   *  cache them so events that aren't viewport-driven (a pin saved
+   *  off the drop-pin modal, a dataChange bump, an active-region
+   *  switch) can refetch without needing the Map to re-emit. */
+  let lastBbox: Bbox | null = null;
+  let lastZoom: number | null = null;
+
+  /** Run the same fetch the viewport-change handler would run, but
+   *  using the cached bbox+zoom. No-op until the Map has dispatched
+   *  at least once; on first mount, the handler runs for both
+   *  branches anyway, so skipping until we have geometry is safe. */
+  async function refetchViewport(): Promise<void> {
+    if (!lastBbox || lastZoom == null) return;
+    await fetchForViewport(lastBbox, lastZoom);
+  }
+
+  /** Pin fetch for a given viewport. Region-scoped when authed +
+   *  in-region; public-scoped otherwise. Uses cluster aggregates at
+   *  low zoom so a continental view doesn't render tens of thousands
+   *  of points. The viewportSeq guard discards stale responses when
+   *  the user pans fast. */
+  async function fetchForViewport(bbox: Bbox, zoom: number): Promise<void> {
     const seq = ++viewportSeq;
     pinsLoading = true;
-    const { bbox, zoom } = e.detail;
+    const region = $activeRegion;
+    const useRegion = !!$session && !!region;
     try {
       if (zoom < CLUSTER_BELOW_ZOOM) {
-        const c = await listPublicPinClusters(bbox, clusterEpsForZoom(zoom));
+        const c = useRegion && region
+          ? await listRegionPinClusters(region.id, bbox, clusterEpsForZoom(zoom))
+          : await listPublicPinClusters(bbox, clusterEpsForZoom(zoom));
         if (seq !== viewportSeq) return;
         clusters = c;
         pins = [];
       } else {
-        const p = await listPublicPins(bbox, 500);
+        const p = useRegion && region
+          ? await listRegionPins(region.id, bbox, 1000)
+          : await listPublicPins(bbox, 500);
         if (seq !== viewportSeq) return;
         pins = p;
         clusters = [];
       }
     } catch (err) {
-      console.error('[+page] handleViewportChange error', err);
+      console.error('[+page] fetchForViewport error', err);
       if (seq === viewportSeq) {
         pins = [];
         clusters = [];
@@ -727,6 +732,14 @@
     } finally {
       if (seq === viewportSeq) pinsLoading = false;
     }
+  }
+
+  async function handleViewportChange(
+    e: CustomEvent<{ bbox: Bbox; zoom: number }>
+  ) {
+    lastBbox = e.detail.bbox;
+    lastZoom = e.detail.zoom;
+    await fetchForViewport(e.detail.bbox, e.detail.zoom);
   }
 
   function handlePinClick(e: CustomEvent<{ pinId: string }>) {
@@ -768,7 +781,11 @@
     showDropPin = false;
     dropPinLng = null;
     dropPinLat = null;
-    if ($activeRegion) loadAll($activeRegion.id);
+    // Refetch the current viewport so the just-created pin appears.
+    // bumpDataChange would also trigger this via the reactive above
+    // but we kick it directly here so the user sees their pin without
+    // waiting on whatever else listens to dataChange.
+    void refetchViewport();
   }
 
   function handleClose() {
