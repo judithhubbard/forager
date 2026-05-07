@@ -71,17 +71,44 @@ function loadInitial(): RecorderState {
 const _store: Writable<RecorderState> = writable(loadInitial());
 export const recording = { subscribe: _store.subscribe };
 
+/** Throttled persist. Earlier code wrote the full state JSON to
+ *  localStorage on every GPS fix. For an hour-long walk that's
+ *  ~3600 synchronous JSON.stringify + disk writes of a steadily
+ *  growing array, on the main thread. Now we batch: while
+ *  recording, write at most every PERSIST_MS; always flush
+ *  immediately on a status transition (start/pause/stop) so
+ *  crash-recovery still has the right idle-vs-paused signal. */
+const PERSIST_MS = 5_000;
+let pendingState: RecorderState | null = null;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let lastPersistedStatus: RecorderStatus | null = null;
+
+function writeNow(s: RecorderState) {
+  try {
+    const persist = { ...s, error: null };
+    localStorage.setItem(KEY, JSON.stringify(persist));
+    lastPersistedStatus = s.status;
+  } catch {
+    const half = Math.floor(s.points.length / 2);
+    _store.update((cur) => ({ ...cur, points: cur.points.slice(half) }));
+  }
+}
+
 if (browser) {
   _store.subscribe((s) => {
-    try {
-      // Trim 'error' from the persisted form — it's a transient.
-      const persist = { ...s, error: null };
-      localStorage.setItem(KEY, JSON.stringify(persist));
-    } catch {
-      // Quota exceeded — drop oldest half of points and retry once.
-      const half = Math.floor(s.points.length / 2);
-      _store.update((cur) => ({ ...cur, points: cur.points.slice(half) }));
+    pendingState = s;
+    // Status transitions write through immediately so the persisted
+    // 'idle' / 'paused' marker is never stale.
+    if (s.status !== lastPersistedStatus) {
+      if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
+      writeNow(s);
+      return;
     }
+    if (persistTimer) return;
+    persistTimer = setTimeout(() => {
+      persistTimer = null;
+      if (pendingState) writeNow(pendingState);
+    }, PERSIST_MS);
   });
 }
 
