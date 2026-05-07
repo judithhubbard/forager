@@ -227,6 +227,24 @@ export async function listPublicPinClusters(
   return (data ?? []) as PinCluster[];
 }
 
+/** Map a zoom level to its density-grid band. Mirrors the server's
+ *  band_for_zoom in migration 36 — keep in sync. The client needs
+ *  this to know the cell size when rendering the heatmap rectangles. */
+export function densityBandForZoom(zoom: number): number {
+  if (zoom < 6) return 0;
+  if (zoom < 8) return 1;
+  if (zoom < 10) return 2;
+  if (zoom < 12) return 3;
+  return 4;
+}
+
+/** Cell size in degrees for a given band. Mirrors server's
+ *  eps_for_band. */
+export function densityEpsForBand(band: number): number {
+  const eps = [0.5, 0.1, 0.02, 0.005, 0.001];
+  return eps[band] ?? 0.5;
+}
+
 /** Pre-aggregated density buckets for the public-layer heatmap.
  *  Reads from pin_density_grid (refreshed on import). The server
  *  picks the right zoom band based on the passed-in map zoom and

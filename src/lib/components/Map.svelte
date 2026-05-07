@@ -782,12 +782,11 @@
     }).addTo(selectionLayer);
   }
 
-  /** Pin-density heatmap from pre-aggregated buckets. Each bucket
-   *  represents one grid cell from pin_density_grid; we render it
-   *  as a single canvas circle with opacity proportional to log
-   *  count_pins so a 1-pin cell barely shows and a 1000-pin cell
-   *  is bold. Adjacent cells overlap their canvas regions so the
-   *  visual reads as a smooth gradient rather than discrete tiles. */
+  /** Real heatmap: each density-grid cell renders as a filled
+   *  rectangle covering its full geographic extent, color-graded
+   *  on a yellow→orange→red scale by log(count_pins). Adjacent
+   *  cells touch but never overlap; the visual is a continuous
+   *  color mosaic, not overlapping dots. */
   function renderPinHeat(buckets: DensityBucket[]) {
     if (!map || !LCache) return;
     if (pinHeatGroup) {
@@ -797,22 +796,47 @@
     if (buckets.length === 0) return;
     const L = LCache;
     const group = L.layerGroup();
+    const zoom = map.getZoom();
+    const eps = densityEpsForZoom(zoom);
+    const halfEps = eps / 2;
     for (const b of buckets) {
-      // Opacity from log(count). A 1-pin cell renders barely
-      // visible; ~100 pins renders mid-strength; ~1000+ pins is
-      // close to fully opaque. Saturates at 0.55 so even very
-      // dense cells stay readable as orange rather than red-brown.
-      const alpha = Math.min(0.55, 0.05 + Math.log10(b.count_pins + 1) * 0.18);
-      L.circleMarker([b.centroid_lat, b.centroid_lng], {
-        radius: 12,
+      const bounds: [[number, number], [number, number]] = [
+        [b.centroid_lat - halfEps, b.centroid_lng - halfEps],
+        [b.centroid_lat + halfEps, b.centroid_lng + halfEps]
+      ];
+      L.rectangle(bounds, {
+        fillColor: heatColor(b.count_pins),
+        fillOpacity: 0.65,
         stroke: false,
-        fillColor: '#d57100',
-        fillOpacity: alpha,
         interactive: false
       }).addTo(group);
     }
     pinHeatGroup = group;
     group.addTo(map);
+  }
+
+  /** Yellow → orange → red color ramp for the heatmap cells. log10
+   *  scale on count: 1→pale yellow, 10→amber, 100→orange,
+   *  1000→deep red. Saturates at very high counts so dense cells
+   *  don't crash to black. Hue from 60 (yellow) to 0 (red),
+   *  lightness slightly down at the hot end for legibility. */
+  function heatColor(count: number): string {
+    const t = Math.min(1, Math.log10(count + 1) / 3.5);
+    const hue = 60 - t * 60;
+    const lightness = 62 - t * 18;
+    return `hsl(${hue.toFixed(0)}, 90%, ${lightness.toFixed(0)}%)`;
+  }
+
+  /** Mirrors pinService.densityBandForZoom + densityEpsForBand
+   *  without importing them — Map keeps its own copy on principle.
+   *  Update both if the server's band schedule (migration 36)
+   *  changes. */
+  function densityEpsForZoom(zoom: number): number {
+    if (zoom < 6) return 0.5;
+    if (zoom < 8) return 0.1;
+    if (zoom < 10) return 0.02;
+    if (zoom < 12) return 0.005;
+    return 0.001;
   }
 
   /** Render aggregated cluster points: a labeled circle per cluster,
