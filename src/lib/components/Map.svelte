@@ -796,7 +796,7 @@
       ];
       L.rectangle(bounds, {
         fillColor: heatColor(b.count_pins),
-        fillOpacity: 0.65,
+        fillOpacity: 0.78,
         stroke: false,
         interactive: false
       }).addTo(group);
@@ -805,16 +805,17 @@
     group.addTo(map);
   }
 
-  /** Yellow → orange → red color ramp for the heatmap cells. log10
-   *  scale on count: 1→pale yellow, 10→amber, 100→orange,
-   *  1000→deep red. Saturates at very high counts so dense cells
-   *  don't crash to black. Hue from 60 (yellow) to 0 (red),
-   *  lightness slightly down at the hot end for legibility. */
+  /** Gold → orange → red color ramp. Tuned so even a single-pin
+   *  cell reads as a clear gold-orange, not pale yellow that
+   *  blends into the basemap. log10 scale: 1→t≈0.15, 10→t≈0.5,
+   *  100→t≈0.95, 1000+→t=1.
+   *  Hue 45 (gold) → 0 (red), lightness 58 → 42 to keep dense
+   *  cells legible without going black. */
   function heatColor(count: number): string {
-    const t = Math.min(1, Math.log10(count + 1) / 3.5);
-    const hue = 60 - t * 60;
-    const lightness = 62 - t * 18;
-    return `hsl(${hue.toFixed(0)}, 90%, ${lightness.toFixed(0)}%)`;
+    const t = Math.min(1, Math.log10(count + 1) / 2.2);
+    const hue = 45 - t * 45;
+    const lightness = 58 - t * 16;
+    return `hsl(${hue.toFixed(0)}, 92%, ${lightness.toFixed(0)}%)`;
   }
 
 
