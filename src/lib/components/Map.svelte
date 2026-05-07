@@ -149,6 +149,24 @@
   let mapEl: HTMLDivElement;
   let map: import('leaflet').Map | undefined;
   let markerLayer: import('leaflet').LayerGroup | undefined;
+  /** Per-pin entries inside markerLayer. Lets renderPins diff
+   *  against the previous render: pins whose signature is unchanged
+   *  just have their latlng updated (cheap), pins whose signature
+   *  is new get rebuilt, and pins that have left the visible set
+   *  get removed. Avoids the clearLayers + rebuild-everything
+   *  storm on every click that the audit flagged. */
+  type PinEntry = {
+    group: import('leaflet').LayerGroup;
+    signature: string;
+    lat: number;
+    lng: number;
+    pinId: string;
+  };
+  const pinEntries = new Map<string, PinEntry>();
+  /** Selection ring lives in its own layer so flipping the selected
+   *  pin doesn't touch any of the regular pin entries. */
+  let selectionLayer: import('leaflet').LayerGroup | undefined;
+  let lastSelectedId: string | null = null;
   let clusterLayer: import('leaflet').LayerGroup | undefined;
   let userMarker: import('leaflet').CircleMarker | undefined;
   /** Polyline drawn from the live recorder's buffered points so the
@@ -449,6 +467,15 @@
     );
   }
 
+  /** Diff-based renderer. Pins whose visual signature didn't change
+   *  keep their existing Leaflet layers (we just setLatLng if they
+   *  moved). New pins build a fresh layer group; gone pins are
+   *  removed. The selection ring is handled by renderSelection so
+   *  toggling the open pin doesn't touch any of the regular markers.
+   *
+   *  Earlier version did markerLayer.clearLayers() + rebuild-all on
+   *  every reactive run, which the audit flagged as a major source
+   *  of map churn on every click and species-toggle. */
   function renderPins(
     currentPins: PinEffective[],
     selectedId: string | null,
@@ -456,138 +483,166 @@
     catResolver: (pin: PinEffective) => ForageCategory
   ) {
     if (!markerLayer || !map || !LCache) return;
-    const L = LCache;
-    // Build the new marker batch into a fresh layer first, then swap
-    // it in via clear+addAll. The new markers exist before the old
-    // ones disappear, eliminating the brief "no pins" flash that
-    // happened when clearLayers ran sync but the marker loop was
-    // inside an async leaflet import.
-    const next = L.layerGroup();
-    {
-      for (const pin of currentPins) {
-        if (pin.lat == null || pin.lng == null) continue;
-        const fill = colorResolver ? colorResolver(pin) : colorFor(pin);
-        const isSelected = !!selectedId && pin.id === selectedId;
-        const isStrictRipe = pin.is_ripe_strict === true;
-        const isPossibly = pin.is_ripe_now === true; // already widened by the buffer
-        const muted =
-          pin.effective_status === 'gone' || pin.effective_status === 'dormant';
-        const inaccessible = pin.is_inaccessible === true;
-        const fillOpacity = inaccessible ? 0.2 : muted ? 0.45 : 0.9;
-        const strokeOpacity = inaccessible ? 0.6 : muted ? 0.8 : 1.0;
-        const baseR = isTouch ? 6 : 4.5;
-
-        // Selected-pin highlight ring (drawn first so it sits below).
-        if (isSelected) {
-          L.circleMarker([pin.lat, pin.lng], {
-            radius: baseR + 13,
-            color: '#1f6fe0',
-            fill: false,
-            weight: 1.5,
-            opacity: 0.35,
-            interactive: false
-          }).addTo(next);
-          L.circleMarker([pin.lat, pin.lng], {
-            radius: baseR + 7,
-            color: '#1f6fe0',
-            fill: false,
-            weight: 2.5,
-            opacity: 1,
-            interactive: false
-          }).addTo(next);
+    const wanted = new Set<string>();
+    for (const pin of currentPins) {
+      if (!pin.id || pin.lat == null || pin.lng == null) continue;
+      wanted.add(pin.id);
+      const cat = catResolver(pin);
+      const fill = colorResolver ? colorResolver(pin) : colorFor(pin);
+      const sig = pinSignature(pin, fill, cat);
+      const existing = pinEntries.get(pin.id);
+      if (existing && existing.signature === sig) {
+        if (existing.lat !== pin.lat || existing.lng !== pin.lng) {
+          existing.group.eachLayer((layer) => {
+            const setter = layer as { setLatLng?: (ll: [number, number]) => void };
+            if (setter.setLatLng) setter.setLatLng([pin.lat as number, pin.lng as number]);
+          });
+          existing.lat = pin.lat;
+          existing.lng = pin.lng;
         }
-
-        // Add ripeness rings BEFORE the main marker (so they render
-        // beneath it). Strict ripe gets the bold double-ring treatment to
-        // really pop; "possibly ripe" (in the ±10-day buffer but not
-        // strictly inside the window) gets a single faint dashed ring
-        // that suggests "maybe" without competing with strict ripe pins.
-        if (isStrictRipe) {
-          L.circleMarker([pin.lat, pin.lng], {
-            radius: baseR + 4,
-            color: '#d57100',
-            fill: false,
-            weight: 2.5,
-            opacity: 1.0,
-            interactive: false
-          }).addTo(next);
-          L.circleMarker([pin.lat, pin.lng], {
-            radius: baseR + 8.5,
-            color: '#d57100',
-            fill: false,
-            weight: 1.6,
-            opacity: 0.65,
-            interactive: false
-          }).addTo(next);
-        } else if (isPossibly) {
-          L.circleMarker([pin.lat, pin.lng], {
-            radius: baseR + 4,
-            color: '#d57100',
-            fill: false,
-            weight: 1.2,
-            opacity: 0.55,
-            dashArray: '3,3',
-            interactive: false
-          }).addTo(next);
-        }
-
-        // Main pin marker — shape varies by category (●■▲◆ for
-        // fruit/nut/mushroom/other, ★ for brambles), filled with the
-        // group color. Rendered as a non-interactive divIcon; the
-        // transparent hit-target circle below captures clicks.
-        // (Public-vs-personal differentiation is communicated through
-        // the chip in the detail panel and the tooltip suffix; the
-        // dashed-stroke experiment was hard to read at 12px so we
-        // dropped it. shapeHtml still accepts a dotted flag for
-        // future use.)
-        const cat = catResolver(pin);
-        const px = baseR * 2;
-        const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
-        const opacityCss = fillOpacity.toFixed(2);
-        const html = shapeHtml(cat, fillVisible, opacityCss, px);
-        const marker = L.marker([pin.lat, pin.lng], {
-          icon: L.divIcon({
-            className: 'forager-shape',
-            html,
-            iconSize: [px + 4, px + 4],
-            iconAnchor: [(px + 4) / 2, (px + 4) / 2]
-          }),
-          keyboard: false,
-          interactive: false
+      } else {
+        if (existing) existing.group.remove();
+        const group = buildPinLayerGroup(pin, cat, fill);
+        if (!group) continue;
+        group.addTo(markerLayer);
+        pinEntries.set(pin.id, {
+          group,
+          signature: sig,
+          lat: pin.lat,
+          lng: pin.lng,
+          pinId: pin.id
         });
-        marker.addTo(next);
-
-        // On touch devices the visual marker is too small for a finger
-        // (≈12px diameter). Layer a transparent, larger circle on top
-        // that captures the tap and the hover. Tooltip binds here too —
-        // the hit-target is always on top, so it catches mouseover for
-        // every symbol style without depending on whether the visual
-        // marker is interactive (divIcon variants are not).
-        const hitR = isTouch ? baseR + 8 : baseR + 3;
-        const hit = L.circleMarker([pin.lat, pin.lng], {
-          radius: hitR,
-          color: 'transparent',
-          fillColor: '#000',
-          fillOpacity: 0,
-          opacity: 0,
-          weight: 0,
-          bubblingMouseEvents: false
-        });
-        hit.on('click', () => {
-          if (pin.id) dispatch('pinClick', { pinId: pin.id });
-        });
-        const label = labelOf(pin);
-        if (label) {
-          hit.bindTooltip(label, { direction: 'top', offset: [0, -2], sticky: true });
-        }
-        hit.addTo(next);
       }
     }
-    // Atomic swap: clear the old layer and immediately attach the
-    // already-built `next` group's children to it. The map never
-    // sees an empty marker layer.
-    markerLayer.clearLayers();
-    next.eachLayer((layer) => layer.addTo(markerLayer!));
+    // Drop pins no longer in the visible set.
+    for (const [id, entry] of pinEntries) {
+      if (!wanted.has(id)) {
+        entry.group.remove();
+        pinEntries.delete(id);
+      }
+    }
+    renderSelection(selectedId);
+  }
+
+  /** Stable string fingerprint of every visual attribute that
+   *  influences how a pin is drawn. Position is checked separately
+   *  so a moved-but-otherwise-identical pin reuses its layers. */
+  function pinSignature(pin: PinEffective, fill: string, cat: ForageCategory): string {
+    return [
+      cat,
+      fill,
+      pin.is_ripe_strict ? 1 : 0,
+      pin.is_ripe_now ? 1 : 0,
+      pin.effective_status ?? '',
+      pin.is_inaccessible ? 1 : 0,
+      labelOf(pin)
+    ].join('|');
+  }
+
+  /** Build the fresh per-pin layer group: ripeness rings first
+   *  (bottom layer), then the shape divIcon, then the transparent
+   *  click target on top with the hover tooltip. */
+  function buildPinLayerGroup(
+    pin: PinEffective,
+    cat: ForageCategory,
+    fill: string
+  ): import('leaflet').LayerGroup | null {
+    if (!LCache || pin.lat == null || pin.lng == null || !pin.id) return null;
+    const L = LCache;
+    const lat = pin.lat;
+    const lng = pin.lng;
+    const isStrictRipe = pin.is_ripe_strict === true;
+    const isPossibly = pin.is_ripe_now === true;
+    const muted = pin.effective_status === 'gone' || pin.effective_status === 'dormant';
+    const inaccessible = pin.is_inaccessible === true;
+    const fillOpacity = inaccessible ? 0.2 : muted ? 0.45 : 0.9;
+    const baseR = isTouch ? 6 : 4.5;
+    const group = L.layerGroup();
+
+    if (isStrictRipe) {
+      L.circleMarker([lat, lng], {
+        radius: baseR + 4, color: '#d57100', fill: false,
+        weight: 2.5, opacity: 1.0, interactive: false
+      }).addTo(group);
+      L.circleMarker([lat, lng], {
+        radius: baseR + 8.5, color: '#d57100', fill: false,
+        weight: 1.6, opacity: 0.65, interactive: false
+      }).addTo(group);
+    } else if (isPossibly) {
+      L.circleMarker([lat, lng], {
+        radius: baseR + 4, color: '#d57100', fill: false,
+        weight: 1.2, opacity: 0.55, dashArray: '3,3', interactive: false
+      }).addTo(group);
+    }
+
+    const px = baseR * 2;
+    const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
+    const opacityCss = fillOpacity.toFixed(2);
+    const html = shapeHtml(cat, fillVisible, opacityCss, px);
+    L.marker([lat, lng], {
+      icon: L.divIcon({
+        className: 'forager-shape',
+        html,
+        iconSize: [px + 4, px + 4],
+        iconAnchor: [(px + 4) / 2, (px + 4) / 2]
+      }),
+      keyboard: false,
+      interactive: false
+    }).addTo(group);
+
+    const hitR = isTouch ? baseR + 8 : baseR + 3;
+    const hit = L.circleMarker([lat, lng], {
+      radius: hitR,
+      color: 'transparent',
+      fillColor: '#000',
+      fillOpacity: 0,
+      opacity: 0,
+      weight: 0,
+      bubblingMouseEvents: false
+    });
+    const pinId = pin.id;
+    hit.on('click', () => dispatch('pinClick', { pinId }));
+    const label = labelOf(pin);
+    if (label) {
+      hit.bindTooltip(label, { direction: 'top', offset: [0, -2], sticky: true });
+    }
+    hit.addTo(group);
+    return group;
+  }
+
+  /** Selected-pin highlight: two concentric rings drawn into a
+   *  separate selection layer. Toggling selection only touches
+   *  this layer — the regular pin entries don't churn. */
+  function renderSelection(selectedId: string | null) {
+    if (!map || !LCache) return;
+    const L = LCache;
+    if (selectedId === lastSelectedId) return;
+    if (selectionLayer) {
+      selectionLayer.clearLayers();
+    } else {
+      selectionLayer = L.layerGroup().addTo(map);
+    }
+    lastSelectedId = selectedId;
+    if (!selectedId) return;
+    const entry = pinEntries.get(selectedId);
+    if (!entry) return;
+    const baseR = isTouch ? 6 : 4.5;
+    L.circleMarker([entry.lat, entry.lng], {
+      radius: baseR + 13,
+      color: '#1f6fe0',
+      fill: false,
+      weight: 1.5,
+      opacity: 0.35,
+      interactive: false
+    }).addTo(selectionLayer);
+    L.circleMarker([entry.lat, entry.lng], {
+      radius: baseR + 7,
+      color: '#1f6fe0',
+      fill: false,
+      weight: 2.5,
+      opacity: 1,
+      interactive: false
+    }).addTo(selectionLayer);
   }
 
   /** Render aggregated cluster points: a labeled circle per cluster,
