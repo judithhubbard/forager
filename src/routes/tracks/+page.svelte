@@ -441,9 +441,10 @@
   .group-label::-webkit-details-marker { display: none; }
   .group-label::before {
     content: '▸';
-    color: #6b7a6b;
-    font-size: 0.75rem;
-    width: 0.85rem;
+    color: #3a5a3a;
+    font-size: 1.1rem;
+    line-height: 1;
+    width: 1.1rem;
     text-align: center;
     transition: transform 0.15s;
   }
