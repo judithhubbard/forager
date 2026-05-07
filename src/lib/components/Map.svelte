@@ -440,11 +440,13 @@
         // Lazy import L only inside async/onMount to avoid SSR issues.
         import('leaflet').then((leaflet) => {
           if (!map) return;
+          // Render into the dedicated SVG pane so the marker always
+          // sits above tracks, heatmap, and pins. preferCanvas:true
+          // on the map means default circle layers go on the shared
+          // canvas; passing an explicit svg renderer + pane keeps
+          // the user marker out of that paint order.
+          const svgRenderer = leaflet.svg({ pane: 'user-location' });
           const group = leaflet.layerGroup();
-          // Accuracy halo: real-meters radius circle so the user
-          // sees how confident the fix is. Only drawn when accuracy
-          // looks usable (a 5km halo from a bad indoor fix would
-          // dominate the screen).
           if (Number.isFinite(accuracyM) && accuracyM > 0 && accuracyM < 1000) {
             leaflet.circle([latitude, longitude], {
               radius: accuracyM,
@@ -453,20 +455,23 @@
               fillOpacity: 0.12,
               weight: 1,
               opacity: 0.5,
-              interactive: false
+              interactive: false,
+              pane: 'user-location',
+              renderer: svgRenderer
             }).addTo(group);
           }
           // Outer white halo + inner bright blue dot, classic
-          // Google-Maps style. The white ring stops the dot from
-          // disappearing against blue tiles (water on satellite,
-          // OSM-HOT's roads).
+          // Google-Maps style. White ring keeps the dot visible
+          // on any basemap; both layers live in user-location pane.
           leaflet.circleMarker([latitude, longitude], {
             radius: 11,
             color: '#ffffff',
             fillColor: '#ffffff',
             fillOpacity: 1,
             weight: 0,
-            interactive: false
+            interactive: false,
+            pane: 'user-location',
+            renderer: svgRenderer
           }).addTo(group);
           leaflet.circleMarker([latitude, longitude], {
             radius: 7,
@@ -474,7 +479,9 @@
             fillColor: '#1f7af5',
             fillOpacity: 1,
             weight: 1.5,
-            interactive: false
+            interactive: false,
+            pane: 'user-location',
+            renderer: svgRenderer
           }).addTo(group);
           group.addTo(map);
           userMarker = group;
@@ -826,6 +833,16 @@
 
     markerLayer = L.layerGroup().addTo(map);
     clusterLayer = L.layerGroup().addTo(map);
+    // Dedicated SVG pane for the GPS location marker. Without this,
+    // the marker shares the canvas with tracks / heatmap / pins and
+    // gets painted-over depending on draw order. The user always
+    // wants to see where they are, so we lift it into a pane that
+    // sits above markerPane (600) and overlayPane (400).
+    if (!map.getPane('user-location')) {
+      const pane = map.createPane('user-location');
+      pane.style.zIndex = '650';
+      pane.style.pointerEvents = 'none';
+    }
     renderPins(pins, selectedPinId, colorOf, categoryOf);
     renderClusters(clusters);
 

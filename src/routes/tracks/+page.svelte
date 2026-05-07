@@ -21,7 +21,8 @@
   import {
     displayedTrackIds,
     showTrack,
-    hideTrack
+    hideTrack,
+    clearAll as clearDisplayed
   } from '$lib/stores/displayedTracks';
   import { formatElapsed } from '$lib/utils/formatTime';
 
@@ -154,6 +155,46 @@
     }
   }
 
+  /** Date-range filter for the track list. Tracks the rolling window
+   *  (or "all"). Persisted within the page only — fresh visit defaults
+   *  to All so the user sees their full library on landing. */
+  type DateFilter = 'all' | '24h' | '7d' | '30d' | 'year';
+  const FILTER_OPTIONS: { k: DateFilter; label: string }[] = [
+    { k: 'all',  label: 'All' },
+    { k: '24h',  label: '24h' },
+    { k: '7d',   label: '7 days' },
+    { k: '30d',  label: '30 days' },
+    { k: 'year', label: 'Year' }
+  ];
+  const FILTER_MS: Record<Exclude<DateFilter, 'all'>, number> = {
+    '24h':  24 * 60 * 60 * 1000,
+    '7d':   7 * 24 * 60 * 60 * 1000,
+    '30d':  30 * 24 * 60 * 60 * 1000,
+    'year': 365 * 24 * 60 * 60 * 1000
+  };
+  let dateFilter: DateFilter = 'all';
+  $: filteredTracks = (() => {
+    if (dateFilter === 'all') return tracks;
+    const cutoff = Date.now() - FILTER_MS[dateFilter];
+    return tracks.filter((t) => {
+      const ts = t.started_at ? new Date(t.started_at).getTime() : NaN;
+      return Number.isFinite(ts) && ts >= cutoff;
+    });
+  })();
+  function showAllFiltered() {
+    for (const t of filteredTracks) showTrack(t.id);
+  }
+  function hideAllFiltered() {
+    // Only hide tracks that are currently in the filtered view —
+    // gives the user a per-window "untoggle these" without
+    // wiping unrelated selections. clearDisplayed wipes everything
+    // and is exposed through the "hide all" button in the All view.
+    for (const t of filteredTracks) hideTrack(t.id);
+  }
+  $: allShownInFilter =
+    filteredTracks.length > 0 &&
+    filteredTracks.every((t) => $displayedTrackIds.has(t.id));
+
   function fmtDate(iso: string | null): string {
     if (!iso) return '—';
     return new Date(iso).toLocaleDateString();
@@ -262,43 +303,66 @@
   {:else if tracks.length === 0}
     <p class="hint">No tracks yet. Drop a GPX or KML file above to import one.</p>
   {:else}
-    <table>
-      <thead>
-        <tr>
-          <th>Show</th>
-          <th>Title</th>
-          <th>Date</th>
-          <th>Distance</th>
-          <th>Duration</th>
-          <th>Source</th>
-          <th>Visibility</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each tracks as t}
-          <tr>
-            <td>
+    <div class="track-toolbar">
+      <div class="filter-chips" role="radiogroup" aria-label="Date range">
+        {#each FILTER_OPTIONS as opt}
+          <button
+            type="button"
+            class="chip"
+            class:active={dateFilter === opt.k}
+            on:click={() => (dateFilter = opt.k)}
+            role="radio"
+            aria-checked={dateFilter === opt.k}
+          >{opt.label}</button>
+        {/each}
+      </div>
+      <div class="bulk">
+        <button
+          type="button"
+          class="bulk-btn"
+          on:click={showAllFiltered}
+          disabled={filteredTracks.length === 0 || allShownInFilter}
+        >Show all on map</button>
+        <button
+          type="button"
+          class="bulk-btn"
+          on:click={hideAllFiltered}
+          disabled={filteredTracks.length === 0 ||
+            !filteredTracks.some((t) => $displayedTrackIds.has(t.id))}
+        >Hide all</button>
+      </div>
+    </div>
+    {#if filteredTracks.length === 0}
+      <p class="hint">No tracks in this window.</p>
+    {:else}
+      <ul class="track-list" aria-label="Saved tracks">
+        {#each filteredTracks as t}
+          <li class="track-row" class:on={$displayedTrackIds.has(t.id)}>
+            <label class="show-toggle" title="Toggle this track on the map">
               <input
                 type="checkbox"
                 checked={$displayedTrackIds.has(t.id)}
                 on:change={(e) => onShowToggle(e, t.id)}
-                title="Toggle this track on the map"
               />
-            </td>
-            <td>{t.title ?? '(untitled)'}</td>
-            <td>{fmtDate(t.started_at)}</td>
-            <td>{fmtDistance(t.distance_m)}</td>
-            <td>{fmtDuration(t.started_at, t.ended_at)}</td>
-            <td><span class="src src-{t.source}">{t.source}</span></td>
-            <td>{t.visibility}</td>
-            <td>
-              <button class="rm" on:click={() => onDelete(t)} aria-label="Delete">×</button>
-            </td>
-          </tr>
+              <span class="sr-only">Show on map</span>
+            </label>
+            <div class="track-main">
+              <div class="track-title">
+                {t.title ?? '(untitled)'}
+                <span class="src src-{t.source}">{t.source}</span>
+                {#if t.visibility !== 'private'}
+                  <span class="vis">{t.visibility}</span>
+                {/if}
+              </div>
+              <div class="track-meta">
+                {fmtDate(t.started_at)} · {fmtDistance(t.distance_m)} · {fmtDuration(t.started_at, t.ended_at)}
+              </div>
+            </div>
+            <button class="rm" on:click={() => onDelete(t)} aria-label="Delete track">×</button>
+          </li>
         {/each}
-      </tbody>
-    </table>
+      </ul>
+    {/if}
   {/if}
 </main>
 
@@ -383,28 +447,76 @@
   }
   .rec-actions button:disabled { opacity: 0.6; cursor: default; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border: 1px solid #e1e8e1;
-    border-radius: 0.4rem;
-    overflow: hidden;
+  /* Toolbar above the list — filter chips on the left, bulk
+     show/hide on the right. */
+  .track-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.25rem 0 0.5rem;
   }
-  th, td { padding: 0.5rem 0.7rem; text-align: left; font-size: 0.88rem; }
-  th { background: #f5f8f5; color: #3a5a3a; font-weight: 600; border-bottom: 1px solid #e1e8e1; }
-  tr + tr td { border-top: 1px solid #f0f5ef; }
-  .src { padding: 0.05rem 0.45rem; border-radius: 0.3rem; font-size: 0.78rem; background: #eef3ed; border: 1px solid #d4ddd2; }
+  .filter-chips { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; }
+  .chip {
+    padding: 0.2rem 0.65rem;
+    border: 1px solid #c7d0c7;
+    background: white;
+    color: #3a5a3a;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .chip:hover { background: #f0f5ef; }
+  .chip.active { background: #3a5a3a; color: white; border-color: #3a5a3a; }
+  .bulk { display: inline-flex; gap: 0.4rem; flex-wrap: wrap; }
+  .bulk-btn {
+    background: white; color: #3a5a3a;
+    border: 1px solid #c7d0c7; border-radius: 0.3rem;
+    padding: 0.25rem 0.6rem; font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .bulk-btn:hover:not(:disabled) { background: #f0f5ef; }
+  .bulk-btn:disabled { opacity: 0.5; cursor: default; }
+
+  /* Compact one-line-per-track list. Replaces the earlier 8-column
+     table that was too wide on phones and too sparse on desktop. */
+  .track-list { list-style: none; margin: 0; padding: 0;
+    background: white; border: 1px solid #e1e8e1; border-radius: 0.4rem; overflow: hidden; }
+  .track-row {
+    display: flex; align-items: center; gap: 0.55rem;
+    padding: 0.4rem 0.65rem;
+    border-top: 1px solid #f0f5ef;
+  }
+  .track-row:first-child { border-top: 0; }
+  .track-row.on { background: #f7faf6; }
+  .show-toggle { display: inline-flex; align-items: center; cursor: pointer; }
+  .show-toggle input { width: 1rem; height: 1rem; margin: 0; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0 0 0 0);
+  }
+  .track-main { flex: 1; min-width: 0; line-height: 1.25; }
+  .track-title {
+    display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+    color: #1f2a1f; font-size: 0.92rem; font-weight: 500;
+  }
+  .track-meta { color: #6b7a6b; font-size: 0.78rem; margin-top: 0.05rem; }
+  .src { padding: 0.02rem 0.38rem; border-radius: 0.3rem; font-size: 0.7rem;
+    background: #eef3ed; border: 1px solid #d4ddd2; color: #4a554a;
+    text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
   .src-live { background: #fff4e3; border-color: #e8d3a6; color: #7a4a10; }
+  .vis { font-size: 0.72rem; color: #6b7a6b; text-transform: uppercase; letter-spacing: 0.04em; }
   .rm {
     background: transparent;
     border: 1px solid #d6c0c0;
     color: #b03030;
-    width: 1.85rem;
-    height: 1.85rem;
+    width: 1.6rem;
+    height: 1.6rem;
     border-radius: 0.3rem;
     cursor: pointer;
     line-height: 1;
+    flex-shrink: 0;
   }
   .rm:hover { background: #fdf2f2; }
 </style>
