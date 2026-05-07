@@ -785,18 +785,27 @@
     if (buckets.length === 0) return;
     const L = LCache;
     const group = L.layerGroup();
+    // Oversize factor: each rectangle extends 30% past its true
+    // cell edge so it overlaps neighbors. Where neighbors are
+    // populated, alpha-blends darker (dense areas compound). Where
+    // a neighbor cell is geographically empty (e.g. middle of a
+    // city block between street trees) but surrounded by populated
+    // cells, those populated cells extend in and visually fill the
+    // gap. Without this, the band-2→band-3 transition exposed
+    // real cell-by-cell pin distribution as 'blocks of empty'.
+    const OVERSIZE = 1.3;
     for (const b of buckets) {
-      // Each bucket carries its own cell_eps so we never use stale
-      // sizing if the user zoomed across a band boundary while a
-      // fetch was in flight.
-      const halfEps = b.cell_eps / 2;
+      const halfEps = (b.cell_eps / 2) * OVERSIZE;
       const bounds: [[number, number], [number, number]] = [
         [b.centroid_lat - halfEps, b.centroid_lng - halfEps],
         [b.centroid_lat + halfEps, b.centroid_lng + halfEps]
       ];
+      // Lower fillOpacity so two-cell overlap stays readable
+      // (two stacked at 0.55 each blend to ~0.8 — full color
+      // density) and three-cell overlap caps at near-opaque.
       L.rectangle(bounds, {
         fillColor: heatColor(b.count_pins),
-        fillOpacity: 0.78,
+        fillOpacity: 0.55,
         stroke: false,
         interactive: false
       }).addTo(group);
