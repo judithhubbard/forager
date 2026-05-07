@@ -733,19 +733,19 @@
             {watching ? '★ Watching' : '☆ Watch'}
           </button>
           <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
-          <select
-            class="status-select"
-            value={pendingStatus ?? ''}
-            on:change={onStatusSelect}
-            disabled={statusSaving}
-            title="Change pin status"
-          >
-            <option value="">{statusSaving ? 'Saving…' : 'change status…'}</option>
-            {#each STATUSES as s}
-              {#if s !== pin.status}<option value={s}>{statusLabel(s)}</option>{/if}
-            {/each}
-          </select>
-          {#if pin.created_by === $profile?.id || $activeRegion?.role === 'admin'}
+          {#if pin.created_by === $profile?.id || (pin.visibility !== 'public' && $activeRegion?.role === 'admin') || $profile?.is_global_admin}
+            <select
+              class="status-select"
+              value={pendingStatus ?? ''}
+              on:change={onStatusSelect}
+              disabled={statusSaving}
+              title="Change pin status"
+            >
+              <option value="">{statusSaving ? 'Saving…' : 'change status…'}</option>
+              {#each STATUSES as s}
+                {#if s !== pin.status}<option value={s}>{statusLabel(s)}</option>{/if}
+              {/each}
+            </select>
             <button
               class="watch-btn"
               on:click={() => dispatch('requestMove', { pinId })}
