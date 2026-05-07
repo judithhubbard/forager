@@ -508,6 +508,66 @@
     discardRec();
   }
 
+  /** Place / replace the user-location marker at (lat, lng).
+   *  Shared between locate-me (one-shot) and the recording-track
+   *  reactive (continuous, follows the user as they walk).
+   *  accuracyM optional — only drawn as a halo if usable. */
+  function placeUserMarker(
+    latitude: number,
+    longitude: number,
+    accuracyM: number | null
+  ): void {
+    if (!map || !LCache) return;
+    const L = LCache;
+    if (userMarker) userMarker.remove();
+    const svgRenderer = L.svg({ pane: 'user-location' });
+    const group = L.layerGroup();
+    if (accuracyM != null && Number.isFinite(accuracyM) && accuracyM > 0 && accuracyM < 1000) {
+      L.circle([latitude, longitude], {
+        radius: accuracyM,
+        color: '#3a8df0',
+        fillColor: '#3a8df0',
+        fillOpacity: 0.12,
+        weight: 1,
+        opacity: 0.5,
+        interactive: false,
+        pane: 'user-location',
+        renderer: svgRenderer
+      }).addTo(group);
+    }
+    L.circleMarker([latitude, longitude], {
+      radius: 11,
+      color: '#ffffff',
+      fillColor: '#ffffff',
+      fillOpacity: 1,
+      weight: 0,
+      interactive: false,
+      pane: 'user-location',
+      renderer: svgRenderer
+    }).addTo(group);
+    L.circleMarker([latitude, longitude], {
+      radius: 7,
+      color: '#1a64d6',
+      fillColor: '#1f7af5',
+      fillOpacity: 1,
+      weight: 1.5,
+      interactive: false,
+      pane: 'user-location',
+      renderer: svgRenderer
+    }).addTo(group);
+    group.addTo(map);
+    userMarker = group;
+  }
+
+  // While a recording is active, keep the user-location marker
+  // pinned to the latest GPS point streamed into the recording
+  // store. Otherwise the dot stays at wherever the locate-me button
+  // last fired and the user appears 'stuck' as they walk.
+  $: if ($recording.status === 'recording' && $recording.points.length > 0) {
+    const last = $recording.points[$recording.points.length - 1];
+    placeUserMarker(last.lat, last.lng, last.accuracy_m ?? null);
+  }
+
   async function locateMe() {
     if (!map) return;
     if (!navigator.geolocation) {
@@ -522,57 +582,7 @@
         if (!map) return;
         const { latitude, longitude } = pos.coords;
         map.setView([latitude, longitude], 15);
-        if (userMarker) userMarker.remove();
-        const accuracyM = pos.coords.accuracy;
-        // Lazy import L only inside async/onMount to avoid SSR issues.
-        import('leaflet').then((leaflet) => {
-          if (!map) return;
-          // Render into the dedicated SVG pane so the marker always
-          // sits above tracks, heatmap, and pins. preferCanvas:true
-          // on the map means default circle layers go on the shared
-          // canvas; passing an explicit svg renderer + pane keeps
-          // the user marker out of that paint order.
-          const svgRenderer = leaflet.svg({ pane: 'user-location' });
-          const group = leaflet.layerGroup();
-          if (Number.isFinite(accuracyM) && accuracyM > 0 && accuracyM < 1000) {
-            leaflet.circle([latitude, longitude], {
-              radius: accuracyM,
-              color: '#3a8df0',
-              fillColor: '#3a8df0',
-              fillOpacity: 0.12,
-              weight: 1,
-              opacity: 0.5,
-              interactive: false,
-              pane: 'user-location',
-              renderer: svgRenderer
-            }).addTo(group);
-          }
-          // Outer white halo + inner bright blue dot, classic
-          // Google-Maps style. White ring keeps the dot visible
-          // on any basemap; both layers live in user-location pane.
-          leaflet.circleMarker([latitude, longitude], {
-            radius: 11,
-            color: '#ffffff',
-            fillColor: '#ffffff',
-            fillOpacity: 1,
-            weight: 0,
-            interactive: false,
-            pane: 'user-location',
-            renderer: svgRenderer
-          }).addTo(group);
-          leaflet.circleMarker([latitude, longitude], {
-            radius: 7,
-            color: '#1a64d6',
-            fillColor: '#1f7af5',
-            fillOpacity: 1,
-            weight: 1.5,
-            interactive: false,
-            pane: 'user-location',
-            renderer: svgRenderer
-          }).addTo(group);
-          group.addTo(map);
-          userMarker = group;
-        });
+        placeUserMarker(latitude, longitude, pos.coords.accuracy ?? null);
       },
       (err) => {
         locating = false;
