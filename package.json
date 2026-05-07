@@ -18,6 +18,8 @@
     "import:cornell-bg": "tsx scripts/import/cornell-bg.ts",
     "import:nyc-trees": "tsx scripts/import/nyc-trees.ts",
     "import:chicago-trees": "tsx scripts/import/chicago-trees.ts",
+    "import:sf-trees": "tsx scripts/import/sf-trees.ts",
+    "import:boston-trees": "tsx scripts/import/boston-trees.ts",
     "import:wikidata": "tsx scripts/import/wikidata-pull.ts",
     "import:wikidata-images": "tsx scripts/import/wikidata-images.ts",
     "wikipedia:summaries": "tsx scripts/import/wikipedia-summaries.ts"
