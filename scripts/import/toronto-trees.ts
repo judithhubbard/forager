@@ -29,8 +29,31 @@ interface TorontoTree {
   STRUCTID?: string;
   BOTANICAL_NAME?: string;
   COMMON_NAME?: string;
-  /** GeoJSON Point: { type:'Point', coordinates:[lng, lat] }. */
-  geometry?: { type?: 'Point'; coordinates?: [number, number] };
+  /** CKAN's datastore_search returns geometry as a STRINGIFIED
+   *  GeoJSON, not a parsed object — distinct from the GeoJSON-formatted
+   *  feature responses elsewhere. We JSON.parse on the fly in
+   *  mapFeature. Some rows can also have it pre-parsed depending
+   *  on the CKAN deployment, so accept both. */
+  geometry?:
+    | string
+    | { type?: 'Point'; coordinates?: [number, number] };
+}
+
+function parseGeometry(g: TorontoTree['geometry']): [number, number] | null {
+  if (!g) return null;
+  let obj: { coordinates?: [number, number] } | null = null;
+  if (typeof g === 'string') {
+    try {
+      obj = JSON.parse(g) as { coordinates?: [number, number] };
+    } catch {
+      return null;
+    }
+  } else {
+    obj = g;
+  }
+  const c = obj?.coordinates;
+  if (!c || !Number.isFinite(c[0]) || !Number.isFinite(c[1])) return null;
+  return [c[0], c[1]];
 }
 
 const config: ImportConfig<TorontoTree> = {
@@ -51,17 +74,17 @@ const config: ImportConfig<TorontoTree> = {
     }) as Promise<TorontoTree[]>;
   },
   mapFeature(t): ImportRecord | null {
-    const lng = t.geometry?.coordinates?.[0];
-    const lat = t.geometry?.coordinates?.[1];
-    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+    const coords = parseGeometry(t.geometry);
+    if (!coords) return null;
     if (!t.BOTANICAL_NAME) return null;
+    const [lng, lat] = coords;
     return {
       externalId:
-        t.STRUCTID ?? `${(lng as number).toFixed(6)},${(lat as number).toFixed(6)}`,
+        t.STRUCTID ?? `${lng.toFixed(6)},${lat.toFixed(6)}`,
       scientificName: t.BOTANICAL_NAME,
       commonName: t.COMMON_NAME,
-      lng: lng as number,
-      lat: lat as number,
+      lng,
+      lat,
       raw: t
     };
   }
