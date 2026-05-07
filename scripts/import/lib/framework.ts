@@ -239,6 +239,14 @@ export async function runImport<F>(config: ImportConfig<F>): Promise<void> {
     // re-enable in a finally block below) — same pattern migration 16
     // used for the bootstrap promote-to-public update.
     await sql`alter table public.pins disable trigger tg_gate_public_pins`;
+    // Also disable the pin_density incremental-maintenance triggers
+    // (migration 39) — at 35k+ rows × 5 zoom bands the per-row
+    // overhead would dominate the import. The trailing
+    // refresh_pin_density() call below brings the grid back in
+    // sync after the bulk insert.
+    await sql`alter table public.pins disable trigger tg_pin_density_track_ins`;
+    await sql`alter table public.pins disable trigger tg_pin_density_track_upd`;
+    await sql`alter table public.pins disable trigger tg_pin_density_track_del`;
     const BATCH = 500;
     for (let i = 0; i < matched.length; i += BATCH) {
       const slice = matched.slice(i, i + BATCH);
