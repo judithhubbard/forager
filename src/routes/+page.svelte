@@ -326,6 +326,10 @@
     return 'group';
   }
   let layersPanelOpen = false;
+  /** Mobile-only: whether the collapsed filter controls are
+   *  expanded. On desktop the controls are always inline and this
+   *  state is irrelevant — see the @media rule in styles. */
+  let filtersPanelOpen = false;
   function onLayerToggle(key: MapLayerKey, e: Event) {
     setMapLayer(key, (e.currentTarget as HTMLInputElement).checked);
   }
@@ -1024,6 +1028,20 @@
 
 {#if $activeRegion || (!$session && !$regionsLoading)}
   <div class="filterbar">
+    <!-- Mobile-only toggle. Hidden on >640px screens via the
+         media query; on phones it collapses every filter control
+         (species/show/make/layers) behind one tap so the bar stays
+         narrow enough for AddressSearch to coexist on a single row. -->
+    <button
+      class="filterbar-mobile-toggle"
+      on:click={() => (filtersPanelOpen = !filtersPanelOpen)}
+      aria-expanded={filtersPanelOpen}
+      title="Show or hide filter controls"
+    >
+      Filters
+      <span class="caret">{filtersPanelOpen ? '▴' : '▾'}</span>
+    </button>
+    <div class="filterbar-controls" class:open={filtersPanelOpen}>
     <div class="species-filter">
       <button
         class="species-toggle"
@@ -1191,6 +1209,7 @@
         {/if}
       </div>
     {/if}
+    </div>
     <div class="filterbar-spacer"></div>
     <AddressSearch on:select={handleGeocodeSelect} />
   </div>
@@ -1422,6 +1441,13 @@
      species/show controls. */
   .filterbar-spacer { flex: 1 1 auto; }
 
+  /* Desktop: the controls wrapper is a no-op — children participate
+     in the .filterbar flexbox as if the wrapper weren't there. The
+     mobile toggle button is hidden. The mobile open/closed state
+     has no effect at this width. */
+  .filterbar-controls { display: contents; }
+  .filterbar-mobile-toggle { display: none; }
+
   /* Layers panel — same shape as the species filter dropdown
      so the two read as a pair. Authed users only. */
   .layers-filter { position: relative; }
@@ -1643,25 +1669,52 @@
       top: auto;
       height: 70vh;
     }
-    /* Keep filters on a single row on phones (was wrapping to two). */
+    /* Phone layout: a single visible row of [Filters] [search],
+       with all the actual filter controls hidden behind the
+       Filters toggle. When opened, they expand into a stacked
+       column below the always-visible row. */
     .filterbar {
-      flex-wrap: nowrap;
-      gap: 0.5rem;
+      flex-wrap: wrap;
+      gap: 0.4rem;
       padding: 0.4rem 0.6rem;
-      font-size: 0.78rem;
+      font-size: 0.85rem;
     }
-    .filterbar select {
-      max-width: none;
+    .filterbar-mobile-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.7rem;
+      background: white;
+      border: 1px solid #c7d0c7;
+      border-radius: 0.3rem;
+      color: #1f2a1f;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .filterbar-controls {
+      display: none;
+      flex-basis: 100%;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid #e1e8e1;
+      margin-top: 0.4rem;
+    }
+    .filterbar-controls.open { display: flex; }
+    .filterbar-controls label {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .filterbar-controls select {
       flex: 1;
-      min-width: 0;
-      font-size: 0.78rem;
-      padding: 0.2rem 0.35rem;
+      max-width: none;
+      font-size: 0.85rem;
     }
-    .filterbar label {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-    .species-toggle { font-size: 0.78rem; padding: 0.2rem 0.5rem; }
+    /* Spacer is unnecessary on phones — wrap behavior places
+       AddressSearch right after the toggle naturally. */
+    .filterbar-spacer { display: none; }
+    .species-toggle { font-size: 0.85rem; padding: 0.25rem 0.55rem; }
     /* Tighter, smaller legend on mobile so it stops dominating the map. */
     .legend {
       bottom: 0.5rem;
