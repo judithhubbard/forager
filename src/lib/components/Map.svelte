@@ -217,6 +217,10 @@
    *  in the corner. Updated on every zoomend so the indicator
    *  tracks the actual zoom rather than the initial prop. */
   let currentZoom: number | null = null;
+  /** Build-time-injected git short SHA. Pulled into a local const
+   *  so svelte-check can resolve the global declared in app.d.ts. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const buildRev: string = (globalThis as any).__BUILD_REV__ ?? 'dev';
 
   // Persistent rain chip in the corner of the map: shows the past
   // 7 days of rainfall at the map's current center. Rain is broadly
@@ -1062,7 +1066,7 @@
     <div class="zoom-chip" title="Current zoom level">z{currentZoom}</div>
   {/if}
   <div class="build-chip" title="Build (git short SHA) — useful for reporting issues / spotting stale caches">
-    {__BUILD_REV__}
+    {buildRev}
   </div>
   {#if placing}
     <div class="placing-hint" role="status">{placingHint}</div>
