@@ -181,10 +181,11 @@
   // even at zoom 11 — better to keep showing accurate cluster
   // counts than a silently truncated individual-pin set.
   const CLUSTER_BELOW_ZOOM = 13;
-  /** When the individual-pin fetch hits its cap, capture the cap
-   *  value so the map can show 'showing X of N+ here, zoom in'. */
+  /** True when the viewport pin fetch returned the maximum allowed
+   *  rows — there could be more pins outside the cap. The Show
+   *  dropdown appends a '+' to its counts when this is set so the
+   *  user knows the numbers are floors, not totals. */
   let capHit = false;
-  let capValue = 0;
   let showDropPin = false;
   let dropPinLng: number | null = null;
   let dropPinLat: number | null = null;
@@ -797,7 +798,6 @@
         clusters = [];
         pinDensityBuckets = [];
         capHit = own.length >= ownCap || pub.length >= pubCap;
-        capValue = ownCap + pubCap;
       }
     } catch (err) {
       console.error('[+page] fetchForViewport error', err);
@@ -1000,10 +1000,10 @@
     <label>
       Show:
       <select bind:value={filterStatus}>
-        <option value="all">All ({statusCounts.all})</option>
-        <option value="active">Active ({statusCounts.active})</option>
-        <option value="possibly_ripe">Ripe today ({statusCounts.possibly_ripe})</option>
-        <option value="productive">Productive ({statusCounts.productive})</option>
+        <option value="all">All ({statusCounts.all}{capHit ? '+' : ''})</option>
+        <option value="active">Active ({statusCounts.active}{capHit ? '+' : ''})</option>
+        <option value="possibly_ripe">Ripe today ({statusCounts.possibly_ripe}{capHit ? '+' : ''})</option>
+        <option value="productive">Productive ({statusCounts.productive}{capHit ? '+' : ''})</option>
       </select>
     </label>
     {#if availableCookbookMethods.length > 0}
@@ -1079,11 +1079,6 @@
       </div>
     {/if}
     <div class="filterbar-spacer"></div>
-    {#if capHit}
-      <span class="cap-hit" title="More pins exist than fit in one fetch — zoom in for the rest.">
-        showing {capValue}+ · zoom in for more
-      </span>
-    {/if}
     <AddressSearch on:select={handleGeocodeSelect} />
   </div>
 
@@ -1361,17 +1356,6 @@
   .layer-row input { width: 0.95rem; height: 0.95rem; margin: 0; }
   .layer-name { color: #1f2a1f; font-weight: 500; }
   .layer-hint { color: #8a948a; font-size: 0.75rem; }
-  .cap-hit {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.15rem 0.55rem;
-    background: #fff4e3;
-    border: 1px solid #e8d3a6;
-    color: #7a4a10;
-    border-radius: 1rem;
-    font-size: 0.78rem;
-    white-space: nowrap;
-  }
 
   /* Multi-select species filter */
   .species-filter {
