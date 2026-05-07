@@ -782,13 +782,18 @@
     const cellMeters = epsDeg * 111_000;
     for (const c of currentClusters) {
       if (c.count_pins < 1) continue;
-      // Radius modulated by log(count). Min 40% of half-cell, max
-      // 100% — denser cells fill their cell, sparser ones leave
-      // visual room around them. Cap at 80% so adjacent full-cell
-      // circles still leave a thin gap rather than touching.
+      // Geometry constraint: circle radii are absolute meters and
+      // adjacent grid cells are cellMeters apart center-to-center.
+      // Cap the OUTER halo at cellMeters/2 so two full-density
+      // adjacent cells render as touching but not overlapping
+      // circles (the user complaint was rings stacking on top
+      // of each other). Inner core is 60% of outer for a soft
+      // falloff; intensity from log(count) modulates from 30%
+      // to 100% of the cap.
       const intensity = Math.min(1, Math.log10(c.count_pins + 1) / 4);
-      const inner = (cellMeters / 2) * (0.4 + intensity * 0.4);
-      const outer = inner * 1.6;
+      const outerMax = cellMeters / 2;
+      const outer = outerMax * (0.3 + intensity * 0.7);
+      const inner = outer * 0.6;
       // Outer halo
       L.circle([c.centroid_lat, c.centroid_lng], {
         radius: outer,
@@ -814,12 +819,12 @@
    *  — duplicated here rather than imported because Map should not
    *  reach into service modules. Keep both in sync. */
   function clusterEpsForZoomLocal(zoom: number): number {
-    if (zoom < 4)  return 1.0;
-    if (zoom < 6)  return 0.3;
-    if (zoom < 8)  return 0.1;
-    if (zoom < 10) return 0.03;
-    if (zoom < 12) return 0.01;
-    return 0.003;
+    if (zoom < 4)  return 2.0;
+    if (zoom < 6)  return 0.6;
+    if (zoom < 8)  return 0.2;
+    if (zoom < 10) return 0.06;
+    if (zoom < 12) return 0.02;
+    return 0.005;
   }
 
   /** Render aggregated cluster points: a labeled circle per cluster,
