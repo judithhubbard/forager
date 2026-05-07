@@ -10,6 +10,7 @@
   import { myRegions, regionsLoading } from '$lib/stores/activeRegion';
   import UsernameSetup from '$lib/components/UsernameSetup.svelte';
   import Disclaimer from '$lib/components/Disclaimer.svelte';
+  import RecorderBadge from '$lib/components/RecorderBadge.svelte';
   // Side-effect import: registers locales and kicks off init() at module
   // load time so $_('key') is ready before any page mounts.
   import '$lib/i18n';
@@ -132,6 +133,13 @@
   </main>
 {:else}
   <slot />
+  {#if $session}
+    <!-- Persistent recorder pill on every signed-in page so a
+         recording started from the map can be stopped & saved
+         from anywhere without navigating back. Hides itself when
+         the recorder is idle and on the map page itself. -->
+    <RecorderBadge />
+  {/if}
   {#if needsUsername && $profile}
     <UsernameSetup profile={$profile} />
   {:else if needsDisclaimer}
