@@ -64,8 +64,15 @@ const REGION_TIMEZONE = 'America/New_York'; // arbitrary — region timezone
                                             // only affects fruiting-window
                                             // computation, which uses the
                                             // pin's climate zone anyway.
-const DEFAULT_SKIP = new Set(['nyc-ny', 'new-york-ny', 'boston-ma', 'sf-ca',
-                              'san-francisco-ca', 'chicago-il']);
+// Cities we have direct scrapes for; Dryad's copy is skipped by default
+// to avoid double-importing pins. Slugs follow fileToCity()'s output:
+// CamelCase cities get hyphenated ('NewYork' → 'new-york'); cities with
+// glued state codes like 'AuroraCO' get '-co' appended. Toronto isn't
+// in the Dryad set (it's US-only).
+const DEFAULT_SKIP = new Set([
+  'new-york', 'boston', 'san-francisco'
+  // Chicago isn't in the Dryad release.
+]);
 
 // ---------- CLI parsing ----------
 
@@ -149,26 +156,42 @@ function loadForageableGenera(): Set<string> {
 
 // ---------- City filename → slug + display name ----------
 
-/** Turn 'New_York_NY.csv' into { slug: 'new-york-ny', display: 'New York, NY' }.
- *  The trailing 1–2 char token is treated as the state postal code; everything
- *  before becomes the city. Files that don't fit that shape get a best-effort
- *  slug from the filename. */
+/** Parse the Dryad city CSV filename into a stable slug + display name.
+ *  Real shapes seen in the dataset:
+ *    Albuquerque_Final_2022-06-18.csv          → 'albuquerque'              | 'Albuquerque'
+ *    NewYork_Final_2022-06-18.csv              → 'new-york'                 | 'New York'
+ *    AuroraCO_Final_2022-06-18.csv             → 'aurora-co'                | 'Aurora, CO'
+ *    WashingtonDC_Final_2022-06-18.csv         → 'washington-dc'            | 'Washington, DC'
+ *    SanFrancisco_Final_2022-06-18.csv         → 'san-francisco'            | 'San Francisco'
+ *  Strategy:
+ *    1. Strip the '_Final_<YYYY-MM-DD>(.csv)' suffix.
+ *    2. If the result ends with 2 uppercase letters glued to a CamelCase
+ *       run (AuroraCO, WashingtonDC), peel them off as the state code.
+ *    3. Split CamelCase to get a 'New York' / 'San Francisco' display.
+ *    4. lowercase + hyphenate for the slug. */
 function fileToCity(filename: string): { slug: string; display: string } {
   const base = basename(filename, '.csv');
-  const parts = base.split('_').filter(Boolean);
-  const last = parts[parts.length - 1];
-  const isState = last && /^[A-Z]{2}$/.test(last);
-  if (isState && parts.length >= 2) {
-    const city = parts.slice(0, -1).join(' ');
-    return {
-      slug: `${city.toLowerCase().replace(/\s+/g, '-')}-${last.toLowerCase()}`,
-      display: `${city}, ${last}`
-    };
+  // Strip '_Final_<YYYY-MM-DD>' or any trailing '_<YYYY-MM-DD>'.
+  const withoutSuffix = base
+    .replace(/_Final_\d{4}-\d{2}-\d{2}$/i, '')
+    .replace(/_\d{4}-\d{2}-\d{2}$/, '');
+  // Split a trailing 2-char uppercase state code if it's glued to a
+  // lowercase letter (City + State pattern). Match the *last* capital
+  // pair preceded by a lowercase to avoid splitting in the middle of
+  // CamelCase city names like SanJose.
+  let cityRaw = withoutSuffix;
+  let state: string | null = null;
+  const stateMatch = cityRaw.match(/^(.+?[a-z])([A-Z]{2})$/);
+  if (stateMatch) {
+    cityRaw = stateMatch[1];
+    state = stateMatch[2];
   }
-  return {
-    slug: base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-    display: base.replace(/_/g, ' ')
-  };
+  // CamelCase split: 'NewYork' → 'New York', 'SanFrancisco' → 'San Francisco'.
+  const display = cityRaw.replace(/([a-z])([A-Z])/g, '$1 $2');
+  const citySlug = display.toLowerCase().replace(/\s+/g, '-');
+  return state
+    ? { slug: `${citySlug}-${state.toLowerCase()}`, display: `${display}, ${state}` }
+    : { slug: citySlug, display };
 }
 
 // ---------- CSV parsing (line-based, quote-aware) ----------
@@ -308,8 +331,8 @@ async function ensureRegion(
   if (existing.length > 0) return;
   console.log(`Region "${name}" not found — creating.`);
   await sql`
-    insert into public.regions (name, slug, timezone)
-    values (${name}, ${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}, ${REGION_TIMEZONE})
+    insert into public.regions (name, timezone)
+    values (${name}, ${REGION_TIMEZONE})
   `;
 }
 
@@ -369,8 +392,20 @@ async function importCity(
   };
 
   const species = await loadSpecies(sql);
+  // Dedupe by externalId. Dryad's tree_ID is supposed to be unique
+  // per city but in practice some cities have repeats (and rows with
+  // missing tree_ID share the lat/lng-derived fallback). The bulk
+  // upsert's ON CONFLICT (region_id, import_source, import_external_id)
+  // can't update the same row twice in one INSERT — duplicates here
+  // would fail the entire batch. Keep the first occurrence; later
+  // duplicates lose any divergent data, but it's the same source row
+  // 99% of the time.
+  const seenIds = new Set<string>();
+  let dupCount = 0;
   const matched: ImportRow[] = [];
   for (const r of rows) {
+    if (seenIds.has(r.externalId)) { dupCount++; continue; }
+    seenIds.add(r.externalId);
     const sci = normalizeSpeciesName(r.scientificName);
     const sp = matchSpecies(species, {
       externalId: r.externalId,
@@ -389,6 +424,7 @@ async function importCity(
       raw: r.raw
     });
   }
+  if (dupCount > 0) console.log(`  dropped ${dupCount} duplicate tree_IDs within file`);
   console.log(`  matched ${matched.length}/${rows.length} rows to species catalog`);
 
   // Same trigger-disable dance as runImport(): the public-visibility
