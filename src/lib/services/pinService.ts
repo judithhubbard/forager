@@ -28,6 +28,15 @@ export interface PinCluster {
   representative_species_id: string | null;
 }
 
+/** A pre-aggregated density bucket from the pin_density_grid table.
+ *  Returned by public_pins_density. Each bucket represents one cell
+ *  at the chosen zoom band and carries an exact pin count. */
+export interface PinDensityBucket {
+  count_pins: number;
+  centroid_lng: number;
+  centroid_lat: number;
+}
+
 export interface CreatePinInput {
   regionId: string;
   /** Required in v1 (species picker enforces it). "Unknown" species is a v1.x add. */
@@ -216,6 +225,35 @@ export async function listPublicPinClusters(
     throw error;
   }
   return (data ?? []) as PinCluster[];
+}
+
+/** Pre-aggregated density buckets for the public-layer heatmap.
+ *  Reads from pin_density_grid (refreshed on import). The server
+ *  picks the right zoom band based on the passed-in map zoom and
+ *  returns only buckets in the bbox. Way cheaper than scanning the
+ *  pins table for individual rows. */
+export async function listPublicPinDensity(
+  bbox: Bbox,
+  zoom: number
+): Promise<PinDensityBucket[]> {
+  const [west, south, east, north] = bbox;
+  // Cast through unknown — the generated Database type doesn't yet
+  // know about public_pins_density (regen lag).
+  const { data, error } = await supabase.rpc(
+    'public_pins_density' as never,
+    {
+      p_min_lng: west,
+      p_min_lat: south,
+      p_max_lng: east,
+      p_max_lat: north,
+      p_zoom: Math.round(zoom)
+    } as never
+  );
+  if (error) {
+    console.error('[pinService] listPublicPinDensity error:', error);
+    throw error;
+  }
+  return (data ?? []) as unknown as PinDensityBucket[];
 }
 
 /** Pick a sensible cluster eps (in degrees) based on map zoom.

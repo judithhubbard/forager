@@ -7,6 +7,7 @@
   import {
     listPublicPins,
     listPublicPinClusters,
+    listPublicPinDensity,
     listRegionPins,
     listRegionPinClusters,
     clusterEpsForZoom,
@@ -14,7 +15,8 @@
     updateLocation as updatePinLocation,
     type PinEffective,
     type Bbox,
-    type PinCluster
+    type PinCluster,
+    type PinDensityBucket
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import {
@@ -726,7 +728,11 @@
    *  to the Map's heat-dot renderer instead of going through clusters
    *  — clusters give a tile-circle visual that the user (rightly)
    *  found terrible. */
-  let pinHeatPoints: Array<[number, number]> = [];
+  /** Pre-aggregated density buckets for the heatmap. Each carries
+   *  a count_pins so the renderer can weight opacity. Fetched from
+   *  the pin_density_grid via public_pins_density — covers ALL
+   *  public pins in the bbox, not just up to a cap. */
+  let pinDensityBuckets: PinDensityBucket[] = [];
   async function fetchForViewport(bbox: Bbox, zoom: number): Promise<void> {
     const seq = ++viewportSeq;
     pinsLoading = true;
@@ -735,17 +741,13 @@
     const heatmapOn = $settings.showPinHeatmap;
     try {
       if (heatmapOn) {
-        // Heatmap mode: always fetch individual pins, cap high so
-        // the heat layer paints a real density gradient. Skip
-        // cluster aggregates entirely.
-        const cap = 2000;
-        const p = useRegion && region
-          ? await listRegionPins(region.id, bbox, cap)
-          : await listPublicPins(bbox, cap);
+        // Heatmap mode: query the pre-computed density grid. No cap
+        // because the grid already aggregates 35k+ public pins down
+        // to a small number of buckets per zoom band. The server
+        // picks the right band from p_zoom.
+        const buckets = await listPublicPinDensity(bbox, zoom);
         if (seq !== viewportSeq) return;
-        pinHeatPoints = p
-          .filter((x) => x.lat != null && x.lng != null)
-          .map((x) => [x.lat as number, x.lng as number]);
+        pinDensityBuckets = buckets;
         pins = [];
         clusters = [];
         capHit = false;
@@ -756,7 +758,7 @@
         if (seq !== viewportSeq) return;
         clusters = c;
         pins = [];
-        pinHeatPoints = [];
+        pinDensityBuckets = [];
         capHit = false;
       } else {
         const cap = useRegion ? 1000 : 500;
@@ -766,7 +768,7 @@
         if (seq !== viewportSeq) return;
         pins = p;
         clusters = [];
-        pinHeatPoints = [];
+        pinDensityBuckets = [];
         capHit = p.length >= cap;
         capValue = cap;
       }
@@ -775,7 +777,7 @@
       if (seq === viewportSeq) {
         pins = [];
         clusters = [];
-        pinHeatPoints = [];
+        pinDensityBuckets = [];
       }
     } finally {
       if (seq === viewportSeq) pinsLoading = false;
@@ -1006,7 +1008,7 @@
     pins={filteredPins}
     {clusters}
     pinHeatmap={$settings.showPinHeatmap}
-    {pinHeatPoints}
+    {pinDensityBuckets}
     heatPoints={shownHeatPoints}
     displayedTracks={displayedTrackPolylines}
     showRecorder={!!$session}

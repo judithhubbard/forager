@@ -266,6 +266,22 @@ export async function runImport<F>(config: ImportConfig<F>): Promise<void> {
     await finishImportRun(sql, runId, summary);
     await sql`select pg_advisory_unlock(hashtext(${`${regionId}:${config.sourceId}`}))`;
 
+    // Refresh the pre-computed pin-density grid so the heatmap
+    // toggle reflects the freshly-imported pins on the next page
+    // load. Cheap (~1s) and idempotent.
+    if (summary.pinsCreated > 0 || summary.pinsUpdated > 0) {
+      try {
+        await sql`select public.refresh_pin_density()`;
+        console.log('  refreshed pin_density_grid');
+      } catch (err) {
+        // Don't fail the whole import on a refresh failure — the
+        // grid can be re-computed manually with `select
+        // public.refresh_pin_density()` in SQL editor.
+        console.warn('  refresh_pin_density failed (non-fatal):',
+          err instanceof Error ? err.message : err);
+      }
+    }
+
     console.log('\nImport complete:');
     console.log(`  created:   ${summary.pinsCreated}`);
     console.log(`  updated:   ${summary.pinsUpdated}`);

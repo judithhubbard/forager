@@ -116,13 +116,17 @@
    *  $settings.showHeatmap. */
   export let heatPoints: Array<[number, number]> = [];
 
-  /** Pin density heat points: flat [lat, lng] pairs from individual
-   *  pins inside the current viewport. Rendered as overlapping
-   *  low-opacity orange circles for a true blobby heatmap; the
-   *  earlier grid-cluster approach drew rigid tile circles that
-   *  the user (rightly) called terrible. Populated by +page.svelte
-   *  when $settings.showPinHeatmap is on. */
-  export let pinHeatPoints: Array<[number, number]> = [];
+  /** Pre-aggregated density buckets from the public-layer
+   *  pin_density_grid. Each bucket is a cell-center coordinate +
+   *  exact count for the cell. Rendered with opacity proportional
+   *  to log(count_pins) so dense areas appear darker — a real
+   *  heatmap from pre-computed data, not a per-viewport fetch. */
+  type DensityBucket = {
+    count_pins: number;
+    centroid_lng: number;
+    centroid_lat: number;
+  };
+  export let pinDensityBuckets: DensityBucket[] = [];
 
   /** Show the live track-recorder controls + path overlay. Parent
    *  passes true for signed-in viewers; signed-out viewers don't
@@ -273,7 +277,7 @@
   // overlapping orange circles, same canvas-rendered approach as
   // the user-track heatmap. Real blobby gradient.
   let pinHeatGroup: import('leaflet').LayerGroup | undefined;
-  $: if (map && LCache) renderPinHeat(pinHeatmap ? pinHeatPoints : []);
+  $: if (map && LCache) renderPinHeat(pinHeatmap ? pinDensityBuckets : []);
   // Density visualization via overlapping low-opacity circles. Not
   // a true Gaussian heatmap (we ditched the leaflet.heat plugin
   // for ESM compatibility) but visually similar — many overlapping
@@ -778,34 +782,32 @@
     }).addTo(selectionLayer);
   }
 
-  /** True pin-density heatmap: each individual pin coordinate
-   *  becomes a small low-opacity orange circle (canvas-rendered).
-   *  Where pins are dense, the overlapping circles compound into
-   *  a darker patch; sparse areas show isolated dots. Same approach
-   *  as the user-track heatmap (renderHeat above), just orange
-   *  instead of blue.
-   *
-   *  Replaces the earlier grid-cluster heatmap, which drew rigid
-   *  tile circles that looked like '100 stacked rings' in dense
-   *  cities — exactly the visual the user objected to. */
-  function renderPinHeat(points: Array<[number, number]>) {
+  /** Pin-density heatmap from pre-aggregated buckets. Each bucket
+   *  represents one grid cell from pin_density_grid; we render it
+   *  as a single canvas circle with opacity proportional to log
+   *  count_pins so a 1-pin cell barely shows and a 1000-pin cell
+   *  is bold. Adjacent cells overlap their canvas regions so the
+   *  visual reads as a smooth gradient rather than discrete tiles. */
+  function renderPinHeat(buckets: DensityBucket[]) {
     if (!map || !LCache) return;
     if (pinHeatGroup) {
       pinHeatGroup.remove();
       pinHeatGroup = undefined;
     }
-    if (points.length === 0) return;
-    const MAX_RENDER = 8000;
-    const step = points.length > MAX_RENDER ? Math.ceil(points.length / MAX_RENDER) : 1;
+    if (buckets.length === 0) return;
     const L = LCache;
     const group = L.layerGroup();
-    for (let i = 0; i < points.length; i += step) {
-      const [lat, lng] = points[i];
-      L.circleMarker([lat, lng], {
-        radius: 9,
+    for (const b of buckets) {
+      // Opacity from log(count). A 1-pin cell renders barely
+      // visible; ~100 pins renders mid-strength; ~1000+ pins is
+      // close to fully opaque. Saturates at 0.55 so even very
+      // dense cells stay readable as orange rather than red-brown.
+      const alpha = Math.min(0.55, 0.05 + Math.log10(b.count_pins + 1) * 0.18);
+      L.circleMarker([b.centroid_lat, b.centroid_lng], {
+        radius: 12,
         stroke: false,
         fillColor: '#d57100',
-        fillOpacity: 0.18,
+        fillOpacity: alpha,
         interactive: false
       }).addTo(group);
     }
