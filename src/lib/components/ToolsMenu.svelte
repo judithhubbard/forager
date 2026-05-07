@@ -125,6 +125,7 @@
         <a href={base + '/timeline'} on:click={closeMenu}>Year history</a>
         <a href={base + '/tracks'} on:click={closeMenu}>My tracks</a>
         <a href={base + '/windows'} on:click={closeMenu}>Harvest windows</a>
+        <a href={base + '/interests'} on:click={closeMenu}>My interests</a>
       {/if}
 
       <hr />

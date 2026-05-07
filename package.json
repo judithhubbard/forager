@@ -24,6 +24,7 @@
     "import:dryad-trees": "tsx scripts/import/dryad-city-trees.ts",
     "import:usda-zones": "tsx scripts/import/usda-zones.ts",
     "backfill:pin-zones": "tsx scripts/import/backfill-pin-zones.ts",
+    "stamp:jk-prefs": "tsx scripts/import/stamp-jk-prefs.ts",
     "import:wikidata": "tsx scripts/import/wikidata-pull.ts",
     "import:wikidata-images": "tsx scripts/import/wikidata-images.ts",
     "wikipedia:summaries": "tsx scripts/import/wikipedia-summaries.ts"

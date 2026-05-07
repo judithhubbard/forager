@@ -68,6 +68,32 @@ export async function removeMany(speciesIds: string[]): Promise<void> {
   }
 }
 
+/** Translate a set of interest-group ids into prefs for every species
+ *  in the catalog: species whose interest_tags intersect the chosen
+ *  set become enabled=true, all others enabled=false. Used by the
+ *  welcome flow + settings "Edit interests" affordance to apply a
+ *  group-level decision to the per-species deny-list backing the
+ *  filter panel. */
+export async function applyInterestGroups(groupIds: string[]): Promise<void> {
+  // Pull the species catalog with tags. Cheap (<200 rows). Cast the
+  // select string through any since interest_tags landed in migration
+  // 29 and the generated Database types haven't been regenerated.
+  const { data, error } = await supabase
+    .from('species')
+    .select('id, interest_tags' as never);
+  if (error) throw error;
+  const all = (data ?? []) as unknown as Array<{ id: string; interest_tags: string[] | null }>;
+  const groups = new Set(groupIds);
+  const prefs: SpeciesPref[] = all.map((s) => ({
+    speciesId: s.id,
+    enabled: (s.interest_tags ?? []).some((t) => groups.has(t))
+  }));
+  // Replace-all semantics: clear existing prefs first so groups newly
+  // unchecked actually take effect, then upsert the fresh set.
+  await removeAllMine();
+  await upsertMany(prefs);
+}
+
 /** Wipe every preference row for the current user — back to the
  *  default-all-enabled state. RLS scopes the delete to auth.uid()
  *  so the unfiltered DELETE is safe. */

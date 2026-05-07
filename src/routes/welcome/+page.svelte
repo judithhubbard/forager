@@ -4,8 +4,15 @@
   import { createRegion } from '$lib/services/regionService';
   import { reloadRegions } from '$lib/stores/activeRegion';
   import { supabase } from '$lib/supabase';
+  import InterestPicker from '$lib/components/InterestPicker.svelte';
+  import {
+    DEFAULT_INTERESTS,
+    type InterestGroup
+  } from '$lib/utils/interestGroups';
+  import { applyInterestGroups, removeAllMine } from '$lib/services/userPreferencesService';
+  import { loadFromServer as reloadUserPrefs } from '$lib/stores/userPreferences';
 
-  type Mode = 'choose' | 'join' | 'group' | 'personal';
+  type Mode = 'choose' | 'join' | 'group' | 'personal' | 'interests';
 
   let mode: Mode = 'choose';
   let busy = false;
@@ -26,7 +33,7 @@
         defaultPinVisibility: 'shared'
       });
       await reloadRegions(id);
-      goto('/', { replaceState: true });
+      mode = 'interests';
     } catch (err) {
       errorMsg = friendly(err);
     } finally {
@@ -45,7 +52,7 @@
         defaultPinVisibility: 'private'
       });
       await reloadRegions(id);
-      goto('/', { replaceState: true });
+      mode = 'interests';
     } catch (err) {
       errorMsg = friendly(err);
     } finally {
@@ -69,6 +76,41 @@
       if (error) throw error;
       const id = data as string;
       await reloadRegions(id);
+      mode = 'interests';
+    } catch (err) {
+      errorMsg = friendly(err);
+    } finally {
+      busy = false;
+    }
+  }
+
+  /** After region creation, the user picks interest groups; this turns
+   *  group ids into per-species enabled/disabled rows on
+   *  user_species_preferences. */
+  async function onInterestsSubmit(e: CustomEvent<{ selected: InterestGroup[] }>) {
+    if (busy) return;
+    busy = true;
+    errorMsg = '';
+    try {
+      await applyInterestGroups(e.detail.selected);
+      await reloadUserPrefs();
+      goto('/', { replaceState: true });
+    } catch (err) {
+      errorMsg = friendly(err);
+    } finally {
+      busy = false;
+    }
+  }
+
+  /** "Skip — show me everything" — wipe any existing prefs so the
+   *  default all-enabled state takes effect. */
+  async function onSkipInterests() {
+    if (busy) return;
+    busy = true;
+    errorMsg = '';
+    try {
+      await removeAllMine();
+      await reloadUserPrefs();
       goto('/', { replaceState: true });
     } catch (err) {
       errorMsg = friendly(err);
@@ -147,7 +189,7 @@
         {busy ? 'Creating…' : 'Create group'}
       </button>
     </div>
-  {:else}
+  {:else if mode === 'personal'}
     <h2>Use it just for me</h2>
     <p>A private map will be created for you. New pins default to <strong>private</strong> — only you'll see them. You can change individual pins to shared later, or invite others to your map.</p>
     {#if errorMsg}<p class="error">{errorMsg}</p>{/if}
@@ -157,6 +199,20 @@
         {busy ? 'Setting up…' : 'Create my map'}
       </button>
     </div>
+  {:else}
+    <h2>What kind of foraging interests you?</h2>
+    <p>
+      Pick the categories you'd like the app to track. Defaults below match
+      what most casual foragers actually do — fruit trees and berries you
+      find on a walk. You can change this any time from settings.
+    </p>
+    {#if errorMsg}<p class="error">{errorMsg}</p>{/if}
+    <InterestPicker
+      selected={DEFAULT_INTERESTS}
+      submitLabel={busy ? 'Saving…' : 'Done'}
+      on:submit={onInterestsSubmit}
+      on:skipAll={onSkipInterests}
+    />
   {/if}
 </main>
 
