@@ -458,12 +458,14 @@
     const status =
       p.effective_status === 'active' ? '' : ` [${p.effective_status}]`;
     const ripe = p.is_ripe_now ? '  · 🍒 ripe now' : '';
-    // Private/public markers on the tooltip so the user knows at a
-    // glance whether other viewers can see this pin.
+    // Visibility tag: only 🔒 private. The previous '🌐 public'
+    // tag was ambiguous — it referred to dataset visibility but
+    // read as 'on public land,' which is a separate property
+    // (access_status) and could be wrong (e.g. a city-inventory
+    // tree on private property). Land-access info should come
+    // from access_status alone.
     const visTag =
-      p.visibility === 'private' ? '  · 🔒 private'
-      : p.visibility === 'public' ? '  · 🌐 public'
-      : '';
+      p.visibility === 'private' ? '  · 🔒 private' : '';
     return `${name}${status}${ripe}${visTag}`;
   }
 
