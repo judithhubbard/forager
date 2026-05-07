@@ -206,6 +206,30 @@ export async function getEffectiveMany(ids: string[]): Promise<PinEffective[]> {
   return (data ?? []) as PinEffective[];
 }
 
+/** Fetch one representative lng/lat for a region — used by callers
+ *  that just need an "approximately here" point (e.g. weather
+ *  lookups). Cheap: single row, two columns. The earlier pattern
+ *  was to call listByRegion() and average every pin's coordinates,
+ *  which paginated the whole region for what amounts to one
+ *  weather-grid cell of resolution. */
+export async function getOneRegionPinLocation(
+  regionId: string
+): Promise<{ lng: number; lat: number } | null> {
+  const { data, error } = await supabase
+    .from('v_pin_effective')
+    .select('lng,lat')
+    .eq('region_id', regionId)
+    .not('lng', 'is', null)
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error('[pinService] getOneRegionPinLocation error:', error);
+    return null;
+  }
+  if (!data || data.lng == null || data.lat == null) return null;
+  return { lng: data.lng, lat: data.lat };
+}
+
 /** A single pin via the effective view. */
 export async function getEffective(id: string): Promise<PinEffective | null> {
   const { data, error } = await supabase

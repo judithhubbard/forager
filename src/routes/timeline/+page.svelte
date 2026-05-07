@@ -4,7 +4,7 @@
   import { base } from '$app/paths';
   import { myRegions, regionsLoading } from '$lib/stores/activeRegion';
   import { session } from '$lib/stores/auth';
-  import { listByRegion, type PinEffective } from '$lib/services/pinService';
+  import { getOneRegionPinLocation } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import { supabase } from '$lib/supabase';
   import { historicalWeather, type DailyWeather } from '$lib/services/weatherService';
@@ -80,7 +80,11 @@
     regionId: string,
     regionName: string
   ): Promise<RegionTimeline> {
-    const [obsRows, winRows, regionPins] = await Promise.all([
+    // Earlier code paginated every pin in the region just to average
+    // the coordinates for a weather centroid. A single representative
+    // point in the region is good enough — Open-Meteo grids weather
+    // to ~25km cells, so pin-level centroid precision is wasted.
+    const [obsRows, winRows, center] = await Promise.all([
       // SELECT * so the query keeps working whether or not migration
       // 20260506000023 (which adds observed_precision to the view)
       // has been applied yet. If the column is missing, the
@@ -96,23 +100,11 @@
         .from('species_fruiting_windows')
         .select('species_id, stage, start_doy, end_doy')
         .eq('region_id', regionId),
-      listByRegion(regionId)
+      getOneRegionPinLocation(regionId)
     ]);
     const observations = (obsRows.data ?? []) as ObsRow[];
     const windows = (winRows.data ?? []) as WindowRow[];
 
-    // Region centroid for weather lookup.
-    const valid = regionPins.filter(
-      (p): p is PinEffective & { lng: number; lat: number } =>
-        p.lng != null && p.lat != null
-    );
-    let center: { lng: number; lat: number } | null = null;
-    if (valid.length > 0) {
-      center = {
-        lng: valid.reduce((a, p) => a + p.lng, 0) / valid.length,
-        lat: valid.reduce((a, p) => a + p.lat, 0) / valid.length
-      };
-    }
     return {
       regionId, regionName, observations, windows,
       weather: [], center, weatherLoading: !!center
