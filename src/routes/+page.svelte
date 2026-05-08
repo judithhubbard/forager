@@ -1,6 +1,10 @@
 <script lang="ts">
   import { goto } from '$lib/utils/nav';
   import { base } from '$app/paths';
+
+  // Build SHA stamp — exposed inline in the filterbar so the user
+  // can confirm which deploy is live by comparing to GitHub.
+  const buildRev: string = (globalThis as unknown as { __BUILD_REV__?: string }).__BUILD_REV__ ?? 'dev';
   import { page } from '$app/stores';
   import { activeRegion, regionsLoading, myRegions } from '$lib/stores/activeRegion';
   import { session } from '$lib/stores/auth';
@@ -419,7 +423,7 @@
     const m = $settings.mapLayers;
     return [m.mine, m.friends, m.group, m.public, m.tracks].filter(Boolean).length;
   })();
-  let showLegend = true;
+  // (Status legend removed — see comment near `legendShows` deletion.)
 
   /** Cookbook filter — show only species whose preparation_methods
    *  include the chosen value. Empty string = no filter. The list of
@@ -712,39 +716,12 @@
   // in the hide-set (and the HIDE_ALL sentinel isn't active).
   $: isSelected = (id: string) => panelIsVisible(selectedSpeciesIds, id);
 
-  /** Which legend rows are worth showing — only categories actually
-   *  present in the visible pin set, plus ripe/possibly indicators only
-   *  if any pin currently has them, plus the gone/dormant row only when
-   *  the user is showing all statuses. */
-  $: legendShows = (() => {
-    const cats = { fruit: false, nut: false, mushroom: false, other: false };
-    let ripe = false, possibly = false, gone = false;
-    for (const p of filteredPins) {
-      const cat = p.species_id ? categoryBySpecies[p.species_id] : null;
-      if (cat === 'fruit') cats.fruit = true;
-      else if (cat === 'nut') cats.nut = true;
-      else if (cat === 'mushroom') cats.mushroom = true;
-      else cats.other = true;
-      if (p.is_edible_strict) ripe = true;
-      else if (p.is_edible_now) possibly = true;
-      if (
-        p.effective_status === 'gone' ||
-        p.effective_status === 'inaccessible' ||
-        p.effective_status === 'not_good' ||
-        p.effective_status === 'dormant'
-      ) gone = true;
-    }
-    return {
-      fruit: cats.fruit,
-      nut: cats.nut,
-      mushroom: cats.mushroom,
-      other: cats.other,
-      ripe,
-      possibly,
-      // Gone/dormant only shows when the user is actually viewing them.
-      gone: gone && filterStatus === 'all'
-    };
-  })();
+  // Status legend was removed — the soft warm-glow halo for ripe
+  // pins is intuitive on its own, and the Layers panel exposes the
+  // toggle for "Edible-now glow" already. The species filter panel
+  // shows category shape + group color so that information is
+  // covered there too. legendShows / showLegend / legend HTML and
+  // CSS are all dropped.
 
   function toggleSpecies(id: string) {
     const allIds = speciesInRegion.map((s) => s.id);
@@ -1393,6 +1370,18 @@
     </div>
     <div class="filterbar-spacer"></div>
     <AddressSearch on:select={handleGeocodeSelect} />
+    <!-- Persistent status chips, anchored to the filterbar so they
+         never collide with map controls. capHit turns the pin count
+         warm-yellow with a "+" suffix when the bbox-fetch is
+         truncated. The build SHA confirms which deploy is live. -->
+    <span class="status-chips" aria-hidden="true">
+      <span class="pin-count" class:capped={capHit} title={capHit ? 'Cap reached — zoom in for full coverage' : 'Pins currently loaded'}>
+        {filteredPins.length.toLocaleString()}{capHit ? '+' : ''}
+      </span>
+      <span class="build-rev" title="Build (git short SHA) — confirms which deploy is live">
+        {buildRev}
+      </span>
+    </span>
   </div>
 
   {#if hasActiveFilters}
@@ -1442,28 +1431,6 @@
          the map view is truncated, not just sparse data). Useful for
          debugging "where are my trees" questions and for general
          confidence that the load completed. -->
-    <div class="pin-count-chip" class:capped={capHit} title={capHit ? 'Cap reached — zoom in for full coverage' : 'Pins currently loaded in view'}>
-      {filteredPins.length.toLocaleString()}{capHit ? '+' : ''} pins
-    </div>
-    {@const hasStatusRows = legendShows.ripe || legendShows.possibly || legendShows.gone}
-    {#if hasStatusRows && showLegend}
-      <!-- Legend matches the map's edible-now glow + the gone-state
-           muted dot. Species/groups are in the species filter panel
-           — each group header shows its shape + color. -->
-      <div class="legend">
-        <button class="legend-toggle floating" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
-        <ul>
-          {#if legendShows.ripe}<li><span class="ring1"></span> Ripe</li>{/if}
-          {#if legendShows.possibly}<li><span class="ring2"></span> Possibly ripe</li>{/if}
-          {#if legendShows.gone}<li><span class="dot faded" style="background:#c14a3a"></span> Inactive (Gone / Inaccessible / Not good)</li>{/if}
-        </ul>
-      </div>
-    {:else if hasStatusRows}
-      <!-- Show the "Legend" button only when there's actually a status
-           legend hidden — clicking it when there's nothing to reveal
-           was the source of "the button does nothing." -->
-      <button class="legend-show" on:click={() => (showLegend = true)}>Legend</button>
-    {/if}
   {/if}
 {:else if $regionsLoading}
   <main class="loading"><p>Loading…</p></main>
@@ -2017,96 +1984,48 @@
     overflow-y: auto;
   }
 
-  /* Persistent pin-count chip — top-left (just below Leaflet's
-   * zoom +/- controls). Top-right is taken by the GPS-locate
-   * button + the locate accuracy halo, both of which extend
-   * further down than this chip would clear. */
-  .pin-count-chip {
-    position: fixed;
-    top: 7.4rem; /* clears the filterbar (~56-72px) + zoom controls */
-    left: 0.5rem;
-    z-index: 600;
-    padding: 0.2rem 0.55rem;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid #d0d8d0;
-    border-radius: 0.3rem;
-    font-size: 0.75rem;
+  /* Inline status chips inside the filterbar — sits to the right
+   * of AddressSearch. Anchored to the persistent top stripe so it
+   * never collides with map controls. */
+  .status-chips {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: 0.4rem;
+    font-size: 0.78rem;
     color: #4a554a;
     font-variant-numeric: tabular-nums;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    pointer-events: auto;
-    user-select: none;
   }
-  .pin-count-chip.capped {
+  .status-chips .pin-count {
+    padding: 0.15rem 0.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #d0d8d0;
+    border-radius: 0.3rem;
+    white-space: nowrap;
+  }
+  .status-chips .pin-count.capped {
     background: #fff4d8;
     border-color: #d8b86a;
     color: #6b4912;
     font-weight: 500;
   }
-  /* Status legend — bottom-right but lifted above Map.svelte's
-   * build-chip (bottom 1.6rem) so they don't pile up. (The old
-   * zoom-chip below the build-chip was removed.) */
-  .legend {
-    position: fixed;
-    bottom: 3rem;
-    right: 0.5rem;
-    z-index: 600;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #d0d8d0;
-    border-radius: 0.4rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
-    color: #1f2a1f;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    max-width: 14rem;
-  }
-  .legend-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.4rem;
-  }
-  .legend-toggle {
-    background: transparent;
-    border: 0;
-    font-size: 1rem;
-    cursor: pointer;
+  .status-chips .build-rev {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.7rem;
     color: #6b7a6b;
-    padding: 0 0.25rem;
-    line-height: 1;
+    opacity: 0.7;
   }
-  /* Floating variant when no header is rendered — sits at the
-   * top-right of the legend bubble. */
-  .legend-toggle.floating {
-    position: absolute;
-    top: 0.15rem;
-    right: 0.25rem;
-    line-height: 1;
+  /* Hide the build-rev on phones to save filterbar real estate. */
+  @media (max-width: 640px) {
+    .status-chips .build-rev { display: none; }
   }
-  .legend ul { padding-right: 0.6rem; } /* avoid overlap with floating × */
-  .legend ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    /* 20 groups can fill the screen — cap and scroll. */
-    max-height: 50vh;
-    overflow-y: auto;
-  }
-  .legend .dot {
-    display: inline-block;
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 50%;
-    margin-right: 0.4rem;
-    vertical-align: middle;
-  }
-  .legend .dot.faded { opacity: 0.4; }
-  /* Shape glyphs reused by both the status legend (status section) and
-     the species panel's group headers. Inline style sets the actual
-     fill color from the group palette. */
+  /* (Status legend block deleted — see comment near `legendShows`.
+   *  .legend / .legend-header / .legend-toggle / .legend-show /
+   *  .ring1 / .ring2 / .legend .dot rules removed. .legend-shape
+   *  is preserved below because the species filter panel reuses it
+   *  for group-header glyphs.) */
+  /* Shape glyphs reused by the species panel's group headers.
+   * Inline style sets the fill color from the group palette. */
   .legend-shape {
     display: inline-block;
     width: 0.8rem;
@@ -2141,48 +2060,7 @@
     height: 0.6rem;
     margin: 0 0.5rem 0 0.1rem;
   }
-  /* Ripe + Possibly-ripe glyphs in the legend — match the soft
-   * warm-glow halo Map.svelte renders around edible-now pins.
-   * Inner dot is the species pin color stand-in (using the same
-   * neutral red the map uses for fruit-category fallback); the
-   * surrounding glow is a translucent yellow-orange box-shadow,
-   * tighter for "Ripe" (with a ring stroke) and looser/no-ring
-   * for "Possibly ripe". */
-  .legend .ring1, .legend .ring2 {
-    display: inline-block;
-    width: 0.55rem; height: 0.55rem;
-    margin: 0 0.55rem 0 0.5rem;
-    vertical-align: middle;
-    background: #c14a3a;
-    border-radius: 50%;
-    border: 1px solid #1f2a1f;
-    flex-shrink: 0;
-  }
-  /* Ripe: tight bright halo + outer aura (matches the strict-ripe
-   * stack in Map.svelte: filled aura + stroked inner ring). */
-  .legend .ring1 {
-    box-shadow:
-      0 0 0 2px #e08a1a,
-      0 0 0 5px rgba(245, 176, 66, 0.32);
-  }
-  /* Possibly ripe: just a soft yellow aura, no inner ring stroke. */
-  .legend .ring2 {
-    box-shadow: 0 0 0 4px rgba(252, 213, 138, 0.5);
-  }
-  .legend-show {
-    position: fixed;
-    bottom: 3rem;
-    right: 0.5rem;
-    z-index: 600;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #d0d8d0;
-    border-radius: 0.4rem;
-    padding: 0.4rem 0.75rem;
-    font-size: 0.8rem;
-    color: #3a5a3a;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  }
+  /* (Ring + legend-show CSS deleted along with the legend block.) */
 
   /* Filter-active banner. Sits between the filterbar and the map,
    * full-width, with a warm tone so the user can't miss it when

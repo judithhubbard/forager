@@ -1155,15 +1155,9 @@
 
 <div class="map-wrap" class:placing>
   <div bind:this={mapEl} class="map" />
-  <!-- Build SHA chip in the bottom-right corner. Lets the user
-       (and anyone reporting an issue) confirm which version of
-       the app they're running. The zoom-level chip was removed
-       — Leaflet's own zoom controls already show the value when
-       the user clicks them, and the standalone chip just added
-       clutter. -->
-  <div class="build-chip" title="Build (git short SHA) — confirms the version you're running. Compare to the latest commit on github.com/judithhubbard/forager.">
-    v {buildRev}
-  </div>
+  <!-- (Build SHA chip moved out of the map corner; the page-level
+       filterbar in +page.svelte renders it inline next to the pin
+       count, where it never collides with map controls.) -->
   {#if placing}
     <div class="placing-hint" role="status">{placingHint}</div>
   {/if}
@@ -1429,24 +1423,15 @@
      stacked with rain + recorder + status legend. Only visible
      when ≥2 tracks are showing — a single track has no gradient
      to interpret. */
-  /* Build SHA chip — bottom-right above Leaflet's attribution.
-     The zoom-chip that used to sit below this was removed; the
-     build chip now occupies the chip slot and is bumped up in
-     readability so the user can actually read the SHA. */
-  .build-chip {
-    position: absolute;
-    bottom: 1.6rem;
-    right: 0.5rem;
-    z-index: 600;
-    padding: 0.18rem 0.5rem;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #d0d8d0;
-    border-radius: 0.3rem;
-    font-size: 0.78rem;
-    color: #4a554a;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    pointer-events: none;
-  }
+  /* Build SHA chip — top-left, just below Leaflet's zoom controls.
+     The bottom-right slot is taken by the new-pin FAB on desktop;
+     the bottom-left stack has the rain pill / recorder / track
+     legend; top-right has the locate button. Top-left has only
+     the small +/- zoom buttons. Build SHA chip moved out of the
+     map and into the page-level filterbar — this CSS is left here
+     in case Map.svelte ever needs a local build chip again, but
+     no element currently has the .build-chip class. */
+  .build-chip { display: none; }
 
   /* Track recency legend. Sits in the bottom-left stack just
      above the recorder pill so it visually associates with the
