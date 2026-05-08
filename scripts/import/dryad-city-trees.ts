@@ -130,6 +130,14 @@ Options:
 }
 
 // ---------- Forageable genera (cheap pre-filter) ----------
+//
+// NOTE: previous versions read genera from data/forageable_species.json,
+// but that file is the original 45-species seed. Migrations 29 / 33 /
+// etc. added 60+ more species (citrus, olive, fig, sumac, oaks, …)
+// directly to the DB without touching the JSON, so the JSON-only filter
+// silently dropped every new-genus row at scan time. Now we read genera
+// from the species table at the start of the run — single SELECT, then
+// in-memory.
 
 interface SpeciesJson {
   species: Array<{
@@ -143,12 +151,15 @@ interface SpeciesJson {
  *  we'd potentially want to keep. Used as a cheap pre-filter while
  *  streaming each CSV — rows whose genus isn't in this set are dropped
  *  before they consume any of the framework's heavier matching logic. */
-function loadForageableGenera(): Set<string> {
-  const path = resolve(process.cwd(), 'data/forageable_species.json');
-  const data = JSON.parse(readFileSync(path, 'utf8')) as SpeciesJson;
+async function loadForageableGenera(
+  sql: ReturnType<typeof postgres>
+): Promise<Set<string>> {
+  const rows = await sql<Array<{ scientific_name: string }>>`
+    select scientific_name from public.species
+  `;
   const genera = new Set<string>();
-  for (const s of data.species) {
-    const first = s.scientific_name.trim().split(/\s+/)[0];
+  for (const r of rows) {
+    const first = r.scientific_name.trim().split(/\s+/)[0];
     if (first) genera.add(first.toLowerCase());
   }
   return genera;
@@ -505,15 +516,15 @@ async function main(): Promise<void> {
   if (!dbUrl) throw new Error('SUPABASE_DB_URL missing.');
   if (!userId) throw new Error('FORAGER_DEV_USER_ID missing.');
 
-  const genera = loadForageableGenera();
-  console.log(`Forageable genera: ${[...genera].sort().join(', ')}`);
+  const sql = postgres(dbUrl, { ssl: 'require', onnotice: () => undefined });
+  const genera = await loadForageableGenera(sql);
+  console.log(`Forageable genera (${genera.size}): ${[...genera].sort().join(', ')}`);
 
   const files = args.file
     ? [resolve(args.file)]
     : listCsvFiles(resolve(args.dir!));
   console.log(`Found ${files.length} CSV file(s) to consider.`);
 
-  const sql = postgres(dbUrl, { ssl: 'require', onnotice: () => undefined });
   try {
     if (!args.dryRun) await ensureRegion(sql, args.region);
     for (const f of files) {
