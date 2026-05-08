@@ -80,6 +80,37 @@ const CITY_CENTROIDS = {
  *  outliers. Same threshold the Dryad cleanup migration used. */
 const CENTROID_RADIUS_KM = 50;
 
+/** Reproject Web Mercator (EPSG:3857) meters to WGS84 (EPSG:4326)
+ *  degrees. ArcGIS Hub services default to Web Mercator, so most
+ *  ArcGIS-Hub-exported CSVs ship x/y in this projection rather than
+ *  WGS84. Reprojection is exact (no datum shift). */
+function webMercatorToWgs84(x, y) {
+  const R = 6378137; // WGS84 equatorial radius (meters)
+  const lng = (x / R) * (180 / Math.PI);
+  const lat = (Math.atan(Math.exp(y / R)) * 2 - Math.PI / 2) * (180 / Math.PI);
+  return { lat, lng };
+}
+
+/** Sample x/y values in the first 30 rows and decide whether they're
+ *  WGS84 degrees, Web Mercator meters, or something else (state plane,
+ *  unknown projection — give up). Heuristic: WGS84 stays within
+ *  ±180/±90; Web Mercator is roughly within ±2.0×10^7. */
+function detectXyMode(rows, latKey, lngKey) {
+  let n = 0, wgs = 0, wm = 0;
+  for (let i = 0; i < Math.min(rows.length, 30); i++) {
+    const x = parseFloat(rows[i][lngKey]);
+    const y = parseFloat(rows[i][latKey]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    n++;
+    if (Math.abs(x) <= 180 && Math.abs(y) <= 90) wgs++;
+    else if (Math.abs(x) <= 2.0e7 && Math.abs(y) <= 2.0e7) wm++;
+  }
+  if (n === 0) return null;
+  if (wgs >= n * 0.8) return 'wgs84';
+  if (wm >= n * 0.8) return 'webmercator';
+  return null;
+}
+
 /** Haversine distance in km between two WGS84 points. */
 function haversineKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
@@ -269,7 +300,7 @@ function walkDir(dir) {
   return out;
 }
 
-function detectSchema(headers, rows) {
+function detectSchema(headers, rows, sourceId) {
   const out = {
     sciKey: pickKey(headers, SCI_KEYS),
     comKey: pickKey(headers, COM_KEYS),
@@ -282,49 +313,83 @@ function detectSchema(headers, rows) {
     useGenusPlusSpecies: false
   };
   // Prefer POINT/the_geom WKT column when present — many ArcGIS Hub
-  // sources expose x/y as PROJECTED meters (Web Mercator / state
-  // plane) which look like valid numbers but plot in the open ocean
-  // when interpreted as WGS84 degrees.
+  // sources expose x/y in projected meters (Web Mercator / state
+  // plane). The importer can reproject Web Mercator inline (most
+  // common case), but a WKT column is unambiguous when available.
   out.pointKey = pickKey(headers, POINT_KEYS);
-  // If we have BOTH a point WKT column and naive x/y columns, sample
-  // the x/y values: if any row's value falls outside ±180 / ±90, the
-  // x/y are projected — fall through to the WKT path.
-  if (out.pointKey && out.latKey && out.lngKey) {
-    let saneXy = true;
-    for (let i = 0; i < Math.min(rows.length, 30); i++) {
-      const lng = parseFloat(rows[i][out.lngKey]);
-      const lat = parseFloat(rows[i][out.latKey]);
-      if (Number.isFinite(lng) && (lng < -180 || lng > 180)) { saneXy = false; break; }
-      if (Number.isFinite(lat) && (lat < -90 || lat > 90)) { saneXy = false; break; }
-    }
-    if (!saneXy) {
-      // Reject the x/y columns; force the importer to use WKT.
-      out.latKey = null;
-      out.lngKey = null;
-    } else {
-      // x/y look sane — keep them, drop the WKT fallback.
-      out.pointKey = null;
-    }
-  }
-  // If we kept x/y but they look swapped (e.g. Nichols Arboretum
-  // had x storing lat, y storing lng), detect by checking sample
-  // row magnitudes against expected lat∈[-90,90] / lng∈[-180,180]
-  // ranges and swap if needed.
+  out.xyMode = null; // 'wgs84' | 'webmercator' | null
+  // Magnitude-based swap detection for the easy case (lat values
+  // exceed 90 in magnitude — clearly longitudes). Catches sources
+  // like Cupertino where LAT=-122 / LONG=37.
   if (out.latKey && out.lngKey) {
-    let nLatLooksLat = 0, nLatLooksLng = 0;
+    let latLooksLat = 0, latLooksLng = 0;
+    let lngLooksLat = 0, lngLooksLng = 0;
     for (let i = 0; i < Math.min(rows.length, 30); i++) {
-      const v = parseFloat(rows[i][out.latKey]);
-      if (!Number.isFinite(v)) continue;
-      if (Math.abs(v) <= 90) nLatLooksLat++;
-      else if (Math.abs(v) <= 180) nLatLooksLng++;
+      const a = parseFloat(rows[i][out.latKey]);
+      const b = parseFloat(rows[i][out.lngKey]);
+      if (Number.isFinite(a)) {
+        if (Math.abs(a) <= 90) latLooksLat++;
+        else if (Math.abs(a) <= 180) latLooksLng++;
+      }
+      if (Number.isFinite(b)) {
+        if (Math.abs(b) <= 90) lngLooksLat++;
+        else if (Math.abs(b) <= 180) lngLooksLng++;
+      }
     }
-    if (nLatLooksLng > nLatLooksLat) {
-      // The "lat" column actually holds longitudes — swap.
+    if (latLooksLng > latLooksLat && lngLooksLat > lngLooksLng) {
       const tmp = out.latKey;
       out.latKey = out.lngKey;
       out.lngKey = tmp;
     }
   }
+  if (out.latKey && out.lngKey) {
+    out.xyMode = detectXyMode(rows, out.latKey, out.lngKey);
+  }
+  // Centroid-driven disambiguation for the hard case: both columns
+  // contain values in [-90,90] but they're swapped (Nichols Arboretum:
+  // LAT=-83.72, LONG=42.28 — both look like valid latitudes; magnitude
+  // alone can't tell which is the longitude). When the source has a
+  // known centroid, try BOTH interpretations and keep whichever lands
+  // closer to the centroid.
+  if (out.latKey && out.lngKey && out.xyMode === 'wgs84') {
+    const centroid = CITY_CENTROIDS[sourceId];
+    if (centroid) {
+      let asIsClose = 0, swappedClose = 0;
+      for (let i = 0; i < Math.min(rows.length, 30); i++) {
+        const a = parseFloat(rows[i][out.latKey]);
+        const b = parseFloat(rows[i][out.lngKey]);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+        if (haversineKm(centroid.lat, centroid.lng, a, b) <= CENTROID_RADIUS_KM) asIsClose++;
+        if (haversineKm(centroid.lat, centroid.lng, b, a) <= CENTROID_RADIUS_KM) swappedClose++;
+      }
+      if (swappedClose > asIsClose) {
+        const tmp = out.latKey;
+        out.latKey = out.lngKey;
+        out.lngKey = tmp;
+      }
+    }
+  }
+  // Disambiguation when both WKT and x/y columns exist:
+  if (out.pointKey && out.latKey && out.lngKey) {
+    if (out.xyMode === 'wgs84') {
+      // x/y are valid WGS84 degrees — drop the WKT fallback.
+      out.pointKey = null;
+    } else {
+      // x/y are projected (or undetectable). Fall back to WKT
+      // unless we have a confident webmercator reading we could use.
+      // WKT is more authoritative; prefer it.
+      out.latKey = null;
+      out.lngKey = null;
+      out.xyMode = null;
+    }
+  } else if (out.latKey && out.lngKey && out.xyMode === null) {
+    // x/y are out-of-range AND not Web Mercator. Could be state plane
+    // or garbage — give up so we don't insert nonsense.
+    out.latKey = null;
+    out.lngKey = null;
+  }
+  // (Swap-detection moved earlier so it runs before xyMode
+  // classification — see the swap block above.)
   const ambigKey = pickKey(headers, AMBIG_SPECIES_KEYS);
   if (ambigKey) {
     const samples = [];
@@ -353,8 +418,16 @@ function detectSchema(headers, rows) {
 function extractRow(r, schema) {
   let lng = NaN, lat = NaN;
   if (schema.latKey && schema.lngKey) {
-    lng = parseFloat(r[schema.lngKey]);
-    lat = parseFloat(r[schema.latKey]);
+    const x = parseFloat(r[schema.lngKey]);
+    const y = parseFloat(r[schema.latKey]);
+    if (Number.isFinite(x) && Number.isFinite(y)) {
+      if (schema.xyMode === 'webmercator') {
+        const wgs = webMercatorToWgs84(x, y);
+        lng = wgs.lng; lat = wgs.lat;
+      } else {
+        lng = x; lat = y;
+      }
+    }
   } else if (schema.pointKey) {
     const v = String(r[schema.pointKey] || '');
     const wkt = v.match(/POINT\s*\(\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d*)\s*\)/i);
@@ -451,7 +524,7 @@ async function importOne(sql, source, regionId, userId, species) {
     console.log(`  ✗ load failed: ${e.message}`);
     return { source: source.id, error: e.message };
   }
-  const schema = detectSchema(parsed.headers, parsed.rows);
+  const schema = detectSchema(parsed.headers, parsed.rows, source.id);
   console.log(`  rows=${parsed.rows.length.toLocaleString()} sci=${schema.sciKey || '?'} com=${schema.comKey || '?'} id=${schema.idKey || '?'}`);
 
   // Register import_source
