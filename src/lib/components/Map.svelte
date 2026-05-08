@@ -1152,6 +1152,16 @@
   {#if placing}
     <div class="placing-hint" role="status">{placingHint}</div>
   {/if}
+  <!-- Heatmap-mode hint. The map shows pre-aggregated density tiles
+       at zoom < 13 instead of individual pins; without this, users
+       who land on a wide view see colored squares and may not realize
+       they need to zoom in to see the actual trees. Auto-hides once
+       they cross the threshold. -->
+  {#if currentZoom != null && currentZoom < 13 && pinDensityBuckets.length > 0}
+    <div class="zoom-in-hint" role="status">
+      Zoom in to see individual trees
+    </div>
+  {/if}
   {#if !hideLocate}
     <button
       class="locate"
@@ -1266,6 +1276,39 @@
     font-size: 0.85rem;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     pointer-events: none;
+  }
+  /* Bottom-center hint that surfaces when the map is in heatmap mode
+     (zoom < 13). Auto-disappears once the user zooms in far enough
+     that individual pins are rendered. Subtle styling so it doesn't
+     compete with the colored heatmap behind it. */
+  .zoom-in-hint {
+    position: absolute;
+    bottom: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    background: rgba(58, 90, 58, 0.92);
+    color: white;
+    padding: 0.45rem 0.95rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+    backdrop-filter: blur(2px);
+    /* Fade in/out smoothly when toggled. */
+    animation: zoom-in-hint-fade 0.25s ease-out;
+  }
+  @keyframes zoom-in-hint-fade {
+    from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  @media (max-width: 640px) {
+    .zoom-in-hint {
+      bottom: 1rem;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.85rem;
+    }
   }
   .locate {
     position: absolute;
