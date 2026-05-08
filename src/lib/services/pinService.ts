@@ -134,17 +134,23 @@ export async function listPublicPins(
   const [west, south, east, north] = bbox;
   // p_zoom drives the spatial decimation grid. zoom 18+ = no
   // decimation; zoom 13 ≈ 40m cells. See migration 50.
-  const { data, error } = await supabase.rpc(
-    'public_pins_bbox' as never,
-    {
-      p_min_lng: west,
-      p_min_lat: south,
-      p_max_lng: east,
-      p_max_lat: north,
-      p_max_rows: maxRows,
-      p_zoom: Math.round(zoom)
-    } as never
-  );
+  // PostgREST defaults to a 1000-row response cap (Supabase config).
+  // The function's own LIMIT may return more — without an explicit
+  // .range() we silently lose rows past 1000 and pins beyond that
+  // position simply don't render. Request up to maxRows-1.
+  const { data, error } = await supabase
+    .rpc(
+      'public_pins_bbox' as never,
+      {
+        p_min_lng: west,
+        p_min_lat: south,
+        p_max_lng: east,
+        p_max_lat: north,
+        p_max_rows: maxRows,
+        p_zoom: Math.round(zoom)
+      } as never
+    )
+    .range(0, Math.max(0, maxRows - 1));
   if (error) {
     console.error('[pinService] listPublicPins error:', error);
     throw error;
@@ -213,24 +219,29 @@ export async function listRegionPinSummary(
 export async function listRegionPins(
   regionId: string,
   bbox: Bbox,
-  maxRows: number = 1000
+  maxRows: number = 1000,
+  zoom: number = 18
 ): Promise<PinEffective[]> {
   const [west, south, east, north] = bbox;
   // Cast the RPC name through unknown — the generated Database type
   // doesn't know about region_pins_bbox until types are regenerated
   // post-migration. Same pattern used for region_pins_clusters and
   // for is_global_admin elsewhere.
-  const { data, error } = await supabase.rpc(
-    'region_pins_bbox' as never,
-    {
-      p_region_id: regionId,
-      p_min_lng: west,
-      p_min_lat: south,
-      p_max_lng: east,
-      p_max_lat: north,
-      p_max_rows: maxRows
-    } as never
-  );
+  // Same .range() bypass for the PostgREST 1000-row default cap.
+  const { data, error } = await supabase
+    .rpc(
+      'region_pins_bbox' as never,
+      {
+        p_region_id: regionId,
+        p_min_lng: west,
+        p_min_lat: south,
+        p_max_lng: east,
+        p_max_lat: north,
+        p_max_rows: maxRows,
+        p_zoom: Math.round(zoom)
+      } as never
+    )
+    .range(0, Math.max(0, maxRows - 1));
   if (error) {
     console.error('[pinService] listRegionPins error:', error);
     throw error;

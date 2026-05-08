@@ -1041,8 +1041,8 @@
         const ownCap = 8000;
         const pubCap = 12000;
         const [own, pub, ownSum, pubSum] = await Promise.all([
-          useRegion && region ? listRegionPins(region.id, bbox, ownCap) : Promise.resolve([]),
-          listPublicPins(bbox, pubCap),
+          useRegion && region ? listRegionPins(region.id, bbox, ownCap, zoom) : Promise.resolve([]),
+          listPublicPins(bbox, pubCap, zoom),
           useRegion && region ? listRegionPinSummary(region.id, bbox) : Promise.resolve([] as PinBboxSummaryRow[]),
           listPublicPinSummary(bbox)
         ]);
