@@ -153,6 +153,11 @@
    *  edible. Defaults true; toggled from the Layers panel. */
   export let showEdibleRings: boolean = true;
 
+  /** Show the past-7-day rainfall chip. Off-by-default would feel
+   *  too hidden for a useful signal, so default true; user can flip
+   *  off in Layers when they want more map space. */
+  export let showRainfall: boolean = true;
+
   /** Set of species_ids that have any invasive flag (community-flagged
    *  as undesirable). Pins of these species render with a warning-red
    *  stroke. Empty set = no invasive treatment. */
@@ -1329,7 +1334,7 @@
       {/if}
     </div>
   {/if}
-  {#if rainTotalMm !== null}
+  {#if showRainfall && rainTotalMm !== null}
     <div
       class="rain-overlay"
       class:dry={rainTotalMm < 5}

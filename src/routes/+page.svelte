@@ -57,6 +57,7 @@
     setShowZones,
     setShowEdibleRings,
     setShowInvasives,
+    setShowRainfall,
     setBasemap,
     setColorBy,
     type MapLayerKey,
@@ -519,6 +520,9 @@
   }
   function onInvasivesToggle(e: Event) {
     setShowInvasives((e.currentTarget as HTMLInputElement).checked);
+  }
+  function onRainfallToggle(e: Event) {
+    setShowRainfall((e.currentTarget as HTMLInputElement).checked);
   }
   function onBasemapChange(e: Event) {
     setBasemap((e.currentTarget as HTMLSelectElement).value as Basemap);
@@ -1533,6 +1537,15 @@
             <span class="layer-name">Invasives</span>
             <span class="layer-hint">Inedible invasives (tree of heaven, knotweed…) for management</span>
           </label>
+          <label class="layer-row">
+            <input
+              type="checkbox"
+              checked={$settings.showRainfall}
+              on:change={onRainfallToggle}
+            />
+            <span class="layer-name">Rainfall chip</span>
+            <span class="layer-hint">7-day rainfall pill in the map corner</span>
+          </label>
 
           <div class="layer-section-head">Display</div>
           <label class="layer-row layer-select">
@@ -1596,6 +1609,7 @@
     colorTracksByDate={$settings.colorTracksByDate}
     showZones={$settings.showZones}
     showEdibleRings={$settings.showEdibleRings}
+    showRainfall={$settings.showRainfall}
     {invasiveSpeciesIds}
     nonForagableSpeciesIds={inedibleInvasiveIds}
     showRecorder={!!$session}
@@ -1853,6 +1867,9 @@
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
     padding: 0.4rem;
     min-width: 14rem;
+    max-height: 75vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
     gap: 0.15rem;

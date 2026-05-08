@@ -71,6 +71,11 @@ interface Settings {
    *  doesn't hide foragable species; it adds the inedible invasives
    *  on top. */
   showInvasives: boolean;
+  /** Show the past-7-day rainfall chip in the map corner. Defaults
+   *  on — knowing recent rain is genuinely useful for choosing a
+   *  foraging day — but the chip eats map real estate, so we let
+   *  the user turn it off. */
+  showRainfall: boolean;
 }
 export type MapLayerKey = 'mine' | 'friends' | 'group' | 'public' | 'tracks';
 const DEFAULT: Settings = {
@@ -83,7 +88,8 @@ const DEFAULT: Settings = {
   colorTracksByDate: true,
   mapLayers: { mine: true, friends: true, group: true, public: true, tracks: true },
   showEdibleRings: true,
-  showInvasives: false
+  showInvasives: false,
+  showRainfall: true
 };
 
 const ALLOWED_LICENSES: PhotoLicense[] = [
@@ -121,7 +127,8 @@ function normalize(s: Partial<Settings>): Settings {
       tracks:  s.mapLayers?.tracks  !== false
     },
     showEdibleRings: s.showEdibleRings !== false,
-    showInvasives: s.showInvasives === true
+    showInvasives: s.showInvasives === true,
+    showRainfall: s.showRainfall !== false
   };
 }
 
@@ -167,6 +174,10 @@ export function setShowHeatmap(v: boolean): void {
 
 export function setShowInvasives(v: boolean): void {
   settings.update((s) => ({ ...s, showInvasives: v }));
+}
+
+export function setShowRainfall(v: boolean): void {
+  settings.update((s) => ({ ...s, showRainfall: v }));
 }
 
 export function setShowZones(v: boolean): void {
