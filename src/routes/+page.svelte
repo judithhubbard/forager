@@ -465,6 +465,10 @@
     // has opted into the management view. Otherwise the panel shows
     // 10+ "checked" species producing zero pins on the map.
     if (inedibleInvasiveIds.has(s.id) && !$settings.showInvasives) return false;
+    // Cookbook filter narrows the species panel too — picking
+    // "Make: jam" should show only jam-able species, not the full
+    // catalog with phantom checkboxes.
+    if (cookbookSpeciesIds !== null && !cookbookSpeciesIds.has(s.id)) return false;
     const cat = (categoryBySpecies[s.id] as SpeciesCat) ?? 'other';
     return visibleCats.has(cat);
   });
@@ -486,6 +490,20 @@
     return 'group';
   }
   let layersPanelOpen = false;
+  /** Click-outside-to-close for the filterbar dropdowns (species,
+   *  layers, mobile filters). Without this the user has to re-tap
+   *  the trigger to dismiss — annoying when they meant to commit a
+   *  selection and move on. The listener runs on every outside
+   *  click whether or not a panel is open; the no-op cost is
+   *  negligible. Bound to the window-level on:click to catch taps
+   *  that bubble past stopPropagation in unrelated handlers. */
+  function handleOutsideClick(e: MouseEvent) {
+    const t = e.target as HTMLElement | null;
+    if (!t) return;
+    if (speciesPanelOpen && !t.closest('.species-filter')) speciesPanelOpen = false;
+    if (layersPanelOpen && !t.closest('.layers-filter')) layersPanelOpen = false;
+    if (filtersPanelOpen && !t.closest('.filterbar')) filtersPanelOpen = false;
+  }
   /** Mobile-only: whether the collapsed filter controls are
    *  expanded. On desktop the controls are always inline and this
    *  state is irrelevant — see the @media rule in styles. */
@@ -1274,7 +1292,7 @@
   }
 </script>
 
-<svelte:window on:keydown={handlePlacingKey} />
+<svelte:window on:keydown={handlePlacingKey} on:click={handleOutsideClick} />
 
 <div class="map-page">
 <header>
@@ -1312,6 +1330,10 @@
       Filters
       <span class="caret">{filtersPanelOpen ? '▴' : '▾'}</span>
     </button>
+    <!-- AddressSearch sits at the top alongside the Filters toggle so
+         the search field is reachable without expanding the filter
+         panel. Premium-real-estate placement on phones. -->
+    <AddressSearch on:select={handleGeocodeSelect} />
     <div class="filterbar-controls" class:open={filtersPanelOpen}>
     <div class="species-filter">
       <button
@@ -1390,26 +1412,32 @@
         </div>
       {/if}
     </div>
-    <label>
-      Show:
-      <select bind:value={filterStatus}>
-        <option value="all">All ({statusCounts.all})</option>
-        <option value="active">Active ({statusCounts.active})</option>
-        <option value="edible_today">Edible today ({statusCounts.edible_today}{capHit ? '+' : ''})</option>
-        <option value="productive">Productive ({statusCounts.productive}{capHit ? '+' : ''})</option>
-      </select>
-    </label>
-    {#if availableCookbookMethods.length > 0}
+    <!-- Show + Make sit on a single row so the filter panel stays
+         compact on mobile. They're both single-select dropdowns and
+         conceptually paired ("show edible · make jam"), so a shared
+         row reads better than the previous stacked layout. -->
+    <div class="show-make-row">
       <label>
-        Make:
-        <select bind:value={cookbookFilter}>
-          <option value="">anything</option>
-          {#each availableCookbookMethods as m}
-            <option value={m.method}>{m.method.replace(/_/g, ' ')} ({m.count})</option>
-          {/each}
+        Show:
+        <select bind:value={filterStatus}>
+          <option value="all">All ({statusCounts.all})</option>
+          <option value="active">Active ({statusCounts.active})</option>
+          <option value="edible_today">Edible today ({statusCounts.edible_today}{capHit ? '+' : ''})</option>
+          <option value="productive">Productive ({statusCounts.productive}{capHit ? '+' : ''})</option>
         </select>
       </label>
-    {/if}
+      {#if availableCookbookMethods.length > 0}
+        <label>
+          Make:
+          <select bind:value={cookbookFilter}>
+            <option value="">anything</option>
+            {#each availableCookbookMethods as m}
+              <option value={m.method}>{m.method.replace(/_/g, ' ')} ({m.count})</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
+    </div>
     <div class="layers-filter">
       <button
         class="layers-toggle"
@@ -1536,23 +1564,9 @@
     </div>
     </div>
     <div class="filterbar-spacer"></div>
-    <AddressSearch on:select={handleGeocodeSelect} />
     <!-- Persistent status chips, anchored to the filterbar so they
-         never collide with map controls. capHit turns the pin count
-         warm-yellow with a "+" suffix when the bbox-fetch is
-         truncated. The build SHA confirms which deploy is live. -->
+         never collide with map controls. -->
     <span class="status-chips" aria-hidden="true">
-      <span class="pin-count" class:capped={trueTotalInView > filteredPins.length} title={
-        trueTotalInView > filteredPins.length
-          ? `${filteredPins.length.toLocaleString()} drawn of ${trueTotalInView.toLocaleString()} pins in view — zoom in for full detail`
-          : `${trueTotalInView.toLocaleString()} pins in view`
-      }>
-        {#if trueTotalInView > filteredPins.length}
-          {filteredPins.length.toLocaleString()} / {trueTotalInView.toLocaleString()}
-        {:else}
-          {trueTotalInView.toLocaleString()}
-        {/if}
-      </span>
       <span class="build-rev" title="Build (git short SHA) — confirms which deploy is live">
         {buildRev}
       </span>
@@ -1793,6 +1807,13 @@
      new row left-aligned, which is fine — better than crowding the
      species/show controls. */
   .filterbar-spacer { flex: 1 1 auto; }
+  .show-make-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .show-make-row label { display: flex; align-items: center; gap: 0.3rem; }
 
   /* Desktop: the controls wrapper is a no-op — children participate
      in the .filterbar flexbox as if the wrapper weren't there. The
