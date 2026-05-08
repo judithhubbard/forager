@@ -87,7 +87,22 @@
       });
       dispatch('saved', { id });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Save failed.';
+      // Supabase PostgrestError is a plain object, not an Error
+      // instance — pull `.message` regardless of class. Without this
+      // the user sees the literal "Save failed." and we lose the
+      // actual reason (RLS rejection, JWT expired, constraint, etc).
+      console.error('[DropPinModal] save failed:', err);
+      let message = 'Save failed.';
+      if (err && typeof err === 'object') {
+        const e = err as { message?: unknown; code?: unknown; details?: unknown; hint?: unknown };
+        if (typeof e.message === 'string' && e.message) message = e.message;
+        const extras = [e.code, e.details, e.hint].filter(
+          (x): x is string => typeof x === 'string' && !!x
+        );
+        if (extras.length) message += ` (${extras.join(' · ')})`;
+      } else if (typeof err === 'string') {
+        message = err;
+      }
       errorMessage = message;
       stage = 'error';
     }
@@ -284,6 +299,7 @@
     color: #b03030;
     font-size: 0.9rem;
     margin: 0 0 0.75rem;
+    word-break: break-word;
   }
   .visibility {
     border: 1px solid #d0d8d0;
