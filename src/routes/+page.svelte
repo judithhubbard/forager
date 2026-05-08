@@ -2120,8 +2120,10 @@
     .filterbar-controls {
       display: none;
       flex-basis: 100%;
-      flex-direction: column;
-      gap: 0.5rem;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 0.4rem 0.5rem;
+      align-items: center;
       padding-top: 0.4rem;
       border-top: 1px solid #e1e8e1;
       margin-top: 0.4rem;
@@ -2129,11 +2131,10 @@
     .filterbar-controls.open { display: flex; }
     .filterbar-controls label {
       display: flex;
-      gap: 0.4rem;
+      gap: 0.3rem;
       align-items: center;
     }
     .filterbar-controls select {
-      flex: 1;
       max-width: none;
       font-size: 0.85rem;
     }
@@ -2162,18 +2163,14 @@
       gap: 0.4rem;
     }
     .filter-reset { padding: 0.15rem 0.45rem; font-size: 0.75rem; }
-    /* Mobile: keep the filterbar to one row by default. When filters
-     * are open, cap the panel at ~45vh and scroll inside, so the user
-     * always sees at least half the map. The species sub-panel was
-     * the worst offender — without max-height it pushed the map off-
-     * screen as soon as the user expanded it. */
-    .filterbar-controls.open {
-      max-height: 45vh;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
+    /* Mobile: open filterbar-controls grow naturally — earlier we
+     * capped at 45vh + overflow-y:auto, but absolute-positioned
+     * dropdowns inside (species panel, layers panel) got clipped by
+     * the overflow container, so tapping Layers appeared to do
+     * nothing. The page itself scrolls if the controls are tall;
+     * the species sub-panel still has its own internal scroll. */
     .species-panel {
-      max-height: 30vh;
+      max-height: 50vh;
       overflow-y: auto;
     }
   }
