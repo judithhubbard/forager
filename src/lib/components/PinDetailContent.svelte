@@ -33,6 +33,14 @@
   import { profileLabel } from '$lib/services/profileService';
   import { profile } from '$lib/stores/profile';
   import { session } from '$lib/stores/auth';
+  import {
+    listForPin as listCommunityFlags,
+    add as addCommunityFlag,
+    remove as removeCommunityFlag,
+    FLAG_LABELS,
+    type FlagType,
+    type FlagCounts
+  } from '$lib/services/communityFlagsService';
   import { activeRegion } from '$lib/stores/activeRegion';
   import { settings } from '$lib/stores/settings';
   import {
@@ -83,6 +91,42 @@
   // types haven't been regenerated yet, so cast through unknown to
   // surface the value reactively without a runtime branch.
   $: zoneCode = (pin as unknown as { climate_zone_code: string | null } | null)?.climate_zone_code ?? null;
+
+  // Community flags (Phase 1 community curation). Free + paid users
+  // can flag a public pin as gone / wrong-species / inaccessible /
+  // low-quality. Aggregated counts surface here as informational
+  // signals; the visibility-affecting score is server-maintained.
+  let flagCounts: FlagCounts | null = null;
+  let flagBusy: FlagType | null = null;
+  let flagError = '';
+  async function refreshFlags() {
+    if (!pinId) { flagCounts = null; return; }
+    try {
+      flagCounts = await listCommunityFlags(pinId);
+    } catch (err) {
+      console.error('[PinDetail] flag load failed', err);
+    }
+  }
+  async function toggleFlag(t: FlagType) {
+    if (!pinId || !$session || flagBusy) return;
+    flagBusy = t;
+    flagError = '';
+    try {
+      const has = flagCounts?.mine.has(t);
+      if (has) await removeCommunityFlag(pinId, t);
+      else await addCommunityFlag(pinId, t);
+      await refreshFlags();
+    } catch (err) {
+      flagError = err instanceof Error ? err.message : 'Could not save flag.';
+    } finally {
+      flagBusy = null;
+    }
+  }
+  /** Order to render flag chips in. Pulled into a const so the
+   *  template stays a one-liner. */
+  const FLAG_ORDER: FlagType[] = ['gone', 'wrong_species', 'inaccessible', 'low_quality'];
+  // Refresh flag counts when the user navigates between pins.
+  $: if (pinId) void refreshFlags();
   let species: Species | null = null;
   let observations: ObservationWithUser[] = [];
   let allSpecies: Species[] = [];
@@ -869,6 +913,45 @@
       {/if}
     </section>
 
+    {#if flagCounts}
+      <section class="community-flags">
+        <div class="section-header">
+          <h3>Community signals</h3>
+          {#if pin.visibility !== 'public'}
+            <span class="muted">Public-pin curation</span>
+          {/if}
+        </div>
+        <p class="flag-explainer muted">
+          Foragers can flag this pin if they find it gone, mislabeled, or not worth the trip.
+          A few independent flags hide it from the default map.
+        </p>
+        <div class="flag-grid">
+          {#each FLAG_ORDER as t}
+            {@const count = flagCounts.byType[t]}
+            {@const mine = flagCounts.mine.has(t)}
+            <button
+              class="flag-chip"
+              class:active={mine}
+              disabled={!$session || flagBusy === t}
+              on:click={() => toggleFlag(t)}
+              title={$session ? (mine ? 'Click to remove your flag' : 'Click to flag') : 'Sign in to flag'}
+            >
+              <span class="flag-label">{FLAG_LABELS[t]}</span>
+              {#if count > 0}
+                <span class="flag-count">{count}</span>
+              {/if}
+              {#if mine}
+                <span class="flag-mine" aria-label="Your flag">✓</span>
+              {/if}
+            </button>
+          {/each}
+        </div>
+        {#if flagError}
+          <p class="error">{flagError}</p>
+        {/if}
+      </section>
+    {/if}
+
     <section class="observations">
       <div class="section-header">
         <h3>Observations</h3>
@@ -1431,6 +1514,56 @@
     color: #7a4a10;
   }
   .watch-btn.link-btn { background: white; }
+
+  /* Community signals (Layer 1 community curation). Authed users
+     can flag a public pin as gone, mislabeled, etc. Active state
+     shows the user has already flagged that type and a click will
+     remove it. */
+  .community-flags { margin-top: 1rem; }
+  .flag-explainer {
+    margin: 0 0 0.5rem;
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+  .flag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .flag-chip {
+    background: white;
+    border: 1px solid #c7d0c7;
+    color: #3a5a3a;
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .flag-chip:hover:not(:disabled) { background: #f0f5ef; }
+  .flag-chip:disabled { cursor: default; opacity: 0.6; }
+  .flag-chip.active {
+    background: #fff4e3;
+    border-color: #e8d3a6;
+    color: #7a4a10;
+  }
+  .flag-label { font-weight: 500; }
+  .flag-count {
+    background: #e1e8e1;
+    color: #3a5a3a;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    min-width: 1.1rem;
+    text-align: center;
+  }
+  .flag-chip.active .flag-count {
+    background: #f5cc8b;
+    color: #7a4a10;
+  }
+  .flag-mine { color: #7a4a10; font-size: 0.78rem; }
 
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
   .section-header h3 {
