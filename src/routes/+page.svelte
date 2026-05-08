@@ -217,8 +217,25 @@
   /** True total of pins in the bbox per the server-side summary RPC,
    *  regardless of the per-fetch row cap. Used by the pin-count chip
    *  so the user sees "1,500 of 8,500 drawn" — accurate to what's
-   *  actually there, not just to what we managed to fetch. */
-  $: trueTotalInView = bboxSummary.reduce((sum, r) => sum + r.total_count, 0);
+   *  actually there, not just to what we managed to fetch.
+   *
+   *  The chip compares drawn vs *what matches the current status
+   *  filter*, not absolute total. Otherwise "266 / 4649" with an
+   *  Active filter is confusing — most of the 4383 difference is
+   *  non-active pins the user explicitly filtered out, not the
+   *  decimation. Drawing 266 of 3100 active reads more honestly. */
+  $: trueTotalInView = (() => {
+    if (filterStatus === 'all') {
+      return bboxSummary.reduce((sum, r) => sum + r.total_count, 0);
+    }
+    if (filterStatus === 'active') {
+      return bboxSummary.reduce((sum, r) => sum + r.active_count, 0);
+    }
+    // edible_today / productive: those summary fields aren't on the
+    // RPC yet, so fall back to the active count as a reasonable
+    // upper bound (every edible-today / productive pin is also active).
+    return bboxSummary.reduce((sum, r) => sum + r.active_count, 0);
+  })();
   let showDropPin = false;
   let dropPinLng: number | null = null;
   let dropPinLat: number | null = null;
