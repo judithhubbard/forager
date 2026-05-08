@@ -939,9 +939,36 @@
     const L = LCache;
     const next = L.layerGroup();
     for (const c of currentClusters) {
-      // Single-pin "cluster" = render as a real pin, not a count
-      // dot (less visual noise at borderline zooms).
-      if (c.count_pins <= 1) continue;
+      if (c.count_pins <= 1) {
+        // Single-pin cell: render as a small colored circle. Without
+        // PinEffective data we can't show ripeness rings or category
+        // shape; use the same group-color as full pins so density-
+        // map colors stay consistent across the cluster→individual
+        // zoom transition. Click → fly to representative pin's
+        // location at higher zoom (where the full pin marker
+        // renders).
+        const fakePin = {
+          species_id: c.representative_species_id,
+          status: 'active'
+        } as unknown as PinEffective;
+        const fill = colorOf ? colorOf(fakePin) : '#3a5a3a';
+        const baseR = isTouch ? 4 : 3;
+        const dot = L.circleMarker([c.centroid_lat, c.centroid_lng], {
+          radius: baseR,
+          color: '#1f2a1f',
+          weight: 1,
+          fillColor: fill,
+          fillOpacity: 0.85,
+          interactive: true
+        });
+        dot.on('click', () => {
+          if (!map) return;
+          const targetZoom = Math.min(map.getMaxZoom(), Math.max(16, map.getZoom() + 2));
+          map.flyTo([c.centroid_lat, c.centroid_lng], targetZoom, { duration: 0.6 });
+        });
+        dot.addTo(next);
+        continue;
+      }
       // log-scaled radius: 2 → 12px, 10 → 18px, 100 → 24px,
       // 1000 → 30px, 10000 → 36px.
       const r = Math.min(36, 12 + Math.log10(c.count_pins) * 6);

@@ -218,6 +218,49 @@ export async function listRegionPinSummary(
   return (data ?? []) as unknown as PinBboxSummaryRow[];
 }
 
+/** Cluster aggregates (count + centroid + representative species)
+ *  per zoom-aware grid cell, for the new clustering-at-low-zoom UI.
+ *  Backed by pin_clusters_bbox (migration 58). */
+export interface PinClusterPoint {
+  cluster_id: string;
+  centroid_lng: number;
+  centroid_lat: number;
+  count: number;
+  representative_pin_id: string;
+  representative_species_id: string | null;
+  representative_status: string | null;
+  representative_visibility: string | null;
+  is_cluster: boolean;
+}
+export async function listPinClusters(
+  bbox: Bbox,
+  zoom: number
+): Promise<PinClusterPoint[]> {
+  const [west, south, east, north] = bbox;
+  const PAGE = 1000;
+  const all: PinClusterPoint[] = [];
+  for (let offset = 0; offset < 15000; offset += PAGE) {
+    const upper = offset + PAGE - 1;
+    const { data, error } = await supabase
+      .rpc('pin_clusters_bbox' as never, {
+        p_min_lng: west,
+        p_min_lat: south,
+        p_max_lng: east,
+        p_max_lat: north,
+        p_zoom: Math.round(zoom)
+      } as never)
+      .range(offset, upper);
+    if (error) {
+      console.error('[pinService] listPinClusters error:', error);
+      throw error;
+    }
+    const rows = (data ?? []) as unknown as PinClusterPoint[];
+    all.push(...rows);
+    if (rows.length < PAGE) break;
+  }
+  return all;
+}
+
 /** Authed analog of listPublicPins: pins inside a bbox, scoped to one
  *  region. RLS still enforces membership; non-members get an empty
  *  set rather than an error. Used by the main map's viewport-driven
