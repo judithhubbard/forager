@@ -4,7 +4,13 @@
 
   // Build SHA stamp — exposed inline in the filterbar so the user
   // can confirm which deploy is live by comparing to GitHub.
-  const buildRev: string = (globalThis as unknown as { __BUILD_REV__?: string }).__BUILD_REV__ ?? 'dev';
+  // __BUILD_REV__ is a vite-define macro substituted at build time
+  // (see vite.config.ts). The previous (globalThis as any).__BUILD_REV__
+  // pattern never got the substitution because Vite's define only
+  // replaces bare identifiers, not property accesses, so the chip
+  // always showed "dev".
+  const buildRev: string =
+    typeof __BUILD_REV__ !== 'undefined' ? __BUILD_REV__ : 'dev';
   import { page } from '$app/stores';
   import { activeRegion, regionsLoading, myRegions } from '$lib/stores/activeRegion';
   import { session } from '$lib/stores/auth';

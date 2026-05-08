@@ -235,7 +235,12 @@
   /** Build-time-injected git short SHA. Pulled into a local const
    *  so svelte-check can resolve the global declared in app.d.ts. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const buildRev: string = (globalThis as any).__BUILD_REV__ ?? 'dev';
+  // __BUILD_REV__ is a vite-define macro replaced at build time. Use
+  // the bare identifier (not a property access on globalThis) so the
+  // replacement actually happens; previously we read via globalThis
+  // and always got "dev". See vite.config.ts.
+  const buildRev: string =
+    typeof __BUILD_REV__ !== 'undefined' ? __BUILD_REV__ : 'dev';
 
   // Persistent rain chip in the corner of the map: shows the past
   // 7 days of rainfall at the map's current center. Rain is broadly

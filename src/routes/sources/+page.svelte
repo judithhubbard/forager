@@ -104,22 +104,41 @@
     </li>
   </ul>
 
+  <h2>Plant Hardiness Zones</h2>
+  <ul class="sources">
+    <li>
+      <strong>USDA Plant Hardiness Zone polygons</strong> — currently
+      based on the 2012 USDA map via the public-domain
+      <a href="https://github.com/kgjenkins/ophz" target="_blank" rel="noopener">OPHZ</a>
+      vector reconstruction. Used for point-in-zone lookup on every
+      pin and for the optional zone overlay on the map. We're in the
+      process of upgrading to the
+      <a href="https://prism.oregonstate.edu/projects/plant_hardiness_zones.php" target="_blank" rel="noopener">2023 USDA / PRISM update</a>
+      (public domain), which shifts much of the eastern US warmer by
+      ~½ zone — so e.g. Ithaca went from 5b to 6a. Phenology windows
+      will then key off the updated zone.
+    </li>
+  </ul>
+
   <h2>Phenology</h2>
   <ul class="sources">
     <li>
-      <strong>Default harvest windows</strong> — approximate per-species
-      flowering / ripening day-of-year ranges keyed to USDA hardiness
-      zones. Compiled from USDA, USA-NPN, Cooperative Extension
-      bulletins, and foraging field guides; refined over time from
-      observations logged on Forager. Edit the defaults for your zone
-      on the <em>Harvest windows</em> page.
+      <strong>Default harvest windows</strong> — per-species
+      flowering / ripening / fruiting day-of-year ranges keyed to
+      USDA hardiness zones. Curated rows are compiled from USDA,
+      USA-NPN, Cooperative Extension bulletins, and foraging field
+      guides. For zones without curated data, windows are estimated
+      from a curated zone (Ithaca 5b/6a) shifted by NOAA frost-date
+      normals; estimated rows render with a faded bar in the
+      <em>Harvest windows</em> page and a tooltip explaining the
+      source. As users log ripe observations, those rows upgrade
+      from estimated to observation-derived.
     </li>
     <li>
-      <strong>USDA hardiness zone lookup</strong> — current
-      implementation is a latitude-band heuristic. A future migration
-      replaces it with the
-      <a href="https://prism.oregonstate.edu/" target="_blank" rel="noopener">PRISM Climate Group</a>
-      shapefile (public domain).
+      <strong>Frost-date normals (planned)</strong> —
+      <a href="https://www.ncei.noaa.gov/products/land-based-station/us-climate-normals" target="_blank" rel="noopener">NOAA US Climate Normals 1991–2020</a>
+      (public domain). Drives the per-zone estimate when a curated
+      window doesn't exist for the user's zone.
     </li>
   </ul>
 
