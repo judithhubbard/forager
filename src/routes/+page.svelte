@@ -796,6 +796,14 @@
     if (layersOff > 0) {
       parts.push(`${5 - layersOff}/5 layers`);
     }
+    // Cap-hit isn't strictly a filter, but for the user the symptom
+    // is the same: trees missing. Surface it loudly so they know to
+    // zoom in for full detail. Without this message, dense areas
+    // (Cornell campus + downtown Ithaca) show different tree subsets
+    // at different zoom levels and nothing explains why.
+    if (capHit) {
+      parts.push('many trees hidden — zoom in for more');
+    }
     return parts;
   })();
   $: hasActiveFilters = activeFilterParts.length > 0;
@@ -1012,8 +1020,15 @@
         // outside their region still shows the global public dataset.
         // The summary RPCs run in parallel for accurate counts even
         // when the pin lists hit their caps.
-        const ownCap = 1000;
-        const pubCap = 500;
+        // Caps scale with zoom — at zoom 16+ (street level) we
+        // allow much more data because the bbox is small (sub-km^2)
+        // so a 2000-row fetch returns dense tree-by-tree coverage
+        // for places like downtown Ithaca + Cornell campus where
+        // there are ~13k pins inside a single zoom-13 bbox. Server
+        // hard-caps still apply (region RPC: 2000, public RPC: 2500
+        // post-migration 46).
+        const ownCap = zoom >= 16 ? 2000 : zoom >= 14 ? 1500 : 1000;
+        const pubCap = zoom >= 16 ? 2500 : zoom >= 14 ? 1500 : 800;
         const [own, pub, ownSum, pubSum] = await Promise.all([
           useRegion && region ? listRegionPins(region.id, bbox, ownCap) : Promise.resolve([]),
           listPublicPins(bbox, pubCap),
