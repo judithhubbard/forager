@@ -1915,6 +1915,28 @@
     .legend .ring1, .legend .ring2 {
       width: 0.7rem; height: 0.7rem; margin-right: 0.3rem;
     }
+    /* Mobile: tighten the filter banner so it doesn't add a tall
+     * stripe between the filterbar and the map. */
+    .filter-banner {
+      padding: 0.25rem 0.55rem;
+      font-size: 0.78rem;
+      gap: 0.4rem;
+    }
+    .filter-reset { padding: 0.15rem 0.45rem; font-size: 0.75rem; }
+    /* Mobile: keep the filterbar to one row by default. When filters
+     * are open, cap the panel at ~45vh and scroll inside, so the user
+     * always sees at least half the map. The species sub-panel was
+     * the worst offender — without max-height it pushed the map off-
+     * screen as soon as the user expanded it. */
+    .filterbar-controls.open {
+      max-height: 45vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .species-panel {
+      max-height: 30vh;
+      overflow-y: auto;
+    }
   }
   .panel-header {
     flex: 0 0 auto;
