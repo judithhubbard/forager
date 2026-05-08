@@ -106,6 +106,15 @@
     return m;
   })();
 
+  // Page-level banner trigger: how many bars are interpolated from
+  // frost-date offsets vs hand-curated. Drives a heads-up notice
+  // above the chart so the user understands the whole-timeline
+  // confidence at a glance instead of having to inspect each bar.
+  $: estimatedCount = windows.filter(
+    (w) => w.confidence && w.confidence !== 'curated'
+  ).length;
+  $: curatedCount = windows.length - estimatedCount;
+
   /** Initialize the region list + default selection. Runs once when
    *  the active region first becomes available, then again only on
    *  $dataChange (a save might create new windows that change the
@@ -531,6 +540,22 @@
       each bar are observations. Click any bar to edit its start/end dates.
     </p>
 
+    {#if estimatedCount > 0 && curatedCount === 0}
+      <div class="zone-banner zone-banner-warn" role="note">
+        <strong>Estimated timeline.</strong>
+        No harvest windows have been hand-curated for this region. The bars below
+        are interpolated from Ithaca's curated dates, shifted by the difference in
+        last-spring / first-fall frost. Treat them as rough guides — log a ripe
+        observation in your area to start refining them.
+      </div>
+    {:else if estimatedCount > 0}
+      <div class="zone-banner" role="note">
+        <strong>{estimatedCount} of {estimatedCount + curatedCount}</strong>
+        bars below are interpolated from frost-date offsets (faded with diagonal
+        stripes). Log ripe observations to refine those species in this region.
+      </div>
+    {/if}
+
     <div class="timeline">
       <div class="legend-row">
         {#each Object.entries(STAGE_COLORS) as [stage, color]}
@@ -769,6 +794,24 @@
   }
   .single-region { color: #3a5a3a; }
   .intro { color: #4a554a; font-size: 0.9rem; margin: 0 0 1rem; }
+  .zone-banner {
+    background: #f8f4e8;
+    border: 1px solid #d8cea0;
+    border-left: 4px solid #c9b56a;
+    padding: 0.6rem 0.85rem;
+    border-radius: 0.4rem;
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: #5a4d22;
+    line-height: 1.45;
+  }
+  .zone-banner-warn {
+    background: #faf0e8;
+    border-color: #d8a880;
+    border-left-color: #c98a4a;
+    color: #5e3920;
+  }
+  .zone-banner strong { color: inherit; font-weight: 600; }
   .error { color: #b03030; font-size: 0.9rem; }
   .attribution {
     margin: 1.25rem 0 0;
