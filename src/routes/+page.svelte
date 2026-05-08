@@ -214,6 +214,11 @@
    *  user sees real numbers even when the visible pin set is
    *  truncated. Empty array = no summary loaded yet. */
   let bboxSummary: PinBboxSummaryRow[] = [];
+  /** True total of pins in the bbox per the server-side summary RPC,
+   *  regardless of the per-fetch row cap. Used by the pin-count chip
+   *  so the user sees "1,500 of 8,500 drawn" — accurate to what's
+   *  actually there, not just to what we managed to fetch. */
+  $: trueTotalInView = bboxSummary.reduce((sum, r) => sum + r.total_count, 0);
   let showDropPin = false;
   let dropPinLng: number | null = null;
   let dropPinLat: number | null = null;
@@ -1034,21 +1039,19 @@
         // appear in both region and public sets (imports live in
         // both); region rows take precedence since they include the
         // user's own non-public contributions on top of the imports.
+        // Region and public summary RPCs are now disjoint by visibility
+        // (migration 49). Region returns only the user's non-public
+        // pins; public returns every public pin. So the merge is a
+        // simple per-species sum, no max-merge or dedup needed.
         const summaryById = new Map<string | null, PinBboxSummaryRow>();
-        for (const r of pubSum) summaryById.set(r.species_id, r);
+        for (const r of pubSum) summaryById.set(r.species_id, { ...r });
         for (const r of ownSum) {
           const existing = summaryById.get(r.species_id);
           if (existing) {
-            // The intersection (imports) shows up in both — keep the
-            // larger of the two counts rather than summing, since
-            // summing would double-count public imports.
-            summaryById.set(r.species_id, {
-              species_id: r.species_id,
-              active_count: Math.max(existing.active_count, r.active_count),
-              total_count: Math.max(existing.total_count, r.total_count)
-            });
+            existing.active_count += r.active_count;
+            existing.total_count += r.total_count;
           } else {
-            summaryById.set(r.species_id, r);
+            summaryById.set(r.species_id, { ...r });
           }
         }
         bboxSummary = [...summaryById.values()];
@@ -1381,8 +1384,16 @@
          warm-yellow with a "+" suffix when the bbox-fetch is
          truncated. The build SHA confirms which deploy is live. -->
     <span class="status-chips" aria-hidden="true">
-      <span class="pin-count" class:capped={capHit} title={capHit ? 'Cap reached — zoom in for full coverage' : 'Pins currently loaded'}>
-        {filteredPins.length.toLocaleString()}{capHit ? '+' : ''}
+      <span class="pin-count" class:capped={capHit} title={
+        capHit
+          ? `${filteredPins.length.toLocaleString()} of ${trueTotalInView.toLocaleString()} drawn — zoom in for full detail`
+          : `${trueTotalInView.toLocaleString()} pins in view`
+      }>
+        {#if capHit && trueTotalInView > filteredPins.length}
+          {filteredPins.length.toLocaleString()} / {trueTotalInView.toLocaleString()}
+        {:else}
+          {trueTotalInView.toLocaleString()}
+        {/if}
       </span>
       <span class="build-rev" title="Build (git short SHA) — confirms which deploy is live">
         {buildRev}
