@@ -149,6 +149,9 @@
    *  wire / ~600 KB gzipped). Lazy-loaded — toggle off keeps the
    *  initial map paint unaffected. */
   export let showZones: boolean = false;
+  /** Show the soft glow around pins whose species is currently
+   *  edible. Defaults true; toggled from the Layers panel. */
+  export let showEdibleRings: boolean = true;
 
   /** Setting this prop animates the map to the given location. Parent
    *  passes a fresh object on each desired fly (e.g. after a geocode
@@ -699,6 +702,7 @@
       fill,
       pin.is_edible_strict ? 1 : 0,
       pin.is_edible_now ? 1 : 0,
+      showEdibleRings ? 1 : 0,
       pin.effective_status ?? '',
       pin.is_inaccessible ? 1 : 0,
       labelOf(pin)
@@ -725,20 +729,28 @@
     const baseR = isTouch ? 6 : 4.5;
     const group = L.layerGroup();
 
-    if (isStrictRipe) {
-      L.circleMarker([lat, lng], {
-        radius: baseR + 4, color: '#d57100', fill: false,
-        weight: 2.5, opacity: 1.0, interactive: false
-      }).addTo(group);
-      L.circleMarker([lat, lng], {
-        radius: baseR + 8.5, color: '#d57100', fill: false,
-        weight: 1.6, opacity: 0.65, interactive: false
-      }).addTo(group);
-    } else if (isPossibly) {
-      L.circleMarker([lat, lng], {
-        radius: baseR + 4, color: '#d57100', fill: false,
-        weight: 1.2, opacity: 0.55, dashArray: '3,3', interactive: false
-      }).addTo(group);
+    if (showEdibleRings) {
+      if (isStrictRipe) {
+        // Soft warm-glow stack: a low-opacity wide aura behind the
+        // pin, then a tighter brighter ring closer in. Reads as a
+        // "this is glowing / fruiting now" cue without the busy
+        // double-circle treatment of the prior version.
+        L.circleMarker([lat, lng], {
+          radius: baseR + 11, color: '#f5b042', fill: true, fillColor: '#fff1c4',
+          weight: 0, fillOpacity: 0.32, interactive: false
+        }).addTo(group);
+        L.circleMarker([lat, lng], {
+          radius: baseR + 5, color: '#e08a1a', fill: false,
+          weight: 1.6, opacity: 0.85, interactive: false
+        }).addTo(group);
+      } else if (isPossibly) {
+        // "Possibly edible" gets a softer single aura — fainter and
+        // smaller than the strict-ripe glow, no ring stroke.
+        L.circleMarker([lat, lng], {
+          radius: baseR + 8, color: '#fcd58a', fill: true, fillColor: '#fff7e0',
+          weight: 0, fillOpacity: 0.30, interactive: false
+        }).addTo(group);
+      }
     }
 
     const px = baseR * 2;

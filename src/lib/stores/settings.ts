@@ -59,6 +59,11 @@ interface Settings {
     public: boolean;
     tracks: boolean;
   };
+  /** Show the orange "ripe / edible now" rings around pins whose
+   *  species is currently in its forage window. Defaults true so
+   *  the visual signal is present out of the box; user can flip
+   *  off in Layers when they find the rings noisy. */
+  showEdibleRings: boolean;
 }
 export type MapLayerKey = 'mine' | 'friends' | 'group' | 'public' | 'tracks';
 const DEFAULT: Settings = {
@@ -69,7 +74,8 @@ const DEFAULT: Settings = {
   showHeatmap: false,
   showZones: false,
   colorTracksByDate: true,
-  mapLayers: { mine: true, friends: true, group: true, public: true, tracks: true }
+  mapLayers: { mine: true, friends: true, group: true, public: true, tracks: true },
+  showEdibleRings: true
 };
 
 const ALLOWED_LICENSES: PhotoLicense[] = [
@@ -105,7 +111,8 @@ function normalize(s: Partial<Settings>): Settings {
       group:   s.mapLayers?.group   !== false,
       public:  s.mapLayers?.public  !== false,
       tracks:  s.mapLayers?.tracks  !== false
-    }
+    },
+    showEdibleRings: s.showEdibleRings !== false
   };
 }
 
@@ -151,6 +158,10 @@ export function setShowHeatmap(v: boolean): void {
 
 export function setShowZones(v: boolean): void {
   settings.update((s) => ({ ...s, showZones: v }));
+}
+
+export function setShowEdibleRings(v: boolean): void {
+  settings.update((s) => ({ ...s, showEdibleRings: v }));
 }
 
 export function setColorTracksByDate(v: boolean): void {

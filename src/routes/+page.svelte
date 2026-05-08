@@ -39,7 +39,7 @@
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
   import AddressSearch from '$lib/components/AddressSearch.svelte';
   import SignupBanner from '$lib/components/SignupBanner.svelte';
-  import { settings, setMapLayer, setShowZones, type MapLayerKey } from '$lib/stores/settings';
+  import { settings, setMapLayer, setShowZones, setShowEdibleRings, type MapLayerKey } from '$lib/stores/settings';
   import { profile } from '$lib/stores/profile';
   import {
     enabledIds,
@@ -290,26 +290,90 @@
     return GROUP_LABELS[genus] ?? genus;
   }
 
-  /** Group a flat species list by genus label. Sorted by canonical
-   *  category order (fruit → nut → mushroom → other), then by group
-   *  label alphabetically within each category bucket. The category
-   *  for a group is taken from any of its species (they're all in the
-   *  same group, so they'll share a category). */
+  /** Friendly label for an interest_tag id. Mirrors INTEREST_GROUPS
+   *  in src/lib/utils/interestGroups.ts but inlined here so the page
+   *  doesn't need to import the spec list. The species panel uses
+   *  these labels to group species by what foragers call them
+   *  ("Edible flowers & aromatics") instead of by Latin genus. */
+  const INTEREST_TAG_LABEL: Record<string, string> = {
+    tree_fruit: 'Tree fruit',
+    mediterranean_tropical_fruit: 'Mediterranean & tropical fruit',
+    bramble_berry: 'Berries & brambles',
+    nut_easy: 'Nuts — easy',
+    nut_intensive: 'Nuts — intensive',
+    sap_syrup: 'Sap & syrup',
+    flower_aromatic: 'Edible flowers & aromatics',
+    wild_green: 'Wild greens & herbs',
+    mushroom_beginner: 'Mushrooms — beginner',
+    mushroom_advanced: 'Mushrooms — advanced',
+    root_tuber: 'Roots & tubers'
+  };
+  /** Order in which interest groups appear in the dropdown. Mirrors
+   *  INTEREST_GROUPS list ordering. Anything not in this list falls
+   *  to the bottom under 'Other'. */
+  const INTEREST_TAG_ORDER = [
+    'tree_fruit',
+    'mediterranean_tropical_fruit',
+    'bramble_berry',
+    'nut_easy',
+    'nut_intensive',
+    'sap_syrup',
+    'flower_aromatic',
+    'wild_green',
+    'mushroom_beginner',
+    'mushroom_advanced',
+    'root_tuber'
+  ];
+  function panelGroupOf(s: Species): string {
+    // Database.types.ts hasn't been regenerated since interest_tags
+    // was added to the schema; cast through Record to get at it.
+    const tags = ((s as unknown as Record<string, unknown>).interest_tags ?? []) as string[];
+    // First tag in INTEREST_TAG_ORDER wins; fallback to first tag
+    // alphabetically; else 'Other'.
+    let bestIdx = Infinity;
+    let best: string | null = null;
+    for (const t of tags) {
+      const idx = INTEREST_TAG_ORDER.indexOf(t);
+      if (idx >= 0 && idx < bestIdx) {
+        bestIdx = idx;
+        best = t;
+      } else if (best === null && idx < 0) {
+        best = t; // fallback to a non-canonical tag if no canonical
+      }
+    }
+    if (best && INTEREST_TAG_LABEL[best]) return INTEREST_TAG_LABEL[best];
+    if (best) return best;
+    return 'Other';
+  }
+
+  /** Group a flat species list by user-facing interest group ("Tree
+   *  fruit", "Edible flowers & aromatics", …). Sorted by INTEREST_TAG_ORDER
+   *  so the dropdown ordering matches the welcome flow. Per-species
+   *  colors on the map still come from groupOf() which keeps genus-
+   *  level distinction. */
   function groupSpecies(list: Species[]): [string, Species[]][] {
     const m: Record<string, Species[]> = {};
     for (const s of list) {
-      const g = groupOf(s);
+      const g = panelGroupOf(s);
       if (!m[g]) m[g] = [];
       m[g].push(s);
     }
-    const groupCat = (sp: Species): SpeciesCat =>
-      (categoryBySpecies[sp.id] as SpeciesCat) ?? 'other';
-    return Object.entries(m).sort((a, b) => {
-      const ca = CAT_ORDER.indexOf(groupCat(a[1][0]));
-      const cb = CAT_ORDER.indexOf(groupCat(b[1][0]));
-      if (ca !== cb) return ca - cb;
-      return a[0].localeCompare(b[0]);
-    });
+    const orderIdx = (label: string): number => {
+      // Map label back to its INTEREST_TAG_ORDER position via the
+      // label table; unknown labels go to the bottom.
+      for (let i = 0; i < INTEREST_TAG_ORDER.length; i++) {
+        if (INTEREST_TAG_LABEL[INTEREST_TAG_ORDER[i]] === label) return i;
+      }
+      return Infinity;
+    };
+    return Object.entries(m)
+      .map(([g, arr]) => [g, arr.sort((a, b) => a.common_name.localeCompare(b.common_name))] as [string, Species[]])
+      .sort((a, b) => {
+        const ia = orderIdx(a[0]);
+        const ib = orderIdx(b[0]);
+        if (ia !== ib) return ia - ib;
+        return a[0].localeCompare(b[0]);
+      });
   }
 
   $: filteredSpeciesList = speciesInRegion.filter((s) => {
@@ -343,6 +407,9 @@
   }
   function onZonesToggle(e: Event) {
     setShowZones((e.currentTarget as HTMLInputElement).checked);
+  }
+  function onEdibleRingsToggle(e: Event) {
+    setShowEdibleRings((e.currentTarget as HTMLInputElement).checked);
   }
   /** Brief 'X / Y on' summary for the panel button. */
   $: layersOnCount = (() => {
@@ -474,10 +541,14 @@
   };
 
   /** Map a group label to one of the legend-shape glyphs based on the
-   *  category of any species in the group. (All species in a group
-   *  share a category, so picking the first works.) */
+   *  category of any species in the group. Tries genus-based groupOf
+   *  first (legend uses these labels) then panelGroupOf (the species
+   *  dropdown labels — e.g. "Tree fruit"); whichever matches a species
+   *  picks the shape from that species' category. */
   function shapeForGroup(group: string): 'circle' | 'square' | 'triangle' | 'diamond' | 'star' {
-    const sp = speciesInRegion.find((s) => groupOf(s) === group);
+    const sp =
+      speciesInRegion.find((s) => groupOf(s) === group) ??
+      speciesInRegion.find((s) => panelGroupOf(s) === group);
     const cat = sp ? categoryBySpecies[sp.id] : null;
     if (cat === 'bramble') return 'star';
     if (cat === 'nut') return 'square';
@@ -537,12 +608,14 @@
     // Category filter (Fruit trees / Brambles / Nuts / Mushrooms / Other).
     const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
     if (cat && !visibleCats.has(cat)) return false;
-    // Species filter
-    // Species filter uses the deny-list ($disabledIds): a species the
-    // user hasn't expressed an opinion on stays visible, which matters
-    // for the public layer (NYC street trees, etc. that aren't in the
-    // user's Ithaca-scoped opt-in list).
+    // Species filter — combines two layers:
+    // 1. $disabledIds (persistent /interests deny-list): species the
+    //    user opted out of long-term.
+    // 2. $panelSelection (in-memory dropdown checkboxes): an explicit
+    //    "show only these" set when user unchecks species in the
+    //    Species dropdown. null = no panel filter.
     if (p.species_id && $disabledIds.has(p.species_id)) return false;
+    if (selectedSpeciesIds !== null && p.species_id && !selectedSpeciesIds.has(p.species_id)) return false;
     // Cookbook filter — pin's species must have the chosen prep method.
     if (cookbookSpeciesIds !== null) {
       if (!p.species_id || !cookbookSpeciesIds.has(p.species_id)) return false;
@@ -578,8 +651,11 @@
   /** Pins after the species/category filters but before the status
    *  filter — used as the denominator for counts in the dropdown. */
   $: speciesFilteredPins = pins.filter((p) => {
-    // Same deny-list semantics as filteredPins above.
-    return !(p.species_id && $disabledIds.has(p.species_id));
+    // Same species-filter semantics as filteredPins above (deny-list
+    // + panel selection).
+    if (p.species_id && $disabledIds.has(p.species_id)) return false;
+    if (selectedSpeciesIds !== null && p.species_id && !selectedSpeciesIds.has(p.species_id)) return false;
+    return true;
   }).filter((p) => {
     const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
     return !cat || visibleCats.has(cat);
@@ -1223,6 +1299,15 @@
               <span class="layer-name">USDA zones</span>
               <span class="layer-hint">Plant Hardiness overlay (US only)</span>
             </label>
+            <label class="layer-row">
+              <input
+                type="checkbox"
+                checked={$settings.showEdibleRings}
+                on:change={onEdibleRingsToggle}
+              />
+              <span class="layer-name">Edible-now glow</span>
+              <span class="layer-hint">Soft warm halo on pins ripe today</span>
+            </label>
           </div>
         {/if}
       </div>
@@ -1241,6 +1326,7 @@
     displayedTracks={$settings.mapLayers.tracks ? displayedTrackPolylines : []}
     colorTracksByDate={$settings.colorTracksByDate}
     showZones={$settings.showZones}
+    showEdibleRings={$settings.showEdibleRings}
     showRecorder={!!$session}
     {categoryOf}
     colorOf={colorOfPin}
@@ -1312,7 +1398,7 @@
     <header class="panel-header">
       <h2>Pin</h2>
       <div class="panel-actions">
-        <a class="link" href={`/pins/${selectedPinId}`} title="Open in full page">↗</a>
+        <a class="link" href={`${base}/pins/${selectedPinId}`} title="Open in full page">↗</a>
         <button class="close" on:click={closePanel} aria-label="Close">×</button>
       </div>
     </header>
@@ -1793,11 +1879,13 @@
     overflow-y: auto;
   }
 
-  /* Legend */
+  /* Status legend — bottom-right so it doesn't collide with the
+   * stack of bottom-left controls (rain pill / recorder / track-
+   * legend). Sits above Leaflet's attribution strip. */
   .legend {
     position: fixed;
-    bottom: 1rem;
-    left: 1rem;
+    bottom: 1.6rem;
+    right: 0.75rem;
     z-index: 600;
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid #d0d8d0;
@@ -1903,8 +1991,8 @@
   }
   .legend-show {
     position: fixed;
-    bottom: 1rem;
-    left: 1rem;
+    bottom: 1.6rem;
+    right: 0.75rem;
     z-index: 600;
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid #d0d8d0;
