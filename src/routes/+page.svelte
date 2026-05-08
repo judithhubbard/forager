@@ -1035,8 +1035,11 @@
         // there are ~13k pins inside a single zoom-13 bbox. Server
         // hard-caps still apply (region RPC: 2000, public RPC: 2500
         // post-migration 46).
-        const ownCap = zoom >= 16 ? 2000 : zoom >= 14 ? 1500 : 1000;
-        const pubCap = zoom >= 16 ? 2500 : zoom >= 14 ? 1500 : 800;
+        // Decimation caps the result by visual cell count, so the
+        // request cap can be high without bloating responses. Server
+        // hard-caps at 15000 (migration 54).
+        const ownCap = 8000;
+        const pubCap = 12000;
         const [own, pub, ownSum, pubSum] = await Promise.all([
           useRegion && region ? listRegionPins(region.id, bbox, ownCap) : Promise.resolve([]),
           listPublicPins(bbox, pubCap),
