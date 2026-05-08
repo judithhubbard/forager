@@ -1163,6 +1163,9 @@
   <!-- (Build SHA chip moved out of the map corner; the page-level
        filterbar in +page.svelte renders it inline next to the pin
        count, where it never collides with map controls.) -->
+  {#if currentZoom != null}
+    <div class="zoom-chip" title="Current zoom level">z{currentZoom}</div>
+  {/if}
   {#if placing}
     <div class="placing-hint" role="status">{placingHint}</div>
   {/if}
@@ -1437,6 +1440,23 @@
      in case Map.svelte ever needs a local build chip again, but
      no element currently has the .build-chip class. */
   .build-chip { display: none; }
+
+  /* Zoom-level chip (re-added per user request). Bottom-right,
+     above Leaflet's attribution. */
+  .zoom-chip {
+    position: absolute;
+    bottom: 1.6rem;
+    right: 0.5rem;
+    z-index: 600;
+    padding: 0.18rem 0.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #d0d8d0;
+    border-radius: 0.3rem;
+    font-size: 0.78rem;
+    color: #4a554a;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
 
   /* Track recency legend. Sits in the bottom-left stack just
      above the recorder pill so it visually associates with the
