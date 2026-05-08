@@ -157,6 +157,13 @@
    *  as undesirable). Pins of these species render with a warning-red
    *  stroke. Empty set = no invasive treatment. */
   export let invasiveSpeciesIds: Set<string> = new Set();
+  /** Set of species_ids that are NOT foragable (inedible invasives —
+   *  tree of heaven, Norway maple, English ivy, etc.). Pins of these
+   *  species get an extra-muted fill so they read as "do not eat,
+   *  remove" rather than "harvest me." Always a subset of
+   *  invasiveSpeciesIds (catalog discipline: only flagged invasives
+   *  get foragable=false). */
+  export let nonForagableSpeciesIds: Set<string> = new Set();
 
   /** Setting this prop animates the map to the given location. Parent
    *  passes a fresh object on each desired fly (e.g. after a geocode
@@ -284,9 +291,11 @@
   // compiler tracks it as a real reactive dependency — a `void colorOf`
   // hint inside the block was fragile across Svelte versions.
   $: if (map && markerLayer && LCache) {
-    // Track invasiveSpeciesIds explicitly so toggling a flag in the
-    // pin-detail panel re-renders the marker stroke immediately.
+    // Track invasive sets explicitly so toggling a flag in the
+    // pin-detail panel re-renders the marker stroke + fill
+    // immediately.
     void invasiveSpeciesIds;
+    void nonForagableSpeciesIds;
     renderPins(pins, selectedPinId, colorOf, categoryOf);
   }
   // Cluster numbered-dot rendering re-wired in migration 58 +
@@ -720,6 +729,7 @@
       pin.effective_status ?? '',
       pin.is_inaccessible ? 1 : 0,
       pin.species_id && invasiveSpeciesIds.has(pin.species_id) ? 1 : 0,
+      pin.species_id && nonForagableSpeciesIds.has(pin.species_id) ? 1 : 0,
       labelOf(pin)
     ].join('|');
   }
@@ -740,7 +750,12 @@
     const isPossibly = pin.is_edible_now === true;
     const muted = pin.effective_status === 'gone' || pin.effective_status === 'dormant';
     const inaccessible = pin.is_inaccessible === true;
-    const fillOpacity = inaccessible ? 0.2 : muted ? 0.45 : 0.9;
+    const inedibleInvasive = pin.species_id ? nonForagableSpeciesIds.has(pin.species_id) : false;
+    // Inedible invasives get a muted fill so they read as "remove"
+    // rather than "harvest." Only applies when the pin isn't already
+    // muted by status (gone/dormant) or inaccessibility, since those
+    // are stronger signals.
+    const fillOpacity = inaccessible ? 0.2 : muted ? 0.45 : inedibleInvasive ? 0.5 : 0.9;
     const baseR = isTouch ? 6 : 4.5;
     const group = L.layerGroup();
 

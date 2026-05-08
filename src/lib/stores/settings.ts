@@ -64,6 +64,13 @@ interface Settings {
    *  the visual signal is present out of the box; user can flip
    *  off in Layers when they find the rings noisy. */
   showEdibleRings: boolean;
+  /** Show pins of inedible-but-flagged-invasive species (tree of
+   *  heaven, Norway maple, English ivy, etc). Defaults off — Forager
+   *  is foraging-first, the management-mode layer is opt-in for
+   *  users who want a "where to pull invasives" view. Toggling on
+   *  doesn't hide foragable species; it adds the inedible invasives
+   *  on top. */
+  showInvasives: boolean;
 }
 export type MapLayerKey = 'mine' | 'friends' | 'group' | 'public' | 'tracks';
 const DEFAULT: Settings = {
@@ -75,7 +82,8 @@ const DEFAULT: Settings = {
   showZones: false,
   colorTracksByDate: true,
   mapLayers: { mine: true, friends: true, group: true, public: true, tracks: true },
-  showEdibleRings: true
+  showEdibleRings: true,
+  showInvasives: false
 };
 
 const ALLOWED_LICENSES: PhotoLicense[] = [
@@ -112,7 +120,8 @@ function normalize(s: Partial<Settings>): Settings {
       public:  s.mapLayers?.public  !== false,
       tracks:  s.mapLayers?.tracks  !== false
     },
-    showEdibleRings: s.showEdibleRings !== false
+    showEdibleRings: s.showEdibleRings !== false,
+    showInvasives: s.showInvasives === true
   };
 }
 
@@ -154,6 +163,10 @@ export function setDefaultPhotoLicense(lic: PhotoLicense): void {
 
 export function setShowHeatmap(v: boolean): void {
   settings.update((s) => ({ ...s, showHeatmap: v }));
+}
+
+export function setShowInvasives(v: boolean): void {
+  settings.update((s) => ({ ...s, showInvasives: v }));
 }
 
 export function setShowZones(v: boolean): void {

@@ -3,12 +3,21 @@
 import { supabase } from '$lib/supabase';
 import type { Database } from '$lib/database.types';
 
-/** Species row + the image columns added in 20260506000028. The
- *  generated database.types.ts hasn't been regenerated, so we
- *  extend the row type here. Same pattern as profile.is_global_admin. */
+/** Species row + columns added after database.types.ts was last
+ *  regenerated. Same pattern as profile.is_global_admin.
+ *  - image_url, image_attribution: 20260506000028
+ *  - invasive_flag_count: 20260508000068 (denormalized counter)
+ *  - identification_notes, management_notes: 20260508000069
+ *    (content for both foragable AND inedible-invasive entries)
+ *  - is_forageable: existing column we now read explicitly so the
+ *    "Show invasives" layer can filter by it.
+ */
 export type Species = Database['public']['Tables']['species']['Row'] & {
   image_url: string | null;
   image_attribution: string | null;
+  invasive_flag_count: number;
+  identification_notes: string | null;
+  management_notes: string | null;
 };
 
 let cache: Species[] | null = null;

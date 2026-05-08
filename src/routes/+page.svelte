@@ -56,6 +56,7 @@
     setMapLayer,
     setShowZones,
     setShowEdibleRings,
+    setShowInvasives,
     setBasemap,
     setColorBy,
     type MapLayerKey,
@@ -283,6 +284,22 @@
     }
     return ids;
   })();
+  /** Species that are flagged invasive AND not foragable (tree of
+   *  heaven, Norway maple, etc). When the "Show invasives" Layers
+   *  toggle is off (default), pins of these species are excluded
+   *  from the map and the species panel — keeps Forager
+   *  foraging-first. When on, they're added on top of the foragable
+   *  layer (rendered with the same warning-red stroke from the
+   *  invasive flag, plus a darker fill from buildPinLayerGroup). */
+  $: inedibleInvasiveIds = (() => {
+    const ids = new Set<string>();
+    for (const s of species) {
+      const c = (s as unknown as { invasive_flag_count?: number }).invasive_flag_count ?? 0;
+      const f = (s as unknown as { is_forageable?: boolean }).is_forageable;
+      if (c > 0 && f === false) ids.add(s.id);
+    }
+    return ids;
+  })();
   /** Species filter — session-only (not persisted). The panel's Clear
    *  / Select-all / individual-checkbox flips are ephemeral viewport
    *  filters; the long-term active set lives on /interests. Resetting
@@ -444,6 +461,10 @@
   }
 
   $: filteredSpeciesList = speciesInRegion.filter((s) => {
+    // Hide inedible invasives from the species panel unless the user
+    // has opted into the management view. Otherwise the panel shows
+    // 10+ "checked" species producing zero pins on the map.
+    if (inedibleInvasiveIds.has(s.id) && !$settings.showInvasives) return false;
     const cat = (categoryBySpecies[s.id] as SpeciesCat) ?? 'other';
     return visibleCats.has(cat);
   });
@@ -477,6 +498,9 @@
   }
   function onEdibleRingsToggle(e: Event) {
     setShowEdibleRings((e.currentTarget as HTMLInputElement).checked);
+  }
+  function onInvasivesToggle(e: Event) {
+    setShowInvasives((e.currentTarget as HTMLInputElement).checked);
   }
   function onBasemapChange(e: Event) {
     setBasemap((e.currentTarget as HTMLSelectElement).value as Basemap);
@@ -706,6 +730,13 @@
   $: filteredPins = pins.filter((p) => {
     // Layer-source filter (mine / friends / group / public).
     if (!$settings.mapLayers[sourceOf(p)]) return false;
+    // Inedible-invasive species hidden by default. The Layers toggle
+    // "Show invasives" lets users opt in to the management-mode view.
+    if (
+      p.species_id &&
+      inedibleInvasiveIds.has(p.species_id) &&
+      !$settings.showInvasives
+    ) return false;
     // Category filter (Fruit trees / Brambles / Nuts / Mushrooms / Other).
     const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
     if (cat && !visibleCats.has(cat)) return false;
@@ -1459,6 +1490,15 @@
               <span class="layer-name">Edible-now glow</span>
               <span class="layer-hint">Warm halo on ripe-today pins</span>
             </label>
+            <label class="layer-row">
+              <input
+                type="checkbox"
+                checked={$settings.showInvasives}
+                on:change={onInvasivesToggle}
+              />
+              <span class="layer-name">Show invasives</span>
+              <span class="layer-hint">Add inedible invasives (tree of heaven, knotweed…) for management</span>
+            </label>
             <hr class="layer-divider" />
             <!-- Display options. These are not pin "layers" but living
                  here keeps all map-display controls in one place. -->
@@ -1538,6 +1578,7 @@
     showZones={$settings.showZones}
     showEdibleRings={$settings.showEdibleRings}
     {invasiveSpeciesIds}
+    nonForagableSpeciesIds={inedibleInvasiveIds}
     showRecorder={!!$session}
     {categoryOf}
     colorOf={colorOfPin}

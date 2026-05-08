@@ -1025,7 +1025,41 @@
         </div>
       {/if}
 
-      {#if species && (species.image_url || species.preparation_methods?.length || species.usage_notes || species.harvest_tips || species.toxicity_notes || species.safety_notes)}
+      {#if species && species.is_forageable === false}
+        <div class="about-species manage-species">
+          <div class="about-head">
+            <strong>Management — not for foraging</strong>
+            <a class="more-link" href={base + '/species/' + species.id}>More →</a>
+          </div>
+          <div class="about-body manage-body">
+            {#if species.image_url}
+              <a class="about-thumb" href={base + '/species/' + species.id} title="Open species page">
+                <img src={species.image_url} alt={species.common_name} loading="lazy" />
+              </a>
+            {/if}
+            <div class="about-detail">
+              {#if species.identification_notes}
+                <div class="about-row manage-row">
+                  <span class="about-label">Identify:</span>
+                  <p class="manage-text">{species.identification_notes}</p>
+                </div>
+              {/if}
+              {#if species.management_notes}
+                <div class="about-row manage-row">
+                  <span class="about-label">Manage:</span>
+                  <p class="manage-text">{species.management_notes}</p>
+                </div>
+              {/if}
+              {#if species.usage_notes}
+                <div class="about-row manage-row">
+                  <span class="about-label">Why it matters:</span>
+                  <p class="manage-text">{species.usage_notes}</p>
+                </div>
+              {/if}
+            </div>
+          </div>
+        </div>
+      {:else if species && (species.image_url || species.preparation_methods?.length || species.usage_notes || species.harvest_tips || species.toxicity_notes || species.safety_notes)}
         <div class="about-species">
           <div class="about-head">
             <strong>About this species</strong>
@@ -1483,6 +1517,22 @@
     background: #fbfdfa;
     font-size: 0.85rem;
   }
+  .about-species.manage-species {
+    background: #faf0e8;
+    border-color: #d8a880;
+  }
+  .manage-species .about-head strong { color: #8a3a14; }
+  .manage-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+  .manage-row .about-label { color: #5e3920; font-weight: 600; }
+  .manage-text {
+    margin: 0;
+    color: #1f2a1f;
+    line-height: 1.4;
+  }
+  .manage-body { flex-direction: column; }
   .about-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem; }
   .about-head strong { color: #3a5a3a; font-weight: 600; }
   .about-head .more-link { color: #3a5a3a; font-size: 0.8rem; text-decoration: none; }
