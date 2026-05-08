@@ -183,6 +183,14 @@ export async function remove(photo: Photo): Promise<void> {
   });
 }
 
+/** Cache of the last successful GPS reading. Photo uploads in quick
+ *  succession from the same spot reuse it instead of re-asking the
+ *  phone (which costs battery and 0-10s of latency per ask). 2-min
+ *  staleness window — long enough for a typical "take 5 photos of
+ *  one tree" burst, short enough that the user has barely walked. */
+const GPS_CACHE_MS = 120_000;
+let lastGpsReading: { lng: number; lat: number; accuracyM: number; at: number } | null = null;
+
 /** GPS capture for photo upload (PLAN §B8). Falls back to pinFallback. */
 export async function capturePhotoLocation(
   pinFallback: { lng: number; lat: number; accuracyM?: number | null }
@@ -195,15 +203,30 @@ export async function capturePhotoLocation(
       source: 'pin'
     };
   }
+  if (lastGpsReading && Date.now() - lastGpsReading.at < GPS_CACHE_MS) {
+    return {
+      lng: lastGpsReading.lng,
+      lat: lastGpsReading.lat,
+      accuracyM: lastGpsReading.accuracyM,
+      source: 'gps'
+    };
+  }
   return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
-      (pos) =>
+      (pos) => {
+        lastGpsReading = {
+          lng: pos.coords.longitude,
+          lat: pos.coords.latitude,
+          accuracyM: Math.round(pos.coords.accuracy),
+          at: Date.now()
+        };
         resolve({
           lng: pos.coords.longitude,
           lat: pos.coords.latitude,
           accuracyM: Math.round(pos.coords.accuracy),
           source: 'gps'
-        }),
+        });
+      },
       () =>
         resolve({
           lng: pinFallback.lng,

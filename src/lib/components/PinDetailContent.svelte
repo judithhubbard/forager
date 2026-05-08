@@ -159,10 +159,15 @@
     : null;
   $: hasInvasiveSignal = regionalInvasive.length > 0 || globalInvasive.length > 0;
 
-  async function refreshInvasiveFlags(speciesId: string | null | undefined) {
+  async function refreshInvasiveFlags(speciesId: string | null | undefined, requestedId?: string) {
     if (!speciesId) { invasiveFlags = []; return; }
     try {
-      invasiveFlags = await listFlagsForSpecies(speciesId);
+      const fetched = await listFlagsForSpecies(speciesId);
+      // If the panel switched to a different pin while we were
+      // waiting, drop the result so we don't paint stale flags onto
+      // the new pin's panel. Same gate as loadTimelineContext.
+      if (requestedId !== undefined && requestedId !== pinId) return;
+      invasiveFlags = fetched;
     } catch (err) {
       console.error('[PinDetail] invasive-flag load failed', err);
     }
@@ -452,7 +457,7 @@
       loadTimelineContext(requestedId).catch((err) => {
         console.warn('[PinDetail] timeline-context load failed:', err);
       });
-      refreshInvasiveFlags(pin?.species_id ?? null).catch((err) => {
+      refreshInvasiveFlags(pin?.species_id ?? null, requestedId).catch((err) => {
         console.warn('[PinDetail] invasive-flag load failed:', err);
       });
       loadPhotos();
@@ -544,13 +549,33 @@
   }
 
   async function loadPhotos() {
-    photos = await listPhotos(pinId);
-    if (photos.length === 0) {
+    const requestedId = pinId;
+    const fetched = await listPhotos(pinId);
+    if (requestedId !== pinId) return;
+    photos = fetched;
+    if (fetched.length === 0) {
       thumbUrls = new Map();
+      fullUrls = new Map();
       return;
     }
-    const paths = photos.map((p) => p.thumbnail_path);
-    thumbUrls = await signUrls(paths, 3600);
+    // Sign thumbnail + full-size paths in one round-trip so opening
+    // the lightbox is instant. Splitting the lightbox-open into a
+    // second signUrls call cost ~500ms-2s of cellular RTT for no
+    // good reason — the cost of signing extra URLs is negligible.
+    const thumbPaths = fetched.map((p) => p.thumbnail_path);
+    const fullPaths = fetched.map((p) => p.storage_path);
+    const allSigned = await signUrls([...thumbPaths, ...fullPaths], 3600);
+    if (requestedId !== pinId) return;
+    const newThumb = new Map<string, string>();
+    const newFull = new Map<string, string>();
+    for (const p of fetched) {
+      const t = allSigned.get(p.thumbnail_path);
+      const f = allSigned.get(p.storage_path);
+      if (t) newThumb.set(p.thumbnail_path, t);
+      if (f) newFull.set(p.storage_path, f);
+    }
+    thumbUrls = newThumb;
+    fullUrls = newFull;
   }
 
   /** Holds the observation_id that the next file-input change should attach
@@ -559,9 +584,15 @@
 
   /** Per-upload license override. Defaults to the user's preference but
    *  can be flipped per-photo without changing the default. Reset to
-   *  the default whenever the panel re-opens for a different pin. */
+   *  the default whenever the panel opens a *different* pin (gated
+   *  by lastLoadedId so a same-pin refresh — e.g. after observation
+   *  save — preserves the user's per-session license choice). */
   let uploadLicense: PhotoLicense = $settings.defaultPhotoLicense;
-  $: if (pin) uploadLicense = $settings.defaultPhotoLicense;
+  let lastLicenseResetForId: string | null = null;
+  $: if (pin && pin.id !== lastLicenseResetForId) {
+    uploadLicense = $settings.defaultPhotoLicense;
+    lastLicenseResetForId = pin.id;
+  }
 
   const PHOTO_LICENSE_OPTIONS: { value: PhotoLicense; label: string }[] = [
     { value: 'CC-BY-SA-4.0',        label: 'CC BY-SA 4.0' },
@@ -659,10 +690,15 @@
       formMonth = NOW.getMonth() + 1;
       formDay = NOW.getDate();
       formPrecision = 'day';
-      observations = await listByPin(pinId);
-      // Refresh the pin so is_edible_now / has_ripe_observation_* update,
-      // then notify the parent to refetch its filtered pins.
-      pin = await getEffective(pinId);
+      // Parallelize the post-save refresh: the obs list and pin row
+      // are independent reads, so let them race instead of chaining
+      // ~500ms-2s of cellular latency back to back.
+      const [refreshedObs, refreshedPin] = await Promise.all([
+        listByPin(pinId),
+        getEffective(pinId)
+      ]);
+      observations = refreshedObs;
+      pin = refreshedPin;
       dispatch('statusChanged');
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Save failed.';
@@ -689,8 +725,12 @@
     if (!confirm('Delete this observation?')) return;
     try {
       await removeObservation(o.id, o.pin_id);
-      observations = await listByPin(pinId);
-      pin = await getEffective(pinId);
+      const [refreshedObs, refreshedPin] = await Promise.all([
+        listByPin(pinId),
+        getEffective(pinId)
+      ]);
+      observations = refreshedObs;
+      pin = refreshedPin;
       dispatch('statusChanged');
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Delete failed.';
