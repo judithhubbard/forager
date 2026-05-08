@@ -164,6 +164,11 @@ async function main() {
       });
     }
 
+    // Same trigger-disable dance as the framework / dryad importer.
+    await sql`alter table public.pins disable trigger tg_gate_public_pins`;
+    await sql`alter table public.pins disable trigger tg_pin_density_track_ins`;
+    await sql`alter table public.pins disable trigger tg_pin_density_track_upd`;
+    await sql`alter table public.pins disable trigger tg_pin_density_track_del`;
     const BATCH = 500;
     for (let i = 0; i < matched.length; i += BATCH) {
       const slice = matched.slice(i, i + BATCH);
@@ -184,6 +189,10 @@ async function main() {
         });
       }
     }
+    await sql`alter table public.pins enable trigger tg_gate_public_pins`;
+    await sql`alter table public.pins enable trigger tg_pin_density_track_ins`;
+    await sql`alter table public.pins enable trigger tg_pin_density_track_upd`;
+    await sql`alter table public.pins enable trigger tg_pin_density_track_del`;
 
     await finishImportRun(sql, runId, summary);
     await sql`select pg_advisory_unlock(hashtext(${`${regionId}:${SOURCE_ID}`}))`;

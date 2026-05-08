@@ -168,6 +168,15 @@ async function main() {
       });
     }
 
+    // Disable the visibility-gate + density-grid triggers for the
+    // bulk insert; same pattern as the framework's runImport. The
+    // gate trigger (migration 16) blocks visibility='public' writes
+    // unless auth.uid() matches a global admin — this script connects
+    // as the DB owner via SUPABASE_DB_URL so auth.uid() is null.
+    await sql`alter table public.pins disable trigger tg_gate_public_pins`;
+    await sql`alter table public.pins disable trigger tg_pin_density_track_ins`;
+    await sql`alter table public.pins disable trigger tg_pin_density_track_upd`;
+    await sql`alter table public.pins disable trigger tg_pin_density_track_del`;
     // Process in batches; each batch is one round-trip.
     const BATCH = 500;
     for (let i = 0; i < matched.length; i += BATCH) {
@@ -189,6 +198,11 @@ async function main() {
         });
       }
     }
+    // Re-enable the triggers that were disabled for the bulk insert.
+    await sql`alter table public.pins enable trigger tg_gate_public_pins`;
+    await sql`alter table public.pins enable trigger tg_pin_density_track_ins`;
+    await sql`alter table public.pins enable trigger tg_pin_density_track_upd`;
+    await sql`alter table public.pins enable trigger tg_pin_density_track_del`;
 
     await finishImportRun(sql, runId, summary);
     await sql`select pg_advisory_unlock(hashtext(${`${regionId}:${SOURCE_ID}`}))`;
