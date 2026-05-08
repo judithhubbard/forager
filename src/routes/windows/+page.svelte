@@ -16,6 +16,7 @@
     stage: string;
     start_doy: number;
     end_doy: number;
+    confidence?: string | null;
   };
 
   type ObsRow = {
@@ -172,19 +173,51 @@
     errorMessage = '';
     try {
       species = await listSpecies();
-      const [winRes, obsRes] = await Promise.all([
+      // Fetch the region's climate zone(s) so we can pick up frost-
+      // offset estimated windows that aren't tied to any specific
+      // region (region_id is NULL on those, climate_zone_id is the
+      // real key).
+      const zoneRes = await supabase
+        .from('region_climate_zones')
+        .select('climate_zone_id')
+        .eq('region_id', regionId);
+      const zoneIds: string[] = ((zoneRes.data ?? []) as Array<{ climate_zone_id: string }>)
+        .map((r) => r.climate_zone_id);
+
+      const [curatedRes, frostRes, obsRes] = await Promise.all([
+        // Curated rows for this region (the original Ithaca-curated set).
         supabase
           .from('species_fruiting_windows')
-          .select('id, species_id, region_id, stage, start_doy, end_doy')
+          .select('id, species_id, region_id, stage, start_doy, end_doy, confidence')
           .eq('region_id', regionId),
+        // Frost-offset rows for any zone(s) this region maps to.
+        // region_id is NULL on these (since they're zone-keyed estimates,
+        // not region-specific). Skip if region has no zone mapping yet.
+        zoneIds.length > 0
+          ? supabase
+              .from('species_fruiting_windows')
+              .select('id, species_id, region_id, stage, start_doy, end_doy, confidence')
+              .neq('confidence', 'curated')
+              .in('climate_zone_id', zoneIds)
+          : Promise.resolve({ data: [], error: null } as { data: WindowRow[]; error: null }),
         supabase
           .from('v_observation_with_pin')
           .select('id, species_id, stage, observed_at, pin_id, pin_display_name, quality_rating, quality_notes')
           .eq('pin_region_id', regionId)
       ]);
-      if (winRes.error) throw winRes.error;
+      if (curatedRes.error) throw curatedRes.error;
+      if (frostRes.error) throw frostRes.error;
       if (obsRes.error) throw obsRes.error;
-      windows = winRes.data ?? [];
+      // Curated rows take precedence per (species_id, stage). When a
+      // species has both a curated row for the region AND a frost-
+      // offset row for the region's zone, drop the frost-offset.
+      const curatedKeys = new Set(
+        (curatedRes.data ?? []).map((w) => `${w.species_id}|${w.stage}`)
+      );
+      const frostFiltered = (frostRes.data ?? []).filter(
+        (w) => !curatedKeys.has(`${w.species_id}|${w.stage}`)
+      );
+      windows = [...(curatedRes.data ?? []), ...frostFiltered];
       observations = obsRes.data ?? [];
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Failed to load.';
@@ -520,11 +553,15 @@
                 <div class="row-track">
                   {#each STAGES as stage}
                     {#if stages[stage]}
+                      {@const isEstimated = stages[stage].confidence && stages[stage].confidence !== 'curated'}
                       <button
                         type="button"
                         class="stage-bar"
+                        class:estimated={isEstimated}
                         style={`left: ${doyToPct(stages[stage].start_doy)}%; width: ${doyToPct(stages[stage].end_doy) - doyToPct(stages[stage].start_doy)}%; background: ${STAGE_COLORS[stage] ?? '#888'};`}
-                        title="{stage}: {doyToDate(stages[stage].start_doy)} – {doyToDate(stages[stage].end_doy)} · click to edit"
+                        title={isEstimated
+                          ? `${stage}: ${doyToDate(stages[stage].start_doy)} – ${doyToDate(stages[stage].end_doy)} · estimated from frost-date offsets — log a ripe observation to refine`
+                          : `${stage}: ${doyToDate(stages[stage].start_doy)} – ${doyToDate(stages[stage].end_doy)} · click to edit`}
                         on:click={() => openEditor(stages[stage])}
                       ></button>
                     {/if}
@@ -868,6 +905,24 @@
   }
   .stage-bar:hover { filter: brightness(1.1); }
   .stage-bar:focus-visible { outline: 2px solid #1f2a1f; outline-offset: 1px; }
+  /* Estimated (confidence = 'frost_offset') — fade the fill and use
+   * a dashed outline so the user sees this is a derived value, not
+   * curator-authored. Hovering bumps the opacity so the bar feels
+   * interactive again. Tooltip explains the source. */
+  .stage-bar.estimated {
+    opacity: 0.55;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(255, 255, 255, 0.35) 4px,
+      rgba(255, 255, 255, 0.35) 6px
+    );
+    box-shadow: inset 0 0 0 1px rgba(31, 42, 31, 0.4);
+    border: 1px dashed rgba(31, 42, 31, 0.6);
+    box-sizing: border-box;
+  }
+  .stage-bar.estimated:hover { opacity: 0.85; }
   .obs-tick {
     /* Diamond centered ON the bar marking an observation at that DOY.
        Centering vertically (rather than perching above) keeps the tick

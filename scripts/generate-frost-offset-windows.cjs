@@ -36,12 +36,9 @@ const sql = postgres(process.env.SUPABASE_DB_URL, { ssl: 'require', onnotice: ()
   for (const r of await sql`select code, id from public.climate_zones`) {
     zoneIdByCode[r.code] = r.id;
   }
-  // species_fruiting_windows.region_id is still NOT NULL (the Phase
-  // 1A cutover dropped the dependency on region for lookup but the
-  // column itself stays). Use the Ithaca region_id as a placeholder
-  // for every frost-offset row — climate_zone_id is the real key.
-  const ithacaRegion = (await sql`select id from public.regions where name = 'Ithaca, NY' limit 1`)[0];
-  if (!ithacaRegion) throw new Error('Ithaca, NY region not found');
+  // After migration 59 region_id is nullable on species_fruiting_windows.
+  // Frost-offset rows are keyed strictly by climate_zone_id, not any
+  // particular region. Set region_id = NULL.
 
   // 2. Load curated windows
   const curated = await sql`
@@ -133,10 +130,9 @@ const sql = postgres(process.env.SUPABASE_DB_URL, { ssl: 'require', onnotice: ()
     const slice = finalRows.slice(i, i + CHUNK);
     const ins = await sql`
       insert into public.species_fruiting_windows
-        (species_id, region_id, climate_zone_id, stage, start_doy, end_doy, confidence)
+        (species_id, climate_zone_id, stage, start_doy, end_doy, confidence)
       select * from unnest(
         ${slice.map(r => r.species_id)}::uuid[],
-        ${slice.map(() => ithacaRegion.id)}::uuid[],
         ${slice.map(r => r.zone_id)}::uuid[],
         ${slice.map(r => r.stage)}::stage[],
         ${slice.map(r => r.start_doy)}::int[],
