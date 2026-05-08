@@ -205,13 +205,13 @@
   // counts than a silently truncated individual-pin set.
   const CLUSTER_BELOW_ZOOM = 13;
   /** Switch from cluster mode (count badges per grid cell) to
-   *  individual-pin mode at this zoom and above. At zoom 16 the
-   *  decimation grid is 22m — most cells have at most 1-2 pins,
-   *  so individual rendering communicates more without overwhelming.
-   *  Below this, multiple pins frequently share a cell; cluster
-   *  bubbles with counts honestly tell the user "there are N trees
-   *  here." */
-  const INDIVIDUAL_AT_ZOOM = 16;
+   *  individual-pin mode at this zoom and above. Set to 14 so
+   *  clusters only appear at zoom 13 (overview / "where am I"
+   *  density), and zoom 14+ shows individual pin markers — the
+   *  user wants pins, not number-circles, whenever the rendering
+   *  is meaningful. With marker-sized grid + pagination the
+   *  individual-pin path handles z14+ densities cleanly. */
+  const INDIVIDUAL_AT_ZOOM = 14;
   /** True when the viewport pin fetch returned the maximum allowed
    *  rows — there could be more pins outside the cap. The Show
    *  dropdown appends a '+' to its counts when this is set so the
