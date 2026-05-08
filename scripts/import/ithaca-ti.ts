@@ -131,7 +131,7 @@ async function main() {
       name: SOURCE_NAME,
       url: SOURCE_URL,
       description: 'City of Ithaca street and park tree inventory.',
-      regionName: 'Ithaca shared'
+      regionName: 'Ithaca, NY'
     });
 
     await sql`select pg_advisory_lock(hashtext(${`${regionId}:${SOURCE_ID}`}))`;

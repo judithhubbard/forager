@@ -190,7 +190,7 @@ async function main() {
       name: SOURCE_NAME,
       url: SOURCE_URL,
       description: 'Cornell Botanic Gardens — accession plant collection (scraped via Garden Explorer).',
-      regionName: 'Ithaca shared'
+      regionName: 'Ithaca, NY'
     });
     await sql`select pg_advisory_lock(hashtext(${`${regionId}:${SOURCE_ID}`}))`;
     const runId = await startImportRun(sql, SOURCE_ID, userId);

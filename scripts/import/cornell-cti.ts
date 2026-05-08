@@ -134,7 +134,7 @@ async function main() {
       name: SOURCE_NAME,
       url: SOURCE_URL,
       description: 'Cornell University Geospatial Information Repository — campus tree inventory.',
-      regionName: 'Ithaca shared'
+      regionName: 'Ithaca, NY'
     });
 
     // Take an advisory lock so two admins cannot run this simultaneously.
