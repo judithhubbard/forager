@@ -120,21 +120,29 @@
   }
 
   async function initRegionsAndLoad(): Promise<void> {
-    // Find regions with at least one fruiting-window row, plus their
-    // names. Distinct on (region_id) via a small post-process since
-    // PostgREST doesn't have a clean DISTINCT in select(...).
-    const { data, error } = await supabase
-      .from('species_fruiting_windows')
-      .select('region_id, regions!inner(name)');
-    if (error) {
-      errorMessage = error.message;
+    // Find regions that have either at least one curated fruiting-window
+    // row OR at least one observation — both sources contribute data
+    // worth showing on this page.
+    const [winRes, obsRes] = await Promise.all([
+      supabase.from('species_fruiting_windows').select('region_id, regions!inner(name)'),
+      supabase.from('v_observation_with_pin').select('pin_region_id, regions:pin_region_id ( name )' as never)
+    ]);
+    if (winRes.error) {
+      errorMessage = winRes.error.message;
       loading = false;
       return;
     }
     const seen = new Map<string, string>();
-    for (const r of (data ?? []) as Array<{ region_id: string; regions: { name: string } | null }>) {
+    for (const r of (winRes.data ?? []) as Array<{ region_id: string; regions: { name: string } | null }>) {
       if (r.region_id && !seen.has(r.region_id)) {
         seen.set(r.region_id, r.regions?.name ?? '(unknown)');
+      }
+    }
+    if (!obsRes.error) {
+      for (const r of (obsRes.data ?? []) as unknown as Array<{ pin_region_id: string; regions: { name: string } | null }>) {
+        if (r.pin_region_id && !seen.has(r.pin_region_id)) {
+          seen.set(r.pin_region_id, r.regions?.name ?? '(unknown)');
+        }
       }
     }
     regionsWithWindows = [...seen.entries()]
@@ -235,12 +243,24 @@
    *  Falls back to a full year if no windows are loaded. Months outside
    *  this range are not labeled. */
   $: timelineRange = (() => {
-    if (windows.length === 0) return { start: 1, end: 365, span: 364 };
-    let lo = 365, hi = 1;
+    let lo = 365, hi = 1, any = false;
     for (const w of windows) {
       if (w.start_doy < lo) lo = w.start_doy;
       if (w.end_doy > hi) hi = w.end_doy;
+      any = true;
     }
+    // Observations also widen the range so observation-only species
+    // (no curated window in this region) still render their ticks
+    // inside the visible chart.
+    for (const o of observations) {
+      if (!o.observed_at) continue;
+      const d = dateToDoy(o.observed_at);
+      if (!Number.isFinite(d)) continue;
+      if (d < lo) lo = d;
+      if (d > hi) hi = d;
+      any = true;
+    }
+    if (!any) return { start: 1, end: 365, span: 364 };
     const start = Math.max(1, lo - 14);
     const end = Math.min(365, hi + 14);
     return { start, end, span: Math.max(1, end - start) };
@@ -290,39 +310,71 @@
     Cantharellus: 'Mushroom', Morchella: 'Mushroom',
     Allium: 'Other', Asparagus: 'Other', Mentha: 'Other'
   };
+  /** High-level group label for a species, derived from interest_tags
+   *  (added in migration 29). One species can have multiple tags
+   *  (e.g. Sambucus is both tree_fruit and flower_aromatic) — picks
+   *  the first by the priority order below.
+   *
+   *  This replaces the earlier per-genus grouping (one row per genus
+   *  like Apple / Cherry / Hickory) which made the chart very long.
+   *  At ~100 species the per-genus chart had ~50 rows; the high-level
+   *  grouping has 8. */
+  const GROUP_PRIORITY: Array<{ tag: string; label: string }> = [
+    { tag: 'tree_fruit',                   label: 'Tree fruit' },
+    { tag: 'mediterranean_tropical_fruit', label: 'Mediterranean & tropical fruit' },
+    { tag: 'bramble_berry',                label: 'Berries & brambles' },
+    { tag: 'nut_easy',                     label: 'Nuts' },
+    { tag: 'nut_intensive',                label: 'Nuts' },
+    { tag: 'sap_syrup',                    label: 'Sap' },
+    { tag: 'flower_aromatic',              label: 'Flowers & aromatics' },
+    { tag: 'wild_green',                   label: 'Wild greens & herbs' },
+    { tag: 'mushroom_beginner',            label: 'Mushrooms' },
+    { tag: 'mushroom_advanced',            label: 'Mushrooms' },
+    { tag: 'root_tuber',                   label: 'Roots & tubers' }
+  ];
+  /** Group sort order — same shape as the welcome flow's INTEREST_GROUPS. */
+  const GROUP_ORDER: Record<string, number> = (() => {
+    const seen = new Set<string>();
+    const out: Record<string, number> = {};
+    let i = 0;
+    for (const { label } of GROUP_PRIORITY) {
+      if (!seen.has(label)) { seen.add(label); out[label] = i++; }
+    }
+    out['Other'] = i;
+    return out;
+  })();
   function groupOf(s: Species): string {
-    if (s.scientific_name === 'Prunus dulcis') return 'Almond';
-    // Each Rubus species is its own group on the timeline too.
-    if (s.scientific_name.startsWith('Rubus ')) return s.common_name;
-    const genus = s.scientific_name.split(/\s+/)[0];
-    return GROUP_LABELS[genus] ?? genus;
+    const tags = ((s as unknown as { interest_tags?: string[] }).interest_tags) ?? [];
+    for (const p of GROUP_PRIORITY) {
+      if (tags.includes(p.tag)) return p.label;
+    }
+    return 'Other';
   }
 
-  /** Category derived from forage_parts (matches the main map's logic).
-   *  Sort order is fruit → nut → mushroom → other; everything else last. */
-  const CATEGORY_ORDER: Record<string, number> = {
-    fruit: 0, nut: 1, mushroom: 2, other: 3
-  };
-  function categoryOf(s: Species): 'fruit' | 'nut' | 'mushroom' | 'other' {
-    const parts = s.forage_parts ?? [];
-    if (parts.includes('mushroom')) return 'mushroom';
-    if (parts.includes('nut')) return 'nut';
-    if (parts.includes('fruit')) return 'fruit';
-    return 'other';
-  }
-
-  $: speciesWithWindows = Object.entries(windowsBySpecies)
-    .map(([id, stages]) => ({ id, species: speciesById[id], stages }))
-    .filter((r) => r.species)
-    .sort((a, b) => {
-      const ca = CATEGORY_ORDER[categoryOf(a.species)] ?? 99;
-      const cb = CATEGORY_ORDER[categoryOf(b.species)] ?? 99;
-      if (ca !== cb) return ca - cb;
+  /** Species that get a row on the timeline = species with curated
+   *  windows OR with at least one observation in this region. The
+   *  observation-only species let users see "the community has data
+   *  here even though no curated bar exists" — observations are
+   *  authoritative even without a formal window. Curated stages are
+   *  rendered as bars; observation-only rows show ticks alone. */
+  $: speciesWithWindows = (() => {
+    const ids = new Set<string>([...Object.keys(windowsBySpecies)]);
+    for (const id of Object.keys(obsBySpecies)) ids.add(id);
+    const rows: Array<{ id: string; species: Species; stages: Record<string, WindowRow> }> = [];
+    for (const id of ids) {
+      const sp = speciesById[id];
+      if (!sp) continue;
+      rows.push({ id, species: sp, stages: windowsBySpecies[id] ?? {} });
+    }
+    return rows.sort((a, b) => {
       const ga = groupOf(a.species);
       const gb = groupOf(b.species);
-      if (ga !== gb) return ga.localeCompare(gb);
+      const oa = GROUP_ORDER[ga] ?? 99;
+      const ob = GROUP_ORDER[gb] ?? 99;
+      if (oa !== ob) return oa - ob;
       return a.species.common_name.localeCompare(b.species.common_name);
     });
+  })();
 
   /** Bucket the sorted species list into consecutive groups (genus
    *  buckets like "Apple / Pear", "Cornelian cherry") so the timeline
@@ -728,12 +780,17 @@
     color: #6b7a6b;
   }
   .month-row {
-    position: relative;
-    height: 1rem;
+    position: sticky;
+    top: 56px; /* matches the page header height */
+    z-index: 5;
+    background: #fafcf6;
+    height: 1.2rem;
     margin-left: var(--left-offset);
     margin-bottom: 0.3rem;
+    padding: 0.15rem 0;
     font-size: 0.7rem;
     color: #6b7a6b;
+    border-bottom: 1px solid #d8e0d0;
   }
   .month-tick {
     position: absolute;
