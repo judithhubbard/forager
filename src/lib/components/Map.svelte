@@ -153,6 +153,11 @@
    *  edible. Defaults true; toggled from the Layers panel. */
   export let showEdibleRings: boolean = true;
 
+  /** Set of species_ids that have any invasive flag (community-flagged
+   *  as undesirable). Pins of these species render with a warning-red
+   *  stroke. Empty set = no invasive treatment. */
+  export let invasiveSpeciesIds: Set<string> = new Set();
+
   /** Setting this prop animates the map to the given location. Parent
    *  passes a fresh object on each desired fly (e.g. after a geocode
    *  result is picked); we never null it back out — Svelte fires the
@@ -279,6 +284,9 @@
   // compiler tracks it as a real reactive dependency — a `void colorOf`
   // hint inside the block was fragile across Svelte versions.
   $: if (map && markerLayer && LCache) {
+    // Track invasiveSpeciesIds explicitly so toggling a flag in the
+    // pin-detail panel re-renders the marker stroke immediately.
+    void invasiveSpeciesIds;
     renderPins(pins, selectedPinId, colorOf, categoryOf);
   }
   // Cluster numbered-dot rendering re-wired in migration 58 +
@@ -711,6 +719,7 @@
       showEdibleRings ? 1 : 0,
       pin.effective_status ?? '',
       pin.is_inaccessible ? 1 : 0,
+      pin.species_id && invasiveSpeciesIds.has(pin.species_id) ? 1 : 0,
       labelOf(pin)
     ].join('|');
   }
@@ -762,7 +771,8 @@
     const px = baseR * 2;
     const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
     const opacityCss = fillOpacity.toFixed(2);
-    const html = shapeHtml(cat, fillVisible, opacityCss, px);
+    const isInvasive = pin.species_id ? invasiveSpeciesIds.has(pin.species_id) : false;
+    const html = shapeHtml(cat, fillVisible, opacityCss, px, false, isInvasive);
     L.marker([lat, lng], {
       icon: L.divIcon({
         className: 'forager-shape',
@@ -1008,7 +1018,8 @@
     fill: string,
     opacity: string,
     px: number,
-    dotted: boolean = false
+    dotted: boolean = false,
+    invasive: boolean = false
   ): string {
     const box = px + 4;
     const cx = box / 2;
@@ -1017,8 +1028,11 @@
     // Dark stroke + thin white halo via drop-shadow gives contrast on
     // both light tiles (the dark stroke pops) and dark tiles (the
     // white halo separates the shape from the background).
-    const stroke = '#1f2a1f';
-    const sw = 1.4;
+    // Invasive species get a warm warning-red stroke + heavier width
+    // so they read as "watch out" at a glance without disturbing
+    // shape-by-category or color-by-group encoding.
+    const stroke = invasive ? '#b03030' : '#1f2a1f';
+    const sw = invasive ? 2.2 : 1.4;
     // 2,1.6 dash pattern is small enough to read on a 12px shape but
     // large enough to be obviously NOT a solid stroke at a glance.
     const dashAttr = dotted ? ' stroke-dasharray="2,1.6"' : '';

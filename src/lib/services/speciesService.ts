@@ -25,6 +25,14 @@ export async function listAll(): Promise<Species[]> {
   return cache;
 }
 
+/** Drop the cache so the next listAll() refetches. Call after any
+ *  write that modifies a species row — invasive-flag toggles,
+ *  curation edits — so map symbology and the species panel pick up
+ *  the change without a hard reload. */
+export function clearCache(): void {
+  cache = null;
+}
+
 /** Curatable subset of species fields. Editable by global admins
  *  via the in-app /species/[id] curation UI. Other columns
  *  (scientific_name, common_name, aliases, taxonomy) are not

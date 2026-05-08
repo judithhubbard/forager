@@ -18,7 +18,12 @@
     type Hazard,
     type HazardType
   } from '$lib/services/hazardService';
-  import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
+  import {
+    listAll as listSpecies,
+    clearCache as clearSpeciesCache,
+    type Species
+  } from '$lib/services/speciesService';
+  import { bumpDataChange } from '$lib/stores/dataChange';
   import {
     listByPin,
     create as createObservation,
@@ -172,6 +177,11 @@
       if (mine) await removeInvasiveFlag(pin.species_id, regionId);
       else await addInvasiveFlag(pin.species_id, regionId);
       await refreshInvasiveFlags(pin.species_id);
+      // Drop the species-list cache + bump dataChange so the parent
+      // map re-fetches species and re-renders pins with the updated
+      // invasive_flag_count (drives the warning-red stroke).
+      clearSpeciesCache();
+      bumpDataChange();
     } catch (err) {
       invasiveError = err instanceof Error ? err.message : 'Could not save flag.';
     } finally {

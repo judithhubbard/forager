@@ -268,6 +268,21 @@
   }
 
   let species: Species[] = [];
+  /** Species ids that have any community invasive flag. Used by the
+   *  map renderer to draw a warning-red stroke on those pins. Derived
+   *  from the in-memory species list, which is reloaded on the same
+   *  $dataChange ticks as everything else, so a freshly added flag
+   *  reflects within one server round-trip. The species table now has
+   *  invasive_flag_count (migration 68) but generated types haven't
+   *  caught up; cast through unknown so the read works. */
+  $: invasiveSpeciesIds = (() => {
+    const ids = new Set<string>();
+    for (const s of species) {
+      const c = (s as unknown as { invasive_flag_count?: number }).invasive_flag_count ?? 0;
+      if (c > 0) ids.add(s.id);
+    }
+    return ids;
+  })();
   /** Species filter — session-only (not persisted). The panel's Clear
    *  / Select-all / individual-checkbox flips are ephemeral viewport
    *  filters; the long-term active set lives on /interests. Resetting
@@ -1522,6 +1537,7 @@
     colorTracksByDate={$settings.colorTracksByDate}
     showZones={$settings.showZones}
     showEdibleRings={$settings.showEdibleRings}
+    {invasiveSpeciesIds}
     showRecorder={!!$session}
     {categoryOf}
     colorOf={colorOfPin}
