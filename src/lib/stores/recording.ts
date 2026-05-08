@@ -33,6 +33,11 @@ export interface RecorderState {
   points: RecordedPoint[];
   /** Surfaces the latest geolocation error so the UI can show it. */
   error: string | null;
+  /** Set when the watchdog detects the GPS watch has gone silent
+   *  (no fix in WATCHDOG_SILENT_MS while status==='recording'). The
+   *  recorder UI shows a "GPS lost" warning so the user can react.
+   *  Cleared on the next successful fix. */
+  gpsSilent: boolean;
 }
 
 const KEY = 'forager.recording.v1';
@@ -43,7 +48,8 @@ function emptyState(): RecorderState {
     startedAt: null,
     endedAt: null,
     points: [],
-    error: null
+    error: null,
+    gpsSilent: false
   };
 }
 
@@ -61,7 +67,8 @@ function loadInitial(): RecorderState {
       startedAt: parsed.startedAt ?? null,
       endedAt: parsed.endedAt ?? null,
       points: Array.isArray(parsed.points) ? parsed.points : [],
-      error: null
+      error: null,
+      gpsSilent: false
     };
   } catch {
     return emptyState();
@@ -113,12 +120,47 @@ if (browser) {
 }
 
 let watchId: number | null = null;
+/** Wall-clock timestamp of the last GPS fix that survived filtering
+ *  (above-200m-accuracy + within-3m-of-last-point are both rejected).
+ *  Drives the watchdog: if this is more than WATCHDOG_SILENT_MS
+ *  behind Date.now() while we're nominally recording, the watch has
+ *  gone silent and we surface that to the UI. */
+let lastFixAt = 0;
+/** ms threshold before declaring the GPS watch silent. iOS Safari
+ *  can pause watchPosition silently when the tab backgrounds. 60s
+ *  is long enough that a normal indoor "no signal" gap doesn't fire,
+ *  short enough that a real glitch is caught before the user has
+ *  walked far. */
+const WATCHDOG_SILENT_MS = 60_000;
+let watchdogTimer: ReturnType<typeof setInterval> | null = null;
+let visListener: (() => void) | null = null;
 
 function clearWatch() {
   if (watchId != null && typeof navigator !== 'undefined') {
     navigator.geolocation.clearWatch(watchId);
   }
   watchId = null;
+  if (watchdogTimer != null) {
+    clearInterval(watchdogTimer);
+    watchdogTimer = null;
+  }
+  if (visListener != null && typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', visListener);
+    visListener = null;
+  }
+}
+
+/** Tear down + re-arm the geolocation watch. Called from the
+ *  watchdog when a silent stop is detected, and from the
+ *  visibilitychange handler when the user comes back to the tab
+ *  (mobile browsers sometimes pause watchPosition silently while
+ *  backgrounded). Idempotent. */
+function rearmWatch() {
+  if (watchId != null && typeof navigator !== 'undefined') {
+    navigator.geolocation.clearWatch(watchId);
+  }
+  watchId = null;
+  startWatch();
 }
 
 function startWatch() {
@@ -127,8 +169,14 @@ function startWatch() {
     return;
   }
   if (watchId != null) return;
+  // Reset the heartbeat so we don't immediately fire the watchdog
+  // before the first real fix arrives.
+  lastFixAt = Date.now();
   watchId = navigator.geolocation.watchPosition(
     (pos) => {
+      // Heartbeat: any callback (even one we drop for accuracy) is
+      // proof the watch is alive. Update before the filter check.
+      lastFixAt = Date.now();
       const p: RecordedPoint = {
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
@@ -138,30 +186,33 @@ function startWatch() {
         ts: pos.timestamp || Date.now()
       };
       _store.update((s) => {
+        // Clear any prior gpsSilent / error state on a healthy fix.
+        const cleared = s.gpsSilent || s.error
+          ? { ...s, gpsSilent: false, error: null }
+          : s;
         // Drop very-jittery points (>200m accuracy) when we already
         // have a tighter previous point — saves clutter on poor GPS.
         if (
           p.accuracy_m != null &&
           p.accuracy_m > 200 &&
-          s.points.length > 0 &&
-          (s.points[s.points.length - 1].accuracy_m ?? 9999) < 200
+          cleared.points.length > 0 &&
+          (cleared.points[cleared.points.length - 1].accuracy_m ?? 9999) < 200
         ) {
-          return s;
+          return cleared;
         }
         // Skip near-duplicates within ~3m of the last point — the
         // user probably stopped to look at a tree.
-        const last = s.points[s.points.length - 1];
+        const last = cleared.points[cleared.points.length - 1];
         if (last && haversineMeters(last.lat, last.lng, p.lat, p.lng) < 3) {
-          return s;
+          return cleared;
         }
         return {
-          ...s,
+          ...cleared,
           // startedAt is already set in start(); leave it alone so
           // the elapsed-time display ticks from the click rather
           // than from the first GPS fix.
           endedAt: p.ts,
-          points: [...s.points, p],
-          error: null
+          points: [...cleared.points, p]
         };
       });
     },
@@ -176,6 +227,42 @@ function startWatch() {
     },
     { enableHighAccuracy: true, timeout: 30_000, maximumAge: 5_000 }
   );
+
+  // Start the watchdog if it isn't running. Fires every 10s; if
+  // we're recording and lastFixAt is more than WATCHDOG_SILENT_MS
+  // behind the wall clock, declare a silent stop and try to re-arm
+  // the watch. The user-facing UI also surfaces the gpsSilent flag
+  // so a glitched recording is visibly broken, not invisibly broken.
+  if (watchdogTimer == null && typeof window !== 'undefined') {
+    watchdogTimer = setInterval(() => {
+      const s = get(_store);
+      if (s.status !== 'recording') return;
+      const gap = Date.now() - lastFixAt;
+      if (gap > WATCHDOG_SILENT_MS) {
+        _store.update((cur) => ({
+          ...cur,
+          gpsSilent: true,
+          error: cur.error ?? 'GPS has gone quiet — re-arming the watch.'
+        }));
+        rearmWatch();
+      }
+    }, 10_000);
+  }
+
+  // Re-arm on visibility regain. Mobile browsers commonly pause
+  // watchPosition while the tab is backgrounded; coming back to
+  // foreground without re-arming leaves the recording dead silent.
+  if (visListener == null && typeof document !== 'undefined') {
+    visListener = () => {
+      if (document.visibilityState !== 'visible') return;
+      const s = get(_store);
+      if (s.status !== 'recording') return;
+      // Force a re-arm — clearing + re-creating the watchPosition
+      // handle is cheap and reliably revives the geolocation pump.
+      rearmWatch();
+    };
+    document.addEventListener('visibilitychange', visListener);
+  }
 }
 
 

@@ -502,10 +502,19 @@
    *  subscription. A script-level reactive guarantees it. */
   let elapsedLabel = '0:00';
   $: {
-    const ms = $recording.startedAt
-      ? ($recording.endedAt ?? $now) - $recording.startedAt
-      : 0;
-    elapsedLabel = formatElapsed(ms);
+    // While recording: tick from the wall clock for smooth seconds.
+    // While paused/stopped: freeze at endedAt. The previous formula
+    // used `endedAt ?? $now` unconditionally, so during recording
+    // the timer froze between GPS fixes and jumped forward when one
+    // arrived — visually broken even though elapsed time was right.
+    if (!$recording.startedAt) {
+      elapsedLabel = '0:00';
+    } else {
+      const endTs = $recording.status === 'recording'
+        ? $now
+        : ($recording.endedAt ?? $recording.startedAt);
+      elapsedLabel = formatElapsed(endTs - $recording.startedAt);
+    }
   }
   /** Wall-clock store, gated on recording state — only ticks while
    *  a recording is active. Earlier version ran a permanent 250ms
@@ -1320,13 +1329,18 @@
     {:else}
       <button
         class="rec-active"
+        class:rec-silent={$recording.gpsSilent}
         on:click={clickStop}
         disabled={recSaving}
-        title={$recording.status === 'recording'
-          ? 'Recording — tap to stop and save.'
-          : 'Paused — tap to stop and save.'}
+        title={$recording.gpsSilent
+          ? 'GPS lost — track has stopped recording. Tap to stop and save what you have.'
+          : $recording.status === 'recording'
+            ? 'Recording — tap to stop and save.'
+            : 'Paused — tap to stop and save.'}
       >
-        {#if $recording.status === 'recording'}
+        {#if $recording.gpsSilent}
+          <span class="rec-warn-icon" aria-hidden="true">⚠</span>
+        {:else if $recording.status === 'recording'}
           <span class="rec-dot-pulse" aria-hidden="true"></span>
         {:else}
           <span class="rec-paused-icon" aria-hidden="true">⏸</span>
@@ -1645,6 +1659,19 @@
   }
   .rec-paused-icon { color: #7a4a10; }
   .rec-stop-icon { color: #b03030; font-size: 0.95rem; }
+  /* GPS-silent state: amber pill so the broken state is visually
+   * distinct from healthy recording (red pulse) and paused (gray). */
+  .rec-active.rec-silent {
+    background: #fff3d9;
+    border-color: #d8a058;
+    color: #5e3920;
+  }
+  .rec-active.rec-silent:hover { background: #ffe9c0; }
+  .rec-warn-icon {
+    color: #c98a4a;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
   .rec-error-overlay {
     position: absolute;
     left: 0.75rem;

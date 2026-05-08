@@ -54,8 +54,20 @@
 
   let elapsedLabel = '0:00';
   $: {
-    const ms = rec.startedAt ? (rec.endedAt ?? $now) - rec.startedAt : 0;
-    elapsedLabel = formatElapsed(ms);
+    // While recording: tick from the wall clock so the seconds count
+    // smoothly. While paused/stopped: freeze at endedAt (the last GPS
+    // fix), since we're not actively timing. Earlier formula always
+    // used `endedAt ?? $now`, which made the timer freeze between
+    // GPS fixes and jump forward when one arrived — unrelated to the
+    // wall clock.
+    if (!rec.startedAt) {
+      elapsedLabel = '0:00';
+    } else {
+      const endTs = rec.status === 'recording'
+        ? $now
+        : (rec.endedAt ?? rec.startedAt);
+      elapsedLabel = formatElapsed(endTs - rec.startedAt);
+    }
   }
 
   async function handleStop() {
@@ -94,8 +106,18 @@
 
 {#if isActive && !isOnMap}
   <div class="badge-wrap">
-    <button class="rec-badge" on:click={handleStop} disabled={saving}>
-      {#if rec.status === 'recording'}
+    <button
+      class="rec-badge"
+      class:silent={rec.gpsSilent}
+      on:click={handleStop}
+      disabled={saving}
+      title={rec.gpsSilent
+        ? 'GPS lost — track has stopped recording. Tap to stop and save.'
+        : 'Tap to stop and save the recording.'}
+    >
+      {#if rec.gpsSilent}
+        <span class="warn" aria-hidden="true">⚠</span>
+      {:else if rec.status === 'recording'}
         <span class="dot" aria-hidden="true"></span>
       {:else}
         <span class="paused" aria-hidden="true">⏸</span>
@@ -155,6 +177,13 @@
   }
   .paused { color: #7a4a10; }
   .stop { color: #b03030; }
+  .rec-badge.silent {
+    background: #fff3d9;
+    border-color: #d8a058;
+    color: #5e3920;
+  }
+  .rec-badge.silent:hover { background: #ffe9c0; }
+  .warn { color: #c98a4a; flex-shrink: 0; }
   .open-map {
     background: white;
     border: 1px solid #c7d0c7;
