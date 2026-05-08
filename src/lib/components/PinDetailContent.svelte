@@ -42,7 +42,7 @@
     type FlagCounts
   } from '$lib/services/communityFlagsService';
   import { activeRegion } from '$lib/stores/activeRegion';
-  import { settings } from '$lib/stores/settings';
+  import { settings, type PhotoLicense } from '$lib/stores/settings';
   import {
     ACCESS_STATUSES,
     ACCESS_LABELS,
@@ -493,6 +493,20 @@
    *  the uploaded photo to. Set right before triggering fileInput.click(). */
   let pendingUploadObsId: string | null = null;
 
+  /** Per-upload license override. Defaults to the user's preference but
+   *  can be flipped per-photo without changing the default. Reset to
+   *  the default whenever the panel re-opens for a different pin. */
+  let uploadLicense: PhotoLicense = $settings.defaultPhotoLicense;
+  $: if (pin) uploadLicense = $settings.defaultPhotoLicense;
+
+  const PHOTO_LICENSE_OPTIONS: { value: PhotoLicense; label: string }[] = [
+    { value: 'CC-BY-SA-4.0',        label: 'CC BY-SA 4.0' },
+    { value: 'CC-BY-4.0',           label: 'CC BY 4.0' },
+    { value: 'CC-BY-NC-SA-4.0',     label: 'CC BY-NC-SA 4.0' },
+    { value: 'CC0',                 label: 'CC0 (public domain)' },
+    { value: 'all-rights-reserved', label: 'All rights reserved' }
+  ];
+
   async function handleFileChange(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -514,7 +528,7 @@
         capturedLat: loc.lat,
         capturedLng: loc.lng,
         capturedAccuracyM: loc.accuracyM,
-        license: $settings.defaultPhotoLicense
+        license: uploadLicense
       });
       await loadPhotos();
       input.value = '';
@@ -1189,6 +1203,29 @@
                  on:change={handleFileChange} style="display: none" />
         {/if}
       </div>
+      {#if $session}
+        <div class="upload-license-row">
+          <label>
+            License
+            <select bind:value={uploadLicense} disabled={uploading}>
+              {#each PHOTO_LICENSE_OPTIONS as o}
+                <option value={o.value}>{o.label}</option>
+              {/each}
+            </select>
+          </label>
+          <span
+            class="license-help"
+            title={
+              'CC BY-SA 4.0 — share-alike: anyone can use it, derivatives must use the same license. Default for foraging-commons spirit.\n\n' +
+              'CC BY 4.0 — attribution only: anyone can use it, including commercially, with credit. No share-alike requirement.\n\n' +
+              'CC BY-NC-SA 4.0 — non-commercial share-alike: free for non-commercial use, derivatives must use the same license.\n\n' +
+              'CC0 — public domain: no rights reserved, no attribution required.\n\n' +
+              'All rights reserved — only you (and Forager, to display the photo on the pin) may use it.'
+            }
+            aria-label="Help with license choices"
+          >?</span>
+        </div>
+      {/if}
       {#if uploadError}<p class="error">{uploadError}</p>{/if}
       {#if loosePhotos.length === 0}
         <p class="hint">{photos.length === 0 ? 'No photos yet.' : 'All photos are attached to observations.'}</p>
@@ -1650,6 +1687,43 @@
     line-height: 1.1;
   }
   button[type='submit']:disabled, .section-header button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .upload-license-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.78rem;
+    color: #4a554a;
+  }
+  .upload-license-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .upload-license-row select {
+    padding: 0.2rem 0.4rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.25rem;
+    background: white;
+    font-size: 0.78rem;
+    color: #1f2a1f;
+  }
+  .license-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 50%;
+    background: #e6ede6;
+    color: #4a554a;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: help;
+    user-select: none;
+  }
+  .license-help:hover { background: #d8e2d8; }
   /* Slightly larger touch targets on small screens. */
   @media (max-width: 640px) {
     .section-header button {
