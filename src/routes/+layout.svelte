@@ -11,6 +11,7 @@
   import UsernameSetup from '$lib/components/UsernameSetup.svelte';
   import Disclaimer from '$lib/components/Disclaimer.svelte';
   import RecorderBadge from '$lib/components/RecorderBadge.svelte';
+  import { online } from '$lib/stores/network';
   // Side-effect import: registers locales and kicks off init() at module
   // load time so $_('key') is ready before any page mounts.
   import '$lib/i18n';
@@ -127,6 +128,15 @@
     );
 </script>
 
+{#if !$online}
+  <!-- Offline indicator. Reads work for already-fetched data; new
+       writes are gated downstream (drop-pin / log-observation /
+       change-status buttons hide themselves when $online is false). -->
+  <div class="offline-banner" role="status" aria-live="polite">
+    Offline · viewing cached data
+  </div>
+{/if}
+
 {#if $authLoading || $i18nLoading}
   <main class="loading">
     <p>Loading…</p>
@@ -159,5 +169,20 @@
   main.loading {
     padding: 2rem;
     color: #6b7a6b;
+  }
+  /* Offline indicator. Sits on a flexbox-friendly slot at the top of
+     the body — pushes the rest of the page down a touch but stays
+     visible above modals via z-index. */
+  .offline-banner {
+    background: #f0e3a8;
+    color: #5a4500;
+    text-align: center;
+    padding: 0.35rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-bottom: 1px solid #d8c270;
+    position: sticky;
+    top: 0;
+    z-index: 1500;
   }
 </style>

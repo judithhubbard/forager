@@ -4,6 +4,7 @@
   import { page } from '$app/stores';
   import { activeRegion, regionsLoading, myRegions } from '$lib/stores/activeRegion';
   import { session } from '$lib/stores/auth';
+  import { online } from '$lib/stores/network';
   import {
     listPublicPins,
     listPublicPinDensity,
@@ -1272,8 +1273,9 @@
   <button
     class="new-pin-fab"
     on:click={handleNewPinClick}
-    aria-label="New pin"
-    title="Add a new pin"
+    aria-label={$online ? 'New pin' : 'You are offline'}
+    title={$online ? 'Add a new pin' : 'You are offline — pins can\'t be saved until you reconnect'}
+    disabled={!$online}
   >+</button>
 {/if}
 
@@ -1388,7 +1390,12 @@
     z-index: 600;
     display: none;
   }
-  .new-pin-fab:active { background: #2a4a2a; }
+  .new-pin-fab:active:not(:disabled) { background: #2a4a2a; }
+  .new-pin-fab:disabled {
+    background: #b4c4b4;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
   @media (pointer: fine) {
     .new-pin-fab { display: inline-flex; align-items: center; justify-content: center; }
   }
