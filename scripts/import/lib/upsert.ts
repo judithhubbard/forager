@@ -221,7 +221,10 @@ export async function bulkUpsertImportedPins(
   const speciesIds = args.rows.map((r) => r.speciesId);
   const lngs = args.rows.map((r) => r.lng);
   const lats = args.rows.map((r) => r.lat);
-  const raws = args.rows.map((r) => JSON.stringify(r.raw ?? {}));
+  // import_raw was dropped in migration 35 to recover ~500 MB; it
+  // wasn't queried by anything and is fully recoverable by re-running
+  // the importer against the public source CSVs. ImportRow.raw stays
+  // in the type for backward compatibility but is no longer written.
 
   const rows = await sql<{ id: string; inserted: boolean }[]>`
     -- visibility='public' for all imports. The bulk update path
@@ -232,7 +235,7 @@ export async function bulkUpsertImportedPins(
     insert into public.pins (
       region_id, created_by, species_id,
       location, status, visibility,
-      import_source, import_external_id, import_raw
+      import_source, import_external_id
     )
     select
       ${args.regionId}::uuid,
@@ -242,17 +245,14 @@ export async function bulkUpsertImportedPins(
       'active'::pin_status,
       'public'::text,
       ${args.sourceId},
-      t.external_id,
-      t.raw::jsonb
+      t.external_id
     from unnest(
       ${speciesIds}::uuid[],
       ${lngs}::float8[],
       ${lats}::float8[],
-      ${externalIds}::text[],
-      ${raws}::text[]
-    ) as t(species_id, lng, lat, external_id, raw)
+      ${externalIds}::text[]
+    ) as t(species_id, lng, lat, external_id)
     on conflict (region_id, import_source, import_external_id) do update set
-      import_raw = excluded.import_raw,
       location = case
         when public.pins.location_modified_by_user_at is null
           then excluded.location
