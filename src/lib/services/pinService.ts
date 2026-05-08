@@ -383,7 +383,7 @@ export async function listRipeNow(regionId: string): Promise<PinEffective[]> {
     .from('v_pin_effective')
     .select('*')
     .eq('region_id', regionId)
-    .eq('is_ripe_now', true);
+    .eq('is_edible_now', true);
 
   if (error) {
     console.error('[pinService] listRipeNow error:', error);

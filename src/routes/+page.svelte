@@ -320,7 +320,7 @@
   type FilterStatus =
     | 'all'
     | 'active'
-    | 'possibly_ripe'
+    | 'edible_today'
     | 'productive';
   let filterStatus: FilterStatus = 'active';
   /** Per-pin source category for the layers panel. Today the
@@ -519,7 +519,7 @@
     const name = s?.common_name ?? p.display_name ?? '(unnamed pin)';
     const status =
       p.effective_status === 'active' ? '' : ` [${p.effective_status}]`;
-    const ripe = p.is_ripe_now ? '  · 🍒 ripe now' : '';
+    const ripe = p.is_edible_now ? '  · 🌿 edible now' : '';
     // Visibility tag: only 🔒 private. The previous '🌐 public'
     // tag was ambiguous — it referred to dataset visibility but
     // read as 'on public land,' which is a separate property
@@ -557,7 +557,7 @@
     if (!isActive) return false;
     if (filterStatus === 'active') return true;
 
-    if (filterStatus === 'possibly_ripe') return p.is_ripe_now === true;
+    if (filterStatus === 'edible_today') return p.is_edible_now === true;
     if (filterStatus === 'productive') return p.has_ripe_observation_ever === true;
     return true;
   });
@@ -571,7 +571,7 @@
     const isActive = p.effective_status === 'active';
     if (!isActive) return false;
     if (status === 'active') return true;
-    if (status === 'possibly_ripe') return p.is_ripe_now === true;
+    if (status === 'edible_today') return p.is_edible_now === true;
     if (status === 'productive') return p.has_ripe_observation_ever === true;
     return false;
   }
@@ -589,16 +589,16 @@
   });
   $: statusCounts = (() => {
     const out: Record<FilterStatus, number> = {
-      all: 0, active: 0, possibly_ripe: 0, productive: 0
+      all: 0, active: 0, edible_today: 0, productive: 0
     };
-    // possibly_ripe and productive depend on per-pin booleans only
+    // edible_today and productive depend on per-pin booleans only
     // available in the heavier v_pin_effective view. Count those from
     // the in-memory pin set; the '+' suffix on the dropdown still
     // signals capHit. all and active come from the server-side
     // summary when available so they're accurate even when the pin
     // fetch is capped.
     for (const p of speciesFilteredPins) {
-      if (matchesStatus(p, 'possibly_ripe')) out.possibly_ripe++;
+      if (matchesStatus(p, 'edible_today')) out.edible_today++;
       if (matchesStatus(p, 'productive'))    out.productive++;
     }
     if (bboxSummary.length > 0) {
@@ -644,8 +644,8 @@
       else if (cat === 'nut') cats.nut = true;
       else if (cat === 'mushroom') cats.mushroom = true;
       else cats.other = true;
-      if (p.is_ripe_strict) ripe = true;
-      else if (p.is_ripe_now) possibly = true;
+      if (p.is_edible_strict) ripe = true;
+      else if (p.is_edible_now) possibly = true;
       if (
         p.effective_status === 'gone' ||
         p.effective_status === 'inaccessible' ||
@@ -1142,7 +1142,7 @@
       <select bind:value={filterStatus}>
         <option value="all">All ({statusCounts.all})</option>
         <option value="active">Active ({statusCounts.active})</option>
-        <option value="possibly_ripe">Ripe today ({statusCounts.possibly_ripe}{capHit ? '+' : ''})</option>
+        <option value="edible_today">Edible today ({statusCounts.edible_today}{capHit ? '+' : ''})</option>
         <option value="productive">Productive ({statusCounts.productive}{capHit ? '+' : ''})</option>
       </select>
     </label>

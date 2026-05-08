@@ -242,29 +242,14 @@
    *  flowering to latest "past" — with two weeks of padding on each side.
    *  Falls back to a full year if no windows are loaded. Months outside
    *  this range are not labeled. */
-  $: timelineRange = (() => {
-    let lo = 365, hi = 1, any = false;
-    for (const w of windows) {
-      if (w.start_doy < lo) lo = w.start_doy;
-      if (w.end_doy > hi) hi = w.end_doy;
-      any = true;
-    }
-    // Observations also widen the range so observation-only species
-    // (no curated window in this region) still render their ticks
-    // inside the visible chart.
-    for (const o of observations) {
-      if (!o.observed_at) continue;
-      const d = dateToDoy(o.observed_at);
-      if (!Number.isFinite(d)) continue;
-      if (d < lo) lo = d;
-      if (d > hi) hi = d;
-      any = true;
-    }
-    if (!any) return { start: 1, end: 365, span: 364 };
-    const start = Math.max(1, lo - 14);
-    const end = Math.min(365, hi + 14);
-    return { start, end, span: Math.max(1, end - start) };
-  })();
+  /** Fixed full-year range. Earlier auto-fit-to-data was unstable —
+   *  adding new windows (sap in Feb-March, fall fungi in Oct-Nov)
+   *  made the chart suddenly span 10 months and old bars looked
+   *  skinny and left-shifted relative to before. Locking to Jan-Dec
+   *  is predictable, makes month positions intuitive, and the bars
+   *  are sized in absolute proportion to the year regardless of
+   *  what species are seeded. */
+  const timelineRange = { start: 1, end: 365, span: 364 };
   $: doyToPct = (doy: number) =>
     ((doy - timelineRange.start) / timelineRange.span) * 100;
   $: todayPct = doyToPct(todayDoy());

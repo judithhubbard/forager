@@ -576,7 +576,7 @@
       formDay = NOW.getDate();
       formPrecision = 'day';
       observations = await listByPin(pinId);
-      // Refresh the pin so is_ripe_now / has_ripe_observation_* update,
+      // Refresh the pin so is_edible_now / has_ripe_observation_* update,
       // then notify the parent to refetch its filtered pins.
       pin = await getEffective(pinId);
       dispatch('statusChanged');
@@ -755,7 +755,7 @@
         <h2>{title}</h2>
         <span class="status-chip status-{pin.effective_status ?? 'active'}">
           {statusLabel(pin.effective_status)}
-          {#if pin.is_ripe_now}<span class="ripe-dot" title="In ripe window">🍒</span>{/if}
+          {#if pin.is_edible_now}<span class="ripe-dot" title="In ripe window">🍒</span>{/if}
         </span>
         {#if pin.visibility === 'public'}
           <span class="vis-chip vis-public" title="Public — visible to anyone, including signed-out viewers.">🌐 public</span>

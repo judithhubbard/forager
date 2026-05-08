@@ -1165,8 +1165,8 @@ export type Database = {
           import_raw: Json | null
           import_source: string | null
           is_inaccessible: boolean | null
-          is_ripe_now: boolean | null
-          is_ripe_strict: boolean | null
+          is_edible_now: boolean | null
+          is_edible_strict: boolean | null
           last_observed_at: string | null
           last_observed_stage: Database["public"]["Enums"]["stage"] | null
           lat: number | null

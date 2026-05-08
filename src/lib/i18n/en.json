@@ -28,7 +28,7 @@
     "show": "Show:",
     "all": "All",
     "active": "Active",
-    "possibly_ripe": "Possibly ripe today",
+    "edible_today": "Possibly ripe today",
     "confirmed_ripe": "Confirmed ripe this year",
     "confirmed_harvest": "Confirmed harvest history"
   },

@@ -697,8 +697,8 @@
     return [
       cat,
       fill,
-      pin.is_ripe_strict ? 1 : 0,
-      pin.is_ripe_now ? 1 : 0,
+      pin.is_edible_strict ? 1 : 0,
+      pin.is_edible_now ? 1 : 0,
       pin.effective_status ?? '',
       pin.is_inaccessible ? 1 : 0,
       labelOf(pin)
@@ -717,8 +717,8 @@
     const L = LCache;
     const lat = pin.lat;
     const lng = pin.lng;
-    const isStrictRipe = pin.is_ripe_strict === true;
-    const isPossibly = pin.is_ripe_now === true;
+    const isStrictRipe = pin.is_edible_strict === true;
+    const isPossibly = pin.is_edible_now === true;
     const muted = pin.effective_status === 'gone' || pin.effective_status === 'dormant';
     const inaccessible = pin.is_inaccessible === true;
     const fillOpacity = inaccessible ? 0.2 : muted ? 0.45 : 0.9;
