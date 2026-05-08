@@ -1403,7 +1403,7 @@
       <label>
         Make:
         <select bind:value={cookbookFilter}>
-          <option value="">— anything —</option>
+          <option value="">anything</option>
           {#each availableCookbookMethods as m}
             <option value={m.method}>{m.method.replace(/_/g, ' ')} ({m.count})</option>
           {/each}
@@ -1421,6 +1421,10 @@
       </button>
       {#if layersPanelOpen}
         <div class="layers-panel">
+          <!-- Pin sources: which categories of pin show on the map.
+               The "X/Y" count on the parent button refers to this
+               group only — that's the meaning users care about. -->
+          <div class="layer-section-head">Pin sources</div>
           {#if $session}
             <label class="layer-row" class:dim={layerCounts.mine === 0}>
               <input
@@ -1443,92 +1447,92 @@
               <span class="layer-hint">{layerCounts.group > 0 ? `${layerCounts.group} pins shared in your region` : 'no group pins in view'}</span>
             </label>
           {/if}
-            <label class="layer-row" class:dim={layerCounts.public === 0}>
-              <input
-                type="checkbox"
-                checked={$settings.mapLayers.public}
-                on:change={(e) => onLayerToggle('public', e)}
-                disabled={layerCounts.public === 0}
-              />
-              <span class="layer-name">City inventories</span>
-              <span class="layer-hint">{layerCounts.public > 0 ? `${layerCounts.public} trees from city / arboretum imports` : 'no imported trees in view'}</span>
-            </label>
-            <!-- Community shared (anyone-promoted public pins) is a
-                 future tier — there's no UI today for users to
-                 promote a pin to public, so it stays empty. Once
-                 that ships this gets its own row separate from the
-                 admin-curated City inventories above. -->
-            <label class="layer-row dim">
-              <input type="checkbox" disabled />
-              <span class="layer-name">Community shared</span>
-              <span class="layer-hint">coming soon — user-promoted public pins</span>
-            </label>
-            <label class="layer-row">
-              <input
-                type="checkbox"
-                checked={$settings.mapLayers.tracks}
-                on:change={(e) => onLayerToggle('tracks', e)}
-              />
-              <span class="layer-name">Tracks</span>
-              <span class="layer-hint">Saved track polylines</span>
-            </label>
-            <label class="layer-row">
-              <input
-                type="checkbox"
-                checked={$settings.showZones}
-                on:change={onZonesToggle}
-              />
-              <span class="layer-name">USDA zones</span>
-              <span class="layer-hint">Plant Hardiness overlay (US only)</span>
-            </label>
-            <label class="layer-row">
-              <input
-                type="checkbox"
-                checked={$settings.showEdibleRings}
-                on:change={onEdibleRingsToggle}
-              />
-              <span class="layer-name">Edible-now glow</span>
-              <span class="layer-hint">Warm halo on ripe-today pins</span>
-            </label>
-            <label class="layer-row">
-              <input
-                type="checkbox"
-                checked={$settings.showInvasives}
-                on:change={onInvasivesToggle}
-              />
-              <span class="layer-name">Show invasives</span>
-              <span class="layer-hint">Add inedible invasives (tree of heaven, knotweed…) for management</span>
-            </label>
-            <hr class="layer-divider" />
-            <!-- Display options. These are not pin "layers" but living
-                 here keeps all map-display controls in one place. -->
-            <label class="layer-row layer-select">
-              <span class="layer-name">Basemap</span>
-              <select
-                class="layer-select-input"
-                value={$settings.basemap}
-                on:change={onBasemapChange}
-              >
-                {#each BASEMAP_OPTIONS as o}
-                  <option value={o.value}>{o.label}</option>
-                {/each}
-              </select>
-            </label>
-            <label class="layer-row layer-select">
-              <span class="layer-name">Marker color</span>
-              <select
-                class="layer-select-input"
-                value={$settings.colorBy}
-                on:change={onColorByChange}
-              >
-                {#each COLOR_BY_OPTIONS as o}
-                  <option value={o.value}>{o.label}</option>
-                {/each}
-              </select>
-            </label>
-          </div>
-        {/if}
-      </div>
+          <label class="layer-row" class:dim={layerCounts.public === 0}>
+            <input
+              type="checkbox"
+              checked={$settings.mapLayers.public}
+              on:change={(e) => onLayerToggle('public', e)}
+              disabled={layerCounts.public === 0}
+            />
+            <span class="layer-name">City inventories</span>
+            <span class="layer-hint">{layerCounts.public > 0 ? `${layerCounts.public} trees from city / arboretum imports` : 'no imported trees in view'}</span>
+          </label>
+          <!-- Community shared (anyone-promoted public pins) is a
+               future tier — there's no UI today for users to
+               promote a pin to public, so it stays empty. Once
+               that ships this gets its own row separate from the
+               admin-curated City inventories above. -->
+          <label class="layer-row dim">
+            <input type="checkbox" disabled />
+            <span class="layer-name">Community shared</span>
+            <span class="layer-hint">coming soon — user-promoted public pins</span>
+          </label>
+          <label class="layer-row">
+            <input
+              type="checkbox"
+              checked={$settings.mapLayers.tracks}
+              on:change={(e) => onLayerToggle('tracks', e)}
+            />
+            <span class="layer-name">Tracks</span>
+            <span class="layer-hint">Saved track polylines</span>
+          </label>
+
+          <div class="layer-section-head">Overlays</div>
+          <label class="layer-row">
+            <input
+              type="checkbox"
+              checked={$settings.showZones}
+              on:change={onZonesToggle}
+            />
+            <span class="layer-name">USDA zones</span>
+            <span class="layer-hint">Plant Hardiness overlay (US only)</span>
+          </label>
+          <label class="layer-row">
+            <input
+              type="checkbox"
+              checked={$settings.showEdibleRings}
+              on:change={onEdibleRingsToggle}
+            />
+            <span class="layer-name">Edible-now glow</span>
+            <span class="layer-hint">Warm halo on ripe-today pins</span>
+          </label>
+          <label class="layer-row">
+            <input
+              type="checkbox"
+              checked={$settings.showInvasives}
+              on:change={onInvasivesToggle}
+            />
+            <span class="layer-name">Invasives</span>
+            <span class="layer-hint">Inedible invasives (tree of heaven, knotweed…) for management</span>
+          </label>
+
+          <div class="layer-section-head">Display</div>
+          <label class="layer-row layer-select">
+            <span class="layer-name">Basemap</span>
+            <select
+              class="layer-select-input"
+              value={$settings.basemap}
+              on:change={onBasemapChange}
+            >
+              {#each BASEMAP_OPTIONS as o}
+                <option value={o.value}>{o.label}</option>
+              {/each}
+            </select>
+          </label>
+          <label class="layer-row layer-select">
+            <span class="layer-name">Marker color</span>
+            <select
+              class="layer-select-input"
+              value={$settings.colorBy}
+              on:change={onColorByChange}
+            >
+              {#each COLOR_BY_OPTIONS as o}
+                <option value={o.value}>{o.label}</option>
+              {/each}
+            </select>
+          </label>
+        </div>
+      {/if}
     </div>
     <div class="filterbar-spacer"></div>
     <AddressSearch on:select={handleGeocodeSelect} />
@@ -1882,6 +1886,15 @@
     border-top: 1px solid #ebefeb;
     margin: 0.35rem 0.2rem;
   }
+  .layer-section-head {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #6b7a6b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0.5rem 0.45rem 0.1rem;
+  }
+  .layer-section-head:first-child { margin-top: 0; }
 
   /* Multi-select species filter */
   .species-filter {
