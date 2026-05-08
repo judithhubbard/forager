@@ -49,6 +49,17 @@
   let saving = false;
   let errorMessage = '';
 
+  /** Regions that have at least one harvest-window row, with display
+   *  name. Drives the region selector at the top of the page so users
+   *  understand the chart is regional and can pick which region to
+   *  view. Loaded once on mount; re-derived if a save adds the first
+   *  window for a previously-empty region. */
+  let regionsWithWindows: Array<{ id: string; name: string }> = [];
+  /** Currently displayed region. Defaults to the user's active region
+   *  if it has windows, otherwise the first available. Null means
+   *  "no curated regions exist yet" — empty-state copy renders. */
+  let selectedRegionId: string | null = null;
+
   /** Modal state: which window the user is editing, plus draft inputs. */
   let editing: WindowRow | null = null;
   let editStart = 0;
@@ -94,15 +105,58 @@
     return m;
   })();
 
-  // Re-run load whenever the active region (re)loads. Replaces an
-  // earlier onMount(load), which captured $activeRegion exactly once
-  // and missed the case where the region store hadn't populated yet.
-  // Refetch on activeRegion change AND on any observation/pin
-  // mutation elsewhere in the app (so a verified-harvest tick added
-  // from the pin panel shows up on the timeline immediately).
-  $: if ($activeRegion) {
+  /** Initialize the region list + default selection. Runs once when
+   *  the active region first becomes available, then again only on
+   *  $dataChange (a save might create new windows that change the
+   *  set of regions to choose from). */
+  let initialized = false;
+  $: if ($activeRegion && !initialized) {
     void $dataChange;
-    loadFor($activeRegion.id);
+    initialized = true;
+    void initRegionsAndLoad();
+  } else if (initialized) {
+    void $dataChange;
+    if (selectedRegionId) loadFor(selectedRegionId);
+  }
+
+  async function initRegionsAndLoad(): Promise<void> {
+    // Find regions with at least one fruiting-window row, plus their
+    // names. Distinct on (region_id) via a small post-process since
+    // PostgREST doesn't have a clean DISTINCT in select(...).
+    const { data, error } = await supabase
+      .from('species_fruiting_windows')
+      .select('region_id, regions!inner(name)');
+    if (error) {
+      errorMessage = error.message;
+      loading = false;
+      return;
+    }
+    const seen = new Map<string, string>();
+    for (const r of (data ?? []) as Array<{ region_id: string; regions: { name: string } | null }>) {
+      if (r.region_id && !seen.has(r.region_id)) {
+        seen.set(r.region_id, r.regions?.name ?? '(unknown)');
+      }
+    }
+    regionsWithWindows = [...seen.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (regionsWithWindows.length === 0) {
+      selectedRegionId = null;
+      loading = false;
+      return;
+    }
+    // Prefer the user's active region if it has windows; else first
+    // alphabetically. Stable, predictable.
+    const activeHas = regionsWithWindows.find((r) => r.id === $activeRegion?.id);
+    selectedRegionId = (activeHas ?? regionsWithWindows[0]).id;
+    await loadFor(selectedRegionId);
+  }
+
+  /** Switch the displayed region — fired by the selector. */
+  async function onRegionChange(e: Event) {
+    const id = (e.currentTarget as HTMLSelectElement).value;
+    selectedRegionId = id;
+    await loadFor(id);
   }
 
   async function loadFor(regionId: string) {
@@ -375,11 +429,31 @@
     <p class="hint">Loading…</p>
   {:else if errorMessage}
     <p class="error">{errorMessage}</p>
-  {:else}
+  {:else if regionsWithWindows.length === 0}
     <p class="intro">
-      Approximate windows per species per stage in your region. The red line
-      is today. Tick marks above each bar are observations. Click any bar to
-      edit its start/end dates.
+      Harvest windows are regional — Ithaca's apple bloom doesn't predict
+      San Diego's. No region has curated harvest data yet. Add a region
+      and seed some species to populate this page.
+    </p>
+  {:else}
+    <div class="region-row">
+      <label>
+        Showing harvest windows for:
+        {#if regionsWithWindows.length === 1}
+          <strong class="single-region">{regionsWithWindows[0].name}</strong>
+        {:else}
+          <select bind:value={selectedRegionId} on:change={onRegionChange}>
+            {#each regionsWithWindows as r}
+              <option value={r.id}>{r.name}</option>
+            {/each}
+          </select>
+        {/if}
+      </label>
+    </div>
+    <p class="intro">
+      Harvest windows are regional — these dates apply to the selected region
+      only and will differ elsewhere. The red line is today. Tick marks above
+      each bar are observations. Click any bar to edit its start/end dates.
     </p>
 
     <div class="timeline">
@@ -597,6 +671,24 @@
   .header-spacer { flex: 1; }
   .back { background: transparent; border: 0; color: #3a5a3a; font-size: 0.9rem; cursor: pointer; }
   main { padding: 1rem; max-width: 60rem; margin: 0 auto; }
+  .region-row {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    color: #1f2a1f;
+  }
+  .region-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .region-row select {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.3rem;
+    font-size: 0.95rem;
+    background: white;
+  }
+  .single-region { color: #3a5a3a; }
   .intro { color: #4a554a; font-size: 0.9rem; margin: 0 0 1rem; }
   .error { color: #b03030; font-size: 0.9rem; }
   .attribution {

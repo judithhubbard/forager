@@ -131,6 +131,11 @@
   let observations: ObservationWithUser[] = [];
   let allSpecies: Species[] = [];
   let windows: WindowRow[] = [];
+  /** True iff this species has fruiting windows in some OTHER region —
+   *  used to render a "no regional harvest data here yet" hint when
+   *  the local timeline is empty. Lets users see that they're missing
+   *  curated data, not that the species has none anywhere. */
+  let speciesHasWindowsElsewhere = false;
 
   type OtherObs = {
     stage: string | null;
@@ -392,9 +397,23 @@
         ]);
         windows = winRes.data ?? [];
         otherSpeciesObs = (otherObsRes.data ?? []) as OtherObs[];
+        // If this species has zero windows in this region, check whether
+        // it has windows in any *other* region — that distinguishes
+        // "no data here yet" from "no data anywhere."
+        if (windows.length === 0 && pin.species_id) {
+          const { data } = await supabase
+            .from('species_fruiting_windows')
+            .select('id')
+            .eq('species_id', pin.species_id)
+            .limit(1);
+          speciesHasWindowsElsewhere = (data?.length ?? 0) > 0;
+        } else {
+          speciesHasWindowsElsewhere = false;
+        }
       } else {
         windows = [];
         otherSpeciesObs = [];
+        speciesHasWindowsElsewhere = false;
       }
       loadPhotos();
     } catch (err) {
@@ -805,6 +824,12 @@
         <div class="watch-row">
           <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
         </div>
+      {/if}
+      {#if windows.length === 0 && speciesHasWindowsElsewhere}
+        <p class="no-regional-data muted">
+          No regional harvest data for this area yet — windows shown on
+          <a href={base + '/timeline'}>Year history</a> are from other regions and may not apply here.
+        </p>
       {/if}
       {#if windows.length > 0}
         <div class="mini-timeline" title="Harvest window for this species. Edit on the Harvest windows page.">
@@ -1564,6 +1589,16 @@
     color: #7a4a10;
   }
   .flag-mine { color: #7a4a10; font-size: 0.78rem; }
+  .no-regional-data {
+    margin: 0.5rem 0;
+    padding: 0.5rem 0.7rem;
+    background: #fcf6e8;
+    border: 1px solid #e8d3a6;
+    border-radius: 0.3rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+  .no-regional-data a { color: #7a4a10; }
 
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
   .section-header h3 {
