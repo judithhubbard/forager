@@ -1403,6 +1403,11 @@
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+    /* Reserve room on the right for the panel's floating × / ↗ action
+     * buttons (rendered by the parent +page.svelte at top: 0.4rem,
+     * right: 0.4rem). Without this padding the visibility chip
+     * ("🌐 public" etc.) wraps under or behind the buttons. */
+    padding-right: 4.5rem;
   }
   .status-chip {
     display: inline-flex;
