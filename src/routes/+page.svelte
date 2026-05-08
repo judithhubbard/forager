@@ -49,7 +49,10 @@
     panelSelection,
     clearAll as clearPanelSelection,
     selectAll as selectAllPanelSelection,
-    toggle as togglePanelSelection
+    toggle as togglePanelSelection,
+    setShowOnly as setShowOnlyPanel,
+    isVisible as panelIsVisible,
+    HIDE_ALL
   } from '$lib/stores/panelSelection';
   import { dataChange, pinChanged } from '$lib/stores/dataChange';
   import { colorForGroup, colorForCategoryFallback } from '$lib/utils/symbology';
@@ -611,11 +614,12 @@
     // Species filter — combines two layers:
     // 1. $disabledIds (persistent /interests deny-list): species the
     //    user opted out of long-term.
-    // 2. $panelSelection (in-memory dropdown checkboxes): an explicit
-    //    "show only these" set when user unchecks species in the
-    //    Species dropdown. null = no panel filter.
+    // 2. $panelSelection (in-memory dropdown checkboxes, deny-list
+    //    semantics): species the user unchecked for this session.
+    //    Pins of unfamiliar species (e.g. panning to Toronto) default
+    //    to visible because they aren't in the hide set.
     if (p.species_id && $disabledIds.has(p.species_id)) return false;
-    if (selectedSpeciesIds !== null && p.species_id && !selectedSpeciesIds.has(p.species_id)) return false;
+    if (!panelIsVisible(selectedSpeciesIds, p.species_id)) return false;
     // Cookbook filter — pin's species must have the chosen prep method.
     if (cookbookSpeciesIds !== null) {
       if (!p.species_id || !cookbookSpeciesIds.has(p.species_id)) return false;
@@ -654,7 +658,7 @@
     // Same species-filter semantics as filteredPins above (deny-list
     // + panel selection).
     if (p.species_id && $disabledIds.has(p.species_id)) return false;
-    if (selectedSpeciesIds !== null && p.species_id && !selectedSpeciesIds.has(p.species_id)) return false;
+    if (!panelIsVisible(selectedSpeciesIds, p.species_id)) return false;
     return true;
   }).filter((p) => {
     const cat = (p.species_id ? categoryBySpecies[p.species_id] : null) as SpeciesCat | null;
@@ -704,8 +708,9 @@
   })();
 
   // Reactive function so checkboxes re-render when selectedSpeciesIds changes.
-  $: isSelected = (id: string) =>
-    selectedSpeciesIds === null || selectedSpeciesIds.has(id);
+  // panelSelection is now a deny-list: a species is checked iff it's NOT
+  // in the hide-set (and the HIDE_ALL sentinel isn't active).
+  $: isSelected = (id: string) => panelIsVisible(selectedSpeciesIds, id);
 
   /** Which legend rows are worth showing — only categories actually
    *  present in the visible pin set, plus ripe/possibly indicators only
@@ -874,9 +879,12 @@
     ) {
       lastSpeciesParam = want;
       // Session-only: focus the panel filter on this single species
-      // so the map highlights it. The persistent /interests selection
-      // is unchanged.
-      panelSelection.set(new Set([want]));
+      // so the map highlights it. With the deny-list semantics, this
+      // is "hide every species I know about EXCEPT this one." Species
+      // not in the user's region (e.g. carob in Hawaii from /species)
+      // aren't enumerated in the deny-set, so they're still visible
+      // when the user pans there.
+      setShowOnlyPanel(want, species.map((s) => s.id));
     }
   }
 
@@ -1144,10 +1152,10 @@
         Species:
         {#if selectedSpeciesIds === null}
           All ({speciesInRegion.length})
-        {:else if selectedSpeciesIds.size === 0}
+        {:else if selectedSpeciesIds.has(HIDE_ALL)}
           None
         {:else}
-          {selectedSpeciesIds.size} selected
+          {selectedSpeciesIds.size} hidden
         {/if}
         <span class="caret">{speciesPanelOpen ? '▴' : '▾'}</span>
       </button>
