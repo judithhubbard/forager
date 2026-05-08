@@ -10,6 +10,42 @@
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import { panelSelection } from '$lib/stores/panelSelection';
+  import { colorForGroup } from '$lib/utils/symbology';
+
+  // Mirror the map's category-to-shape mapping. Categories come from
+  // a species' forage_parts (first part wins). Keep this aligned with
+  // the per-pin shapeHtml rule in src/routes/+page.svelte and Map.svelte
+  // so the species list and map use identical glyphs.
+  type Cat = 'fruit' | 'bramble' | 'nut' | 'mushroom' | 'other';
+  type Shape = 'circle' | 'square' | 'triangle' | 'diamond' | 'star';
+  function categoryOf(s: Species | null): Cat {
+    if (!s) return 'other';
+    const parts = (s.forage_parts ?? []) as string[];
+    if (parts.includes('fruit')) {
+      // Brambles split out from generic fruit so they get a different shape.
+      if (s.scientific_name.startsWith('Rubus ')) return 'bramble';
+      return 'fruit';
+    }
+    if (parts.includes('nut')) return 'nut';
+    if (parts.includes('mushroom')) return 'mushroom';
+    return 'other';
+  }
+  function shapeOf(cat: Cat): Shape {
+    if (cat === 'bramble') return 'star';
+    if (cat === 'nut') return 'square';
+    if (cat === 'mushroom') return 'triangle';
+    if (cat === 'other') return 'diamond';
+    return 'circle';
+  }
+  // Same group-key derivation the main page uses for color
+  // (genus-based, with brambles split per species). Inlined to
+  // avoid sharing module state with the map page.
+  function colorGroupOf(s: Species | null): string {
+    if (!s) return 'other';
+    if (s.scientific_name === 'Prunus dulcis') return 'Almond';
+    if (s.scientific_name.startsWith('Rubus ')) return s.common_name;
+    return s.scientific_name.split(/\s+/)[0];
+  }
 
   let pins: PinEffective[] = [];
   let allSpecies: Species[] = [];
@@ -39,6 +75,8 @@
         pinCount: number;
         nearestDistance: number;
         nearestPinId: string;
+        shape: Shape;
+        color: string;
       }
     >();
     for (const p of pins) {
@@ -57,6 +95,7 @@
           existing.nearestPinId = pinId;
         }
       } else {
+        const cat = categoryOf(sp);
         out.set(key, {
           speciesId: p.species_id ?? null,
           species: sp,
@@ -65,7 +104,9 @@
           forageParts: (sp?.forage_parts ?? []) as string[],
           pinCount: 1,
           nearestDistance: dist,
-          nearestPinId: pinId
+          nearestPinId: pinId,
+          shape: shapeOf(cat),
+          color: colorForGroup(colorGroupOf(sp))
         });
       }
     }
@@ -152,7 +193,7 @@
 
 <header>
   <button class="back" on:click={() => goto('/')}>← Back</button>
-  <h1>Ripe now</h1>
+  <h1>Edible now</h1>
 </header>
 
 <main>
@@ -175,7 +216,17 @@
       {#each groups as g}
         <li>
           <div class="row">
-            <span class="dot" aria-hidden="true">●</span>
+            {#if g.shape === 'triangle'}
+              <span class="glyph triangle" style="border-bottom-color: {g.color};" aria-hidden="true"></span>
+            {:else if g.shape === 'star'}
+              <svg class="glyph" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                <polygon
+                  points="7,1 8.6,5.5 13.5,5.5 9.5,8.5 11.1,13 7,10 2.9,13 4.5,8.5 0.5,5.5 5.4,5.5"
+                  fill={g.color} stroke="#1f2a1f" stroke-width="1" stroke-linejoin="round" />
+              </svg>
+            {:else}
+              <span class="glyph {g.shape}" style="background: {g.color};" aria-hidden="true"></span>
+            {/if}
             <a class="body" href={g.speciesId ? `${base}/species/${g.speciesId}` : `${base}/pins/${g.nearestPinId}`}>
               <p class="primary">
                 <strong>{g.displayName}</strong>
@@ -244,11 +295,34 @@
     align-items: center;
   }
   .row:hover { background: #fff8ee; }
-  .dot {
-    color: #d57100;
-    font-size: 1.5rem;
-    line-height: 1;
+  /* Glyph shapes — match the legend/map symbology so a circle on
+   * the map and a circle in this list mean the same thing. */
+  .glyph {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    border: 1px solid #1f2a1f;
+    box-sizing: border-box;
   }
+  .glyph.circle { border-radius: 50%; }
+  .glyph.square { border-radius: 2px; }
+  .glyph.diamond {
+    transform: rotate(45deg);
+    border-radius: 1px;
+  }
+  .glyph.triangle {
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 12px solid currentColor;
+    border-top: 0;
+    background: transparent !important;
+  }
+  /* Star is rendered as an inline SVG and doesn't need a class
+   * background; just keep alignment consistent. */
+  svg.glyph { display: inline-block; }
   a.body {
     flex: 1;
     min-width: 0;

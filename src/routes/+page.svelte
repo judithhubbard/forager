@@ -1110,7 +1110,7 @@
       <span class="hint">Loading…</span>
     {/if}
     {#if $session}
-      <a class="link ripe-link" href={base + '/ripe'}>Ripe now</a>
+      <a class="link ripe-link" href={base + '/ripe'}>Edible now</a>
     {/if}
     <ToolsMenu />
   </div>
