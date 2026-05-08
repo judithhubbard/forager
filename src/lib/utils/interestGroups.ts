@@ -9,6 +9,7 @@
 
 export type InterestGroup =
   | 'tree_fruit'
+  | 'mediterranean_tropical_fruit'
   | 'bramble_berry'
   | 'wild_green'
   | 'mushroom_beginner'
@@ -39,9 +40,16 @@ export const INTEREST_GROUPS: InterestGroupSpec[] = [
   {
     id: 'tree_fruit',
     label: 'Tree fruit',
-    examples: 'apples, mulberries, cherries, pawpaw, persimmon',
+    examples: 'apples, mulberries, cherries, pawpaw, hawthorn, beach plum',
     coverage: 'tens of thousands of public pins',
     defaultOn: true
+  },
+  {
+    id: 'mediterranean_tropical_fruit',
+    label: 'Mediterranean & tropical fruit',
+    examples: 'citrus, fig, olive, pomegranate, loquat, dates, mango, lychee',
+    coverage: 'thousands of public pins in CA/AZ/FL/HI cities',
+    defaultOn: false
   },
   {
     id: 'bramble_berry',
