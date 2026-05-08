@@ -281,13 +281,14 @@
   $: if (map && markerLayer && LCache) {
     renderPins(pins, selectedPinId, colorOf, categoryOf);
   }
-  // Heatmap is the default low-zoom view. Cluster numbered-dot
-  // rendering is no longer wired (the parent only sends density
-  // buckets at low zoom now); we keep the function for potential
-  // future toggle. Always clear the cluster layer so any stray
-  // markers from earlier renders don't sit under the heat tiles.
+  // Cluster numbered-dot rendering re-wired in migration 58 +
+  // commit 090b721: at zoom 13-15 the parent sends per-cell cluster
+  // points (count + centroid + representative species), and we
+  // render them as count-bubbles (multi-pin) or small dots
+  // (single-pin). Reactive on the clusters prop so updates from
+  // a viewport change actually paint.
   $: if (map && clusterLayer && LCache) {
-    clusterLayer.clearLayers();
+    renderClusters(clusters);
   }
   let pinHeatGroup: import('leaflet').LayerGroup | undefined;
   $: if (map && LCache) renderPinHeat(pinDensityBuckets);
