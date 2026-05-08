@@ -1437,6 +1437,14 @@
   />
 
   {#if !selectedPinId}
+    <!-- Always-visible "X pins loaded" chip. Shows visible-pin count
+         + a "+" suffix when the bbox-fetch hit its cap (so you know
+         the map view is truncated, not just sparse data). Useful for
+         debugging "where are my trees" questions and for general
+         confidence that the load completed. -->
+    <div class="pin-count-chip" class:capped={capHit} title={capHit ? 'Cap reached — zoom in for full coverage' : 'Pins currently loaded in view'}>
+      {filteredPins.length.toLocaleString()}{capHit ? '+' : ''} pins
+    </div>
     {@const hasStatusRows = legendShows.ripe || legendShows.possibly || legendShows.gone}
     {#if hasStatusRows && showLegend}
       <!-- Status legend only — species/groups are listed in the species
@@ -1992,13 +2000,38 @@
     overflow-y: auto;
   }
 
-  /* Status legend — bottom-right so it doesn't collide with the
-   * stack of bottom-left controls (rain pill / recorder / track-
-   * legend). Sits above Leaflet's attribution strip. */
+  /* Persistent pin-count chip — top-right (just under Leaflet's
+   * locate button) so it's always visible and never overlaps with
+   * the status legend below. */
+  .pin-count-chip {
+    position: fixed;
+    top: 7.4rem; /* clears the filterbar (~56-72px) + locate button */
+    right: 0.5rem;
+    z-index: 600;
+    padding: 0.2rem 0.55rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid #d0d8d0;
+    border-radius: 0.3rem;
+    font-size: 0.75rem;
+    color: #4a554a;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    pointer-events: auto;
+    user-select: none;
+  }
+  .pin-count-chip.capped {
+    background: #fff4d8;
+    border-color: #d8b86a;
+    color: #6b4912;
+    font-weight: 500;
+  }
+  /* Status legend — bottom-right but lifted above Map.svelte's
+   * zoom-chip (z14, bottom 1.6rem) and build-chip (bottom 3rem) so
+   * the three don't pile on top of each other. */
   .legend {
     position: fixed;
-    bottom: 1.6rem;
-    right: 0.75rem;
+    bottom: 4.5rem;
+    right: 0.5rem;
     z-index: 600;
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid #d0d8d0;
@@ -2104,8 +2137,8 @@
   }
   .legend-show {
     position: fixed;
-    bottom: 1.6rem;
-    right: 0.75rem;
+    bottom: 4.5rem;
+    right: 0.5rem;
     z-index: 600;
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid #d0d8d0;
