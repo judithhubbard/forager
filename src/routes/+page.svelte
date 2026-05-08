@@ -2017,13 +2017,14 @@
     overflow-y: auto;
   }
 
-  /* Persistent pin-count chip — top-right (just under Leaflet's
-   * locate button) so it's always visible and never overlaps with
-   * the status legend below. */
+  /* Persistent pin-count chip — top-left (just below Leaflet's
+   * zoom +/- controls). Top-right is taken by the GPS-locate
+   * button + the locate accuracy halo, both of which extend
+   * further down than this chip would clear. */
   .pin-count-chip {
     position: fixed;
-    top: 7.4rem; /* clears the filterbar (~56-72px) + locate button */
-    right: 0.5rem;
+    top: 7.4rem; /* clears the filterbar (~56-72px) + zoom controls */
+    left: 0.5rem;
     z-index: 600;
     padding: 0.2rem 0.55rem;
     background: rgba(255, 255, 255, 0.92);
@@ -2043,11 +2044,11 @@
     font-weight: 500;
   }
   /* Status legend — bottom-right but lifted above Map.svelte's
-   * zoom-chip (z14, bottom 1.6rem) and build-chip (bottom 3rem) so
-   * the three don't pile on top of each other. */
+   * build-chip (bottom 1.6rem) so they don't pile up. (The old
+   * zoom-chip below the build-chip was removed.) */
   .legend {
     position: fixed;
-    bottom: 4.5rem;
+    bottom: 3rem;
     right: 0.5rem;
     z-index: 600;
     background: rgba(255, 255, 255, 0.95);
@@ -2170,7 +2171,7 @@
   }
   .legend-show {
     position: fixed;
-    bottom: 4.5rem;
+    bottom: 3rem;
     right: 0.5rem;
     z-index: 600;
     background: rgba(255, 255, 255, 0.95);

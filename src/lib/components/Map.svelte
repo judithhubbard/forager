@@ -1155,11 +1155,14 @@
 
 <div class="map-wrap" class:placing>
   <div bind:this={mapEl} class="map" />
-  {#if currentZoom != null}
-    <div class="zoom-chip" title="Current zoom level">z{currentZoom}</div>
-  {/if}
-  <div class="build-chip" title="Build (git short SHA) — useful for reporting issues / spotting stale caches">
-    {buildRev}
+  <!-- Build SHA chip in the bottom-right corner. Lets the user
+       (and anyone reporting an issue) confirm which version of
+       the app they're running. The zoom-level chip was removed
+       — Leaflet's own zoom controls already show the value when
+       the user clicks them, and the standalone chip just added
+       clutter. -->
+  <div class="build-chip" title="Build (git short SHA) — confirms the version you're running. Compare to the latest commit on github.com/judithhubbard/forager.">
+    v {buildRev}
   </div>
   {#if placing}
     <div class="placing-hint" role="status">{placingHint}</div>
@@ -1426,36 +1429,21 @@
      stacked with rain + recorder + status legend. Only visible
      when ≥2 tracks are showing — a single track has no gradient
      to interpret. */
-  /* Small zoom indicator. Bottom-right above Leaflet's attribution
-     so it stays out of the way of all the other corner UI. Useful
-     for users figuring out 'why is the map showing this' and for
-     reporting issues like 'overlap at zoom N'. */
-  .zoom-chip {
+  /* Build SHA chip — bottom-right above Leaflet's attribution.
+     The zoom-chip that used to sit below this was removed; the
+     build chip now occupies the chip slot and is bumped up in
+     readability so the user can actually read the SHA. */
+  .build-chip {
     position: absolute;
     bottom: 1.6rem;
     right: 0.5rem;
     z-index: 600;
-    padding: 0.1rem 0.4rem;
-    background: rgba(255, 255, 255, 0.85);
+    padding: 0.18rem 0.5rem;
+    background: rgba(255, 255, 255, 0.95);
     border: 1px solid #d0d8d0;
     border-radius: 0.3rem;
-    font-size: 0.7rem;
+    font-size: 0.78rem;
     color: #4a554a;
-    font-variant-numeric: tabular-nums;
-    pointer-events: none;
-  }
-  /* Build SHA — sits next to zoom chip. Same look, just one row up. */
-  .build-chip {
-    position: absolute;
-    bottom: 3rem;
-    right: 0.5rem;
-    z-index: 600;
-    padding: 0.1rem 0.4rem;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid #d0d8d0;
-    border-radius: 0.3rem;
-    font-size: 0.65rem;
-    color: #6b7a6b;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     pointer-events: none;
   }
