@@ -43,11 +43,14 @@
   import { profile } from '$lib/stores/profile';
   import {
     enabledIds,
-    disabledIds,
-    setEnabled as setSpeciesEnabled,
-    setExplicitSet as setExplicitSpecies,
-    enableAll as enableAllSpecies
+    disabledIds
   } from '$lib/stores/userPreferences';
+  import {
+    panelSelection,
+    clearAll as clearPanelSelection,
+    selectAll as selectAllPanelSelection,
+    toggle as togglePanelSelection
+  } from '$lib/stores/panelSelection';
   import { dataChange, pinChanged } from '$lib/stores/dataChange';
   import { colorForGroup, colorForCategoryFallback } from '$lib/utils/symbology';
 
@@ -213,11 +216,14 @@
   }
 
   let species: Species[] = [];
-  /** Species filter — sourced from the persisted userPreferences store.
-   *   null     → no filter, show all species (default for new users
-   *              and any user with zero preference rows)
-   *   Set([…]) → only listed species are visible (empty set = show none) */
-  $: selectedSpeciesIds = $enabledIds;
+  /** Species filter — session-only (not persisted). The panel's Clear
+   *  / Select-all / individual-checkbox flips are ephemeral viewport
+   *  filters; the long-term active set lives on /interests. Resetting
+   *  on page reload is intentional.
+   *   null     → no panel filter; show every species the user hasn't
+   *              disabled in /interests
+   *   Set([…]) → only listed species visible (empty set = show none) */
+  $: selectedSpeciesIds = $panelSelection;
   let speciesPanelOpen = false;
   /** Category filter for the species panel — checkboxes that turn each
    *  category on/off. The set holds enabled categories. Brambles are
@@ -661,18 +667,16 @@
 
   function toggleSpecies(id: string) {
     const allIds = speciesInRegion.map((s) => s.id);
-    const currentlyEnabled =
-      selectedSpeciesIds === null || selectedSpeciesIds.has(id);
-    setSpeciesEnabled(id, !currentlyEnabled, allIds);
+    togglePanelSelection(id, allIds);
   }
   function clearSpecies() {
-    // Show no species — materializes one disabled row per species.
-    setExplicitSpecies(new Set<string>(), speciesInRegion.map((s) => s.id));
+    // Session-only: empties the panel filter. Species stay in the
+    // dropdown unchecked so they can be re-checked individually.
+    clearPanelSelection();
   }
   function selectAllSpecies() {
-    // Back to "all enabled" (writes enabled=true rows for every
-    // species — server still reads this as the all-on state).
-    enableAllSpecies(speciesInRegion.map((s) => s.id));
+    // Session-only: removes the panel filter (back to "show all").
+    selectAllPanelSelection();
   }
 
   // Sort species by common name; only include species that have at least
@@ -793,10 +797,10 @@
       species.some((s) => s.id === want)
     ) {
       lastSpeciesParam = want;
-      setExplicitSpecies(
-        new Set([want]),
-        species.map((s) => s.id)
-      );
+      // Session-only: focus the panel filter on this single species
+      // so the map highlights it. The persistent /interests selection
+      // is unchanged.
+      panelSelection.set(new Set([want]));
     }
   }
 
