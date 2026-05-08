@@ -204,14 +204,11 @@
   // even at zoom 11 — better to keep showing accurate cluster
   // counts than a silently truncated individual-pin set.
   const CLUSTER_BELOW_ZOOM = 13;
-  /** Switch from cluster mode (count badges per grid cell) to
-   *  individual-pin mode at this zoom and above. Set to 14 so
-   *  clusters only appear at zoom 13 (overview / "where am I"
-   *  density), and zoom 14+ shows individual pin markers — the
-   *  user wants pins, not number-circles, whenever the rendering
-   *  is meaningful. With marker-sized grid + pagination the
-   *  individual-pin path handles z14+ densities cleanly. */
-  const INDIVIDUAL_AT_ZOOM = 14;
+  // Cluster bubbles removed — heatmap stays at zoom < 13, individual
+  // pins via marker-sized grid decimation at zoom ≥ 13. The decimation
+  // already drops same-cell duplicates so visually-obscured pins
+  // aren't rendered, but every cell that COULD be distinguished gets
+  // its own pin marker (no number-circles).
   /** True when the viewport pin fetch returned the maximum allowed
    *  rows — there could be more pins outside the cap. The Show
    *  dropdown appends a '+' to its counts when this is set so the
@@ -1049,36 +1046,6 @@
         clusters = [];
         capHit = false;
         bboxSummary = [];
-      } else if (zoom < INDIVIDUAL_AT_ZOOM) {
-        // Cluster mode (zoom 13-15): one bubble per grid cell with
-        // count badge for multi-pin cells, small dot for single-pin.
-        // Click a cluster to zoom in. Honest representation of
-        // density without the "where did my tree go" surprise of
-        // hash-decimating individual pins.
-        const [clusterRows, pubSum] = await Promise.all([
-          listPinClusters(bbox, zoom),
-          listPublicPinSummary(bbox)
-        ]);
-        if (seq !== viewportSeq) return;
-        // Map server shape → existing PinCluster shape used by Map.
-        // (Map.svelte's redeclared ClusterPoint type matches PinCluster
-        // structurally so the prop binds without conversion.)
-        const cps: PinCluster[] = clusterRows.map((c: PinClusterPoint) => ({
-          cluster_id: 0, // PinCluster expects number; cell_id is a string,
-                          // it's only used as a stable React-style key
-                          // and the centroid serves that role here
-          count_pins: c.count,
-          centroid_lng: c.centroid_lng,
-          centroid_lat: c.centroid_lat,
-          representative_species_id: c.representative_species_id
-        }));
-        clusters = cps;
-        pins = [];
-        pinDensityBuckets = [];
-        capHit = false;
-        const summaryById = new Map<string | null, PinBboxSummaryRow>();
-        for (const r of pubSum) summaryById.set(r.species_id, { ...r });
-        bboxSummary = [...summaryById.values()];
       } else {
         // Individual-pin mode (zoom ≥ 13): authed users get their
         // region pins ∪ the public layer (dedup by id) so panning

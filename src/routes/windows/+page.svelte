@@ -184,22 +184,30 @@
       const zoneIds: string[] = ((zoneRes.data ?? []) as Array<{ climate_zone_id: string }>)
         .map((r) => r.climate_zone_id);
 
+      // The generated Database types don't include the `confidence`
+      // column yet (added in migration 45 but never regen'd). Cast
+      // through unknown so .select('…confidence') typechecks. Same
+      // pattern is used elsewhere for post-migration columns.
+      const sb = supabase as unknown as {
+        from: (t: string) => {
+          select: (cols: string) => {
+            eq: (col: string, val: string) => Promise<{ data: WindowRow[] | null; error: { message: string } | null }>;
+            neq: (col: string, val: string) => {
+              in: (col: string, vals: string[]) => Promise<{ data: WindowRow[] | null; error: { message: string } | null }>;
+            };
+          };
+        };
+      };
       const [curatedRes, frostRes, obsRes] = await Promise.all([
-        // Curated rows for this region (the original Ithaca-curated set).
-        supabase
-          .from('species_fruiting_windows')
+        sb.from('species_fruiting_windows')
           .select('id, species_id, region_id, stage, start_doy, end_doy, confidence')
           .eq('region_id', regionId),
-        // Frost-offset rows for any zone(s) this region maps to.
-        // region_id is NULL on these (since they're zone-keyed estimates,
-        // not region-specific). Skip if region has no zone mapping yet.
         zoneIds.length > 0
-          ? supabase
-              .from('species_fruiting_windows')
+          ? sb.from('species_fruiting_windows')
               .select('id, species_id, region_id, stage, start_doy, end_doy, confidence')
               .neq('confidence', 'curated')
               .in('climate_zone_id', zoneIds)
-          : Promise.resolve({ data: [], error: null } as { data: WindowRow[]; error: null }),
+          : Promise.resolve({ data: [] as WindowRow[], error: null }),
         supabase
           .from('v_observation_with_pin')
           .select('id, species_id, stage, observed_at, pin_id, pin_display_name, quality_rating, quality_notes')
@@ -208,9 +216,6 @@
       if (curatedRes.error) throw curatedRes.error;
       if (frostRes.error) throw frostRes.error;
       if (obsRes.error) throw obsRes.error;
-      // Curated rows take precedence per (species_id, stage). When a
-      // species has both a curated row for the region AND a frost-
-      // offset row for the region's zone, drop the frost-offset.
       const curatedKeys = new Set(
         (curatedRes.data ?? []).map((w) => `${w.species_id}|${w.stage}`)
       );
