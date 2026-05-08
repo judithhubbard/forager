@@ -760,6 +760,61 @@
     selectAllPanelSelection();
   }
 
+  /** Summary of currently-active filters. The "filter active" chip
+   *  surfaces these so the user always knows when a filter is hiding
+   *  pins. Without this, filters like the species panel selection
+   *  (in-memory, easy to miss) silently hide trees in other regions
+   *  — the bug that hid Toronto pins for logged-in users.
+   *
+   *  Order matters: the most-likely-surprising filters come first
+   *  (panel selection, category) so they're the most visible part of
+   *  the chip. */
+  $: activeFilterParts = (() => {
+    const parts: string[] = [];
+    if ($panelSelection !== null) {
+      if ($panelSelection.has(HIDE_ALL)) parts.push('all species hidden');
+      else parts.push(`${$panelSelection.size} species hidden`);
+    }
+    if (visibleCats.size < 5) {
+      parts.push(`${visibleCats.size}/5 categories`);
+    }
+    if (filterStatus !== 'active') {
+      const statusLabel: Record<FilterStatus, string> = {
+        all: 'all statuses',
+        active: 'active',
+        edible_today: 'edible today',
+        productive: 'productive'
+      };
+      parts.push(`status: ${statusLabel[filterStatus]}`);
+    }
+    if (cookbookFilter) {
+      parts.push(`make: ${cookbookFilter.replace(/_/g, ' ')}`);
+    }
+    const layers = $settings.mapLayers;
+    const layersOff = (['mine', 'friends', 'group', 'public', 'tracks'] as const)
+      .filter((k) => !layers[k]).length;
+    if (layersOff > 0) {
+      parts.push(`${5 - layersOff}/5 layers`);
+    }
+    return parts;
+  })();
+  $: hasActiveFilters = activeFilterParts.length > 0;
+
+  /** Reset every filter to its default. Called from the chip's
+   *  "Show all" button. Persistent /interests selections are NOT
+   *  touched — those are deliberate long-term decisions, not
+   *  session filters. */
+  function resetAllFilters() {
+    selectAllPanelSelection();
+    visibleCats = new Set(['fruit', 'bramble', 'nut', 'mushroom', 'other']);
+    filterStatus = 'active';
+    cookbookFilter = '';
+    settings.update((s) => ({
+      ...s,
+      mapLayers: { mine: true, friends: true, group: true, public: true, tracks: true }
+    }));
+  }
+
   // Sort species by common name; only include species that have at least
   // one pin in the active region for compactness.
   // Order categories so the panel groups fruits, then nuts, then mushrooms,
@@ -1324,6 +1379,19 @@
     <div class="filterbar-spacer"></div>
     <AddressSearch on:select={handleGeocodeSelect} />
   </div>
+
+  {#if hasActiveFilters}
+    <!-- Filter-active banner. Surfaces every non-default filter so
+         the user always knows when something is hiding pins from
+         the map. Without this, the species panel filter (in-memory)
+         silently hid Toronto pins for logged-in users — surprising
+         and persistent. -->
+    <div class="filter-banner" role="status">
+      <span class="filter-icon" aria-hidden="true">⚲</span>
+      <span class="filter-summary">Filtered: {activeFilterParts.join(' · ')}</span>
+      <button class="filter-reset" on:click={resetAllFilters}>Show all</button>
+    </div>
+  {/if}
 
   <MapView
     bind:this={mapRef}
@@ -2011,4 +2079,42 @@
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   }
+
+  /* Filter-active banner. Sits between the filterbar and the map,
+   * full-width, with a warm tone so the user can't miss it when
+   * any filter is hiding pins. Single-line; the summary truncates
+   * with ellipsis on narrow viewports. */
+  .filter-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    background: #fff4d8;
+    border-bottom: 1px solid #d8b86a;
+    color: #5a3d0c;
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+  .filter-icon {
+    font-size: 0.95rem;
+    color: #a06a13;
+    flex-shrink: 0;
+  }
+  .filter-summary {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .filter-reset {
+    background: white;
+    border: 1px solid #d8b86a;
+    color: #6b4912;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .filter-reset:hover { background: #fff8e8; }
 </style>
