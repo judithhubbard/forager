@@ -765,19 +765,15 @@
       if (matchesStatus(p, 'productive'))    out.productive++;
     }
     if (bboxSummary.length > 0) {
+      // Pure status counts — no species/category/cookbook gates. The
+      // dropdown reports "how many pins in this status bucket exist
+      // in the viewport," matching the trueTotalInView chip. Pins
+      // hidden by other filters or by display decimation still count
+      // toward their status bucket — they ARE active, the user just
+      // isn't currently looking at them. Clicking the filter still
+      // applies all the gates downstream so the actual rendered
+      // result respects them.
       for (const r of bboxSummary) {
-        // Apply the same species/category/cookbook gates the in-memory
-        // path applies, so the dropdown counts match what the species
-        // panel offers. A null species_id can't be filtered by these
-        // species-level predicates, so it's always included.
-        if (r.species_id) {
-          if ($disabledIds.has(r.species_id)) continue;
-          const cat = (categoryBySpecies[r.species_id] ?? null) as SpeciesCat | null;
-          if (cat && !visibleCats.has(cat)) continue;
-          if (cookbookSpeciesIds !== null && !cookbookSpeciesIds.has(r.species_id)) continue;
-        } else if (cookbookSpeciesIds !== null) {
-          continue;
-        }
         out.all    += r.total_count;
         out.active += r.active_count;
       }
