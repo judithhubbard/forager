@@ -12,11 +12,7 @@
   } from '$lib/stores/activeRegion';
   import {
     settings,
-    setBasemap,
-    setColorBy,
     setDefaultPhotoLicense,
-    type Basemap,
-    type ColorBy,
     type PhotoLicense
   } from '$lib/stores/settings';
 
@@ -36,16 +32,6 @@
     return p;
   })();
   $: isOnMap = localPath === '/' || localPath === '';
-
-  const BASEMAP_OPTIONS: { value: Basemap; label: string }[] = [
-    { value: 'osm-hot',   label: 'Humanitarian OSM' },
-    { value: 'satellite', label: 'Satellite' }
-  ];
-
-  const COLOR_BY_OPTIONS: { value: ColorBy; label: string }[] = [
-    { value: 'group',    label: 'Per species group' },
-    { value: 'category', label: 'By category only' }
-  ];
 
   const PHOTO_LICENSE_OPTIONS: { value: PhotoLicense; label: string }[] = [
     { value: 'CC-BY-SA-4.0',      label: 'CC BY-SA 4.0 (share-alike, default)' },
@@ -77,12 +63,6 @@
     helpOpen = false;
   }
 
-  function onBasemapChange(e: Event) {
-    setBasemap((e.currentTarget as HTMLSelectElement).value as Basemap);
-  }
-  function onColorByChange(e: Event) {
-    setColorBy((e.currentTarget as HTMLSelectElement).value as ColorBy);
-  }
   function onPhotoLicenseChange(e: Event) {
     setDefaultPhotoLicense((e.currentTarget as HTMLSelectElement).value as PhotoLicense);
   }
@@ -128,36 +108,17 @@
         <a href={base + '/interests'} on:click={closeMenu}>My interests</a>
       {/if}
 
-      <hr />
-
-      <!-- Options submenu (basemap, marker color, photo license,
-           heatmap toggle). Collapsed by default. -->
-      <button class="submenu-toggle" on:click={() => (optionsOpen = !optionsOpen)}>
-        Options <span class="chev">{optionsOpen ? '▾' : '▸'}</span>
-      </button>
-      {#if optionsOpen}
-        <div class="submenu">
-          <div class="settings-block">
-            <label>
-              Basemap
-              <select value={$settings.basemap} on:change={onBasemapChange}>
-                {#each BASEMAP_OPTIONS as o}
-                  <option value={o.value}>{o.label}</option>
-                {/each}
-              </select>
-            </label>
-          </div>
-          <div class="settings-block">
-            <label>
-              Marker color
-              <select value={$settings.colorBy} on:change={onColorByChange}>
-                {#each COLOR_BY_OPTIONS as o}
-                  <option value={o.value}>{o.label}</option>
-                {/each}
-              </select>
-            </label>
-          </div>
-          {#if $session}
+      {#if $session}
+        <hr />
+        <!-- Photo license lives here because it's a per-user write
+             preference. Display options (basemap, marker color) moved
+             into the Layers panel where they sit alongside the other
+             map-display toggles. -->
+        <button class="submenu-toggle" on:click={() => (optionsOpen = !optionsOpen)}>
+          Options <span class="chev">{optionsOpen ? '▾' : '▸'}</span>
+        </button>
+        {#if optionsOpen}
+          <div class="submenu">
             <div class="settings-block">
               <label>
                 Photo license
@@ -168,8 +129,8 @@
                 </select>
               </label>
             </div>
-          {/if}
-        </div>
+          </div>
+        {/if}
       {/if}
 
       <!-- Help submenu — How to use is the parent doc, About + Data

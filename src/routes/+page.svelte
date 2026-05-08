@@ -51,7 +51,17 @@
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
   import AddressSearch from '$lib/components/AddressSearch.svelte';
   import SignupBanner from '$lib/components/SignupBanner.svelte';
-  import { settings, setMapLayer, setShowZones, setShowEdibleRings, type MapLayerKey } from '$lib/stores/settings';
+  import {
+    settings,
+    setMapLayer,
+    setShowZones,
+    setShowEdibleRings,
+    setBasemap,
+    setColorBy,
+    type MapLayerKey,
+    type Basemap,
+    type ColorBy
+  } from '$lib/stores/settings';
   import { profile } from '$lib/stores/profile';
   import {
     enabledIds,
@@ -453,6 +463,20 @@
   function onEdibleRingsToggle(e: Event) {
     setShowEdibleRings((e.currentTarget as HTMLInputElement).checked);
   }
+  function onBasemapChange(e: Event) {
+    setBasemap((e.currentTarget as HTMLSelectElement).value as Basemap);
+  }
+  function onColorByChange(e: Event) {
+    setColorBy((e.currentTarget as HTMLSelectElement).value as ColorBy);
+  }
+  const BASEMAP_OPTIONS: { value: Basemap; label: string }[] = [
+    { value: 'osm-hot',   label: 'Humanitarian OSM' },
+    { value: 'satellite', label: 'Satellite' }
+  ];
+  const COLOR_BY_OPTIONS: { value: ColorBy; label: string }[] = [
+    { value: 'group',    label: 'Per species group' },
+    { value: 'category', label: 'By category only' }
+  ];
   /** Brief 'X / Y on' summary for the panel button. */
   /** Per-layer pin counts in the current viewport. Drives the
    *  grayed-out "(empty)" state on layers with no data — saves the
@@ -1344,18 +1368,18 @@
         </select>
       </label>
     {/if}
-    {#if $session}
-      <div class="layers-filter">
-        <button
-          class="layers-toggle"
-          on:click={() => (layersPanelOpen = !layersPanelOpen)}
-          title="Show or hide pin sources on the map"
-        >
-          Layers: {layersOnCount.on}/{layersOnCount.total}
-          <span class="caret">{layersPanelOpen ? '▴' : '▾'}</span>
-        </button>
-        {#if layersPanelOpen}
-          <div class="layers-panel">
+    <div class="layers-filter">
+      <button
+        class="layers-toggle"
+        on:click={() => (layersPanelOpen = !layersPanelOpen)}
+        title="Show or hide pin sources on the map"
+      >
+        Layers: {layersOnCount.on}/{layersOnCount.total}
+        <span class="caret">{layersPanelOpen ? '▴' : '▾'}</span>
+      </button>
+      {#if layersPanelOpen}
+        <div class="layers-panel">
+          {#if $session}
             <label class="layer-row" class:dim={layerCounts.mine === 0}>
               <input
                 type="checkbox"
@@ -1376,6 +1400,7 @@
               <span class="layer-name">Group</span>
               <span class="layer-hint">{layerCounts.group > 0 ? `${layerCounts.group} pins shared in your region` : 'no group pins in view'}</span>
             </label>
+          {/if}
             <label class="layer-row" class:dim={layerCounts.public === 0}>
               <input
                 type="checkbox"
@@ -1423,10 +1448,36 @@
               <span class="layer-name">Edible-now glow</span>
               <span class="layer-hint">Warm halo on ripe-today pins</span>
             </label>
+            <hr class="layer-divider" />
+            <!-- Display options. These are not pin "layers" but living
+                 here keeps all map-display controls in one place. -->
+            <label class="layer-row layer-select">
+              <span class="layer-name">Basemap</span>
+              <select
+                class="layer-select-input"
+                value={$settings.basemap}
+                on:change={onBasemapChange}
+              >
+                {#each BASEMAP_OPTIONS as o}
+                  <option value={o.value}>{o.label}</option>
+                {/each}
+              </select>
+            </label>
+            <label class="layer-row layer-select">
+              <span class="layer-name">Marker color</span>
+              <select
+                class="layer-select-input"
+                value={$settings.colorBy}
+                on:change={onColorByChange}
+              >
+                {#each COLOR_BY_OPTIONS as o}
+                  <option value={o.value}>{o.label}</option>
+                {/each}
+              </select>
+            </label>
           </div>
         {/if}
       </div>
-    {/if}
     </div>
     <div class="filterbar-spacer"></div>
     <AddressSearch on:select={handleGeocodeSelect} />
@@ -1758,6 +1809,26 @@
   }
   .layer-row.dim:hover { background: transparent; }
   .layer-row input[type="checkbox"]:disabled { cursor: not-allowed; }
+  /* Display-option rows use a select instead of a checkbox; collapse
+   * the leading checkbox column so the label sits flush left. */
+  .layer-row.layer-select {
+    grid-template-columns: 7.5rem 1fr;
+  }
+  .layer-select-input {
+    width: 100%;
+    padding: 0.2rem 0.35rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.25rem;
+    background: white;
+    font-size: 0.8rem;
+    color: #1f2a1f;
+    cursor: pointer;
+  }
+  .layer-divider {
+    border: 0;
+    border-top: 1px solid #ebefeb;
+    margin: 0.35rem 0.2rem;
+  }
 
   /* Multi-select species filter */
   .species-filter {
