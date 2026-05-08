@@ -1877,7 +1877,11 @@
   @media (max-width: 640px) {
     .pin-panel {
       top: auto;
-      height: 70vh;
+      /* Cap at 45vh so the user always sees ~55% of the map below
+       * the panel. Inner .content already scrolls (overflow-y:auto),
+       * so the long pin-detail content stays accessible — just
+       * inside the panel rather than pushing the map off-screen. */
+      height: 45vh;
     }
     /* Phone layout: a single visible row of [Filters] [search],
        with all the actual filter controls hidden behind the
