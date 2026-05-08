@@ -128,21 +128,28 @@ export async function listByRegion(regionId: string): Promise<PinEffective[]> {
  *  would silently truncate to 500 pins. */
 export async function listPublicPins(
   bbox: Bbox,
-  maxRows: number = 500
+  maxRows: number = 500,
+  zoom: number = 18
 ): Promise<PinEffective[]> {
   const [west, south, east, north] = bbox;
-  const { data, error } = await supabase.rpc('public_pins_bbox', {
-    p_min_lng: west,
-    p_min_lat: south,
-    p_max_lng: east,
-    p_max_lat: north,
-    p_max_rows: maxRows
-  });
+  // p_zoom drives the spatial decimation grid. zoom 18+ = no
+  // decimation; zoom 13 ≈ 40m cells. See migration 50.
+  const { data, error } = await supabase.rpc(
+    'public_pins_bbox' as never,
+    {
+      p_min_lng: west,
+      p_min_lat: south,
+      p_max_lng: east,
+      p_max_lat: north,
+      p_max_rows: maxRows,
+      p_zoom: Math.round(zoom)
+    } as never
+  );
   if (error) {
     console.error('[pinService] listPublicPins error:', error);
     throw error;
   }
-  return (data ?? []) as PinEffective[];
+  return (data ?? []) as unknown as PinEffective[];
 }
 
 /** Per-species and per-status counts for the public layer in a bbox.

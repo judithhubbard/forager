@@ -430,9 +430,29 @@
     setShowEdibleRings((e.currentTarget as HTMLInputElement).checked);
   }
   /** Brief 'X / Y on' summary for the panel button. */
+  /** Per-layer pin counts in the current viewport. Drives the
+   *  grayed-out "(empty)" state on layers with no data — saves the
+   *  user from clicking layer toggles that change nothing. */
+  $: layerCounts = (() => {
+    const c = { mine: 0, group: 0, public: 0 };
+    for (const p of pins) {
+      const src = sourceOf(p);
+      if (src in c) c[src as 'mine' | 'group' | 'public']++;
+    }
+    return c;
+  })();
   $: layersOnCount = (() => {
+    // Count the layers that BOTH have data AND are toggled on. The
+    // user-visible "X/Y" should reflect what's actually contributing
+    // pins, not the abstract layer registry.
     const m = $settings.mapLayers;
-    return [m.mine, m.friends, m.group, m.public, m.tracks].filter(Boolean).length;
+    let on = 0, total = 0;
+    if (layerCounts.mine > 0) { total++; if (m.mine) on++; }
+    if (layerCounts.group > 0) { total++; if (m.group) on++; }
+    if (layerCounts.public > 0) { total++; if (m.public) on++; }
+    if (m.tracks) on++;
+    total++; // Tracks always counted (data may exist outside viewport)
+    return { on, total };
   })();
   // (Status legend removed — see comment near `legendShows` deletion.)
 
@@ -1304,46 +1324,50 @@
           on:click={() => (layersPanelOpen = !layersPanelOpen)}
           title="Show or hide pin sources on the map"
         >
-          Layers: {layersOnCount}/5
+          Layers: {layersOnCount.on}/{layersOnCount.total}
           <span class="caret">{layersPanelOpen ? '▴' : '▾'}</span>
         </button>
         {#if layersPanelOpen}
           <div class="layers-panel">
-            <label class="layer-row">
+            <label class="layer-row" class:dim={layerCounts.mine === 0}>
               <input
                 type="checkbox"
                 checked={$settings.mapLayers.mine}
                 on:change={(e) => onLayerToggle('mine', e)}
+                disabled={layerCounts.mine === 0}
               />
               <span class="layer-name">Mine</span>
-              <span class="layer-hint">Pins I created</span>
+              <span class="layer-hint">{layerCounts.mine > 0 ? `${layerCounts.mine} pins you've added` : 'no pins yet'}</span>
             </label>
-            <label class="layer-row">
-              <input
-                type="checkbox"
-                checked={$settings.mapLayers.friends}
-                on:change={(e) => onLayerToggle('friends', e)}
-              />
-              <span class="layer-name">Friends</span>
-              <span class="layer-hint">No-op until friend graph ships</span>
-            </label>
-            <label class="layer-row">
+            <label class="layer-row" class:dim={layerCounts.group === 0}>
               <input
                 type="checkbox"
                 checked={$settings.mapLayers.group}
                 on:change={(e) => onLayerToggle('group', e)}
+                disabled={layerCounts.group === 0}
               />
               <span class="layer-name">Group</span>
-              <span class="layer-hint">Region members' pins</span>
+              <span class="layer-hint">{layerCounts.group > 0 ? `${layerCounts.group} pins shared in your region` : 'no group pins in view'}</span>
             </label>
-            <label class="layer-row">
+            <label class="layer-row" class:dim={layerCounts.public === 0}>
               <input
                 type="checkbox"
                 checked={$settings.mapLayers.public}
                 on:change={(e) => onLayerToggle('public', e)}
+                disabled={layerCounts.public === 0}
               />
-              <span class="layer-name">Public</span>
-              <span class="layer-hint">City inventories + community-shared</span>
+              <span class="layer-name">City inventories</span>
+              <span class="layer-hint">{layerCounts.public > 0 ? `${layerCounts.public} trees from city / arboretum imports` : 'no imported trees in view'}</span>
+            </label>
+            <!-- Community shared (anyone-promoted public pins) is a
+                 future tier — there's no UI today for users to
+                 promote a pin to public, so it stays empty. Once
+                 that ships this gets its own row separate from the
+                 admin-curated City inventories above. -->
+            <label class="layer-row dim">
+              <input type="checkbox" disabled />
+              <span class="layer-name">Community shared</span>
+              <span class="layer-hint">coming soon — user-promoted public pins</span>
             </label>
             <label class="layer-row">
               <input
@@ -1370,7 +1394,7 @@
                 on:change={onEdibleRingsToggle}
               />
               <span class="layer-name">Edible-now glow</span>
-              <span class="layer-hint">Soft warm halo on pins ripe today</span>
+              <span class="layer-hint">Warm halo on ripe-today pins</span>
             </label>
           </div>
         {/if}
@@ -1677,18 +1701,36 @@
   }
   .layer-row {
     display: grid;
-    grid-template-columns: 1.1rem 4rem 1fr;
+    grid-template-columns: 1.1rem 7.5rem 1fr;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.25rem 0.35rem;
+    gap: 0.5rem;
+    padding: 0.3rem 0.4rem;
     border-radius: 0.2rem;
     cursor: pointer;
     font-size: 0.85rem;
   }
   .layer-row:hover { background: #f5f8f5; }
-  .layer-row input { width: 0.95rem; height: 0.95rem; margin: 0; }
+  /* Force every checkbox to identical dimensions — without an
+   * explicit appearance + flex-shrink rule some browsers shrunk
+   * checkboxes when adjacent text was longer than the column,
+   * causing irregular sizes across rows. */
+  .layer-row input[type="checkbox"] {
+    appearance: auto;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
   .layer-name { color: #1f2a1f; font-weight: 500; }
   .layer-hint { color: #8a948a; font-size: 0.75rem; }
+  /* Empty / disabled layer rows: gray everything out, no hover. */
+  .layer-row.dim {
+    cursor: default;
+    opacity: 0.55;
+  }
+  .layer-row.dim:hover { background: transparent; }
+  .layer-row input[type="checkbox"]:disabled { cursor: not-allowed; }
 
   /* Multi-select species filter */
   .species-filter {
