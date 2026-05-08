@@ -1411,12 +1411,12 @@
          warm-yellow with a "+" suffix when the bbox-fetch is
          truncated. The build SHA confirms which deploy is live. -->
     <span class="status-chips" aria-hidden="true">
-      <span class="pin-count" class:capped={capHit} title={
-        capHit
-          ? `${filteredPins.length.toLocaleString()} of ${trueTotalInView.toLocaleString()} drawn — zoom in for full detail`
+      <span class="pin-count" class:capped={trueTotalInView > filteredPins.length} title={
+        trueTotalInView > filteredPins.length
+          ? `${filteredPins.length.toLocaleString()} drawn of ${trueTotalInView.toLocaleString()} pins in view — zoom in for full detail`
           : `${trueTotalInView.toLocaleString()} pins in view`
       }>
-        {#if capHit && trueTotalInView > filteredPins.length}
+        {#if trueTotalInView > filteredPins.length}
           {filteredPins.length.toLocaleString()} / {trueTotalInView.toLocaleString()}
         {:else}
           {trueTotalInView.toLocaleString()}
