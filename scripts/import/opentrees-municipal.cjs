@@ -31,6 +31,67 @@ const DOWNLOADS = JSON.parse(
 
 const REGION_NAME = 'OpenTrees municipal (US/Canada)';
 
+/** Hardcoded city centroids per OpenTrees source id. Used for the
+ *  post-extraction outlier check: any pin >CENTROID_RADIUS_KM from
+ *  the city's center is rejected. Catches three classes of source-
+ *  side data corruption that look fine row-by-row:
+ *    - Lat/lng columns inverted (Nichols Arboretum: lat-stored value
+ *      is actually a longitude). Each row is in valid WGS84 range
+ *      but plots in the south Atlantic.
+ *    - Sign-flipped longitudes (Sioux Falls had 3 such rows).
+ *    - Wrong-city CSVs accidentally renamed.
+ *  Sources without a centroid here are imported without the check.
+ *  When adding a new source, look up the city's lat/lng on Wikipedia
+ *  or OSM and add an entry. */
+const CITY_CENTROIDS = {
+  edmonton:           { lat: 53.5461,  lng: -113.4938 },
+  calgary:            { lat: 51.0447,  lng: -114.0719 },
+  vancouver:          { lat: 49.2827,  lng: -123.1207 },
+  surrey:             { lat: 49.1913,  lng: -122.8490 },
+  winnipeg:           { lat: 49.8951,  lng: -97.1384  },
+  regina:             { lat: 50.4452,  lng: -104.6189 },
+  strathcona:         { lat: 53.6311,  lng: -113.4209 },
+  ottawa:             { lat: 45.4215,  lng: -75.6972  },
+  moncton:            { lat: 46.0878,  lng: -64.7782  },
+  providence:         { lat: 41.8240,  lng: -71.4128  },
+  cupertino:          { lat: 37.3230,  lng: -122.0322 },
+  oxnard:             { lat: 34.1975,  lng: -119.1771 },
+  three_rivers:       { lat: 44.9619,  lng: -93.4619  }, // Three Rivers Park District, MN
+  mountain_view:      { lat: 37.3861,  lng: -122.0839 },
+  richardson:         { lat: 32.9483,  lng: -96.7299  },
+  sioux_falls:        { lat: 43.5446,  lng: -96.7311  },
+  charlottesville_nc: { lat: 35.5982,  lng: -82.5515  }, // labelled NC but src is Charlottesville VA
+  weston_fl:          { lat: 26.1003,  lng: -80.3997  },
+  west_chester_pa:    { lat: 39.9601,  lng: -75.6058  },
+  champaign_il:       { lat: 40.1164,  lng: -88.2434  },
+  st_augustine_fl:    { lat: 29.8946,  lng: -81.3145  },
+  bozeman_mt:         { lat: 45.6770,  lng: -111.0429 },
+  nichols_arboretum:  { lat: 42.2770,  lng: -83.7191  }, // Ann Arbor
+  unt:                { lat: 33.2148,  lng: -97.1331  }, // U North Texas, Denton
+  westerville_oh:     { lat: 40.1262,  lng: -82.9290  },
+  escondido_ca:       { lat: 33.1192,  lng: -117.0864 },
+  auburn_me:          { lat: 44.0979,  lng: -70.2312  },
+  cape_coral_fl:      { lat: 26.5629,  lng: -81.9495  },
+  naperville_il:      { lat: 41.7508,  lng: -88.1535  }
+};
+/** Radius (km) within which a pin must fall to count as inside the
+ *  source's expected city. 50km is generous enough for sprawling
+ *  metros (LA, Houston ~30km radius) without admitting cross-state
+ *  outliers. Same threshold the Dryad cleanup migration used. */
+const CENTROID_RADIUS_KM = 50;
+
+/** Haversine distance in km between two WGS84 points. */
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
 const SCI_KEYS = [
   'botanical_name', 'botanic_name', 'botanical', 'botanic',
   'scientific_name', 'scientific', 'sciname',
@@ -408,12 +469,23 @@ async function importOne(sql, source, regionId, userId, species) {
 
   // Match against species
   const matched = [];
-  let unmatched = 0, latlngMissing = 0;
+  let unmatched = 0, latlngMissing = 0, centroidOutliers = 0;
+  const centroid = CITY_CENTROIDS[source.id];
   for (const r of parsed.rows) {
     const e = extractRow(r, schema);
     if (!Number.isFinite(e.lng) || !Number.isFinite(e.lat)) {
       latlngMissing++;
       continue;
+    }
+    // Per-source centroid check: reject pins implausibly far from
+    // the city. Catches lat/lng-swap, sign-flip, and wrong-city
+    // bugs that look fine row-by-row.
+    if (centroid) {
+      const distKm = haversineKm(centroid.lat, centroid.lng, e.lat, e.lng);
+      if (distKm > CENTROID_RADIUS_KM) {
+        centroidOutliers++;
+        continue;
+      }
     }
     const hit = matchSpecies(species, e.sci, e.com);
     if (!hit) { unmatched++; continue; }
@@ -431,7 +503,24 @@ async function importOne(sql, source, regionId, userId, species) {
   for (const m of matched) byId.set(m.externalId, m);
   const finalRows = Array.from(byId.values());
 
-  console.log(`  matched=${finalRows.length.toLocaleString()} unmatched=${unmatched.toLocaleString()} no-coord=${latlngMissing.toLocaleString()}`);
+  console.log(
+    `  matched=${finalRows.length.toLocaleString()} unmatched=${unmatched.toLocaleString()} ` +
+    `no-coord=${latlngMissing.toLocaleString()}` +
+    (centroid ? ` outlier=${centroidOutliers.toLocaleString()}` : ' (no centroid set — outlier check skipped)')
+  );
+  // Loud warning when centroid filter rejected a substantial share —
+  // signals a swap / wrong-city / wrong-SRS issue worth investigating.
+  if (centroid && centroidOutliers > 0) {
+    const totalCoords = finalRows.length + centroidOutliers + unmatched;
+    const pct = (centroidOutliers / Math.max(1, totalCoords)) * 100;
+    if (pct > 20) {
+      console.log(
+        `  ⚠ ${pct.toFixed(0)}% of rows fell >${CENTROID_RADIUS_KM}km from ${source.id}'s ` +
+        `centroid (${centroid.lat.toFixed(3)}, ${centroid.lng.toFixed(3)}). ` +
+        `Likely a lat/lng swap, sign flip, or the wrong source CSV — review before relying on this import.`
+      );
+    }
+  }
 
   // Start an import_run
   const runIns = await sql`
