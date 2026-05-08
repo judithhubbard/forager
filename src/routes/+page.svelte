@@ -5,6 +5,7 @@
   import { activeRegion, regionsLoading, myRegions } from '$lib/stores/activeRegion';
   import { session } from '$lib/stores/auth';
   import { online } from '$lib/stores/network';
+  import { mapViewport, setMapViewport } from '$lib/stores/mapViewport';
   import {
     listPublicPins,
     listPublicPinDensity,
@@ -689,7 +690,11 @@
     const ids = new Set(pins.map((p) => p.species_id).filter(Boolean));
     for (const r of bboxSummary) if (r.species_id) ids.add(r.species_id);
     return species
-      .filter((s) => ids.has(s.id))
+      // Species the user has explicitly disabled in /interests are
+      // hidden from the filter panel entirely — disabled means "I'm
+      // not foraging this," so it doesn't belong in the active-species
+      // chooser. Re-enabling happens on the /interests page.
+      .filter((s) => ids.has(s.id) && !$disabledIds.has(s.id))
       .sort((a, b) => {
         const ca = CATEGORY_ORDER[categoryBySpecies[a.id] ?? 'unknown'] ?? 9;
         const cb = CATEGORY_ORDER[categoryBySpecies[b.id] ?? 'unknown'] ?? 9;
@@ -925,6 +930,14 @@
   ) {
     lastBbox = e.detail.bbox;
     lastZoom = e.detail.zoom;
+    // Persist center + zoom so navigation away (and back) restores
+    // the user's view instead of resetting to defaults.
+    const [west, south, east, north] = e.detail.bbox;
+    setMapViewport({
+      lat: (south + north) / 2,
+      lng: (west + east) / 2,
+      zoom: e.detail.zoom
+    });
     await fetchForViewport(e.detail.bbox, e.detail.zoom);
   }
 
@@ -1230,7 +1243,8 @@
     {labelOf}
     {selectedPinId}
     basemap={$settings.basemap}
-    zoom={$session ? 14 : 5}
+    center={[$mapViewport.lat, $mapViewport.lng]}
+    zoom={$mapViewport.zoom}
     placing={placingPin || !!movingPinId}
     placingHint={movingPinId ? 'Click on the map to set the new location · Esc to cancel' : 'Click on the map to place the pin · Esc to cancel'}
     hideLocate={!!selectedPinId}
