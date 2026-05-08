@@ -1447,13 +1447,11 @@
     </div>
     {@const hasStatusRows = legendShows.ripe || legendShows.possibly || legendShows.gone}
     {#if hasStatusRows && showLegend}
-      <!-- Status legend only — species/groups are listed in the species
-           filter panel (each group header shows its shape + color). -->
+      <!-- Legend matches the map's edible-now glow + the gone-state
+           muted dot. Species/groups are in the species filter panel
+           — each group header shows its shape + color. -->
       <div class="legend">
-        <div class="legend-header">
-          <strong>Status</strong>
-          <button class="legend-toggle" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
-        </div>
+        <button class="legend-toggle floating" on:click={() => (showLegend = false)} aria-label="Hide legend">−</button>
         <ul>
           {#if legendShows.ripe}<li><span class="ring1"></span> Ripe</li>{/if}
           {#if legendShows.possibly}<li><span class="ring2"></span> Possibly ripe</li>{/if}
@@ -1494,13 +1492,14 @@
 
 {#if selectedPinId}
   <aside class="pin-panel" role="dialog" aria-label="Pin detail">
-    <header class="panel-header">
-      <h2>Pin</h2>
-      <div class="panel-actions">
-        <a class="link" href={`${base}/pins/${selectedPinId}`} title="Open in full page">↗</a>
-        <button class="close" on:click={closePanel} aria-label="Close">×</button>
-      </div>
-    </header>
+    <!-- Floating action buttons in the top-right corner replace the
+         old "Pin" header bar. The pin's own species/common name
+         renders inside PinDetailContent so there's nothing the
+         header was telling the user that wasn't already obvious. -->
+    <div class="panel-actions floating">
+      <a class="link" href={`${base}/pins/${selectedPinId}`} title="Open in full page">↗</a>
+      <button class="close" on:click={closePanel} aria-label="Close">×</button>
+    </div>
     <PinDetailContent
       pinId={selectedPinId}
       on:statusChanged={onPanelStatusChanged}
@@ -1984,6 +1983,20 @@
     align-items: center;
     gap: 0.5rem;
   }
+  /* Floating variant: when there's no panel-header bar, the actions
+   * dock in the top-right of the panel itself. White rounded
+   * background so they stay legible over the species photo or any
+   * dense pin-detail content underneath. */
+  .panel-actions.floating {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 0.5rem;
+    padding: 0.05rem 0.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
   .panel-actions .link {
     font-size: 1.05rem;
     text-decoration: none;
@@ -2061,6 +2074,15 @@
     padding: 0 0.25rem;
     line-height: 1;
   }
+  /* Floating variant when no header is rendered — sits at the
+   * top-right of the legend bubble. */
+  .legend-toggle.floating {
+    position: absolute;
+    top: 0.15rem;
+    right: 0.25rem;
+    line-height: 1;
+  }
+  .legend ul { padding-right: 0.6rem; } /* avoid overlap with floating × */
   .legend ul {
     list-style: none;
     margin: 0;
@@ -2118,26 +2140,33 @@
     height: 0.6rem;
     margin: 0 0.5rem 0 0.1rem;
   }
+  /* Ripe + Possibly-ripe glyphs in the legend — match the soft
+   * warm-glow halo Map.svelte renders around edible-now pins.
+   * Inner dot is the species pin color stand-in (using the same
+   * neutral red the map uses for fruit-category fallback); the
+   * surrounding glow is a translucent yellow-orange box-shadow,
+   * tighter for "Ripe" (with a ring stroke) and looser/no-ring
+   * for "Possibly ripe". */
   .legend .ring1, .legend .ring2 {
     display: inline-block;
-    width: 0.95rem; height: 0.95rem;
-    margin-right: 0.4rem;
+    width: 0.55rem; height: 0.55rem;
+    margin: 0 0.55rem 0 0.5rem;
     vertical-align: middle;
     background: #c14a3a;
     border-radius: 50%;
-    border: 1.5px solid white;
+    border: 1px solid #1f2a1f;
+    flex-shrink: 0;
   }
-  /* Ripe: bold solid double-ring (matches the map's strict-ripe pin). */
+  /* Ripe: tight bright halo + outer aura (matches the strict-ripe
+   * stack in Map.svelte: filled aura + stroked inner ring). */
   .legend .ring1 {
     box-shadow:
-      0 0 0 2.2px #d57100,
-      0 0 0 3.4px white,
-      0 0 0 4.4px rgba(213, 113, 0, 0.65);
+      0 0 0 2px #e08a1a,
+      0 0 0 5px rgba(245, 176, 66, 0.32);
   }
-  /* Possibly ripe: a single faint dashed halo (matches the map). */
+  /* Possibly ripe: just a soft yellow aura, no inner ring stroke. */
   .legend .ring2 {
-    outline: 1.5px dashed #d57100;
-    outline-offset: 1.5px;
+    box-shadow: 0 0 0 4px rgba(252, 213, 138, 0.5);
   }
   .legend-show {
     position: fixed;
