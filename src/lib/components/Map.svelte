@@ -1179,9 +1179,37 @@
       // Defer so the map has time to settle before we pan it.
       setTimeout(() => locateMe(), 250);
     }
+
+    // Re-locate when the page becomes visible again. On mobile, the user
+    // typically opens the app, locks the phone, walks somewhere, then
+    // unlocks — at that point the marker is stale. visibilitychange
+    // fires on unlock; pageshow fires on bfcache restore. Both should
+    // refresh the dot without requiring the user to tap the locate
+    // button. Only fires when permission is already granted (re-prompt
+    // on every wake would be obnoxious).
+    const refreshIfVisible = async () => {
+      if (typeof document === 'undefined') return;
+      if (document.visibilityState !== 'visible') return;
+      if (!navigator.geolocation || !navigator.permissions) return;
+      try {
+        const p = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+        if (p.state === 'granted') locateMe();
+      } catch {
+        // Older browsers without permissions API: skip auto-refresh.
+      }
+    };
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    window.addEventListener('pageshow', refreshIfVisible);
+    autoRefreshCleanup = () => {
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+      window.removeEventListener('pageshow', refreshIfVisible);
+    };
   });
 
+  let autoRefreshCleanup: (() => void) | null = null;
+
   onDestroy(() => {
+    autoRefreshCleanup?.();
     if (map) map.remove();
   });
 </script>

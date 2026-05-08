@@ -354,15 +354,27 @@
     observations = [];
     hazards = [];
     photos = [];
+    windows = [];
+    otherSpeciesObs = [];
+    speciesHasWindowsElsewhere = false;
     thumbUrls = new Map();
     fullUrls = new Map();
+    const requestedId = pinId;
     try {
+      // First-paint critical path: pin metadata, species lookup, this
+      // pin's own observations, hazards. As soon as these resolve the
+      // panel can render. On mobile cellular, each Supabase round-trip
+      // is ~1-2s, so chaining a second-batch + photos sequentially used
+      // to stretch first-paint to ~10s.
       const [pinResult, speciesResult, obsResult, hazResult] = await Promise.all([
         getEffective(pinId),
         listSpecies(),
         listByPin(pinId),
         listHazards(pinId)
       ]);
+      // If the user clicked a different pin while we were loading, drop
+      // these results — a later load() call owns the panel now.
+      if (requestedId !== pinId) return;
       pin = pinResult;
       allSpecies = speciesResult;
       observations = obsResult;
@@ -370,56 +382,50 @@
       if (pin?.species_id) {
         species = allSpecies.find((s) => s.id === pin?.species_id) ?? null;
       }
-      // Fetch the species' fruiting windows for this pin's region so the
-      // mini-timeline in the summary can show when this plant flowers /
-      // ripens. Also fetch observations from OTHER pins of the same
-      // species in the region so they can show as faded ticks alongside
-      // this pin's own (more prominent) observations.
-      if (pin?.species_id && pin?.region_id) {
-        const [winRes, otherObsRes] = await Promise.all([
-          supabase
-            .from('species_fruiting_windows')
-            .select('stage, start_doy, end_doy')
-            .eq('species_id', pin.species_id)
-            .eq('region_id', pin.region_id),
-          // Cap to the most-recent 500 observations of this species
-          // on other pins. The mini-timeline only renders ticks for
-          // the current visible year window, so an unbounded query
-          // pulled rows we never display.
-          supabase
-            .from('v_observation_with_pin')
-            .select('stage, observed_at, pin_id')
-            .eq('species_id', pin.species_id)
-            .eq('pin_region_id', pin.region_id)
-            .neq('pin_id', pin.id)
-            .order('observed_at', { ascending: false })
-            .limit(500)
-        ]);
-        windows = winRes.data ?? [];
-        otherSpeciesObs = (otherObsRes.data ?? []) as OtherObs[];
-        // If this species has zero windows in this region, check whether
-        // it has windows in any *other* region — that distinguishes
-        // "no data here yet" from "no data anywhere."
-        if (windows.length === 0 && pin.species_id) {
-          const { data } = await supabase
-            .from('species_fruiting_windows')
-            .select('id')
-            .eq('species_id', pin.species_id)
-            .limit(1);
-          speciesHasWindowsElsewhere = (data?.length ?? 0) > 0;
-        } else {
-          speciesHasWindowsElsewhere = false;
-        }
-      } else {
-        windows = [];
-        otherSpeciesObs = [];
-        speciesHasWindowsElsewhere = false;
-      }
+      loading = false;
+
+      // Background fills: timeline context (species windows + other-pin
+      // observations) and photos. These update reactive state as they
+      // arrive; the panel re-renders in place. No await on the outer
+      // load() — let the panel be interactive immediately.
+      loadTimelineContext(requestedId).catch((err) => {
+        console.warn('[PinDetail] timeline-context load failed:', err);
+      });
       loadPhotos();
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Failed to load pin.';
-    } finally {
       loading = false;
+    }
+  }
+
+  async function loadTimelineContext(requestedId: string) {
+    if (!pin?.species_id || !pin?.region_id) return;
+    const [winRes, otherObsRes] = await Promise.all([
+      supabase
+        .from('species_fruiting_windows')
+        .select('stage, start_doy, end_doy')
+        .eq('species_id', pin.species_id)
+        .eq('region_id', pin.region_id),
+      supabase
+        .from('v_observation_with_pin')
+        .select('stage, observed_at, pin_id')
+        .eq('species_id', pin.species_id)
+        .eq('pin_region_id', pin.region_id)
+        .neq('pin_id', pin.id)
+        .order('observed_at', { ascending: false })
+        .limit(500)
+    ]);
+    if (requestedId !== pinId) return;
+    windows = winRes.data ?? [];
+    otherSpeciesObs = (otherObsRes.data ?? []) as OtherObs[];
+    if (windows.length === 0) {
+      const { data } = await supabase
+        .from('species_fruiting_windows')
+        .select('id')
+        .eq('species_id', pin.species_id)
+        .limit(1);
+      if (requestedId !== pinId) return;
+      speciesHasWindowsElsewhere = (data?.length ?? 0) > 0;
     }
   }
 
