@@ -132,30 +132,37 @@ export async function listPublicPins(
   zoom: number = 18
 ): Promise<PinEffective[]> {
   const [west, south, east, north] = bbox;
-  // p_zoom drives the spatial decimation grid. zoom 18+ = no
-  // decimation; zoom 13 ≈ 40m cells. See migration 50.
-  // PostgREST defaults to a 1000-row response cap (Supabase config).
-  // The function's own LIMIT may return more — without an explicit
-  // .range() we silently lose rows past 1000 and pins beyond that
-  // position simply don't render. Request up to maxRows-1.
-  const { data, error } = await supabase
-    .rpc(
-      'public_pins_bbox' as never,
-      {
-        p_min_lng: west,
-        p_min_lat: south,
-        p_max_lng: east,
-        p_max_lat: north,
-        p_max_rows: maxRows,
-        p_zoom: Math.round(zoom)
-      } as never
-    )
-    .range(0, Math.max(0, maxRows - 1));
-  if (error) {
-    console.error('[pinService] listPublicPins error:', error);
-    throw error;
+  // p_zoom drives the spatial decimation grid in the RPC. PostgREST
+  // has a hidden 1000-row response cap on Supabase (db-max-rows) —
+  // .range() doesn't bypass it. Paginate explicitly so the marker-
+  // sized grid can return >1000 cells in dense urban areas without
+  // silently truncating.
+  const PAGE = 1000;
+  const all: PinEffective[] = [];
+  for (let offset = 0; offset < maxRows; offset += PAGE) {
+    const upper = Math.min(offset + PAGE - 1, maxRows - 1);
+    const { data, error } = await supabase
+      .rpc(
+        'public_pins_bbox' as never,
+        {
+          p_min_lng: west,
+          p_min_lat: south,
+          p_max_lng: east,
+          p_max_lat: north,
+          p_max_rows: maxRows,
+          p_zoom: Math.round(zoom)
+        } as never
+      )
+      .range(offset, upper);
+    if (error) {
+      console.error('[pinService] listPublicPins error:', error);
+      throw error;
+    }
+    const rows = (data ?? []) as unknown as PinEffective[];
+    all.push(...rows);
+    if (rows.length < PAGE) break; // no more pages
   }
-  return (data ?? []) as unknown as PinEffective[];
+  return all;
 }
 
 /** Per-species and per-status counts for the public layer in a bbox.
@@ -227,26 +234,35 @@ export async function listRegionPins(
   // doesn't know about region_pins_bbox until types are regenerated
   // post-migration. Same pattern used for region_pins_clusters and
   // for is_global_admin elsewhere.
-  // Same .range() bypass for the PostgREST 1000-row default cap.
-  const { data, error } = await supabase
-    .rpc(
-      'region_pins_bbox' as never,
-      {
-        p_region_id: regionId,
-        p_min_lng: west,
-        p_min_lat: south,
-        p_max_lng: east,
-        p_max_lat: north,
-        p_max_rows: maxRows,
-        p_zoom: Math.round(zoom)
-      } as never
-    )
-    .range(0, Math.max(0, maxRows - 1));
-  if (error) {
-    console.error('[pinService] listRegionPins error:', error);
-    throw error;
+  // Paginate to bypass the PostgREST 1000-row hidden cap. Same
+  // pattern as listPublicPins above.
+  const PAGE = 1000;
+  const all: PinEffective[] = [];
+  for (let offset = 0; offset < maxRows; offset += PAGE) {
+    const upper = Math.min(offset + PAGE - 1, maxRows - 1);
+    const { data, error } = await supabase
+      .rpc(
+        'region_pins_bbox' as never,
+        {
+          p_region_id: regionId,
+          p_min_lng: west,
+          p_min_lat: south,
+          p_max_lng: east,
+          p_max_lat: north,
+          p_max_rows: maxRows,
+          p_zoom: Math.round(zoom)
+        } as never
+      )
+      .range(offset, upper);
+    if (error) {
+      console.error('[pinService] listRegionPins error:', error);
+      throw error;
+    }
+    const rows = (data ?? []) as unknown as PinEffective[];
+    all.push(...rows);
+    if (rows.length < PAGE) break;
   }
-  return (data ?? []) as unknown as PinEffective[];
+  return all;
 }
 
 /** Authed analog of listPublicPinClusters: cluster aggregates inside
