@@ -1662,6 +1662,7 @@
       pinId={selectedPinId}
       on:statusChanged={onPanelStatusChanged}
       on:requestMove={handleRequestMove}
+      on:deleted={() => { selectedPinId = null; }}
     />
   </aside>
 {/if}

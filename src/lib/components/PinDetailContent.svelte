@@ -5,6 +5,7 @@
     getEffective,
     updateStatus,
     updateVisibility,
+    remove as removePin,
     type PinEffective,
     type PinStatus
   } from '$lib/services/pinService';
@@ -95,6 +96,7 @@
   const dispatch = createEventDispatcher<{
     statusChanged: void;
     requestMove: { pinId: string };
+    deleted: { pinId: string };
   }>();
 
   let pin: PinEffective | null = null;
@@ -229,6 +231,33 @@
 
   let pendingStatus: PinStatus | null = null;
   let statusSaving = false;
+  let deletingPin = false;
+  /** Eligibility for destructive ops (delete, move, status change).
+   *  Owner can always edit their own pin. Region admins can edit
+   *  any non-public pin in their region (public pins are admin-only
+   *  globally — keeps community-curated data tamper-resistant).
+   *  Global admins can edit anything. */
+  $: canEditPin = !!pin && (
+    pin.created_by === $profile?.id
+    || (pin.visibility !== 'public' && $activeRegion?.role === 'admin')
+    || $profile?.is_global_admin === true
+  );
+
+  async function handleDeletePin() {
+    if (!pin || deletingPin) return;
+    if (!confirm('Delete this pin? This removes its observations, photos, and hazards too. This cannot be undone.')) return;
+    deletingPin = true;
+    try {
+      await removePin(pinId);
+      // Parent closes the panel + refetches the map (the
+      // bumpDataChange inside pinService.remove triggers the refetch).
+      dispatch('deleted', { pinId });
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : 'Could not delete pin.';
+    } finally {
+      deletingPin = false;
+    }
+  }
 
   let accessSaving = false;
   let accessError = '';
@@ -923,8 +952,10 @@
           >
             {watching ? '★ Watching' : '☆ Watch'}
           </button>
-          <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
-          {#if pin.created_by === $profile?.id || (pin.visibility !== 'public' && $activeRegion?.role === 'admin') || $profile?.is_global_admin}
+          {#if species?.is_forageable !== false}
+            <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
+          {/if}
+          {#if canEditPin}
             <select
               class="status-select"
               value={pendingStatus ?? ''}
@@ -942,9 +973,15 @@
               on:click={() => dispatch('requestMove', { pinId })}
               title="Click on the map to set a new location"
             >Move pin</button>
+            <button
+              class="watch-btn delete-btn"
+              on:click={handleDeletePin}
+              disabled={deletingPin}
+              title="Delete this pin (cascades to its observations + photos + hazards)"
+            >{deletingPin ? 'Deleting…' : '🗑 Delete'}</button>
           {/if}
         </div>
-      {:else}
+      {:else if species?.is_forageable !== false}
         <div class="watch-row">
           <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
         </div>
@@ -1833,6 +1870,13 @@
     color: #7a4a10;
   }
   .watch-btn.link-btn { background: white; }
+  .watch-btn.delete-btn {
+    background: #fbf0e8;
+    border-color: #d8a880;
+    color: #8a3a14;
+  }
+  .watch-btn.delete-btn:hover { background: #f4dec5; }
+  .watch-btn.delete-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
   /* Community signals (Layer 1 community curation). Authed users
      can flag a public pin as gone, mislabeled, etc. Active state

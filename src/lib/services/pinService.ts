@@ -595,3 +595,26 @@ export async function updateStatus(pinId: string, status: PinStatus): Promise<vo
   });
   bumpPinChanged(pinId);
 }
+
+/** Hard-delete a pin. RLS allows this for the pin's creator,
+ *  for region admins (when the pin isn't public — public is
+ *  admin-only), and for global admins. Cascades remove
+ *  observations / photos / hazards / watchlist rows via
+ *  ON DELETE CASCADE on those tables. */
+export async function remove(pinId: string): Promise<void> {
+  await enqueue({
+    id: pinId,
+    entityType: 'pin',
+    op: 'delete',
+    payload: {},
+    exec: async () => {
+      const { error } = await supabase.from('pins').delete().eq('id', pinId);
+      if (error) {
+        console.error('[pinService] remove error:', error);
+        throw error;
+      }
+    }
+  });
+  bumpDataChange();
+  bumpPinChanged(pinId);
+}
