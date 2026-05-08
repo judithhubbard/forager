@@ -294,7 +294,7 @@ async function streamCsvFiltered(
 ): Promise<{ rows: ParsedRow[]; total: number; schema: CsvSchema; header: string[] }> {
   const stream = createReadStream(filePath, { encoding: 'utf8' });
   const rl = createInterface({ input: stream, crlfDelay: Infinity });
-  const rows: ParsedRow[] = [];
+  let rows: ParsedRow[] = [];
   let header: string[] | null = null;
   let schema: CsvSchema | null = null;
   let total = 0;
@@ -338,6 +338,27 @@ async function streamCsvFiltered(
       lat,
       raw
     });
+  }
+  // Drop coordinate outliers — points more than 200 km from the
+  // city's median lat/lng. Origin: Dryad's source CSVs have a few
+  // rows with bad coordinates (typo / geocoder error) that put a
+  // Houston, TX tree in Houston, MO ~2,000 km away, etc. 200 km is
+  // comfortable: largest legitimate Dryad metro extent (LA) is ~80 km
+  // radius. A single pass after parsing is cheap; per-row distance
+  // check uses the haversine approximation.
+  if (rows.length > 0) {
+    const sortedLng = rows.map((r) => r.lng).sort((a, b) => a - b);
+    const sortedLat = rows.map((r) => r.lat).sort((a, b) => a - b);
+    const medLng = sortedLng[Math.floor(sortedLng.length / 2)];
+    const medLat = sortedLat[Math.floor(sortedLat.length / 2)];
+    const before = rows.length;
+    rows = rows.filter((r) => {
+      const dLat = (r.lat - medLat) * 111;       // ~111 km/° lat
+      const dLng = (r.lng - medLng) * 111 * Math.cos((medLat * Math.PI) / 180);
+      return Math.sqrt(dLat * dLat + dLng * dLng) <= 200;
+    });
+    const dropped = before - rows.length;
+    if (dropped > 0) console.log(`  dropped ${dropped} coordinate outliers (>200 km from city centroid)`);
   }
   return { rows, total, schema: schema!, header: header! };
 }
