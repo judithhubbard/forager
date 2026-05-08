@@ -796,7 +796,10 @@
     const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
     const opacityCss = fillOpacity.toFixed(2);
     const isInvasive = pin.species_id ? invasiveSpeciesIds.has(pin.species_id) : false;
-    const html = shapeHtml(cat, fillVisible, opacityCss, px, false, isInvasive);
+    // Reuse the inedibleInvasive computed earlier (it drove the muted
+    // fillOpacity). Same Set, same lookup; pass through to shapeHtml
+    // so the SVG draws a red ✗ over the category shape.
+    const html = shapeHtml(cat, fillVisible, opacityCss, px, false, isInvasive, inedibleInvasive);
     L.marker([lat, lng], {
       icon: L.divIcon({
         className: 'forager-shape',
@@ -1043,7 +1046,8 @@
     opacity: string,
     px: number,
     dotted: boolean = false,
-    invasive: boolean = false
+    invasive: boolean = false,
+    inedibleInvasive: boolean = false
   ): string {
     const box = px + 4;
     const cx = box / 2;
@@ -1104,7 +1108,22 @@
       default:
         body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dashAttr}/>`;
     }
-    return `<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="opacity:${opacity};filter:${haloFilter};">${body}</svg>`;
+    // Inedible invasives get a red ✗ overlay drawn on top of the
+    // shape — clear "do not consume, remove" signal at a glance.
+    // The X is white-haloed (dropped via the SVG-level filter) so
+    // it stays readable against any species fill color.
+    let xMark = '';
+    if (inedibleInvasive) {
+      const xR = r * 0.78;
+      const xc1 = (cx - xR).toFixed(2);
+      const xc2 = (cx + xR).toFixed(2);
+      const yc1 = (cy - xR).toFixed(2);
+      const yc2 = (cy + xR).toFixed(2);
+      xMark =
+        `<line x1="${xc1}" y1="${yc1}" x2="${xc2}" y2="${yc2}" stroke="#b03030" stroke-width="2.2" stroke-linecap="round"/>` +
+        `<line x1="${xc1}" y1="${yc2}" x2="${xc2}" y2="${yc1}" stroke="#b03030" stroke-width="2.2" stroke-linecap="round"/>`;
+    }
+    return `<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="opacity:${opacity};filter:${haloFilter};">${body}${xMark}</svg>`;
   }
 
   /** Color is by forage category. Status overlays handled via opacity +
