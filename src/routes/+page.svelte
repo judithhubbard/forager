@@ -1534,6 +1534,7 @@
         </div>
       {/if}
     </div>
+    </div>
     <div class="filterbar-spacer"></div>
     <AddressSearch on:select={handleGeocodeSelect} />
     <!-- Persistent status chips, anchored to the filterbar so they
