@@ -12,6 +12,11 @@
   import { applyInterestGroups, removeAllMine } from '$lib/services/userPreferencesService';
   import { loadFromServer as reloadUserPrefs } from '$lib/stores/userPreferences';
   import { settings, setShowInvasives } from '$lib/stores/settings';
+  import { onMount } from 'svelte';
+  import { getGlobalStats, formatPinCount, type GlobalStats } from '$lib/services/statsService';
+
+  let stats: GlobalStats | null = null;
+  onMount(async () => { stats = await getGlobalStats(); });
 
   function onInvasiveOptin(e: Event) {
     setShowInvasives((e.currentTarget as HTMLInputElement).checked);
@@ -135,6 +140,12 @@
 
 <main>
   <h1>Welcome to Forager</h1>
+  {#if stats && stats.total_pins > 0}
+    <p class="stats-line">
+      Tracking <strong>{formatPinCount(stats.total_pins)}</strong> trees and plants
+      across <strong>{stats.total_species}</strong> foragable species.
+    </p>
+  {/if}
   <p class="lead">How would you like to get started?</p>
 
   {#if mode === 'choose'}
@@ -249,6 +260,17 @@
   h1 { color: #3a5a3a; margin: 0 0 0.4rem; font-size: 1.6rem; }
   h2 { color: #3a5a3a; margin: 1.4rem 0 0.4rem; font-size: 1.1rem; }
   .lead { margin: 0 0 1.5rem; font-size: 1rem; color: #4a554a; }
+  .stats-line {
+    margin: 0 0 1rem;
+    padding: 0.55rem 0.8rem;
+    background: #f0f5ef;
+    border-left: 3px solid #3a5a3a;
+    border-radius: 0.25rem;
+    color: #1f2a1f;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+  .stats-line strong { color: #3a5a3a; font-weight: 600; }
   p { line-height: 1.5; color: #2a322a; }
 
   .cards {

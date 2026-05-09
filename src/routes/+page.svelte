@@ -551,16 +551,14 @@
     return c;
   })();
   $: layersOnCount = (() => {
-    // Count the layers that BOTH have data AND are toggled on. The
-    // user-visible "X/Y" should reflect what's actually contributing
-    // pins, not the abstract layer registry.
+    // Count the pin-source layers that BOTH have data AND are
+    // toggled on. Tracks moved out of pin sources (it's a polyline
+    // overlay, not a pin source) so it no longer counts here.
     const m = $settings.mapLayers;
     let on = 0, total = 0;
     if (layerCounts.mine > 0) { total++; if (m.mine) on++; }
     if (layerCounts.group > 0) { total++; if (m.group) on++; }
     if (layerCounts.public > 0) { total++; if (m.public) on++; }
-    if (m.tracks) on++;
-    total++; // Tracks always counted (data may exist outside viewport)
     return { on, total };
   })();
   // (Status legend removed — see comment near `legendShows` deletion.)
@@ -1345,7 +1343,7 @@
         on:click={() => (layersPanelOpen = !layersPanelOpen)}
         title="Show or hide pin sources on the map"
       >
-        Layers: {layersOnCount.on}/{layersOnCount.total}
+        Layers{#if layersOnCount.total > 0 && layersOnCount.on < layersOnCount.total}: {layersOnCount.on}/{layersOnCount.total}{/if}
         <span class="caret">{layersPanelOpen ? '▴' : '▾'}</span>
       </button>
       {#if layersPanelOpen}
@@ -1396,26 +1394,23 @@
             <span class="layer-name">Community shared</span>
             <span class="layer-hint">coming soon — user-promoted public pins</span>
           </label>
+          <!-- Invasives sit under Pin sources because the toggle adds
+               a CATEGORY of pins (inedible-invasive species) to the
+               visible set. It's a content axis, not a visual overlay. -->
           <label class="layer-row">
             <input
               type="checkbox"
-              checked={$settings.mapLayers.tracks}
-              on:change={(e) => onLayerToggle('tracks', e)}
+              checked={$settings.showInvasives}
+              on:change={onInvasivesToggle}
             />
-            <span class="layer-name">Tracks</span>
-            <span class="layer-hint">Saved track polylines</span>
+            <span class="layer-name">Invasives</span>
+            <span class="layer-hint">Inedible invasives (tree of heaven, knotweed…) for management</span>
           </label>
 
           <div class="layer-section-head">Overlays</div>
-          <label class="layer-row">
-            <input
-              type="checkbox"
-              checked={$settings.showZones}
-              on:change={onZonesToggle}
-            />
-            <span class="layer-name">Hardiness zones</span>
-            <span class="layer-hint">USDA + Canadian (NRCan) plant hardiness overlay</span>
-          </label>
+          <!-- Edible-now glow sits at top of overlays — it's the most
+               foraging-relevant decoration. Hardiness zones and
+               rainfall are reference data, not season cues. -->
           <label class="layer-row">
             <input
               type="checkbox"
@@ -1428,11 +1423,11 @@
           <label class="layer-row">
             <input
               type="checkbox"
-              checked={$settings.showInvasives}
-              on:change={onInvasivesToggle}
+              checked={$settings.showZones}
+              on:change={onZonesToggle}
             />
-            <span class="layer-name">Invasives</span>
-            <span class="layer-hint">Inedible invasives (tree of heaven, knotweed…) for management</span>
+            <span class="layer-name">Hardiness zones</span>
+            <span class="layer-hint">USDA + Canadian (NRCan) plant hardiness overlay</span>
           </label>
           <label class="layer-row">
             <input
@@ -1445,6 +1440,17 @@
           </label>
 
           <div class="layer-section-head">Display</div>
+          <!-- Tracks moved here from Pin sources: tracks are polylines,
+               not pins. Conceptually a display style toggle. -->
+          <label class="layer-row">
+            <input
+              type="checkbox"
+              checked={$settings.mapLayers.tracks}
+              on:change={(e) => onLayerToggle('tracks', e)}
+            />
+            <span class="layer-name">Tracks</span>
+            <span class="layer-hint">Saved track polylines</span>
+          </label>
           <label class="layer-row layer-select">
             <span class="layer-name">Basemap</span>
             <select

@@ -1,6 +1,19 @@
 <script lang="ts">
   import { goto } from '$lib/utils/nav';
   import { base } from '$app/paths';
+  import { onMount } from 'svelte';
+  import { getGlobalStats, formatPinCount, type GlobalStats } from '$lib/services/statsService';
+
+  let stats: GlobalStats | null = null;
+  onMount(async () => { stats = await getGlobalStats(); });
+
+  $: fetchedRel = (() => {
+    if (!stats) return '';
+    const ms = Date.now() - new Date(stats.fetched_at).getTime();
+    if (ms < 60_000) return 'just now';
+    if (ms < 3_600_000) return Math.floor(ms / 60_000) + ' min ago';
+    return Math.floor(ms / 3_600_000) + 'h ago';
+  })();
 </script>
 
 <header>
@@ -9,6 +22,32 @@
 </header>
 
 <main>
+  {#if stats && stats.total_pins > 0}
+    <div class="stats-card">
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-value">{formatPinCount(stats.total_pins)}</div>
+          <div class="stat-label">trees + plants</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">{stats.total_species.toLocaleString()}</div>
+          <div class="stat-label">foragable species</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">{stats.total_regions.toLocaleString()}</div>
+          <div class="stat-label">regions covered</div>
+        </div>
+        {#if stats.total_observations > 0}
+          <div class="stat">
+            <div class="stat-value">{formatPinCount(stats.total_observations)}</div>
+            <div class="stat-label">observations</div>
+          </div>
+        {/if}
+      </div>
+      <p class="stats-fresh muted">As of {fetchedRel} · auto-updates every 15 minutes.</p>
+    </div>
+  {/if}
+
   <p>
     Forager is a community foraging map. The public layer is built from
     open municipal and academic tree inventories — a growing list of
@@ -58,4 +97,32 @@
   ul.disclaimer { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
   ul.disclaimer li { border-left: 3px solid #3a5a3a; padding-left: 0.7rem; }
   a { color: #3a5a3a; }
+  .stats-card {
+    background: #f0f5ef;
+    border-radius: 0.4rem;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: 0.85rem;
+  }
+  .stat-value {
+    color: #3a5a3a;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  .stat-label {
+    color: #4a554a;
+    font-size: 0.85rem;
+    margin-top: 0.15rem;
+  }
+  .stats-fresh {
+    margin: 0.6rem 0 0;
+    font-size: 0.78rem;
+    color: #6b7a6b;
+  }
+  .muted { color: #6b7a6b; }
 </style>
