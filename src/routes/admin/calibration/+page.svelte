@@ -162,6 +162,11 @@
   let speciesSummaryById: Record<string, SpeciesSummary> = {};
   /** Saving state for the review-status buttons. */
   let reviewBusy = false;
+  /** Free-text notes the admin types about this species (what's wrong,
+   *  what to revisit, etc.). Loaded from species.review_notes when the
+   *  species changes, saved with a debounce on edit. */
+  let reviewNotesText = '';
+  let reviewNotesTimer: ReturnType<typeof setTimeout> | null = null;
 
   /** Which zone-row's evidence/notes panel is currently expanded. The
    *  paperclip / note pills are click-to-toggle; only one open at a
@@ -265,12 +270,48 @@
     }
   }
 
-  // Reload pin distribution when the species changes.
+  /** Load the species' review notes when the current species changes.
+   *  Cheap one-row select on the species table. */
+  async function loadReviewNotes(speciesId: string | null) {
+    if (!speciesId) { reviewNotesText = ''; return; }
+    const { data, error } = await supabase
+      .from('species')
+      .select('review_notes' as never)
+      .eq('id', speciesId)
+      .single();
+    if (error) {
+      console.warn('[calibration] loadReviewNotes error', error);
+      reviewNotesText = '';
+      return;
+    }
+    reviewNotesText = ((data as unknown as { review_notes: string | null })?.review_notes) ?? '';
+  }
+
+  async function saveReviewNotes(text: string) {
+    if (!currentSpeciesId) return;
+    const { error } = await supabase
+      .from('species')
+      .update({ review_notes: text || null } as never)
+      .eq('id', currentSpeciesId);
+    if (error) console.warn('[calibration] saveReviewNotes error', error);
+  }
+
+  function onReviewNotesInput() {
+    if (reviewNotesTimer) clearTimeout(reviewNotesTimer);
+    const captured = reviewNotesText;
+    reviewNotesTimer = setTimeout(() => {
+      void saveReviewNotes(captured);
+    }, 800);
+  }
+
+  // Reload pin distribution + review notes when the species changes.
   let lastLoadedSpecies: string | null = null;
   $: if (currentSpeciesId !== lastLoadedSpecies) {
     lastLoadedSpecies = currentSpeciesId;
     expandedZoneId = null;
+    if (reviewNotesTimer) { clearTimeout(reviewNotesTimer); reviewNotesTimer = null; }
     void loadPinZones(currentSpeciesId);
+    void loadReviewNotes(currentSpeciesId);
   }
 
   async function loadWindows() {
@@ -687,6 +728,14 @@
         >
           {reviewStatus === 'needs_work' ? '⚠ Needs work' : 'Mark needs work'}
         </button>
+        <textarea
+          class="review-notes-input"
+          bind:value={reviewNotesText}
+          on:input={onReviewNotesInput}
+          on:blur={() => { if (reviewNotesTimer) { clearTimeout(reviewNotesTimer); reviewNotesTimer = null; } void saveReviewNotes(reviewNotesText); }}
+          placeholder="Notes for follow-up: what's wrong, what to revisit, sources to chase…"
+          rows="2"
+        ></textarea>
       </div>
 
       <div class="legend">
@@ -1064,9 +1113,25 @@
 
   .review-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.4rem;
     margin: 0.4rem 0 0.8rem;
+    align-items: stretch;
   }
+  .review-notes-input {
+    flex: 1;
+    min-width: 18rem;
+    padding: 0.4rem 0.55rem;
+    font-size: 0.85rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.35rem;
+    background: white;
+    color: #1f2a1f;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .review-notes-input:focus { outline: 2px solid #b3d0a8; outline-offset: -1px; }
+  .review-notes-input::placeholder { color: #8a948a; font-style: italic; }
   .rb {
     font-size: 0.85rem;
     padding: 0.35rem 0.85rem;
