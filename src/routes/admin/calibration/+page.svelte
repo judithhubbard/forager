@@ -31,7 +31,16 @@
     name: string;
   }
 
+  interface Evidence {
+    source: string;
+    url: string;
+    consulted_at: string;
+    summary: string;
+    supports?: { start_doy?: number; end_doy?: number; peak_doy?: number };
+  }
+
   interface DBWindow {
+    id: string;
     species_id: string;
     climate_zone_id: string;
     stage: Stage;
@@ -40,6 +49,32 @@
     peak_doy: number | null;
     confidence: string | null;
     notes: string | null;
+    evidence: Evidence[];
+  }
+
+  const CONFIDENCE_VALUES = [
+    'expert_verified',
+    'regional_guide',
+    'empirical_npn',
+    'empirical_community',
+    'curated',
+    'frost_offset'
+  ] as const;
+
+  function sourceLinks(sci: string): { name: string; url: string }[] {
+    const enc = encodeURIComponent(sci);
+    const wikiPath = sci.replace(/ /g, '_');
+    const parts = sci.toLowerCase().split(' ');
+    const genus = parts[0] ?? '';
+    const speciesName = parts.slice(1).join(' ');
+    return [
+      { name: 'Wikipedia',     url: `https://en.wikipedia.org/wiki/${wikiPath}` },
+      { name: 'USDA NRCS',     url: `https://plants.sc.egov.usda.gov/home/searchResult?text=${enc}` },
+      { name: 'iNaturalist',   url: `https://www.inaturalist.org/taxa/search?q=${enc}` },
+      { name: 'GoBotany (NE)', url: `https://gobotany.nativeplanttrust.org/species/${genus}/${speciesName}/` },
+      { name: 'USA-NPN',       url: `https://data.usanpn.org/observations/search?species_search=${enc}` },
+      { name: 'Google search', url: `https://www.google.com/search?q=${enc}+harvest+season+phenology` }
+    ];
   }
 
   interface JsonWindow {
@@ -71,31 +106,61 @@
   let searchTerm = '';
   let searchInput: HTMLInputElement;
 
+  // ---- Edit state ----
+  let editMode = false;
+  /** Zone id of the row currently being edited, or null. */
+  let editingZoneId: string | null = null;
+  let formStartDoy: number | null = null;
+  let formEndDoy: number | null = null;
+  let formPeakDoy: number | null = null;
+  let formConfidence: string = 'expert_verified';
+  let formNotes: string = '';
+  let formEvidence: Evidence[] = [];
+  let saving = false;
+  let saveError = '';
+
+  // New-evidence form state
+  let newEvSource = '';
+  let newEvUrl = '';
+  let newEvSummary = '';
+  let newEvSupportsStart: number | null = null;
+  let newEvSupportsEnd: number | null = null;
+  let newEvSupportsPeak: number | null = null;
+
   const regionalData = regionalWindowsJson as { regions: Record<string, JsonRegion> };
 
   /** Map JSON region name → record. Sorted by coldest min zone first
    *  (matches the per-zone order on screen). */
   $: regionsByName = regionalData.regions;
 
+  async function loadWindows() {
+    const { data, error } = await supabase
+      .from('species_fruiting_windows')
+      .select(
+        'id, species_id, climate_zone_id, stage, start_doy, end_doy, peak_doy, confidence, notes, evidence' as never
+      );
+    if (error) throw error;
+    // Cast via unknown — generated types lag the schema (mig #46/#83/#07
+    // added confidence/peak/evidence which aren't in src/lib/database.types.ts).
+    dbWindows = ((data ?? []) as unknown as DBWindow[]).map((w) => ({
+      ...w,
+      evidence: (w.evidence ?? []) as Evidence[]
+    }));
+  }
+
   onMount(async () => {
     try {
-      const [speciesRes, zonesRes, windowsRes] = await Promise.all([
+      const [speciesRes, zonesRes] = await Promise.all([
         supabase.from('species').select('id, common_name, scientific_name').order('common_name'),
-        supabase.from('climate_zones').select('id, code, name').order('code'),
-        supabase
-          .from('species_fruiting_windows')
-          .select('species_id, climate_zone_id, stage, start_doy, end_doy, peak_doy, confidence, notes')
+        supabase.from('climate_zones').select('id, code, name').order('code')
       ]);
       if (speciesRes.error) throw speciesRes.error;
       if (zonesRes.error) throw zonesRes.error;
-      if (windowsRes.error) throw windowsRes.error;
       species = (speciesRes.data ?? []) as SpeciesRow[];
       zones = (zonesRes.data ?? []) as ZoneRow[];
-      // Cast via unknown — generated types don't yet include confidence/peak_doy
-      // columns that mig #46 added.
-      dbWindows = (windowsRes.data ?? []) as unknown as DBWindow[];
 
-      // Default to first species with data, otherwise first species.
+      await loadWindows();
+
       const speciesWithData = new Set(dbWindows.map((w) => w.species_id));
       currentSpeciesId =
         species.find((s) => speciesWithData.has(s.id))?.id ?? species[0]?.id ?? null;
@@ -105,6 +170,145 @@
       loaded = true;
     }
   });
+
+  // ---- Edit handlers ----
+
+  function startEdit(zoneId: string) {
+    editingZoneId = zoneId;
+    saveError = '';
+    const ripe = dbBySpeciesZone.get(zoneId)?.get('ripe');
+    if (ripe) {
+      formStartDoy = ripe.start_doy;
+      formEndDoy = ripe.end_doy;
+      formPeakDoy = ripe.peak_doy;
+      formConfidence = ripe.confidence ?? 'expert_verified';
+      formNotes = ripe.notes ?? '';
+      formEvidence = (ripe.evidence ?? []).slice();
+    } else {
+      formStartDoy = null;
+      formEndDoy = null;
+      formPeakDoy = null;
+      formConfidence = 'expert_verified';
+      formNotes = '';
+      formEvidence = [];
+    }
+    newEvSource = '';
+    newEvUrl = '';
+    newEvSummary = '';
+    newEvSupportsStart = null;
+    newEvSupportsEnd = null;
+    newEvSupportsPeak = null;
+  }
+
+  function cancelEdit() {
+    editingZoneId = null;
+    saveError = '';
+  }
+
+  async function saveCell() {
+    if (!currentSpeciesId || !editingZoneId || saving) return;
+    saving = true;
+    saveError = '';
+    try {
+      const ripe = dbBySpeciesZone.get(editingZoneId)?.get('ripe');
+      const payload = {
+        species_id: currentSpeciesId,
+        climate_zone_id: editingZoneId,
+        stage: 'ripe',
+        start_doy: formStartDoy,
+        end_doy: formEndDoy,
+        peak_doy: formPeakDoy,
+        confidence: formConfidence,
+        notes: formNotes.trim() || null,
+        evidence: formEvidence
+      } as never;
+      let error;
+      if (ripe?.id) {
+        ({ error } = await supabase
+          .from('species_fruiting_windows')
+          .update(payload)
+          .eq('id', ripe.id));
+      } else {
+        ({ error } = await supabase.from('species_fruiting_windows').insert(payload));
+      }
+      if (error) throw error;
+      await loadWindows();
+      cancelEdit();
+    } catch (err) {
+      saveError = err instanceof Error ? err.message : 'Save failed.';
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function deleteCell() {
+    if (!editingZoneId || saving) return;
+    const ripe = dbBySpeciesZone.get(editingZoneId)?.get('ripe');
+    if (!ripe?.id) {
+      cancelEdit();
+      return;
+    }
+    if (!confirm('Delete this row? This removes the harvest window for this species + zone.')) return;
+    saving = true;
+    saveError = '';
+    try {
+      const { error } = await supabase
+        .from('species_fruiting_windows')
+        .delete()
+        .eq('id', ripe.id);
+      if (error) throw error;
+      await loadWindows();
+      cancelEdit();
+    } catch (err) {
+      saveError = err instanceof Error ? err.message : 'Delete failed.';
+    } finally {
+      saving = false;
+    }
+  }
+
+  function addEvidence() {
+    if (!newEvSource.trim() || !newEvSummary.trim()) return;
+    const supports =
+      newEvSupportsStart != null || newEvSupportsEnd != null || newEvSupportsPeak != null
+        ? {
+            ...(newEvSupportsStart != null ? { start_doy: newEvSupportsStart } : {}),
+            ...(newEvSupportsEnd != null ? { end_doy: newEvSupportsEnd } : {}),
+            ...(newEvSupportsPeak != null ? { peak_doy: newEvSupportsPeak } : {})
+          }
+        : undefined;
+    formEvidence = [
+      ...formEvidence,
+      {
+        source: newEvSource.trim(),
+        url: newEvUrl.trim(),
+        consulted_at: new Date().toISOString(),
+        summary: newEvSummary.trim(),
+        ...(supports ? { supports } : {})
+      }
+    ];
+    newEvSource = '';
+    newEvUrl = '';
+    newEvSummary = '';
+    newEvSupportsStart = null;
+    newEvSupportsEnd = null;
+    newEvSupportsPeak = null;
+  }
+
+  function removeEvidence(idx: number) {
+    formEvidence = formEvidence.filter((_, i) => i !== idx);
+  }
+
+  function applyEvidenceToForm(ev: Evidence) {
+    if (ev.supports?.start_doy != null) formStartDoy = ev.supports.start_doy;
+    if (ev.supports?.end_doy != null) formEndDoy = ev.supports.end_doy;
+    if (ev.supports?.peak_doy != null) formPeakDoy = ev.supports.peak_doy;
+  }
+
+  function shortDate(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString();
+  }
 
   // Filtered species list for the search box.
   $: filteredSpecies = !searchTerm
@@ -233,11 +437,19 @@
   function confidenceLabel(c: string | null | undefined): string {
     if (c === 'curated') return 'AI-seeded (Ithaca 5b)';
     if (c === 'frost_offset') return 'frost-shifted';
+    if (c === 'expert_verified') return 'verified';
+    if (c === 'regional_guide') return 'regional guide';
+    if (c === 'empirical_npn') return 'NPN empirical';
+    if (c === 'empirical_community') return 'community sightings';
     return c ?? '';
   }
   function confidenceTitle(c: string | null | undefined): string {
     if (c === 'curated') return 'Provenance: data/species/ithaca.json — AI-generated in an earlier session, not verified against a primary source. Zone 6a values are literal copies of 5b.';
     if (c === 'frost_offset') return 'Provenance: heuristic shift of the 5b values by per-zone frost-date offset (migration #47). Inherits 5b uncertainty.';
+    if (c === 'expert_verified') return 'Manually entered or verified, with cited evidence in the per-cell evidence log.';
+    if (c === 'regional_guide') return 'Source: a regional expert guide (CityFruit / Hidden Harvest / NFFTT / POP / UCANR).';
+    if (c === 'empirical_npn') return 'Source: USA-NPN observations aggregated per zone with leading-edge offset.';
+    if (c === 'empirical_community') return 'Source: community-reporting tracker (e.g. The Great Morel).';
     return '';
   }
 </script>
@@ -291,14 +503,26 @@
       </div>
 
       <div class="legend">
-        <span class="legend-item"><span class="swatch swatch-db"></span>Current DB (all AI-derived: Ithaca 5b seed + heuristic propagation)</span>
-        <span class="legend-item"><span class="swatch swatch-guide"></span>Regional guide (Layer 2)</span>
-        <span class="legend-item swatch-pending"><span class="swatch"></span>NPN peak (Layer 1) — pending</span>
+        <span class="legend-item"><span class="swatch swatch-db"></span>Current DB row</span>
+        <span class="legend-item"><span class="swatch swatch-guide"></span>Regional guide (JSON sidecar)</span>
         <label class="toggle">
           <input type="checkbox" bind:checked={showEmptyZones} />
           Show zones with no data
         </label>
+        <label class="toggle toggle-edit">
+          <input type="checkbox" bind:checked={editMode} on:change={() => { if (!editMode) cancelEdit(); }} />
+          <strong>Edit mode</strong>
+        </label>
       </div>
+
+      {#if editMode}
+        <div class="source-sidebar">
+          <span class="muted small">Open in new tab to research:</span>
+          {#each sourceLinks(currentSpecies.scientific_name) as link}
+            <a class="source-link" href={link.url} target="_blank" rel="noopener">{link.name} ↗</a>
+          {/each}
+        </div>
+      {/if}
 
       {#if visibleZones.length === 0}
         <p class="muted">No data in any zone for this species. Toggle "Show zones with no data" to see the empty matrix.</p>
@@ -374,12 +598,121 @@
                   {#if ripe?.confidence}
                     <span class="conf-pill conf-{ripe.confidence}" title={confidenceTitle(ripe.confidence)}>{confidenceLabel(ripe.confidence)}</span>
                   {/if}
+                  {#if ripe && ripe.evidence && ripe.evidence.length > 0}
+                    <span class="ev-pill" title="{ripe.evidence.length} evidence entries">{ripe.evidence.length}📎</span>
+                  {/if}
                   {#if ripe?.notes}
                     <span class="note-pill" title={ripe.notes}>note</span>
                   {/if}
                 {/if}
+                {#if editMode && editingZoneId !== z.id}
+                  <button class="edit-btn" on:click={() => startEdit(z.id)}>
+                    {dbStages?.has('ripe') ? 'Edit' : '+ Add'}
+                  </button>
+                {/if}
               </div>
             </div>
+            {#if editMode && editingZoneId === z.id}
+              <div class="editor">
+                <div class="editor-row">
+                  <label class="field">
+                    <span>Start DOY</span>
+                    <input type="number" min="1" max="365" bind:value={formStartDoy} placeholder="e.g. 175" />
+                  </label>
+                  <label class="field">
+                    <span>End DOY</span>
+                    <input type="number" min="1" max="365" bind:value={formEndDoy} placeholder="e.g. 220" />
+                  </label>
+                  <label class="field">
+                    <span>Peak DOY</span>
+                    <input type="number" min="1" max="365" bind:value={formPeakDoy} placeholder="optional" />
+                  </label>
+                  <label class="field">
+                    <span>Confidence</span>
+                    <select bind:value={formConfidence}>
+                      {#each CONFIDENCE_VALUES as c}
+                        <option value={c}>{confidenceLabel(c)}</option>
+                      {/each}
+                    </select>
+                  </label>
+                </div>
+                <label class="field full">
+                  <span>Notes (free text)</span>
+                  <textarea rows="2" bind:value={formNotes} placeholder="e.g. Peak shifts ~1 week earlier in coastal microclimate."></textarea>
+                </label>
+
+                <div class="evidence-section">
+                  <div class="evidence-head">Evidence log <span class="muted small">({formEvidence.length})</span></div>
+                  {#if formEvidence.length > 0}
+                    <ul class="evidence-list">
+                      {#each formEvidence as ev, idx}
+                        <li class="ev-item">
+                          <div class="ev-main">
+                            <strong>{ev.source}</strong>
+                            {#if ev.url}
+                              <a class="ev-link" href={ev.url} target="_blank" rel="noopener">↗</a>
+                            {/if}
+                            <span class="muted small">· {shortDate(ev.consulted_at)}</span>
+                            <p class="ev-summary">{ev.summary}</p>
+                            {#if ev.supports}
+                              <div class="ev-supports">
+                                supports:
+                                {#if ev.supports.start_doy != null}<span>start={ev.supports.start_doy}</span>{/if}
+                                {#if ev.supports.end_doy != null}<span>end={ev.supports.end_doy}</span>{/if}
+                                {#if ev.supports.peak_doy != null}<span>peak={ev.supports.peak_doy}</span>{/if}
+                                <button class="link-btn" on:click={() => applyEvidenceToForm(ev)}>copy to form</button>
+                              </div>
+                            {/if}
+                          </div>
+                          <button class="link-btn danger" on:click={() => removeEvidence(idx)}>remove</button>
+                        </li>
+                      {/each}
+                    </ul>
+                  {/if}
+
+                  <div class="ev-add">
+                    <div class="editor-row">
+                      <label class="field"><span>Source name</span>
+                        <input type="text" bind:value={newEvSource} placeholder="e.g. Wikipedia, USDA NRCS, Cornell CCE" />
+                      </label>
+                      <label class="field full"><span>URL (optional)</span>
+                        <input type="url" bind:value={newEvUrl} placeholder="https://…" />
+                      </label>
+                    </div>
+                    <label class="field full"><span>What the source said</span>
+                      <textarea rows="2" bind:value={newEvSummary} placeholder="e.g. 'Article says fruit ripens late August to mid-September.'"></textarea>
+                    </label>
+                    <div class="editor-row">
+                      <label class="field"><span>Supports start</span>
+                        <input type="number" min="1" max="365" bind:value={newEvSupportsStart} placeholder="DOY" />
+                      </label>
+                      <label class="field"><span>Supports end</span>
+                        <input type="number" min="1" max="365" bind:value={newEvSupportsEnd} placeholder="DOY" />
+                      </label>
+                      <label class="field"><span>Supports peak</span>
+                        <input type="number" min="1" max="365" bind:value={newEvSupportsPeak} placeholder="DOY" />
+                      </label>
+                      <button class="add-ev" on:click={addEvidence} disabled={!newEvSource.trim() || !newEvSummary.trim()}>+ add evidence</button>
+                    </div>
+                  </div>
+                </div>
+
+                {#if saveError}
+                  <p class="error">{saveError}</p>
+                {/if}
+                <div class="editor-actions">
+                  <button class="link-btn danger" on:click={deleteCell} disabled={saving || !dbStages?.has('ripe')}>
+                    Delete row
+                  </button>
+                  <div class="actions-right">
+                    <button class="link-btn" on:click={cancelEdit} disabled={saving}>Cancel</button>
+                    <button class="primary" on:click={saveCell} disabled={saving}>
+                      {saving ? 'Saving…' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            {/if}
           {/each}
         </div>
       {/if}
@@ -565,7 +898,7 @@
   .conf-curated { color: #6f5a10; border-color: #d8c890; background: #fbf6e8; }
   .conf-frost_offset { color: #5a6f6f; border-color: #b0c0c0; background: #f0f5f5; }
 
-  .note-pill {
+  .note-pill, .ev-pill {
     font-size: 0.68rem;
     padding: 0.05rem 0.35rem;
     border-radius: 0.2rem;
@@ -574,4 +907,190 @@
     color: #6b7a6b;
     cursor: help;
   }
+  .ev-pill {
+    border-style: solid;
+    border-color: #b3d0a8;
+    background: #f0f7ec;
+    color: #2a6f2a;
+  }
+
+  .toggle-edit input { accent-color: #c84545; }
+
+  .edit-btn {
+    background: #3a5a3a;
+    color: white;
+    border: 0;
+    padding: 0.18rem 0.55rem;
+    border-radius: 0.25rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+  .edit-btn:hover { background: #2a4a2a; }
+
+  .source-sidebar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.5rem 0.7rem;
+    background: #fffbf2;
+    border: 1px dashed #d8c890;
+    border-radius: 0.4rem;
+    margin: 0 0 0.7rem;
+    align-items: center;
+  }
+  .source-link {
+    font-size: 0.83rem;
+    padding: 0.18rem 0.6rem;
+    border: 1px solid #d8c890;
+    border-radius: 1rem;
+    color: #6f5a10;
+    background: white;
+    text-decoration: none;
+  }
+  .source-link:hover { background: #fbf6e8; }
+
+  .editor {
+    background: #f7faf6;
+    border: 1px solid #b3d0a8;
+    border-radius: 0.4rem;
+    padding: 0.7rem 0.85rem;
+    margin: 0.2rem 0 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .editor-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+    min-width: 6rem;
+  }
+  .field.full { width: 100%; flex: 1 1 100%; }
+  .field span {
+    font-size: 0.78rem;
+    color: #4a554a;
+    font-weight: 500;
+  }
+  .field input, .field select, .field textarea {
+    padding: 0.3rem 0.4rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.25rem;
+    font-size: 0.9rem;
+    background: white;
+    font-family: inherit;
+  }
+  .field textarea { resize: vertical; }
+
+  .evidence-section {
+    border-top: 1px dashed #c7d0c7;
+    padding-top: 0.55rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .evidence-head {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #3a5a3a;
+  }
+  .evidence-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .ev-item {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.4rem 0.55rem;
+    background: white;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.3rem;
+  }
+  .ev-main { flex: 1; }
+  .ev-link { color: #3a5a3a; text-decoration: none; }
+  .ev-summary {
+    margin: 0.2rem 0 0;
+    font-size: 0.85rem;
+    color: #1f2a1f;
+    line-height: 1.35;
+  }
+  .ev-supports {
+    font-size: 0.78rem;
+    color: #4a554a;
+    margin-top: 0.2rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .ev-supports span {
+    background: #f0f5ef;
+    padding: 0.05rem 0.35rem;
+    border-radius: 0.2rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ev-add {
+    background: white;
+    border: 1px dashed #c7d0c7;
+    border-radius: 0.3rem;
+    padding: 0.5rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .add-ev {
+    align-self: flex-end;
+    background: #3a5a3a;
+    color: white;
+    border: 0;
+    padding: 0.35rem 0.7rem;
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .add-ev:disabled { background: #b4c4b4; cursor: not-allowed; }
+
+  .editor-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px dashed #c7d0c7;
+    padding-top: 0.55rem;
+  }
+  .actions-right {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+  .link-btn {
+    background: transparent;
+    border: 0;
+    color: #3a5a3a;
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    padding: 0.3rem 0.5rem;
+  }
+  .link-btn.danger { color: #b03030; }
+  .link-btn:disabled { color: #b4c4b4; cursor: not-allowed; }
+  .primary {
+    background: #3a5a3a;
+    color: white;
+    border: 0;
+    padding: 0.4rem 1rem;
+    border-radius: 0.3rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  .primary:disabled { background: #b4c4b4; cursor: not-allowed; }
 </style>
