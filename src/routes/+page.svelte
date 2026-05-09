@@ -1594,17 +1594,19 @@
     </span>
   </div>
 
-  {#if hasActiveFilters}
-    <!-- Filter-active banner. Surfaces every non-default filter so
-         the user always knows when something is hiding pins from
-         the map. Without this, the species panel filter (in-memory)
-         silently hid Toronto pins for logged-in users — surprising
-         and persistent. -->
-    <div class="filter-banner" role="status">
-      <span class="filter-icon" aria-hidden="true">⚲</span>
-      <span class="filter-summary">Filtered: {activeFilterParts.join(' · ')}</span>
-      <button class="filter-reset" on:click={resetAllFilters}>Show all</button>
-    </div>
+  {#if hasActiveFilters && trueTotalInView > filteredPins.length}
+    <!-- Compact inline indicator (replaces the verbose
+         "Filtered: …" banner that ate vertical space). Only shows
+         when filters are actually hiding pins, with a one-click
+         reset. The verbose breakdown is still available as a
+         tooltip for the curious. -->
+    <button
+      class="filter-pill"
+      on:click={resetAllFilters}
+      title={'Clear filters · ' + activeFilterParts.join(' · ')}
+    >
+      ⚲ {(trueTotalInView - filteredPins.length).toLocaleString()} hidden · clear
+    </button>
   {/if}
 
   <MapView
@@ -2180,14 +2182,9 @@
     .legend .ring1, .legend .ring2 {
       width: 0.7rem; height: 0.7rem; margin-right: 0.3rem;
     }
-    /* Mobile: tighten the filter banner so it doesn't add a tall
-     * stripe between the filterbar and the map. */
-    .filter-banner {
-      padding: 0.25rem 0.55rem;
-      font-size: 0.78rem;
-      gap: 0.4rem;
-    }
-    .filter-reset { padding: 0.15rem 0.45rem; font-size: 0.75rem; }
+    /* (Old .filter-banner mobile rules removed — that element is
+     * replaced by the inline .filter-pill which is already
+     * appropriately compact for phones.) */
     /* Mobile: open filterbar-controls grow naturally — earlier we
      * capped at 45vh + overflow-y:auto, but absolute-positioned
      * dropdowns inside (species panel, layers panel) got clipped by
@@ -2349,37 +2346,23 @@
    * full-width, with a warm tone so the user can't miss it when
    * any filter is hiding pins. Single-line; the summary truncates
    * with ellipsis on narrow viewports. */
-  .filter-banner {
-    display: flex;
+  /* Compact "X hidden by filters · clear" pill that lives in the
+   * filterbar where the verbose .filter-banner used to be. Single
+   * tap clears all filters. */
+  .filter-pill {
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.75rem;
+    gap: 0.3rem;
     background: #fff4d8;
-    border-bottom: 1px solid #d8b86a;
-    color: #5a3d0c;
-    font-size: 0.85rem;
-    line-height: 1.2;
-  }
-  .filter-icon {
-    font-size: 0.95rem;
-    color: #a06a13;
-    flex-shrink: 0;
-  }
-  .filter-summary {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .filter-reset {
-    background: white;
     border: 1px solid #d8b86a;
     color: #6b4912;
-    font-size: 0.8rem;
-    padding: 0.2rem 0.55rem;
-    border-radius: 0.3rem;
+    font-size: 0.78rem;
+    padding: 0.18rem 0.55rem;
+    margin: 0.25rem 0 0;
+    border-radius: 999px;
     cursor: pointer;
-    flex-shrink: 0;
+    line-height: 1.1;
+    align-self: flex-start;
   }
-  .filter-reset:hover { background: #fff8e8; }
+  .filter-pill:hover { background: #fff8e8; }
 </style>

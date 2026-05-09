@@ -1,14 +1,14 @@
-// Seattle SDOT Trees inventory.
+// Seattle Combined Tree Point inventory (SDOT + Parks + utility +
+// pest-marked + planting-unit feeds, unioned by the city).
 //
-// Source: https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::sdot-trees
+// Source: https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::combined-tree-point
 // API:    ArcGIS REST FeatureServer
 // License: City of Seattle open-data terms — permissive, attribution
 //          appreciated, accuracy disclaimed.
-// ~267k rows; daily refresh. Treekeeper-flavored schema with
-// SCIENTIFICN + COMMONNAME columns.
 //
-// Filter: SDOT publishes both in-service and removed/dead rows.
-// CURRENT_STATUS = 'INSVC' keeps just the live trees.
+// (My initial guess at SDOT_TREES/FeatureServer/0 returned 400 —
+// the canonical layer is Combined_Tree_Point, with SCIENTIFIC_NAME +
+// COMMON_NAME columns.)
 //
 // Run with:
 //   npm run import:seattle-trees
@@ -22,9 +22,9 @@ import {
 } from './lib/framework';
 import type { ImportRecord } from './lib/upsert';
 
-const SOURCE_ID = 'seattle-sdot-trees';
+const SOURCE_ID = 'seattle-combined-trees';
 const ENDPOINT =
-  'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_TREES/FeatureServer/0/query';
+  'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Combined_Tree_Point/FeatureServer/0/query';
 const REGION_NAME = 'Seattle public';
 
 interface ArcGisFeature {
@@ -32,39 +32,44 @@ interface ArcGisFeature {
   geometry?: { type: 'Point'; coordinates: [number, number] } | null;
   properties?: {
     OBJECTID?: number;
-    UNITID?: string;
-    SCIENTIFIC?: string;
-    SCIENTIFICN?: string;
-    COMMONNAME?: string;
-    CURRENT_STATUS?: string;
+    SDOT_UNIT_ID?: string;
+    SPR_UNIT_ID?: string;
+    SCIENTIFIC_NAME?: string;
+    COMMON_NAME?: string;
+    SOURCE_DEPT?: string;
   };
 }
 
 const config: ImportConfig<ArcGisFeature> = {
   sourceId: SOURCE_ID,
-  sourceName: 'Seattle SDOT Trees',
+  sourceName: 'Seattle Combined Tree Point',
   sourceUrl: ENDPOINT,
   sourceDescription:
-    'City of Seattle Department of Transportation tree inventory — ' +
-    'street + right-of-way trees. Treekeeper schema, daily refresh.',
+    'City of Seattle combined tree-point inventory — union of SDOT, ' +
+    'Parks, utility, and other city tree feeds.',
   regionName: REGION_NAME,
   license: 'City of Seattle Open Data Terms',
   async fetchAll() {
     return fetchArcGisLayer({
       url: ENDPOINT,
-      where: "CURRENT_STATUS = 'INSVC'"
+      where: 'SCIENTIFIC_NAME IS NOT NULL'
     }) as Promise<ArcGisFeature[]>;
   },
   mapFeature(f): ImportRecord | null {
     const lng = f.geometry?.coordinates?.[0];
     const lat = f.geometry?.coordinates?.[1];
     if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
-    const latin = f.properties?.SCIENTIFICN ?? f.properties?.SCIENTIFIC;
+    const latin = f.properties?.SCIENTIFIC_NAME;
     if (!latin) return null;
     return {
-      externalId: String(f.properties?.OBJECTID ?? f.properties?.UNITID ?? `${(lng as number).toFixed(6)},${(lat as number).toFixed(6)}`),
+      externalId: String(
+        f.properties?.OBJECTID ??
+        f.properties?.SDOT_UNIT_ID ??
+        f.properties?.SPR_UNIT_ID ??
+        `${(lng as number).toFixed(6)},${(lat as number).toFixed(6)}`
+      ),
       scientificName: latin,
-      commonName: f.properties?.COMMONNAME,
+      commonName: f.properties?.COMMON_NAME,
       lng: lng as number,
       lat: lat as number,
       raw: f
