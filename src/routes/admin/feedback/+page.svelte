@@ -78,6 +78,8 @@
     const d = new Date(iso);
     return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
   }
+
+  const STATUSES: FeedbackRow['status'][] = ['new', 'acknowledged', 'in_progress', 'resolved', 'wontfix'];
 </script>
 
 <header>
@@ -133,7 +135,7 @@
             {/if}
           </div>
           <div class="actions">
-            {#each (['new','acknowledged','in_progress','resolved','wontfix'] as const) as s}
+            {#each STATUSES as s}
               {#if s !== r.status}
                 <button
                   on:click={() => setStatus(r.id, s)}
