@@ -1516,8 +1516,8 @@
               checked={$settings.showZones}
               on:change={onZonesToggle}
             />
-            <span class="layer-name">USDA zones</span>
-            <span class="layer-hint">Plant Hardiness overlay (US only)</span>
+            <span class="layer-name">Hardiness zones</span>
+            <span class="layer-hint">USDA + Canadian (NRCan) plant hardiness overlay</span>
           </label>
           <label class="layer-row">
             <input

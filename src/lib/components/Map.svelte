@@ -920,11 +920,29 @@
     if (zonesLayer) return; // already rendered
     if (!zonesGeoJsonCache) {
       try {
-        const res = await fetch(`${base}/usda-zones.geojson`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        zonesGeoJsonCache = await res.json();
+        // Fetch USDA (CONUS) + NRCan (Canada) in parallel and combine
+        // into a single FeatureCollection. Properties are normalized
+        // (both files use {zone, source}) so the same style/tooltip
+        // logic handles either origin.
+        const [usaRes, canRes] = await Promise.all([
+          fetch(`${base}/usda-zones.geojson`),
+          fetch(`${base}/canada-zones.geojson`)
+        ]);
+        const features: GeoJSON.Feature[] = [];
+        if (usaRes.ok) {
+          const usa = await usaRes.json();
+          for (const f of usa.features ?? []) {
+            f.properties = { ...(f.properties ?? {}), source: f.properties?.source ?? 'USDA-2023' };
+            features.push(f);
+          }
+        }
+        if (canRes.ok) {
+          const can = await canRes.json();
+          for (const f of can.features ?? []) features.push(f);
+        }
+        zonesGeoJsonCache = { type: 'FeatureCollection', features } as GeoJSON.FeatureCollection;
       } catch (err) {
-        console.error('[Map] failed to load USDA zones', err);
+        console.error('[Map] failed to load hardiness zones', err);
         return;
       }
     }
@@ -941,8 +959,10 @@
         };
       },
       onEachFeature: (f, layer) => {
-        const code = (f.properties as { zone?: string } | null)?.zone ?? '?';
-        layer.bindTooltip(`USDA Zone ${code}`, { sticky: true });
+        const props = f.properties as { zone?: string; source?: string } | null;
+        const code = props?.zone ?? '?';
+        const src = props?.source === 'NRCan-2024' ? 'NRCan' : 'USDA';
+        layer.bindTooltip(`${src} Zone ${code}`, { sticky: true });
       }
     }).addTo(map);
   }
