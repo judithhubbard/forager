@@ -35,6 +35,13 @@
   } from '$lib/services/pinService';
   import { listAll as listSpecies, type Species } from '$lib/services/speciesService';
   import {
+    perfEnabled,
+    perfStore,
+    pendingFetch,
+    recordSample,
+    clearSamples
+  } from '$lib/utils/perfTracker';
+  import {
     listMyTrackPoints,
     importParsedTrack,
     getTrackPoints,
@@ -1116,6 +1123,16 @@
     pinsLoading = true;
     const region = $activeRegion;
     const useRegion = !!$session && !!region;
+    // Perf instrumentation. fetchStart marks RPC dispatch; renderEnd is
+    // captured by the renderPinHeat path or the marker-render reactive
+    // statement. We finalize the sample on the next animation frame
+    // after the relevant assignment so Leaflet has had a chance to
+    // paint. See src/lib/utils/perfTracker.ts.
+    const fetchStart = performance.now();
+    if (perfEnabled) pendingFetch.set({ zoom, startedAt: fetchStart });
+    const bboxArea = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]);
+    const mode: 'heatmap' | 'individual' =
+      zoom < CLUSTER_BELOW_ZOOM ? 'heatmap' : 'individual';
     try {
       if (zoom < CLUSTER_BELOW_ZOOM) {
         // Heatmap mode (zoom < 13): always use the public density
@@ -1126,12 +1143,29 @@
         // rare in this view and only contribute meaningfully at zoom
         // ≥ 13 where the merge below pulls them in.
         const buckets = await listPublicPinDensity(bbox, zoom);
+        const fetchEnd = performance.now();
         if (seq !== viewportSeq) return;
         pinDensityBuckets = buckets;
         pins = [];
         clusters = [];
         capHit = false;
         bboxSummary = [];
+        if (perfEnabled) {
+          requestAnimationFrame(() => {
+            const renderEnd = performance.now();
+            recordSample({
+              zoom,
+              result_count: buckets.length,
+              fetch_ms: fetchEnd - fetchStart,
+              render_ms: renderEnd - fetchEnd,
+              total_ms: renderEnd - fetchStart,
+              bbox_area_deg2: bboxArea,
+              mode,
+              finished_at: Date.now()
+            });
+            pendingFetch.set(null);
+          });
+        }
       } else {
         // Individual-pin mode (zoom ≥ 13): authed users get their
         // region pins ∪ the public layer (dedup by id) so panning
@@ -1156,6 +1190,7 @@
           useRegion && region ? listRegionPinSummary(region.id, bbox) : Promise.resolve([] as PinBboxSummaryRow[]),
           listPublicPinSummary(bbox)
         ]);
+        const fetchEnd = performance.now();
         if (seq !== viewportSeq) return;
         // PinEffective.id is typed nullable (view-derived) but is in
         // practice never null — coalesce to '' for the Set key just to
@@ -1188,8 +1223,25 @@
           }
         }
         bboxSummary = [...summaryById.values()];
+        if (perfEnabled) {
+          requestAnimationFrame(() => {
+            const renderEnd = performance.now();
+            recordSample({
+              zoom,
+              result_count: merged.length,
+              fetch_ms: fetchEnd - fetchStart,
+              render_ms: renderEnd - fetchEnd,
+              total_ms: renderEnd - fetchStart,
+              bbox_area_deg2: bboxArea,
+              mode,
+              finished_at: Date.now()
+            });
+            pendingFetch.set(null);
+          });
+        }
       }
     } catch (err) {
+      if (perfEnabled) pendingFetch.set(null);
       console.error('[+page] fetchForViewport error', err);
       if (seq === viewportSeq) {
         pins = [];
@@ -1640,6 +1692,56 @@
   >+</button>
 {/if}
 
+{#if perfEnabled}
+  <!-- Perf HUD — only rendered when ?perf=1 is in the URL. Shows the
+       last fetch + median + p90 over the last 30 viewport-fetch samples.
+       Click row resets the buffer. -->
+  <div class="perf-hud">
+    <div class="perf-row perf-head">
+      <strong>Perf HUD</strong>
+      <span class="muted">samples {$perfStore.count}/30</span>
+      <button class="perf-clear" on:click={clearSamples} title="Clear samples">⟲</button>
+    </div>
+    {#if $pendingFetch}
+      <div class="perf-row perf-pending">
+        ⏳ fetching z{$pendingFetch.zoom}…
+        <span class="muted">{Math.round(performance.now() - $pendingFetch.startedAt)} ms</span>
+      </div>
+    {/if}
+    {#if $perfStore.last}
+      <div class="perf-row">
+        <span class="muted">last:</span>
+        <span class="mono">z{$perfStore.last.zoom}</span>
+        <span class="muted">{$perfStore.last.mode}</span>
+        <span class="mono">{$perfStore.last.result_count}</span>
+        <span class="muted">items</span>
+      </div>
+      <div class="perf-stats">
+        <div class="perf-stat-col">
+          <div class="muted">last</div>
+          <div>fetch <span class="mono">{Math.round($perfStore.last.fetch_ms)}</span></div>
+          <div>render <span class="mono">{Math.round($perfStore.last.render_ms)}</span></div>
+          <div>total <span class="mono perf-total">{Math.round($perfStore.last.total_ms)}</span></div>
+        </div>
+        <div class="perf-stat-col">
+          <div class="muted">median</div>
+          <div>fetch <span class="mono">{Math.round($perfStore.median.fetch)}</span></div>
+          <div>render <span class="mono">{Math.round($perfStore.median.render)}</span></div>
+          <div>total <span class="mono perf-total">{Math.round($perfStore.median.total)}</span></div>
+        </div>
+        <div class="perf-stat-col">
+          <div class="muted">p90</div>
+          <div>fetch <span class="mono">{Math.round($perfStore.p90.fetch)}</span></div>
+          <div>render <span class="mono">{Math.round($perfStore.p90.render)}</span></div>
+          <div>total <span class="mono perf-total">{Math.round($perfStore.p90.total)}</span></div>
+        </div>
+      </div>
+    {:else}
+      <div class="perf-row muted">no samples yet — pan/zoom to populate</div>
+    {/if}
+  </div>
+{/if}
+
 {#if showDropPin && $activeRegion}
   <DropPinModal
     regionId={$activeRegion.id}
@@ -1762,6 +1864,65 @@
   @media (pointer: fine) {
     .new-pin-fab { display: inline-flex; align-items: center; justify-content: center; }
   }
+
+  /* Perf HUD — only rendered when ?perf=1 is in the URL. Top-left so
+     it doesn't collide with the new-pin FAB or the zoom chip. */
+  .perf-hud {
+    position: fixed;
+    top: 4.2rem;
+    left: 0.5rem;
+    z-index: 1500;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #c7d0c7;
+    border-radius: 0.4rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    padding: 0.4rem 0.55rem;
+    font-size: 0.78rem;
+    color: #1f2a1f;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    min-width: 16rem;
+  }
+  .perf-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    line-height: 1.3;
+  }
+  .perf-head { gap: 0.5rem; margin-bottom: 0.25rem; }
+  .perf-clear {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid #c7d0c7;
+    color: #4a554a;
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.35rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .perf-clear:hover { background: #f0f5ef; }
+  .perf-pending { color: #8a6f10; }
+  .perf-stats {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.3rem;
+    border-top: 1px dashed #d0d8d0;
+    padding-top: 0.3rem;
+  }
+  .perf-stat-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  .perf-stat-col > .muted { font-size: 0.7rem; }
+  .mono {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .perf-total { color: #c84545; font-weight: 600; }
+  .perf-hud .muted { color: #6b7a6b; }
+
   .hint {
     color: #6b7a6b;
   }
