@@ -336,7 +336,6 @@
   let formStage: Stage = 'ripe';
   let formQuality: number | null = null;
   let formNotes = '';
-  let formPrecision: ObservationPrecision = 'day';
   /** Observation visibility — defaults to the pin's visibility (no
    *  point posting a "shared" observation on a private pin) but the
    *  user can flip per-observation. Reset every time the form opens
@@ -699,22 +698,14 @@
     formSubmitting = true;
     errorMessage = '';
     try {
-      // Build the timestamp from whichever precision the user chose.
-      let observedAt: Date;
-      if (formPrecision === 'day') {
-        observedAt = new Date(formYear, formMonth - 1, formDay, 12, 0, 0);
-      } else if (formPrecision === 'month') {
-        observedAt = new Date(formYear, formMonth - 1, 1, 12, 0, 0);
-      } else {
-        observedAt = new Date(formYear, 0, 1, 12, 0, 0);
-      }
+      const observedAt = new Date(formYear, formMonth - 1, formDay, 12, 0, 0);
       await createObservation({
         pinId,
         stage: formStage,
         qualityRating: formQuality,
         qualityNotes: formNotes.trim() || null,
         observedAt,
-        observedPrecision: formPrecision,
+        observedPrecision: 'day',
         visibility: formVisibility
       });
       formOpen = false;
@@ -723,7 +714,6 @@
       formYear = NOW.getFullYear();
       formMonth = NOW.getMonth() + 1;
       formDay = NOW.getDate();
-      formPrecision = 'day';
       // Parallelize the post-save refresh: the obs list and pin row
       // are independent reads, so let them race instead of chaining
       // ~500ms-2s of cellular latency back to back.
@@ -1249,44 +1239,19 @@
         <form class="obs-form" on:submit|preventDefault={submitObservation}>
           <fieldset class="date-precision">
             <legend>Date observed</legend>
-            <div class="precision-tabs">
-              {#each [['day','Day/Month/Year'], ['month','Month/Year'], ['year','Year']] as [k, label]}
-                <label class="precision-tab" class:active={formPrecision === k}>
-                  <input type="radio" bind:group={formPrecision} value={k} />
-                  {label}
-                </label>
-              {/each}
-            </div>
-            {#if formPrecision === 'day'}
-              <div class="ymd-row">
-                <select bind:value={formMonth} required>
-                  {#each MONTH_NAMES as m, i}
-                    <option value={i + 1}>{m}</option>
-                  {/each}
-                </select>
-                <select bind:value={formDay} required>
-                  {#each dayOptions as d}<option value={d}>{d}</option>{/each}
-                </select>
-                <select bind:value={formYear} required>
-                  {#each YEAR_OPTIONS as y}<option value={y}>{y}</option>{/each}
-                </select>
-              </div>
-            {:else if formPrecision === 'month'}
-              <div class="ymd-row">
-                <select bind:value={formMonth} required>
-                  {#each MONTH_NAMES as m, i}
-                    <option value={i + 1}>{m}</option>
-                  {/each}
-                </select>
-                <select bind:value={formYear} required>
-                  {#each YEAR_OPTIONS as y}<option value={y}>{y}</option>{/each}
-                </select>
-              </div>
-            {:else}
+            <div class="ymd-row">
+              <select bind:value={formMonth} required>
+                {#each MONTH_NAMES as m, i}
+                  <option value={i + 1}>{m}</option>
+                {/each}
+              </select>
+              <select bind:value={formDay} required>
+                {#each dayOptions as d}<option value={d}>{d}</option>{/each}
+              </select>
               <select bind:value={formYear} required>
                 {#each YEAR_OPTIONS as y}<option value={y}>{y}</option>{/each}
               </select>
-            {/if}
+            </div>
           </fieldset>
           <label>
             Stage
@@ -2162,29 +2127,6 @@
     padding: 0 0.4rem;
     font-size: 0.8rem;
     color: #4a554a;
-  }
-  .precision-tabs {
-    display: flex;
-    gap: 0.4rem;
-    margin-bottom: 0.55rem;
-    flex-wrap: wrap;
-  }
-  .precision-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.78rem;
-    color: #4a554a;
-    padding: 0.18rem 0.5rem;
-    border: 1px solid #c7d0c7;
-    border-radius: 1rem;
-    cursor: pointer;
-  }
-  .precision-tab input { display: none; }
-  .precision-tab.active {
-    background: #3a5a3a;
-    color: white;
-    border-color: #3a5a3a;
   }
   .ymd-row {
     display: flex;
