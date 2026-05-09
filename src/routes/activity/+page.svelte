@@ -9,6 +9,24 @@
     type Stage
   } from '$lib/services/observationService';
   import { profileLabel } from '$lib/services/profileService';
+  import { exportPersonalData, downloadBlob } from '$lib/services/exportService';
+
+  let exporting = false;
+  async function handleExport() {
+    if (exporting) return;
+    exporting = true;
+    try {
+      const { blob, filename } = await exportPersonalData();
+      downloadBlob(blob, filename);
+    } catch (err) {
+      const e = err as { message?: unknown };
+      errorMessage = (typeof e?.message === 'string' && e.message)
+        ? `Export failed: ${e.message}`
+        : 'Export failed.';
+    } finally {
+      exporting = false;
+    }
+  }
 
   let observations: ObservationWithPin[] = [];
   let loading = true;
@@ -114,6 +132,13 @@
 <header>
   <button class="back" on:click={() => goto('/')}>← Back</button>
   <h1>Recent observations</h1>
+  <div class="header-spacer"></div>
+  <button
+    class="export-btn"
+    on:click={handleExport}
+    disabled={exporting}
+    title="Download all your pins, observations, photos, tracks, and watchlist as a zip"
+  >{exporting ? 'Exporting…' : '⤓ Export my data'}</button>
 </header>
 
 <main>
@@ -219,6 +244,18 @@
     font-size: 0.9rem;
     cursor: pointer;
   }
+  .header-spacer { flex: 1 1 auto; }
+  .export-btn {
+    background: white;
+    border: 1px solid #c7d0c7;
+    color: #3a5a3a;
+    padding: 0.35rem 0.7rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .export-btn:hover { background: #f0f5ef; }
+  .export-btn:disabled { opacity: 0.6; cursor: default; }
   main {
     padding: 1rem 1.25rem 3rem;
     max-width: 36rem;
