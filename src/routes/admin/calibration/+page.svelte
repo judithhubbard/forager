@@ -17,12 +17,48 @@
   import { activeRegion } from '$lib/stores/activeRegion';
   import regionalWindowsJson from '$lib/data/regional-windows.json';
 
-  type Stage = 'flowering' | 'green' | 'ripening' | 'ripe' | 'past' | 'bare' | 'unknown';
+  type Stage =
+    | 'flowering' | 'green' | 'ripening' | 'ripe' | 'past' | 'bare' | 'unknown'
+    | 'sap_run' | 'shoot' | 'leaf' | 'flower_harvest' | 'root_dig'
+    | 'mushroom_flush' | 'bark_strip';
 
   interface SpeciesRow {
     id: string;
     common_name: string;
     scientific_name: string;
+    forage_parts: string[];
+  }
+
+  /** Pick the stage we expect calibration data to live under, based on
+   *  the species' forage_parts. Mirrors the priority logic in the
+   *  pin_is_edible_now SQL function (mig 16). Multi-part species pick
+   *  the highest-priority part: mushroom > fruit/nut > shoot > leaf >
+   *  root > flower > bark > sap. */
+  function primaryStageFor(parts: string[] | undefined | null): Stage {
+    if (!parts || parts.length === 0) return 'ripe';
+    if (parts.includes('mushroom')) return 'mushroom_flush';
+    if (parts.includes('fruit') || parts.includes('nut') || parts.includes('seed')) return 'ripe';
+    if (parts.includes('shoot')) return 'shoot';
+    if (parts.includes('leaf') || parts.includes('bulb')) return 'leaf';
+    if (parts.includes('root')) return 'root_dig';
+    if (parts.includes('flower')) return 'flower_harvest';
+    if (parts.includes('bark')) return 'bark_strip';
+    if (parts.includes('sap')) return 'sap_run';
+    return 'ripe';
+  }
+
+  function stageLabel(s: Stage): string {
+    switch (s) {
+      case 'ripe':           return 'ripe fruit / nut';
+      case 'mushroom_flush': return 'mushroom flush';
+      case 'sap_run':        return 'sap flow';
+      case 'shoot':          return 'spring shoots';
+      case 'leaf':           return 'spring greens';
+      case 'root_dig':       return 'root harvest';
+      case 'flower_harvest': return 'flower harvest';
+      case 'bark_strip':     return 'bark harvest';
+      default:               return s;
+    }
   }
 
   interface ZoneRow {
@@ -188,7 +224,7 @@
   onMount(async () => {
     try {
       const [speciesRes, zonesRes] = await Promise.all([
-        supabase.from('species').select('id, common_name, scientific_name').order('common_name'),
+        supabase.from('species').select('id, common_name, scientific_name, forage_parts').order('common_name'),
         supabase.from('climate_zones').select('id, code, name').order('code')
       ]);
       if (speciesRes.error) throw speciesRes.error;
@@ -213,7 +249,7 @@
   function startEdit(zoneId: string) {
     editingZoneId = zoneId;
     saveError = '';
-    const ripe = dbBySpeciesZone.get(zoneId)?.get('ripe');
+    const ripe = dbBySpeciesZone.get(zoneId)?.get(primaryStage);
     if (ripe) {
       formStartDoy = ripe.start_doy;
       formEndDoy = ripe.end_doy;
@@ -247,11 +283,11 @@
     saving = true;
     saveError = '';
     try {
-      const ripe = dbBySpeciesZone.get(editingZoneId)?.get('ripe');
+      const ripe = dbBySpeciesZone.get(editingZoneId)?.get(primaryStage);
       const payload = {
         species_id: currentSpeciesId,
         climate_zone_id: editingZoneId,
-        stage: 'ripe',
+        stage: primaryStage,
         start_doy: formStartDoy,
         end_doy: formEndDoy,
         peak_doy: formPeakDoy,
@@ -280,7 +316,7 @@
 
   async function deleteCell() {
     if (!editingZoneId || saving) return;
-    const ripe = dbBySpeciesZone.get(editingZoneId)?.get('ripe');
+    const ripe = dbBySpeciesZone.get(editingZoneId)?.get(primaryStage);
     if (!ripe?.id) {
       cancelEdit();
       return;
@@ -359,6 +395,7 @@
       });
 
   $: currentSpecies = species.find((s) => s.id === currentSpeciesId) ?? null;
+  $: primaryStage = primaryStageFor(currentSpecies?.forage_parts);
 
   /** Climate-zone code natural sort: 3a < 3b < 4a < … < 11b. */
   function zoneSortKey(code: string): number {
@@ -541,14 +578,17 @@
       <div class="species-head">
         <h2>{currentSpecies.common_name}</h2>
         <div class="sci">{currentSpecies.scientific_name}</div>
+        <div class="stage-tag" title="Forage parts: {(currentSpecies.forage_parts ?? []).join(', ') || 'none'}">
+          harvest stage: <strong>{stageLabel(primaryStage)}</strong>
+        </div>
       </div>
 
       <div class="legend">
         <span class="legend-item"><span class="swatch swatch-db"></span>Current DB row</span>
         <span class="legend-item"><span class="swatch swatch-guide"></span>Regional guide (JSON sidecar)</span>
-        <label class="toggle">
+        <label class="toggle" title="Off: show zones that have either cal data or pins for this species. On: show every USDA zone, even ones with neither.">
           <input type="checkbox" bind:checked={showEmptyZones} />
-          Show zones with no data
+          Show all zones (incl. no pins/data)
         </label>
         <label class="toggle toggle-edit">
           <input type="checkbox" bind:checked={editMode} on:change={() => { if (!editMode) cancelEdit(); }} />
@@ -635,7 +675,7 @@
                   {/each}
                 {/if}
                 {#if dbStages && dbStages.size > 0}
-                  {@const ripe = dbStages.get('ripe')}
+                  {@const ripe = dbStages.get(primaryStage)}
                   {#if ripe?.confidence}
                     <span class="conf-pill conf-{ripe.confidence}" title={confidenceTitle(ripe.confidence)}>{confidenceLabel(ripe.confidence)}</span>
                   {/if}
@@ -657,13 +697,13 @@
                 {/if}
                 {#if editMode && editingZoneId !== z.id}
                   <button class="edit-btn" on:click={() => startEdit(z.id)}>
-                    {dbStages?.has('ripe') ? 'Edit' : '+ Add'}
+                    {dbStages?.has(primaryStage) ? 'Edit' : '+ Add'}
                   </button>
                 {/if}
               </div>
             </div>
-            {#if !editMode && expandedZoneId === z.id && dbBySpeciesZone.get(z.id)?.get('ripe')}
-              {@const ripe = dbBySpeciesZone.get(z.id)?.get('ripe')}
+            {#if !editMode && expandedZoneId === z.id && dbBySpeciesZone.get(z.id)?.get(primaryStage)}
+              {@const ripe = dbBySpeciesZone.get(z.id)?.get(primaryStage)}
               <div class="row-detail">
                 {#if ripe?.notes}
                   <div class="detail-section">
@@ -787,7 +827,7 @@
                   <p class="error">{saveError}</p>
                 {/if}
                 <div class="editor-actions">
-                  <button class="link-btn danger" on:click={deleteCell} disabled={saving || !dbStages?.has('ripe')}>
+                  <button class="link-btn danger" on:click={deleteCell} disabled={saving || !dbStages?.has(primaryStage)}>
                     Delete row
                   </button>
                   <div class="actions-right">
@@ -882,9 +922,23 @@
   .dd-sci { color: #6b7a6b; font-style: italic; }
   .species-head {
     margin: 0.6rem 0 0.4rem;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.8rem;
   }
   .species-head h2 { margin: 0; font-size: 1.4rem; }
   .sci { color: #6b7a6b; font-style: italic; font-size: 0.9rem; }
+  .stage-tag {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: #4a554a;
+    background: #f0f5ef;
+    border: 1px solid #c7d0c7;
+    border-radius: 1rem;
+    padding: 0.18rem 0.7rem;
+    cursor: help;
+  }
   .legend {
     display: flex;
     gap: 1.2rem;
