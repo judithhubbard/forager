@@ -1186,11 +1186,12 @@
         // hard-caps at 15000 (migration 54).
         const ownCap = 8000;
         const pubCap = 12000;
+        const includeInvasives = $settings.showInvasives;
         const [own, pub, ownSum, pubSum] = await Promise.all([
           useRegion && region ? listRegionPins(region.id, bbox, ownCap, zoom) : Promise.resolve([]),
-          listPublicPins(bbox, pubCap, zoom),
+          listPublicPins(bbox, pubCap, zoom, includeInvasives),
           useRegion && region ? listRegionPinSummary(region.id, bbox) : Promise.resolve([] as PinBboxSummaryRow[]),
-          listPublicPinSummary(bbox)
+          listPublicPinSummary(bbox, includeInvasives)
         ]);
         const fetchEnd = performance.now();
         if (seq !== viewportSeq) return;

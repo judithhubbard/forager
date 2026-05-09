@@ -125,11 +125,18 @@ export async function listByRegion(regionId: string): Promise<PinEffective[]> {
 /** Public pins inside the given bbox. Anon-callable. Capped at
  *  maxRows (server enforces ≤1000). At low zooms callers should
  *  prefer listPublicPinClusters() — passing a 50-state bbox here
- *  would silently truncate to 500 pins. */
+ *  would silently truncate to 500 pins.
+ *
+ *  includeInvasives: when false (default), the server filters out
+ *  pins whose species is_forageable=false. ~104k of our public pins
+ *  are inedible-invasives (mostly Norway maple in Ontario imports),
+ *  so excluding them by default cuts dense-city payloads materially.
+ *  Pass true when the user has the "Show invasives" Layers toggle on. */
 export async function listPublicPins(
   bbox: Bbox,
   maxRows: number = 500,
-  zoom: number = 18
+  zoom: number = 18,
+  includeInvasives: boolean = false
 ): Promise<PinEffective[]> {
   const [west, south, east, north] = bbox;
   // p_zoom drives the spatial decimation grid in the RPC. PostgREST
@@ -150,7 +157,8 @@ export async function listPublicPins(
           p_max_lng: east,
           p_max_lat: north,
           p_max_rows: maxRows,
-          p_zoom: Math.round(zoom)
+          p_zoom: Math.round(zoom),
+          p_include_invasives: includeInvasives
         } as never
       )
       .range(offset, upper);
@@ -176,7 +184,8 @@ export interface PinBboxSummaryRow {
   total_count: number;
 }
 export async function listPublicPinSummary(
-  bbox: Bbox
+  bbox: Bbox,
+  includeInvasives: boolean = false
 ): Promise<PinBboxSummaryRow[]> {
   const [west, south, east, north] = bbox;
   const { data, error } = await supabase.rpc(
@@ -185,7 +194,8 @@ export async function listPublicPinSummary(
       p_min_lng: west,
       p_min_lat: south,
       p_max_lng: east,
-      p_max_lat: north
+      p_max_lat: north,
+      p_include_invasives: includeInvasives
     } as never
   );
   if (error) {
