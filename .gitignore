@@ -27,3 +27,4 @@ data/wikipedia-extracts.txt
 # Regenerable raw exports — can be ~20MB+
 data/exploration/great-morel-raw/
 data/exploration/layer1-npn-raw.json
+data/exploration/web-crawl-cache/
