@@ -225,6 +225,21 @@
       default:          return '#bbb';
     }
   }
+
+  /** Honest labels for the two `confidence` values currently in the DB.
+   *  Neither is real human curation — both originate from AI-seeded
+   *  `data/species/ithaca.json` (5b) plus heuristic propagation
+   *  (frost-offset shifts to other zones, or literal copy to 6a). */
+  function confidenceLabel(c: string | null | undefined): string {
+    if (c === 'curated') return 'AI-seeded (Ithaca 5b)';
+    if (c === 'frost_offset') return 'frost-shifted';
+    return c ?? '';
+  }
+  function confidenceTitle(c: string | null | undefined): string {
+    if (c === 'curated') return 'Provenance: data/species/ithaca.json — AI-generated in an earlier session, not verified against a primary source. Zone 6a values are literal copies of 5b.';
+    if (c === 'frost_offset') return 'Provenance: heuristic shift of the 5b values by per-zone frost-date offset (migration #47). Inherits 5b uncertainty.';
+    return '';
+  }
 </script>
 
 <svelte:window on:keydown={onKey} />
@@ -276,7 +291,7 @@
       </div>
 
       <div class="legend">
-        <span class="legend-item"><span class="swatch swatch-db"></span>Current DB (AI-propagated)</span>
+        <span class="legend-item"><span class="swatch swatch-db"></span>Current DB (all AI-derived: Ithaca 5b seed + heuristic propagation)</span>
         <span class="legend-item"><span class="swatch swatch-guide"></span>Regional guide (Layer 2)</span>
         <span class="legend-item swatch-pending"><span class="swatch"></span>NPN peak (Layer 1) — pending</span>
         <label class="toggle">
@@ -357,7 +372,10 @@
                 {#if dbStages && dbStages.size > 0}
                   {@const ripe = dbStages.get('ripe')}
                   {#if ripe?.confidence}
-                    <span class="conf-pill conf-{ripe.confidence}">{ripe.confidence}</span>
+                    <span class="conf-pill conf-{ripe.confidence}" title={confidenceTitle(ripe.confidence)}>{confidenceLabel(ripe.confidence)}</span>
+                  {/if}
+                  {#if ripe?.notes}
+                    <span class="note-pill" title={ripe.notes}>note</span>
                   {/if}
                 {/if}
               </div>
@@ -532,8 +550,20 @@
     padding: 0.05rem 0.35rem;
     border-radius: 0.2rem;
     border: 1px solid;
+    cursor: help;
   }
-  .conf-high { color: #2a6f2a; border-color: #85c285; background: #effaef; }
-  .conf-medium { color: #8a6f10; border-color: #e0c060; background: #fff8e3; }
-  .conf-low { color: #963535; border-color: #d99090; background: #fff0f0; }
+  /* Both DB confidence values today are AI-derived. Style them similarly
+     muted to avoid implying that "curated" is human-validated. */
+  .conf-curated { color: #6f5a10; border-color: #d8c890; background: #fbf6e8; }
+  .conf-frost_offset { color: #5a6f6f; border-color: #b0c0c0; background: #f0f5f5; }
+
+  .note-pill {
+    font-size: 0.68rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 0.2rem;
+    background: #fff;
+    border: 1px dashed #c7d0c7;
+    color: #6b7a6b;
+    cursor: help;
+  }
 </style>
