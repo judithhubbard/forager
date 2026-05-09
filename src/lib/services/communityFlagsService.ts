@@ -12,10 +12,10 @@ import { supabase } from '$lib/supabase';
 export type FlagType = 'gone' | 'wrong_species' | 'inaccessible' | 'low_quality';
 
 export const FLAG_LABELS: Record<FlagType, string> = {
-  gone: 'No longer here',
+  gone: 'Gone',
   wrong_species: 'Wrong species',
   inaccessible: 'Inaccessible',
-  low_quality: 'Poor quality / not worth foraging'
+  low_quality: 'Poor quality'
 };
 
 export interface FlagCounts {

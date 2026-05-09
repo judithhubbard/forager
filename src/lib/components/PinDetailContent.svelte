@@ -617,6 +617,11 @@
    *  by lastLoadedId so a same-pin refresh — e.g. after observation
    *  save — preserves the user's per-session license choice). */
   let uploadLicense: PhotoLicense = $settings.defaultPhotoLicense;
+  /** License-help panel below the upload row. The native HTML title=
+   *  attribute doesn't work on touch devices — users tapped the "?"
+   *  and saw nothing. Replaced with an explicit toggle that paints
+   *  the explanations inline. */
+  let showLicenseHelp = false;
   let lastLicenseResetForId: string | null = null;
   $: if (pin && pin.id !== lastLicenseResetForId) {
     uploadLicense = $settings.defaultPhotoLicense;
@@ -934,10 +939,14 @@
         <p class="sub">
           <em>{species.scientific_name}</em>
           {#if showCommonNameBelow}<span class="muted"> · {species.common_name}</span>{/if}
+        </p>
+        <p class="loc-row">
           <span class="loc">
             {pin.lat?.toFixed(5)}, {pin.lng?.toFixed(5)}
-            {#if pin.location_accuracy_m}<span class="muted">±{pin.location_accuracy_m}m</span>{/if}
           </span>
+          {#if pin.location_accuracy_m}
+            <span class="muted">±{pin.location_accuracy_m}m</span>
+          {/if}
         </p>
       {/if}
 
@@ -952,22 +961,28 @@
           >
             {watching ? '★ Watching' : '☆ Watch'}
           </button>
-          {#if species?.is_forageable !== false}
-            <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
-          {/if}
           {#if canEditPin}
+            <!-- Status select reads as the current state ("Active ▾")
+                 instead of a placeholder; selecting a different option
+                 commits the change. The current value is excluded from
+                 the option list so the user only sees alternatives. -->
             <select
               class="status-select"
               value={pendingStatus ?? ''}
               on:change={onStatusSelect}
               disabled={statusSaving}
-              title="Change pin status"
+              title="Pin status — click to change"
             >
-              <option value="">{statusSaving ? 'Saving…' : 'change status…'}</option>
+              <option value="">{statusSaving ? 'Saving…' : statusLabel(pin.status)}</option>
               {#each STATUSES as s}
                 {#if s !== pin.status}<option value={s}>{statusLabel(s)}</option>{/if}
               {/each}
             </select>
+          {/if}
+          {#if species?.is_forageable !== false}
+            <a class="watch-btn link-btn" href={base + '/timeline'}>Year history →</a>
+          {/if}
+          {#if canEditPin}
             <button
               class="watch-btn"
               on:click={() => dispatch('requestMove', { pinId })}
@@ -1080,9 +1095,11 @@
                   class:flagged={!!myRegionalFlag}
                   on:click={() => toggleInvasive('regional')}
                   disabled={invasiveBusy}
-                  title={myRegionalFlag ? 'Remove your regional flag' : 'Flag this species as invasive in this region'}
+                  title={myRegionalFlag
+                    ? 'Click to remove your flag (you said this species is invasive in this region).'
+                    : 'Flag this species as invasive in this region only — for example, Norway maple in eastern North America.'}
                 >
-                  {myRegionalFlag ? '✓ flagged in region' : 'Flag in region'}
+                  {myRegionalFlag ? '✓ Invasive here' : 'Invasive here'}
                 </button>
               {/if}
               <button
@@ -1090,9 +1107,11 @@
                 class:flagged={!!myGlobalFlag}
                 on:click={() => toggleInvasive('global')}
                 disabled={invasiveBusy}
-                title={myGlobalFlag ? 'Remove your global flag' : 'Flag this species as globally invasive'}
+                title={myGlobalFlag
+                  ? 'Click to remove your flag (you said this species is invasive everywhere).'
+                  : 'Flag this species as invasive everywhere it grows.'}
               >
-                {myGlobalFlag ? '✓ flagged globally' : 'Flag globally'}
+                {myGlobalFlag ? '✓ Invasive everywhere' : 'Invasive everywhere'}
               </button>
             </div>
             {#if invasiveError}
@@ -1416,34 +1435,41 @@
       <div class="section-header">
         <h3>Photos</h3>
         {#if $session}
-          <button on:click={() => { pendingUploadObsId = null; fileInput?.click(); }} disabled={uploading}>
-            {uploading ? 'Uploading…' : 'Add photo'}
-          </button>
+          <div class="upload-controls">
+            <label class="upload-license-inline">
+              License
+              <select bind:value={uploadLicense} disabled={uploading}>
+                {#each PHOTO_LICENSE_OPTIONS as o}
+                  <option value={o.value}>{o.label}</option>
+                {/each}
+              </select>
+              <button
+                type="button"
+                class="license-help"
+                on:click|stopPropagation={() => (showLicenseHelp = !showLicenseHelp)}
+                aria-label="Help with license choices"
+                aria-expanded={showLicenseHelp}
+              >?</button>
+            </label>
+            <button
+              class="add-photo-btn"
+              on:click={() => { pendingUploadObsId = null; fileInput?.click(); }}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading…' : 'Add photo'}
+            </button>
+          </div>
           <input type="file" accept="image/*" capture="environment" bind:this={fileInput}
                  on:change={handleFileChange} style="display: none" />
         {/if}
       </div>
-      {#if $session}
-        <div class="upload-license-row">
-          <label>
-            License
-            <select bind:value={uploadLicense} disabled={uploading}>
-              {#each PHOTO_LICENSE_OPTIONS as o}
-                <option value={o.value}>{o.label}</option>
-              {/each}
-            </select>
-          </label>
-          <span
-            class="license-help"
-            title={
-              'CC BY-SA 4.0 — share-alike: anyone can use it, derivatives must use the same license. Default for foraging-commons spirit.\n\n' +
-              'CC BY 4.0 — attribution only: anyone can use it, including commercially, with credit. No share-alike requirement.\n\n' +
-              'CC BY-NC-SA 4.0 — non-commercial share-alike: free for non-commercial use, derivatives must use the same license.\n\n' +
-              'CC0 — public domain: no rights reserved, no attribution required.\n\n' +
-              'All rights reserved — only you (and Forager, to display the photo on the pin) may use it.'
-            }
-            aria-label="Help with license choices"
-          >?</span>
+      {#if $session && showLicenseHelp}
+        <div class="license-help-panel" role="note">
+          <p><strong>CC BY-SA 4.0</strong> — share-alike. Anyone can use it; derivatives must use the same license. Default, in the foraging-commons spirit.</p>
+          <p><strong>CC BY 4.0</strong> — attribution only. Anyone can use it (including commercially) with credit. No share-alike requirement.</p>
+          <p><strong>CC BY-NC-SA 4.0</strong> — non-commercial share-alike. Free for non-commercial use; derivatives must use the same license.</p>
+          <p><strong>CC0</strong> — public domain. No rights reserved, no attribution required.</p>
+          <p><strong>All rights reserved</strong> — only you (and Forager, to display the photo on the pin) may use it.</p>
         </div>
       {/if}
       {#if uploadError}<p class="error">{uploadError}</p>{/if}
@@ -1529,11 +1555,17 @@
     align-items: baseline;
   }
   .sub em { font-style: italic; }
-  .sub .loc {
-    margin-left: auto;
-    font-style: italic;
+  .loc-row {
+    margin: 0.1rem 0 0.2rem;
+    font-size: 0.8rem;
     color: #6b7a6b;
-    white-space: nowrap;
+    display: flex;
+    gap: 0.4rem;
+    align-items: baseline;
+  }
+  .loc-row .loc {
+    font-style: italic;
+    font-variant-numeric: tabular-nums;
   }
   ul.meta { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #4a554a; }
   ul.meta li { margin-bottom: 0.15rem; line-height: 1.3; }
@@ -1891,19 +1923,22 @@
   .flag-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
+    gap: 0.3rem;
   }
   .flag-chip {
     background: white;
     border: 1px solid #c7d0c7;
     color: #3a5a3a;
-    padding: 0.3rem 0.7rem;
+    padding: 0.25rem 0.5rem;
     border-radius: 0.3rem;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.3rem;
+    flex: 1 1 auto;
+    justify-content: center;
+    white-space: nowrap;
   }
   .flag-chip:hover:not(:disabled) { background: #f0f5ef; }
   .flag-chip:disabled { cursor: default; opacity: 0.6; }
@@ -1978,26 +2013,33 @@
   }
   button[type='submit']:disabled, .section-header button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  .upload-license-row {
+  /* License + Add photo sit on the same row of the section header
+   * so it's visually obvious the dropdown affects the next upload.
+   * Wraps cleanly on narrow screens. */
+  .upload-controls {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    margin: 0 0 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .upload-license-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     font-size: 0.78rem;
     color: #4a554a;
   }
-  .upload-license-row label {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-  .upload-license-row select {
+  .upload-license-inline select {
     padding: 0.2rem 0.4rem;
     border: 1px solid #c7d0c7;
     border-radius: 0.25rem;
     background: white;
     font-size: 0.78rem;
     color: #1f2a1f;
+  }
+  .add-photo-btn {
+    /* Inherits .section-header button styling but explicitly named
+     * so it doesn't get confused with the license help button below. */
   }
   .license-help {
     display: inline-flex;
@@ -2010,10 +2052,30 @@
     color: #4a554a;
     font-size: 0.7rem;
     font-weight: 600;
-    cursor: help;
+    cursor: pointer;
     user-select: none;
+    border: 0;
+    padding: 0;
+    line-height: 1;
   }
   .license-help:hover { background: #d8e2d8; }
+  .license-help[aria-expanded="true"] {
+    background: #3a5a3a;
+    color: white;
+  }
+  .license-help-panel {
+    background: #fbfdfa;
+    border: 1px solid #d0d8d0;
+    border-radius: 0.35rem;
+    padding: 0.5rem 0.7rem;
+    margin: 0.4rem 0 0.6rem;
+    font-size: 0.8rem;
+    color: #1f2a1f;
+    line-height: 1.4;
+  }
+  .license-help-panel p { margin: 0 0 0.35rem; }
+  .license-help-panel p:last-child { margin: 0; }
+  .license-help-panel strong { color: #3a5a3a; }
   /* Slightly larger touch targets on small screens. */
   @media (max-width: 640px) {
     .section-header button {
