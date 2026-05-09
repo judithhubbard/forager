@@ -90,6 +90,7 @@
 
   const CONFIDENCE_VALUES = [
     'expert_verified',
+    'cited_thin',
     'regional_guide',
     'empirical_npn',
     'empirical_community',
@@ -516,6 +517,7 @@
     if (c === 'curated') return 'AI-seeded (Ithaca 5b)';
     if (c === 'frost_offset') return 'frost-shifted';
     if (c === 'expert_verified') return 'verified';
+    if (c === 'cited_thin') return 'thin citation';
     if (c === 'regional_guide') return 'regional guide';
     if (c === 'empirical_npn') return 'NPN empirical';
     if (c === 'empirical_community') return 'community sightings';
@@ -524,7 +526,8 @@
   function confidenceTitle(c: string | null | undefined): string {
     if (c === 'curated') return 'Provenance: data/species/ithaca.json — AI-generated in an earlier session, not verified against a primary source. Zone 6a values are literal copies of 5b.';
     if (c === 'frost_offset') return 'Provenance: heuristic shift of the 5b values by per-zone frost-date offset (migration #47). Inherits 5b uncertainty.';
-    if (c === 'expert_verified') return 'Manually entered or verified, with cited evidence in the per-cell evidence log.';
+    if (c === 'expert_verified') return 'Verified with multiple cited sources in the per-cell evidence log.';
+    if (c === 'cited_thin') return 'Single citation, often weak — DOY values came from agent general knowledge with one tangential web fact attached. Treat as approximate; re-cite or revise.';
     if (c === 'regional_guide') return 'Source: a regional expert guide (CityFruit / Hidden Harvest / NFFTT / POP / UCANR).';
     if (c === 'empirical_npn') return 'Source: USA-NPN observations aggregated per zone with leading-edge offset.';
     if (c === 'empirical_community') return 'Source: community-reporting tracker (e.g. The Great Morel).';
@@ -1037,6 +1040,7 @@
      muted to avoid implying that "curated" is human-validated. */
   .conf-curated { color: #6f5a10; border-color: #d8c890; background: #fbf6e8; }
   .conf-frost_offset { color: #5a6f6f; border-color: #b0c0c0; background: #f0f5f5; }
+  .conf-cited_thin { color: #8a4f10; border-color: #d8a880; background: #fbf0e8; }
 
   .note-pill, .ev-pill {
     font-size: 0.68rem;
