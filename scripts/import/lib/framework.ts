@@ -79,12 +79,16 @@ export async function fetchArcGisLayer(opts: {
     }
     const body = (await res.json()) as {
       features?: unknown[];
+      // FeatureServer puts the flag under properties; MapServer
+      // (e.g. City of Madison's maps.cityofmadison.com) puts it
+      // at the top level. Check both.
       properties?: { exceededTransferLimit?: boolean };
+      exceededTransferLimit?: boolean;
     };
     const feats = body.features ?? [];
     all.push(...feats);
     process.stdout.write(`  fetched offset ${offset}: ${feats.length} (total ${all.length})\n`);
-    const more = !!body.properties?.exceededTransferLimit;
+    const more = !!(body.properties?.exceededTransferLimit ?? body.exceededTransferLimit);
     if (!more || feats.length === 0) break;
     offset += feats.length;
   }
