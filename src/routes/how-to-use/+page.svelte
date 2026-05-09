@@ -42,10 +42,11 @@
   <ul>
     <li><strong>Activity</strong> — recent observations across the region.</li>
     <li><strong>Watchlist</strong> — species or pins you're following for ripeness alerts.</li>
-    <li><strong>Year history</strong> — stacked annual timelines combining your observations with weather.</li>
     <li><strong>My tracks</strong> — upload GPX/KML files or record live tracks; turn on the foraging heatmap.</li>
+    <li><strong>Year history</strong> — stacked annual timelines combining your observations with weather.</li>
     <li><strong>Harvest windows</strong> — view the year-long timeline of fruiting stages. Click any colored bar to edit its dates.</li>
-    <li><strong>Help</strong> — this page, plus <a href={base + '/about'}>About</a> and <a href={base + '/sources'}>Data sources</a>.</li>
+    <li><strong>Preferences</strong> — what species you forage, invasive opt-in, default photo license.</li>
+    <li><strong>Send feedback</strong> — report bugs or suggest features.</li>
   </ul>
 
   <h2>More info</h2>

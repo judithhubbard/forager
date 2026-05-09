@@ -12,7 +12,6 @@
   } from '$lib/stores/activeRegion';
 
   let open = false;
-  let helpOpen = false;
   $: isAdmin = $activeRegion?.role === 'admin';
   $: hasMultipleRegions = $myRegions.length > 1;
   // Strip the configured base path so the comparison works whether
@@ -38,13 +37,11 @@
     const target = e.target as HTMLElement;
     if (!target.closest('.tools-wrap')) {
       open = false;
-      helpOpen = false;
     }
   }
 
   function closeMenu() {
     open = false;
-    helpOpen = false;
   }
 
   function onRegionChange(e: Event) {
@@ -72,37 +69,32 @@
         <hr />
       {/if}
 
-      <!-- Core navigation. The Map link is hidden when the user is
-           already on the map page since it would be a no-op. The
-           personal-data pages (Activity, Watchlist, My tracks etc.)
-           are authed-only because they read user-scoped data and
-           would just show 'sign in to use this' for anon. -->
+      <!-- Core navigation. Map link is hidden when already on the map.
+           Personal-data pages (Activity, Watchlist, My tracks etc.)
+           are authed-only — they read user-scoped data and would
+           show "sign in to use this" for anon. Sections are grouped
+           by purpose: personal data, analytical views, preferences,
+           help docs. -->
       {#if !isOnMap}
         <a href={base + '/'} on:click={closeMenu}>Map</a>
+        <hr />
       {/if}
       {#if $session}
         <a href={base + '/activity'} on:click={closeMenu}>Activity</a>
         <a href={base + '/watchlist'} on:click={closeMenu}>Watchlist</a>
-        <a href={base + '/timeline'} on:click={closeMenu}>Year history</a>
         <a href={base + '/tracks'} on:click={closeMenu}>My tracks</a>
+        <hr />
+        <a href={base + '/timeline'} on:click={closeMenu}>Year history</a>
         <a href={base + '/windows'} on:click={closeMenu}>Harvest windows</a>
-        <a href={base + '/interests'} on:click={closeMenu}>My interests</a>
+        <hr />
+        <a href={base + '/interests'} on:click={closeMenu}>Preferences</a>
+        <hr />
       {/if}
 
-      <!-- Help submenu — How to use is the parent doc, About + Data
-           sources are linked from inside it (and reachable here too
-           for direct access). -->
-      <button class="submenu-toggle" on:click={() => (helpOpen = !helpOpen)}>
-        Help <span class="chev">{helpOpen ? '▾' : '▸'}</span>
-      </button>
-      {#if helpOpen}
-        <div class="submenu">
-          <a href={base + '/feedback'} on:click={closeMenu}>Send feedback</a>
-          <a href={base + '/how-to-use'} on:click={closeMenu}>How to use</a>
-          <a href={base + '/about'} on:click={closeMenu}>About</a>
-          <a href={base + '/sources'} on:click={closeMenu}>Data sources</a>
-        </div>
-      {/if}
+      <a href={base + '/feedback'} on:click={closeMenu}>Send feedback</a>
+      <a href={base + '/how-to-use'} on:click={closeMenu}>How to use</a>
+      <a href={base + '/about'} on:click={closeMenu}>About</a>
+      <a href={base + '/sources'} on:click={closeMenu}>Data sources</a>
 
       {#if isAdmin}
         <hr />
@@ -167,27 +159,6 @@
     margin: 0.25rem 0;
     border: 0;
     border-top: 1px solid #ebefeb;
-  }
-  .submenu-toggle {
-    display: flex !important;
-    justify-content: space-between;
-    align-items: center;
-    color: #3a5a3a !important;
-    font-weight: 600 !important;
-  }
-  .chev {
-    color: #6b7a6b;
-    font-size: 0.78rem;
-    margin-left: 0.5rem;
-  }
-  .submenu {
-    background: #fbfdfa;
-    border: 1px solid #ebefeb;
-    border-radius: 0.3rem;
-    margin: 0.15rem 0.15rem 0.25rem;
-    padding: 0.2rem;
-    display: flex;
-    flex-direction: column;
   }
   .settings-block {
     padding: 0.35rem 0.55rem;

@@ -21,10 +21,27 @@
     removeAllMine
   } from '$lib/services/userPreferencesService';
   import { loadFromServer as reloadUserPrefs } from '$lib/stores/userPreferences';
-  import { settings, setShowInvasives } from '$lib/stores/settings';
+  import {
+    settings,
+    setShowInvasives,
+    setDefaultPhotoLicense,
+    type PhotoLicense
+  } from '$lib/stores/settings';
 
   function onInvasiveOptin(e: Event) {
     setShowInvasives((e.currentTarget as HTMLInputElement).checked);
+  }
+
+  const PHOTO_LICENSE_OPTIONS: { value: PhotoLicense; label: string }[] = [
+    { value: 'CC-BY-SA-4.0',        label: 'CC BY-SA 4.0 (share-alike, default)' },
+    { value: 'CC-BY-4.0',           label: 'CC BY 4.0 (attribution)' },
+    { value: 'CC-BY-NC-SA-4.0',     label: 'CC BY-NC-SA 4.0 (non-commercial)' },
+    { value: 'CC0',                 label: 'CC0 (public domain)' },
+    { value: 'all-rights-reserved', label: 'All rights reserved' }
+  ];
+
+  function onPhotoLicenseChange(e: Event) {
+    setDefaultPhotoLicense((e.currentTarget as HTMLSelectElement).value as PhotoLicense);
   }
 
   interface SpeciesRow {
@@ -180,10 +197,11 @@
 
 <header>
   <button class="back" on:click={() => goto('/')}>← Back</button>
-  <h1>My foraging interests</h1>
+  <h1>Preferences</h1>
 </header>
 
 <main>
+  <h2 class="section-heading">Foraging interests</h2>
   <p class="lead">
     Pick the categories you want the app to track. Expand any category
     to fine-tune individual species. Species in unchecked categories
@@ -266,6 +284,21 @@
         </span>
       </div>
     </label>
+
+    <h2 class="section-heading">Photo upload</h2>
+    <p class="lead small">
+      Default license for photos you upload to pins. Saves automatically.
+      You can override per-photo on the upload form.
+    </p>
+    <label class="photo-license">
+      <span class="ph-label">License</span>
+      <select value={$settings.defaultPhotoLicense} on:change={onPhotoLicenseChange}>
+        {#each PHOTO_LICENSE_OPTIONS as o}
+          <option value={o.value}>{o.label}</option>
+        {/each}
+      </select>
+    </label>
+
     <div class="actions">
       <button type="button" class="link-btn" on:click={showEverything} disabled={busy}>
         Reset — show me everything
@@ -323,8 +356,41 @@
     color: #1f2a1f;
   }
   .lead { color: #4a554a; font-size: 0.95rem; line-height: 1.5; }
+  .lead.small { font-size: 0.88rem; margin-top: 0.3rem; }
   .hint { color: #6b7a6b; }
   .error { color: #b03030; font-size: 0.9rem; }
+
+  .section-heading {
+    margin: 1.6rem 0 0.4rem;
+    font-size: 0.95rem;
+    color: #3a5a3a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .section-heading:first-of-type { margin-top: 0; }
+
+  .photo-license {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    background: white;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.4rem;
+  }
+  .ph-label {
+    font-size: 0.85rem;
+    color: #4a554a;
+  }
+  .photo-license select {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.25rem;
+    background: white;
+    font-size: 0.9rem;
+  }
 
   ul.groups {
     list-style: none;
