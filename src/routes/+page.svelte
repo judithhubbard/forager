@@ -217,14 +217,16 @@
   // Track the last requested viewport so a stale in-flight load that
   // resolves after a newer one doesn't clobber the visible layer.
   let viewportSeq = 0;
-  // Zoom threshold below which we render aggregate cluster dots
-  // instead of individual pins. Bumped from 11 → 13 because the
-  // anon individual-pin cap (500) gets hit easily in dense areas
-  // even at zoom 11 — better to keep showing accurate cluster
-  // counts than a silently truncated individual-pin set.
-  const CLUSTER_BELOW_ZOOM = 13;
-  // Cluster bubbles removed — heatmap stays at zoom < 13, individual
-  // pins via marker-sized grid decimation at zoom ≥ 13. The decimation
+  // Zoom threshold below which we render the heatmap instead of
+  // individual pins. Bumped from 13 → 14: at z13 over a city-scale
+  // bbox the individual-pin RPC has to dedup ~150k pins (Hamilton-
+  // class density), which is 5+ s server-side regardless of cell
+  // size. Heatmap mode at z13 is sub-second because it reads from
+  // the pre-aggregated pin_density_grid. Individual pins kick in
+  // at z14 where the bbox is small enough that dedup is fast.
+  const CLUSTER_BELOW_ZOOM = 14;
+  // Cluster bubbles removed — heatmap stays at zoom < 14, individual
+  // pins via marker-sized grid decimation at zoom ≥ 14. The decimation
   // already drops same-cell duplicates so visually-obscured pins
   // aren't rendered, but every cell that COULD be distinguished gets
   // its own pin marker (no number-circles).
