@@ -1,0 +1,91 @@
+-- Re-runs the Layer 2 regional-window ingestion now that the 12
+-- cultivated cultivars are in the species catalog (mig 20260509000004).
+-- These cells were previously skipped because the species lookups
+-- failed.
+--
+-- Source data: data/exploration/regional-windows-v1.json
+
+insert into public.species_fruiting_windows
+  (species_id, climate_zone_id, stage, start_doy, end_doy, confidence, notes)
+select s.id, z.id, 'ripe'::public.stage, t.sd, t.ed,
+       'regional_guide'::public.window_confidence, t.note
+from (values
+('Prunus salicina', '8a', 182, 273, 'Seattle metro — JUL-SEP per guide (Asian/Japanese plums)'),
+('Prunus salicina', '8b', 182, 273, 'Seattle metro — JUL-SEP per guide (Asian/Japanese plums)'),
+('Prunus domestica', '8a', 182, 273, 'Seattle metro — JUL-SEP per guide (European plums incl. Italian, Greengage)'),
+('Prunus domestica', '8b', 182, 273, 'Seattle metro — JUL-SEP per guide (European plums incl. Italian, Greengage)'),
+('Pyrus pyrifolia', '8a', 213, 304, 'Seattle metro — AUG-OCT per guide (Asian pears)'),
+('Pyrus pyrifolia', '8b', 213, 304, 'Seattle metro — AUG-OCT per guide (Asian pears)'),
+('Cydonia oblonga', '8a', 244, 334, 'Seattle metro — SEP-NOV per guide'),
+('Cydonia oblonga', '8b', 244, 334, 'Seattle metro — SEP-NOV per guide'),
+('Vitis vinifera', '8a', 213, 304, 'Seattle metro — AUG-OCT per guide'),
+('Vitis vinifera', '8b', 213, 304, 'Seattle metro — AUG-OCT per guide'),
+('Actinidia deliciosa', '8a', 244, 304, 'Seattle metro — SEP-OCT per guide'),
+('Actinidia deliciosa', '8b', 244, 304, 'Seattle metro — SEP-OCT per guide'),
+('Prunus avium', '8a', 152, 191, 'Seattle metro — Early June to early July per guide; Bing and Rainier dominant'),
+('Prunus avium', '8b', 152, 191, 'Seattle metro — Early June to early July per guide; Bing and Rainier dominant'),
+('Prunus avium', '5a', 152, 212, 'Ottawa metro — Early June to late July (sweet cherries)'),
+('Prunus avium', '5b', 152, 212, 'Ottawa metro — Early June to late July (sweet cherries)'),
+('Prunus cerasus', '5a', 161, 212, 'Ottawa metro — Mid-June to late July (sour cherries)'),
+('Prunus cerasus', '5b', 161, 212, 'Ottawa metro — Mid-June to late July (sour cherries)'),
+('Prunus domestica', '5a', 191, 253, 'Ottawa metro — Mid-July to early September; Ottawa-localized, matches NFFTT Toronto'),
+('Prunus domestica', '5b', 191, 253, 'Ottawa metro — Mid-July to early September; Ottawa-localized, matches NFFTT Toronto'),
+('Prunus armeniaca', '6a', 191, 222, 'Toronto metro — Mid-July to mid-August'),
+('Prunus armeniaca', '6b', 191, 222, 'Toronto metro — Mid-July to mid-August'),
+('Prunus avium', '6a', 152, 201, 'Toronto metro — Early June to mid-July; sweet/sour not separately distinguished by NFFTT'),
+('Prunus avium', '6b', 152, 201, 'Toronto metro — Early June to mid-July; sweet/sour not separately distinguished by NFFTT'),
+('Ginkgo biloba', '6a', 253, 304, 'Toronto metro — Mid-September to late October (seeds)'),
+('Ginkgo biloba', '6b', 253, 304, 'Toronto metro — Mid-September to late October (seeds)'),
+('Prunus persica', '6a', 191, 222, 'Toronto metro — Mid-July to mid-August'),
+('Prunus persica', '6b', 191, 222, 'Toronto metro — Mid-July to mid-August'),
+('Prunus domestica', '6a', 191, 253, 'Toronto metro — Mid-July to early September; European plum dominant in Toronto'),
+('Prunus domestica', '6b', 191, 253, 'Toronto metro — Mid-July to early September; European plum dominant in Toronto'),
+('Cydonia oblonga', '6a', 244, 304, 'Toronto metro — Early September to late October'),
+('Cydonia oblonga', '6b', 244, 304, 'Toronto metro — Early September to late October'),
+('Prunus avium', '7a', 152, 212, 'Philadelphia metro — JUN-JUL per calendar'),
+('Prunus avium', '7b', 152, 212, 'Philadelphia metro — JUN-JUL per calendar'),
+('Prunus cerasus', '7a', 152, 212, 'Philadelphia metro — JUN-JUL per calendar; not split sweet/sour'),
+('Prunus cerasus', '7b', 152, 212, 'Philadelphia metro — JUN-JUL per calendar; not split sweet/sour'),
+('Prunus armeniaca', '7a', 182, 212, 'Philadelphia metro — JUL per calendar'),
+('Prunus armeniaca', '7b', 182, 212, 'Philadelphia metro — JUL per calendar'),
+('Prunus persica', '7a', 182, 243, 'Philadelphia metro — JUL-AUG per calendar'),
+('Prunus persica', '7b', 182, 243, 'Philadelphia metro — JUL-AUG per calendar'),
+('Prunus domestica', '7a', 213, 243, 'Philadelphia metro — AUG per calendar; species not specified, European plum assumed for Mid-Atlantic mix'),
+('Prunus domestica', '7b', 213, 243, 'Philadelphia metro — AUG per calendar; species not specified, European plum assumed for Mid-Atlantic mix'),
+('Pyrus pyrifolia', '7a', 213, 273, 'Philadelphia metro — AUG-SEP per calendar'),
+('Pyrus pyrifolia', '7b', 213, 273, 'Philadelphia metro — AUG-SEP per calendar'),
+('Vitis labrusca', '7a', 244, 304, 'Philadelphia metro — SEP-OCT per calendar'),
+('Vitis labrusca', '7b', 244, 304, 'Philadelphia metro — SEP-OCT per calendar'),
+('Cydonia oblonga', '7a', 244, 304, 'Philadelphia metro — SEP-OCT per calendar'),
+('Cydonia oblonga', '7b', 244, 304, 'Philadelphia metro — SEP-OCT per calendar'),
+('Ginkgo biloba', '7a', 305, 334, 'Philadelphia metro — NOV per calendar'),
+('Ginkgo biloba', '7b', 305, 334, 'Philadelphia metro — NOV per calendar'),
+('Prunus persica', '8b', 152, 304, 'California (UCANR statewide) — JUN-OCT per calendar'),
+('Prunus persica', '9a', 152, 304, 'California (UCANR statewide) — JUN-OCT per calendar'),
+('Prunus persica', '9b', 152, 304, 'California (UCANR statewide) — JUN-OCT per calendar'),
+('Prunus persica', '10a', 152, 304, 'California (UCANR statewide) — JUN-OCT per calendar'),
+('Prunus salicina', '8b', 152, 273, 'California (UCANR statewide) — JUN-SEP per calendar; Japanese plum dominant in CA'),
+('Prunus salicina', '9a', 152, 273, 'California (UCANR statewide) — JUN-SEP per calendar; Japanese plum dominant in CA'),
+('Prunus salicina', '9b', 152, 273, 'California (UCANR statewide) — JUN-SEP per calendar; Japanese plum dominant in CA'),
+('Prunus salicina', '10a', 152, 273, 'California (UCANR statewide) — JUN-SEP per calendar; Japanese plum dominant in CA'),
+('Prunus armeniaca', '8b', 152, 243, 'California (UCANR statewide) — JUN/AUG per calendar'),
+('Prunus armeniaca', '9a', 152, 243, 'California (UCANR statewide) — JUN/AUG per calendar'),
+('Prunus armeniaca', '9b', 152, 243, 'California (UCANR statewide) — JUN/AUG per calendar'),
+('Prunus armeniaca', '10a', 152, 243, 'California (UCANR statewide) — JUN/AUG per calendar'),
+('Vitis vinifera', '8b', 182, 304, 'California (UCANR statewide) — JUL-OCT per calendar'),
+('Vitis vinifera', '9a', 182, 304, 'California (UCANR statewide) — JUL-OCT per calendar'),
+('Vitis vinifera', '9b', 182, 304, 'California (UCANR statewide) — JUL-OCT per calendar'),
+('Vitis vinifera', '10a', 182, 304, 'California (UCANR statewide) — JUL-OCT per calendar'),
+('Pyrus pyrifolia', '8b', 182, 334, 'California (UCANR statewide) — JUL-NOV per calendar'),
+('Pyrus pyrifolia', '9a', 182, 334, 'California (UCANR statewide) — JUL-NOV per calendar'),
+('Pyrus pyrifolia', '9b', 182, 334, 'California (UCANR statewide) — JUL-NOV per calendar'),
+('Pyrus pyrifolia', '10a', 182, 334, 'California (UCANR statewide) — JUL-NOV per calendar'),
+('Actinidia deliciosa', '8b', 305, 365, 'California (UCANR statewide) — NOV-DEC per calendar'),
+('Actinidia deliciosa', '9a', 305, 365, 'California (UCANR statewide) — NOV-DEC per calendar'),
+('Actinidia deliciosa', '9b', 305, 365, 'California (UCANR statewide) — NOV-DEC per calendar'),
+('Actinidia deliciosa', '10a', 305, 365, 'California (UCANR statewide) — NOV-DEC per calendar')
+) as t(sci, zone, sd, ed, note)
+join public.species s on s.scientific_name = t.sci
+join public.climate_zones z on z.code = t.zone
+on conflict do nothing
+returning id;
