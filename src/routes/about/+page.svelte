@@ -12,7 +12,8 @@
     const ms = Date.now() - new Date(stats.fetched_at).getTime();
     if (ms < 60_000) return 'just now';
     if (ms < 3_600_000) return Math.floor(ms / 60_000) + ' min ago';
-    return Math.floor(ms / 3_600_000) + 'h ago';
+    if (ms < 86_400_000) return Math.floor(ms / 3_600_000) + 'h ago';
+    return Math.floor(ms / 86_400_000) + 'd ago';
   })();
 </script>
 
@@ -44,7 +45,7 @@
           </div>
         {/if}
       </div>
-      <p class="stats-fresh muted">As of {fetchedRel} · auto-updates every 15 minutes.</p>
+      <p class="stats-fresh muted">As of {fetchedRel} · refreshes daily.</p>
     </div>
   {/if}
 
