@@ -1348,55 +1348,40 @@
       </button>
       {#if layersPanelOpen}
         <div class="layers-panel">
-          <!-- Pin sources: which categories of pin show on the map.
-               The "X/Y" count on the parent button refers to this
-               group only — that's the meaning users care about. -->
+          <!-- Pin sources: what kinds of pins are on the map. Counts
+               render inline so the user sees viewport state without a
+               separate hint line. Mine is hidden entirely when empty
+               (drop one to make it appear); Group + City inventories
+               always show because their counts swing with pan. -->
           <div class="layer-section-head">Pin sources</div>
-          {#if $session}
-            <label class="layer-row" class:dim={layerCounts.mine === 0}>
+          {#if $session && layerCounts.mine > 0}
+            <label class="layer-row">
               <input
                 type="checkbox"
                 checked={$settings.mapLayers.mine}
                 on:change={(e) => onLayerToggle('mine', e)}
-                disabled={layerCounts.mine === 0}
               />
-              <span class="layer-name">Mine</span>
-              <span class="layer-hint">{layerCounts.mine > 0 ? `${layerCounts.mine} pins you've added` : 'no pins yet'}</span>
+              <span class="layer-name">Mine ({layerCounts.mine.toLocaleString()})</span>
             </label>
-            <label class="layer-row" class:dim={layerCounts.group === 0}>
+          {/if}
+          {#if $session}
+            <label class="layer-row">
               <input
                 type="checkbox"
                 checked={$settings.mapLayers.group}
                 on:change={(e) => onLayerToggle('group', e)}
-                disabled={layerCounts.group === 0}
               />
-              <span class="layer-name">Group</span>
-              <span class="layer-hint">{layerCounts.group > 0 ? `${layerCounts.group} pins shared in your region` : 'no group pins in view'}</span>
+              <span class="layer-name">Group ({layerCounts.group.toLocaleString()})</span>
             </label>
           {/if}
-          <label class="layer-row" class:dim={layerCounts.public === 0}>
+          <label class="layer-row">
             <input
               type="checkbox"
               checked={$settings.mapLayers.public}
               on:change={(e) => onLayerToggle('public', e)}
-              disabled={layerCounts.public === 0}
             />
-            <span class="layer-name">City inventories</span>
-            <span class="layer-hint">{layerCounts.public > 0 ? `${layerCounts.public} trees from city / arboretum imports` : 'no imported trees in view'}</span>
+            <span class="layer-name">City inventories ({layerCounts.public.toLocaleString()})</span>
           </label>
-          <!-- Community shared (anyone-promoted public pins) is a
-               future tier — there's no UI today for users to
-               promote a pin to public, so it stays empty. Once
-               that ships this gets its own row separate from the
-               admin-curated City inventories above. -->
-          <label class="layer-row dim">
-            <input type="checkbox" disabled />
-            <span class="layer-name">Community shared</span>
-            <span class="layer-hint">coming soon — user-promoted public pins</span>
-          </label>
-          <!-- Invasives sit under Pin sources because the toggle adds
-               a CATEGORY of pins (inedible-invasive species) to the
-               visible set. It's a content axis, not a visual overlay. -->
           <label class="layer-row">
             <input
               type="checkbox"
@@ -1404,13 +1389,20 @@
               on:change={onInvasivesToggle}
             />
             <span class="layer-name">Invasives</span>
-            <span class="layer-hint">Inedible invasives (tree of heaven, knotweed…) for management</span>
           </label>
 
           <div class="layer-section-head">Overlays</div>
-          <!-- Edible-now glow sits at top of overlays — it's the most
-               foraging-relevant decoration. Hardiness zones and
-               rainfall are reference data, not season cues. -->
+          <!-- Tracks at top of overlays: it's the most user-personal
+               non-pin content. Edible-now is the foraging-specific
+               decoration; zones + rainfall are reference data. -->
+          <label class="layer-row">
+            <input
+              type="checkbox"
+              checked={$settings.mapLayers.tracks}
+              on:change={(e) => onLayerToggle('tracks', e)}
+            />
+            <span class="layer-name">Tracks</span>
+          </label>
           <label class="layer-row">
             <input
               type="checkbox"
@@ -1418,7 +1410,6 @@
               on:change={onEdibleRingsToggle}
             />
             <span class="layer-name">Edible-now glow</span>
-            <span class="layer-hint">Warm halo on ripe-today pins</span>
           </label>
           <label class="layer-row">
             <input
@@ -1427,7 +1418,6 @@
               on:change={onZonesToggle}
             />
             <span class="layer-name">Hardiness zones</span>
-            <span class="layer-hint">USDA + Canadian (NRCan) plant hardiness overlay</span>
           </label>
           <label class="layer-row">
             <input
@@ -1435,22 +1425,10 @@
               checked={$settings.showRainfall}
               on:change={onRainfallToggle}
             />
-            <span class="layer-name">Rainfall chip</span>
-            <span class="layer-hint">7-day rainfall pill in the map corner</span>
+            <span class="layer-name">Rainfall</span>
           </label>
 
           <div class="layer-section-head">Display</div>
-          <!-- Tracks moved here from Pin sources: tracks are polylines,
-               not pins. Conceptually a display style toggle. -->
-          <label class="layer-row">
-            <input
-              type="checkbox"
-              checked={$settings.mapLayers.tracks}
-              on:change={(e) => onLayerToggle('tracks', e)}
-            />
-            <span class="layer-name">Tracks</span>
-            <span class="layer-hint">Saved track polylines</span>
-          </label>
           <label class="layer-row layer-select">
             <span class="layer-name">Basemap</span>
             <select
@@ -1886,7 +1864,7 @@
   }
   .layer-row {
     display: grid;
-    grid-template-columns: 1.1rem 7.5rem 1fr;
+    grid-template-columns: 1.1rem 1fr;
     align-items: center;
     gap: 0.5rem;
     padding: 0.3rem 0.4rem;
@@ -1908,14 +1886,6 @@
     cursor: pointer;
   }
   .layer-name { color: #1f2a1f; font-weight: 500; }
-  .layer-hint { color: #8a948a; font-size: 0.75rem; }
-  /* Empty / disabled layer rows: gray everything out, no hover. */
-  .layer-row.dim {
-    cursor: default;
-    opacity: 0.55;
-  }
-  .layer-row.dim:hover { background: transparent; }
-  .layer-row input[type="checkbox"]:disabled { cursor: not-allowed; }
   /* Display-option rows use a select instead of a checkbox; collapse
    * the leading checkbox column so the label sits flush left. */
   .layer-row.layer-select {
