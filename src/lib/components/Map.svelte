@@ -1605,11 +1605,14 @@
      no element currently has the .build-chip class. */
   .build-chip { display: none; }
 
-  /* Zoom-level chip (re-added per user request). Bottom-right,
-     above Leaflet's attribution. */
+  /* Zoom-level chip. Bottom-right, lifted above the new-pin FAB
+     (which is a 3.25rem circle at bottom: 1.25rem on desktop) so
+     the chip stays visible while the user is dropping pins. On
+     mobile the FAB is hidden, but this position is fine — still
+     above Leaflet's attribution row. */
   .zoom-chip {
     position: absolute;
-    bottom: 1.6rem;
+    bottom: 5rem;
     right: 0.5rem;
     z-index: 600;
     padding: 0.18rem 0.5rem;
