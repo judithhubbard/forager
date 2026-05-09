@@ -688,6 +688,14 @@
    *  Earlier version did markerLayer.clearLayers() + rebuild-all on
    *  every reactive run, which the audit flagged as a major source
    *  of map churn on every click and species-toggle. */
+  /** Above this pin count we drop the per-category divIcon (DOM-rendered
+   *  SVG) and use a plain canvas circleMarker for each pin. Lose the
+   *  shape distinction, keep color + click target. At dense zoom the
+   *  shapes are tiny visual noise anyway, and the DOM cost was the
+   *  dominant render-time spike. ~3x faster paint at z14+ over Hamilton-
+   *  density viewports. */
+  const DENSE_PIN_THRESHOLD = 500;
+
   function renderPins(
     currentPins: PinEffective[],
     selectedId: string | null,
@@ -695,13 +703,14 @@
     catResolver: (pin: PinEffective) => ForageCategory
   ) {
     if (!markerLayer || !map || !LCache) return;
+    const dense = currentPins.length > DENSE_PIN_THRESHOLD;
     const wanted = new Set<string>();
     for (const pin of currentPins) {
       if (!pin.id || pin.lat == null || pin.lng == null) continue;
       wanted.add(pin.id);
       const cat = catResolver(pin);
       const fill = colorResolver ? colorResolver(pin) : colorFor(pin);
-      const sig = pinSignature(pin, fill, cat);
+      const sig = pinSignature(pin, fill, cat, dense);
       const existing = pinEntries.get(pin.id);
       if (existing && existing.signature === sig) {
         if (existing.lat !== pin.lat || existing.lng !== pin.lng) {
@@ -714,7 +723,7 @@
         }
       } else {
         if (existing) existing.group.remove();
-        const group = buildPinLayerGroup(pin, cat, fill);
+        const group = buildPinLayerGroup(pin, cat, fill, dense);
         if (!group) continue;
         group.addTo(markerLayer);
         pinEntries.set(pin.id, {
@@ -738,9 +747,12 @@
 
   /** Stable string fingerprint of every visual attribute that
    *  influences how a pin is drawn. Position is checked separately
-   *  so a moved-but-otherwise-identical pin reuses its layers. */
-  function pinSignature(pin: PinEffective, fill: string, cat: ForageCategory): string {
+   *  so a moved-but-otherwise-identical pin reuses its layers.
+   *  `dense` is included so that crossing the DENSE_PIN_THRESHOLD
+   *  forces all pins to rebuild in the new representation. */
+  function pinSignature(pin: PinEffective, fill: string, cat: ForageCategory, dense: boolean): string {
     return [
+      dense ? 'D' : 'S',
       cat,
       fill,
       pin.is_edible_strict ? 1 : 0,
@@ -754,13 +766,16 @@
     ].join('|');
   }
 
-  /** Build the fresh per-pin layer group: ripeness rings first
-   *  (bottom layer), then the shape divIcon, then the transparent
-   *  click target on top with the hover tooltip. */
+  /** Build the fresh per-pin layer group. Two modes:
+   *  - sparse (≤ DENSE_PIN_THRESHOLD): ripeness rings, divIcon shape, hit target.
+   *  - dense (> DENSE_PIN_THRESHOLD): single canvas circleMarker for the
+   *    visible mark + click handler. No divIcon (DOM-rendered, expensive
+   *    at scale), no per-category shape, no tooltip on hover. */
   function buildPinLayerGroup(
     pin: PinEffective,
     cat: ForageCategory,
-    fill: string
+    fill: string,
+    dense: boolean
   ): import('leaflet').LayerGroup | null {
     if (!LCache || pin.lat == null || pin.lng == null || !pin.id) return null;
     const L = LCache;
@@ -778,6 +793,30 @@
     const fillOpacity = inaccessible ? 0.2 : muted ? 0.45 : inedibleInvasive ? 0.5 : 0.9;
     const baseR = isTouch ? 6 : 4.5;
     const group = L.layerGroup();
+    const pinId = pin.id;
+
+    if (dense) {
+      // Single canvas circle: visible mark + click target combined.
+      // Ripeness rings, per-category shape, and tooltip are all skipped
+      // — at this density they're either invisible noise or a perf hit
+      // we can't afford. Inedible invasives get a thin red ring so
+      // they're still visually flagged.
+      const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
+      const stroke = inedibleInvasive ? '#c84545' : '#1f2a1f';
+      const strokeW = inedibleInvasive ? 1.0 : 0.5;
+      const r = isTouch ? baseR + 1 : baseR;
+      const dot = L.circleMarker([lat, lng], {
+        radius: r,
+        color: stroke,
+        weight: strokeW,
+        fillColor: fillVisible,
+        fillOpacity,
+        bubblingMouseEvents: false
+      });
+      dot.on('click', () => dispatch('pinClick', { pinId }));
+      dot.addTo(group);
+      return group;
+    }
 
     if (showEdibleRings) {
       if (isStrictRipe) {
@@ -832,7 +871,6 @@
       weight: 0,
       bubblingMouseEvents: false
     });
-    const pinId = pin.id;
     hit.on('click', () => dispatch('pinClick', { pinId }));
     const label = labelOf(pin);
     if (label) {
