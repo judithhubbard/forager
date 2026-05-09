@@ -6,6 +6,7 @@
   import type { PinEffective } from '$lib/services/pinService';
   import { recentRain, formatMm } from '$lib/services/weatherService';
   import { formatElapsed, autoTrackTitle } from '$lib/utils/formatTime';
+  import { nearestMetro } from '$lib/utils/metros';
   import {
     recording,
     start as startRec,
@@ -891,12 +892,17 @@
         [b.centroid_lat - halfEps, b.centroid_lng - halfEps],
         [b.centroid_lat + halfEps, b.centroid_lng + halfEps]
       ];
+      const metro = nearestMetro(b.centroid_lat, b.centroid_lng);
+      const countLabel = `${b.count_pins.toLocaleString()} pin${b.count_pins === 1 ? '' : 's'}`;
+      const tooltip = metro ? `${metro.name} · ${countLabel}` : countLabel;
       L.rectangle(bounds, {
         fillColor: heatColor(b.count_pins),
         fillOpacity: 0.78,
         stroke: false,
-        interactive: false
-      }).addTo(group);
+        interactive: true
+      })
+        .bindTooltip(tooltip, { sticky: true, direction: 'top', opacity: 0.92 })
+        .addTo(group);
     }
     pinHeatGroup = group;
     group.addTo(map);
