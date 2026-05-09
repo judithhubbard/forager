@@ -29,6 +29,14 @@
     forage_parts: string[];
   }
 
+  type ReviewStatus = 'unreviewed' | 'confirmed' | 'needs_work';
+
+  interface SpeciesSummary {
+    n_distinct_sources: number;
+    n_rows: number;
+    review_status: ReviewStatus;
+  }
+
   /** Pick the stage we expect calibration data to live under, based on
    *  the species' forage_parts. Mirrors the priority logic in the
    *  pin_is_edible_now SQL function (mig 16). Multi-part species pick
@@ -149,6 +157,12 @@
    *  where pins exist without windows. */
   let pinsByZoneId: Record<string, number> = {};
 
+  /** Per-species source-count + review-status, loaded once on mount.
+   *  Reloaded lazily after a save / review-status change. */
+  let speciesSummaryById: Record<string, SpeciesSummary> = {};
+  /** Saving state for the review-status buttons. */
+  let reviewBusy = false;
+
   /** Which zone-row's evidence/notes panel is currently expanded. The
    *  paperclip / note pills are click-to-toggle; only one open at a
    *  time keeps the timeline scannable. */
@@ -199,6 +213,58 @@
     pinsByZoneId = out;
   }
 
+  async function loadSpeciesSummaries() {
+    const { data, error } = await supabase.rpc(
+      'species_source_summary_all' as never,
+      {} as never
+    );
+    if (error) {
+      console.warn('[calibration] species_source_summary_all error', error);
+      return;
+    }
+    const out: Record<string, SpeciesSummary> = {};
+    for (const r of (data ?? []) as Array<{
+      species_id: string;
+      n_distinct_sources: number;
+      n_rows: number;
+      review_status: ReviewStatus;
+    }>) {
+      out[r.species_id] = {
+        n_distinct_sources: r.n_distinct_sources,
+        n_rows: r.n_rows,
+        review_status: r.review_status
+      };
+    }
+    speciesSummaryById = out;
+  }
+
+  async function setReviewStatus(status: ReviewStatus) {
+    if (!currentSpeciesId || reviewBusy) return;
+    reviewBusy = true;
+    try {
+      const { error } = await supabase
+        .from('species')
+        .update({
+          review_status: status,
+          reviewed_at: status === 'unreviewed' ? null : new Date().toISOString()
+        } as never)
+        .eq('id', currentSpeciesId);
+      if (error) throw error;
+      // Optimistic local update
+      speciesSummaryById = {
+        ...speciesSummaryById,
+        [currentSpeciesId]: {
+          ...(speciesSummaryById[currentSpeciesId] ?? { n_distinct_sources: 0, n_rows: 0, review_status: 'unreviewed' }),
+          review_status: status
+        }
+      };
+    } catch (err) {
+      console.warn('[calibration] setReviewStatus error', err);
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
   // Reload pin distribution when the species changes.
   let lastLoadedSpecies: string | null = null;
   $: if (currentSpeciesId !== lastLoadedSpecies) {
@@ -234,6 +300,7 @@
       zones = (zonesRes.data ?? []) as ZoneRow[];
 
       await loadWindows();
+      await loadSpeciesSummaries();
 
       const speciesWithData = new Set(dbWindows.map((w) => w.species_id));
       currentSpeciesId =
@@ -307,6 +374,7 @@
       }
       if (error) throw error;
       await loadWindows();
+      await loadSpeciesSummaries();
       cancelEdit();
     } catch (err) {
       saveError = err instanceof Error ? err.message : 'Save failed.';
@@ -332,6 +400,7 @@
         .eq('id', ripe.id);
       if (error) throw error;
       await loadWindows();
+      await loadSpeciesSummaries();
       cancelEdit();
     } catch (err) {
       saveError = err instanceof Error ? err.message : 'Delete failed.';
@@ -578,12 +647,46 @@
     {/if}
 
     {#if currentSpecies}
+      {@const summary = speciesSummaryById[currentSpecies.id]}
+      {@const sourceCount = summary?.n_distinct_sources ?? 0}
+      {@const sourceTier = sourceCount === 0 ? 'none' : sourceCount === 1 ? 'thin' : sourceCount === 2 ? 'pair' : 'strong'}
+      {@const reviewStatus = summary?.review_status ?? 'unreviewed'}
       <div class="species-head">
         <h2>{currentSpecies.common_name}</h2>
         <div class="sci">{currentSpecies.scientific_name}</div>
+        <span class="src-count src-{sourceTier}" title={
+          sourceTier === 'none' ? 'No cited sources yet — values are heuristic-shifted or AI-derived.'
+          : sourceTier === 'thin' ? 'Single cited source. Goal: ≥3 independent sources.'
+          : sourceTier === 'pair' ? '2 cited sources. Goal: ≥3 independent sources.'
+          : `${sourceCount} cited sources — meets the ≥3 goal.`
+        }>{sourceCount} {sourceCount === 1 ? 'source' : 'sources'}</span>
+        <span class="review-chip review-{reviewStatus}" title={
+          reviewStatus === 'confirmed' ? 'Marked confirmed — values + sources reviewed.'
+          : reviewStatus === 'needs_work' ? 'Marked needs work — flagged for revisit.'
+          : 'Not yet reviewed.'
+        }>{reviewStatus.replace('_', ' ')}</span>
         <div class="stage-tag" title="Forage parts: {(currentSpecies.forage_parts ?? []).join(', ') || 'none'}">
           harvest stage: <strong>{stageLabel(primaryStage)}</strong>
         </div>
+      </div>
+
+      <div class="review-actions">
+        <button
+          class="rb rb-confirm"
+          class:active={reviewStatus === 'confirmed'}
+          on:click={() => setReviewStatus(reviewStatus === 'confirmed' ? 'unreviewed' : 'confirmed')}
+          disabled={reviewBusy}
+        >
+          {reviewStatus === 'confirmed' ? '✓ Confirmed' : 'Mark confirmed'}
+        </button>
+        <button
+          class="rb rb-needs"
+          class:active={reviewStatus === 'needs_work'}
+          on:click={() => setReviewStatus(reviewStatus === 'needs_work' ? 'unreviewed' : 'needs_work')}
+          disabled={reviewBusy}
+        >
+          {reviewStatus === 'needs_work' ? '⚠ Needs work' : 'Mark needs work'}
+        </button>
       </div>
 
       <div class="legend">
@@ -941,6 +1044,45 @@
     border-radius: 1rem;
     padding: 0.18rem 0.7rem;
     cursor: help;
+  }
+
+  .src-count, .review-chip {
+    font-size: 0.75rem;
+    border-radius: 1rem;
+    padding: 0.15rem 0.65rem;
+    border: 1px solid;
+    cursor: help;
+    font-variant-numeric: tabular-nums;
+  }
+  .src-none   { color: #963535; background: #fff0f0; border-color: #d99090; }
+  .src-thin   { color: #8a4f10; background: #fbf0e8; border-color: #d8a880; }
+  .src-pair   { color: #6f5a10; background: #fbf6e8; border-color: #d8c890; }
+  .src-strong { color: #2a6f2a; background: #effaef; border-color: #85c285; }
+  .review-unreviewed { color: #6b7a6b; background: #f0f5ef; border-color: #c7d0c7; }
+  .review-confirmed  { color: #2a6f2a; background: #e3f0db; border-color: #85c285; font-weight: 600; }
+  .review-needs_work { color: #963535; background: #fff0f0; border-color: #d99090; font-weight: 600; }
+
+  .review-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin: 0.4rem 0 0.8rem;
+  }
+  .rb {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 0.4rem;
+    border: 1px solid #c7d0c7;
+    background: white;
+    color: #4a554a;
+    cursor: pointer;
+  }
+  .rb:hover:not(:disabled) { background: #f0f5ef; }
+  .rb:disabled { opacity: 0.6; cursor: not-allowed; }
+  .rb-confirm.active {
+    background: #2a6f2a; color: white; border-color: #2a6f2a;
+  }
+  .rb-needs.active {
+    background: #c84545; color: white; border-color: #c84545;
   }
   .legend {
     display: flex;
