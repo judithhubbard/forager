@@ -106,6 +106,17 @@
   let searchTerm = '';
   let searchInput: HTMLInputElement;
 
+  /** Pin counts per zone for the current species — populated by RPC
+   *  whenever currentSpeciesId changes. Zones in this map but not in
+   *  the calibration data appear as empty rows so the user can see
+   *  where pins exist without windows. */
+  let pinsByZoneId: Record<string, number> = {};
+
+  /** Which zone-row's evidence/notes panel is currently expanded. The
+   *  paperclip / note pills are click-to-toggle; only one open at a
+   *  time keeps the timeline scannable. */
+  let expandedZoneId: string | null = null;
+
   // ---- Edit state ----
   let editMode = false;
   /** Zone id of the row currently being edited, or null. */
@@ -132,6 +143,32 @@
   /** Map JSON region name → record. Sorted by coldest min zone first
    *  (matches the per-zone order on screen). */
   $: regionsByName = regionalData.regions;
+
+  async function loadPinZones(speciesId: string | null) {
+    if (!speciesId) { pinsByZoneId = {}; return; }
+    const { data, error } = await supabase.rpc(
+      'species_zone_pins' as never,
+      { p_species_id: speciesId } as never
+    );
+    if (error) {
+      console.warn('[calibration] species_zone_pins error', error);
+      pinsByZoneId = {};
+      return;
+    }
+    const out: Record<string, number> = {};
+    for (const r of (data ?? []) as Array<{ zone_id: string; n_pins: number }>) {
+      out[r.zone_id] = r.n_pins;
+    }
+    pinsByZoneId = out;
+  }
+
+  // Reload pin distribution when the species changes.
+  let lastLoadedSpecies: string | null = null;
+  $: if (currentSpeciesId !== lastLoadedSpecies) {
+    lastLoadedSpecies = currentSpeciesId;
+    expandedZoneId = null;
+    void loadPinZones(currentSpeciesId);
+  }
 
   async function loadWindows() {
     const { data, error } = await supabase
@@ -365,15 +402,19 @@
     return out;
   })();
 
-  /** Zones that have ANY data (DB or JSON) for this species. */
-  $: zonesWithData = sortedZones.filter((z) => {
+  /** Zones that have ANY signal for this species:
+   *   - calibration data (DB row or JSON guide), OR
+   *   - pins (so the user can see WHERE coverage is missing).
+   *  Zones with neither are hidden unless "Show zones with no data" is on. */
+  $: zonesWithSignal = sortedZones.filter((z) => {
     const hasDb = dbBySpeciesZone.has(z.id);
     const hasJson = regionsByZoneCode.has(z.code);
-    return hasDb || hasJson;
+    const hasPins = (pinsByZoneId[z.id] ?? 0) > 0;
+    return hasDb || hasJson || hasPins;
   });
 
   let showEmptyZones = false;
-  $: visibleZones = showEmptyZones ? sortedZones : zonesWithData;
+  $: visibleZones = showEmptyZones ? sortedZones : zonesWithSignal;
 
   function pickSpecies(id: string) {
     currentSpeciesId = id;
@@ -599,11 +640,20 @@
                     <span class="conf-pill conf-{ripe.confidence}" title={confidenceTitle(ripe.confidence)}>{confidenceLabel(ripe.confidence)}</span>
                   {/if}
                   {#if ripe && ripe.evidence && ripe.evidence.length > 0}
-                    <span class="ev-pill" title="{ripe.evidence.length} evidence entries">{ripe.evidence.length}📎</span>
+                    <button
+                      class="ev-pill clickable"
+                      on:click={() => (expandedZoneId = expandedZoneId === z.id ? null : z.id)}
+                    >{ripe.evidence.length}📎</button>
                   {/if}
                   {#if ripe?.notes}
-                    <span class="note-pill" title={ripe.notes}>note</span>
+                    <button
+                      class="note-pill clickable"
+                      on:click={() => (expandedZoneId = expandedZoneId === z.id ? null : z.id)}
+                    >note</button>
                   {/if}
+                {/if}
+                {#if pinsByZoneId[z.id]}
+                  <span class="pin-count" title="Pins in this zone for this species">{pinsByZoneId[z.id].toLocaleString()} pins</span>
                 {/if}
                 {#if editMode && editingZoneId !== z.id}
                   <button class="edit-btn" on:click={() => startEdit(z.id)}>
@@ -612,6 +662,42 @@
                 {/if}
               </div>
             </div>
+            {#if !editMode && expandedZoneId === z.id && dbBySpeciesZone.get(z.id)?.get('ripe')}
+              {@const ripe = dbBySpeciesZone.get(z.id)?.get('ripe')}
+              <div class="row-detail">
+                {#if ripe?.notes}
+                  <div class="detail-section">
+                    <strong>Notes</strong>
+                    <p class="detail-text">{ripe.notes}</p>
+                  </div>
+                {/if}
+                {#if ripe?.evidence && ripe.evidence.length > 0}
+                  <div class="detail-section">
+                    <strong>Evidence ({ripe.evidence.length})</strong>
+                    <ul class="evidence-list-readonly">
+                      {#each ripe.evidence as ev}
+                        <li>
+                          <strong>{ev.source}</strong>
+                          {#if ev.url}
+                            <a class="ev-link" href={ev.url} target="_blank" rel="noopener">↗</a>
+                          {/if}
+                          <span class="muted small">· {shortDate(ev.consulted_at)}</span>
+                          <p class="ev-summary">{ev.summary}</p>
+                          {#if ev.supports}
+                            <div class="ev-supports">
+                              supports:
+                              {#if ev.supports.start_doy != null}<span>start={ev.supports.start_doy}</span>{/if}
+                              {#if ev.supports.end_doy != null}<span>end={ev.supports.end_doy}</span>{/if}
+                              {#if ev.supports.peak_doy != null}<span>peak={ev.supports.peak_doy}</span>{/if}
+                            </div>
+                          {/if}
+                        </li>
+                      {/each}
+                    </ul>
+                  </div>
+                {/if}
+              </div>
+            {/if}
             {#if editMode && editingZoneId === z.id}
               <div class="editor">
                 <div class="editor-row">
@@ -906,12 +992,47 @@
     border: 1px dashed #c7d0c7;
     color: #6b7a6b;
     cursor: help;
+    font-family: inherit;
   }
   .ev-pill {
     border-style: solid;
     border-color: #b3d0a8;
     background: #f0f7ec;
     color: #2a6f2a;
+  }
+  .note-pill.clickable, .ev-pill.clickable { cursor: pointer; }
+  .note-pill.clickable:hover { background: #f5f8f5; }
+  .ev-pill.clickable:hover { background: #e3f0db; }
+
+  .pin-count {
+    font-size: 0.7rem;
+    color: #6b7a6b;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .row-detail {
+    margin: 0.1rem 0 0.4rem 6.6rem;
+    padding: 0.6rem 0.85rem;
+    background: #fbfdfa;
+    border: 1px solid #e1e8e1;
+    border-radius: 0.35rem;
+    font-size: 0.85rem;
+  }
+  .detail-section + .detail-section { margin-top: 0.5rem; }
+  .detail-text { margin: 0.2rem 0 0; color: #1f2a1f; line-height: 1.4; }
+  .evidence-list-readonly {
+    list-style: none;
+    margin: 0.3rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .evidence-list-readonly li {
+    padding: 0.4rem 0.55rem;
+    background: white;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.3rem;
   }
 
   .toggle-edit input { accent-color: #c84545; }
