@@ -70,12 +70,6 @@
     capturePhotoLocation,
     type Photo
   } from '$lib/services/photoService';
-  import {
-    listFlagsForSpecies,
-    addFlag as addInvasiveFlag,
-    removeFlag as removeInvasiveFlag,
-    type InvasiveFlag
-  } from '$lib/services/invasiveFlagService';
   import { supabase } from '$lib/supabase';
 
   type WindowRow = { stage: string; start_doy: number; end_doy: number };
@@ -141,60 +135,6 @@
   // Refresh flag counts when the user navigates between pins.
   $: if (pinId) void refreshFlags();
 
-  // Invasive flags — community-curated metadata layer that flags
-  // species like multiflora rose / tree of heaven / Japanese knotweed
-  // / bamboo as undesirable. Per-region scope (region_id) lets a
-  // species be flagged invasive in one province but not another.
-  let invasiveFlags: InvasiveFlag[] = [];
-  let invasiveBusy = false;
-  let invasiveError = '';
-  $: myUserId = $session?.user.id ?? null;
-  $: regionalInvasive = invasiveFlags.filter(
-    (f) => f.region_id !== null && f.region_id === pin?.region_id
-  );
-  $: globalInvasive = invasiveFlags.filter((f) => f.region_id === null);
-  $: myRegionalFlag = myUserId
-    ? regionalInvasive.find((f) => f.flagged_by === myUserId) ?? null
-    : null;
-  $: myGlobalFlag = myUserId
-    ? globalInvasive.find((f) => f.flagged_by === myUserId) ?? null
-    : null;
-  $: hasInvasiveSignal = regionalInvasive.length > 0 || globalInvasive.length > 0;
-
-  async function refreshInvasiveFlags(speciesId: string | null | undefined, requestedId?: string) {
-    if (!speciesId) { invasiveFlags = []; return; }
-    try {
-      const fetched = await listFlagsForSpecies(speciesId);
-      // If the panel switched to a different pin while we were
-      // waiting, drop the result so we don't paint stale flags onto
-      // the new pin's panel. Same gate as loadTimelineContext.
-      if (requestedId !== undefined && requestedId !== pinId) return;
-      invasiveFlags = fetched;
-    } catch (err) {
-      console.error('[PinDetail] invasive-flag load failed', err);
-    }
-  }
-  async function toggleInvasive(scope: 'regional' | 'global') {
-    if (!pin?.species_id || !$session || invasiveBusy) return;
-    invasiveBusy = true;
-    invasiveError = '';
-    try {
-      const regionId = scope === 'regional' ? pin.region_id ?? null : null;
-      const mine = scope === 'regional' ? myRegionalFlag : myGlobalFlag;
-      if (mine) await removeInvasiveFlag(pin.species_id, regionId);
-      else await addInvasiveFlag(pin.species_id, regionId);
-      await refreshInvasiveFlags(pin.species_id);
-      // Drop the species-list cache + bump dataChange so the parent
-      // map re-fetches species and re-renders pins with the updated
-      // invasive_flag_count (drives the warning-red stroke).
-      clearSpeciesCache();
-      bumpDataChange();
-    } catch (err) {
-      invasiveError = err instanceof Error ? err.message : 'Could not save flag.';
-    } finally {
-      invasiveBusy = false;
-    }
-  }
   let species: Species | null = null;
   let observations: ObservationWithUser[] = [];
   let allSpecies: Species[] = [];
@@ -484,9 +424,6 @@
       // load() — let the panel be interactive immediately.
       loadTimelineContext(requestedId).catch((err) => {
         console.warn('[PinDetail] timeline-context load failed:', err);
-      });
-      refreshInvasiveFlags(pin?.species_id ?? null, requestedId).catch((err) => {
-        console.warn('[PinDetail] invasive-flag load failed:', err);
       });
       loadPhotos();
     } catch (err) {
@@ -1062,55 +999,6 @@
         <p class="notes">{pin.notes}</p>
       {/if}
 
-      {#if hasInvasiveSignal || $session}
-        <div class="invasive-block" class:invasive-flagged={hasInvasiveSignal}>
-          {#if hasInvasiveSignal}
-            <div class="invasive-summary">
-              <strong class="invasive-label">⚠ Flagged invasive</strong>
-              <span class="invasive-counts">
-                {#if regionalInvasive.length > 0}
-                  {regionalInvasive.length} {regionalInvasive.length === 1 ? 'flag' : 'flags'} for this region{globalInvasive.length > 0 ? ', ' : ''}
-                {/if}
-                {#if globalInvasive.length > 0}
-                  {globalInvasive.length} global {globalInvasive.length === 1 ? 'flag' : 'flags'}
-                {/if}
-              </span>
-            </div>
-          {/if}
-          {#if $session && pin.species_id}
-            <div class="invasive-actions">
-              {#if pin.region_id}
-                <button
-                  class="invasive-btn"
-                  class:flagged={!!myRegionalFlag}
-                  on:click={() => toggleInvasive('regional')}
-                  disabled={invasiveBusy}
-                  title={myRegionalFlag
-                    ? 'Click to remove your flag (you said this species is invasive in this region).'
-                    : 'Flag this species as invasive in this region only — for example, Norway maple in eastern North America.'}
-                >
-                  {myRegionalFlag ? '✓ Invasive here' : 'Invasive here'}
-                </button>
-              {/if}
-              <button
-                class="invasive-btn"
-                class:flagged={!!myGlobalFlag}
-                on:click={() => toggleInvasive('global')}
-                disabled={invasiveBusy}
-                title={myGlobalFlag
-                  ? 'Click to remove your flag (you said this species is invasive everywhere).'
-                  : 'Flag this species as invasive everywhere it grows.'}
-              >
-                {myGlobalFlag ? '✓ Invasive everywhere' : 'Invasive everywhere'}
-              </button>
-            </div>
-            {#if invasiveError}
-              <p class="error invasive-error">{invasiveError}</p>
-            {/if}
-          {/if}
-        </div>
-      {/if}
-
       {#if species && species.is_forageable === false}
         <div class="about-species manage-species">
           <div class="about-head">
@@ -1535,53 +1423,6 @@
   ul.meta { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #4a554a; }
   ul.meta li { margin-bottom: 0.15rem; line-height: 1.3; }
   .notes { background: #f5f8f5; padding: 0.5rem 0.7rem; border-radius: 0.35rem; margin: 0.4rem 0 0; color: #1f2a1f; font-size: 0.85rem; }
-
-  .invasive-block {
-    margin-top: 0.6rem;
-    padding: 0.5rem 0.7rem;
-    border: 1px solid #e1e8e1;
-    border-radius: 0.35rem;
-    background: #fbfdfa;
-    font-size: 0.85rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-  .invasive-block.invasive-flagged {
-    background: #fbf0e8;
-    border-color: #d8a880;
-  }
-  .invasive-summary {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.4rem;
-  }
-  .invasive-label { color: #8a3a14; font-weight: 600; }
-  .invasive-counts { color: #5e3920; font-size: 0.8rem; }
-  .invasive-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-  .invasive-btn {
-    padding: 0.25rem 0.6rem;
-    border: 1px solid #c7d0c7;
-    border-radius: 0.25rem;
-    background: white;
-    color: #3a5a3a;
-    cursor: pointer;
-    font-size: 0.78rem;
-  }
-  .invasive-btn:hover { background: #f5f8f5; }
-  .invasive-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-  .invasive-btn.flagged {
-    background: #c98a4a;
-    color: white;
-    border-color: #b07c3a;
-  }
-  .invasive-btn.flagged:hover { background: #b07c3a; }
-  .invasive-error {
-    margin: 0;
-    color: #b03030;
-    font-size: 0.8rem;
-  }
 
   .about-species {
     margin-top: 0.6rem;
