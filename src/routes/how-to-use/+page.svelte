@@ -46,6 +46,7 @@
     <li><strong>Year history</strong> — stacked annual timelines combining your observations with weather.</li>
     <li><strong>Harvest windows</strong> — view the year-long timeline of fruiting stages. Click any colored bar to edit its dates.</li>
     <li><strong>Preferences</strong> — what species you forage, invasive opt-in, default photo license.</li>
+    <li><strong>Species catalog</strong> — browse every forageable species in the catalog with photos, edible parts, and harvest windows.</li>
     <li><strong>Send feedback</strong> — report bugs or suggest features.</li>
   </ul>
 

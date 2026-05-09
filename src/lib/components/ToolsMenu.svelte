@@ -91,6 +91,7 @@
         <hr />
       {/if}
 
+      <a href={base + '/species'} on:click={closeMenu}>Species catalog</a>
       <a href={base + '/feedback'} on:click={closeMenu}>Send feedback</a>
       <a href={base + '/how-to-use'} on:click={closeMenu}>How to use</a>
       <a href={base + '/about'} on:click={closeMenu}>About</a>
