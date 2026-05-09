@@ -238,15 +238,13 @@ export async function runImport<F>(config: ImportConfig<F>): Promise<void> {
     // would block every row. Disable for the bulk insert (and
     // re-enable in a finally block below) — same pattern migration 16
     // used for the bootstrap promote-to-public update.
-    await sql`alter table public.pins disable trigger tg_gate_public_pins`;
-    // Also disable the pin_density incremental-maintenance triggers
-    // (migration 39) — at 35k+ rows × 5 zoom bands the per-row
-    // overhead would dominate the import. The trailing
-    // refresh_pin_density() call below brings the grid back in
-    // sync after the bulk insert.
-    await sql`alter table public.pins disable trigger tg_pin_density_track_ins`;
-    await sql`alter table public.pins disable trigger tg_pin_density_track_upd`;
-    await sql`alter table public.pins disable trigger tg_pin_density_track_del`;
+    // Bypass triggers for THIS session only via session_replication_role.
+    // Earlier code did ALTER TABLE … DISABLE TRIGGER, which is global —
+    // running two importers concurrently caused one to re-enable the
+    // gate while the other was mid-batch, losing ~140k rows per
+    // concurrent run. Replica role skips non-replica triggers in
+    // this session and leaves other sessions unaffected.
+    await sql`set session_replication_role = replica`;
     const BATCH = 500;
     for (let i = 0; i < matched.length; i += BATCH) {
       const slice = matched.slice(i, i + BATCH);
@@ -267,9 +265,9 @@ export async function runImport<F>(config: ImportConfig<F>): Promise<void> {
         });
       }
     }
-    // Re-enable the visibility-gate trigger so future row-level
-    // writes by non-admin users are still rejected.
-    await sql`alter table public.pins enable trigger tg_gate_public_pins`;
+    // Restore default replication role; only matters if the
+    // connection is reused after this function returns.
+    await sql`set session_replication_role = origin`;
 
     await finishImportRun(sql, runId, summary);
     await sql`select pg_advisory_unlock(hashtext(${`${regionId}:${config.sourceId}`}))`;
