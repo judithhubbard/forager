@@ -16,14 +16,13 @@ import { supabase } from '$lib/supabase';
 export interface GlobalStats {
   total_pins: number;
   total_species: number;
-  total_regions: number;
-  total_observations: number;
+  total_cities: number;
   /** Wall-clock time the row was fetched. Used to render an "as of"
    *  timestamp so users can see how fresh the headline is. */
   fetched_at: string;
 }
 
-const LS_KEY = 'forager.global-stats.v2';
+const LS_KEY = 'forager.global-stats.v3';
 const TTL_MS = 24 * 60 * 60 * 1000;
 
 let inMemory: GlobalStats | null = null;
@@ -74,8 +73,7 @@ async function refreshFromServer(): Promise<GlobalStats | null> {
     const stats: GlobalStats = {
       total_pins: Number(row.total_pins ?? 0),
       total_species: Number(row.total_species ?? 0),
-      total_regions: Number(row.total_regions ?? 0),
-      total_observations: Number(row.total_observations ?? 0),
+      total_cities: Number((row as unknown as { total_cities?: number }).total_cities ?? 0),
       fetched_at: new Date().toISOString()
     };
     inMemory = stats;

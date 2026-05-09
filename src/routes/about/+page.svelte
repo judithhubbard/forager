@@ -35,15 +35,9 @@
           <div class="stat-label">foragable species</div>
         </div>
         <div class="stat">
-          <div class="stat-value">{stats.total_regions.toLocaleString()}</div>
-          <div class="stat-label">regions covered</div>
+          <div class="stat-value">{stats.total_cities.toLocaleString()}</div>
+          <div class="stat-label">data sources</div>
         </div>
-        {#if stats.total_observations > 0}
-          <div class="stat">
-            <div class="stat-value">{formatPinCount(stats.total_observations)}</div>
-            <div class="stat-label">observations</div>
-          </div>
-        {/if}
       </div>
       <p class="stats-fresh muted">As of {fetchedRel} · refreshes daily.</p>
     </div>
