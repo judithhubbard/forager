@@ -26,6 +26,7 @@
     "import:pittsburgh-trees": "tsx scripts/import/pittsburgh-trees.ts",
     "import:madison-trees": "tsx scripts/import/madison-trees.ts",
     "import:cambridge-trees": "tsx scripts/import/cambridge-trees.ts",
+    "import:charlottesville-trees": "tsx scripts/import/charlottesville-trees.ts",
     "import:toronto-trees": "tsx scripts/import/toronto-trees.ts",
     "import:dryad-trees": "tsx scripts/import/dryad-city-trees.ts",
     "import:usda-zones": "tsx scripts/import/usda-zones.ts",
