@@ -23,22 +23,56 @@
     image_url: string | null;
   }
 
+  interface ZonePresence {
+    species_id: string;
+    zone_code: string;
+    n_pins: number;
+    has_window: boolean;
+  }
+
   let species: Row[] = [];
+  let zonePresence: ZonePresence[] = [];
+  let zoneOptions: string[] = [];
+  let speciesByZone: Map<string, Set<string>> = new Map();
   let loaded = false;
   let errorMsg = '';
   let searchTerm = '';
   let activeGroup: InterestGroup | 'all' = 'all';
+  let activeZone: string | 'all' = 'all';
 
   onMount(async () => {
     try {
-      const { data, error } = await supabase
-        .from('species')
-        .select('id, common_name, scientific_name, forage_parts, interest_tags, image_url' as never)
-        .eq('is_forageable', true)
-        .order('common_name');
-      if (error) throw error;
-      // Cast via unknown — generated types lag schema for interest_tags / image_url etc.
-      species = (data ?? []) as unknown as Row[];
+      const [spRes, zpRes] = await Promise.all([
+        supabase
+          .from('species')
+          .select('id, common_name, scientific_name, forage_parts, interest_tags, image_url' as never)
+          .eq('is_forageable', true)
+          .order('common_name'),
+        supabase.rpc('species_zone_presence_all' as never, {} as never)
+      ]);
+      if (spRes.error) throw spRes.error;
+      species = (spRes.data ?? []) as unknown as Row[];
+
+      if (!zpRes.error) {
+        zonePresence = (zpRes.data ?? []) as unknown as ZonePresence[];
+        const byZone = new Map<string, Set<string>>();
+        const zonesSet = new Set<string>();
+        for (const r of zonePresence) {
+          zonesSet.add(r.zone_code);
+          let s = byZone.get(r.zone_code);
+          if (!s) { s = new Set<string>(); byZone.set(r.zone_code, s); }
+          s.add(r.species_id);
+        }
+        speciesByZone = byZone;
+        zoneOptions = [...zonesSet].sort((a, b) => {
+          const re = /^(\d+)([ab]?)$/;
+          const ma = a.match(re), mb = b.match(re);
+          if (!ma || !mb) return a.localeCompare(b);
+          const na = parseInt(ma[1], 10) + (ma[2] === 'b' ? 0.5 : 0);
+          const nb = parseInt(mb[1], 10) + (mb[2] === 'b' ? 0.5 : 0);
+          return na - nb;
+        });
+      }
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : 'Failed to load.';
     } finally {
@@ -50,6 +84,11 @@
     let list = species;
     if (activeGroup !== 'all') {
       list = list.filter((s) => s.interest_tags.includes(activeGroup as string));
+    }
+    if (activeZone !== 'all') {
+      const presentInZone = speciesByZone.get(activeZone as string);
+      if (presentInZone) list = list.filter((s) => presentInZone.has(s.id));
+      else list = [];
     }
     if (searchTerm.trim()) {
       const t = searchTerm.toLowerCase();
@@ -95,12 +134,25 @@
       windows by climate zone).
     </p>
 
-    <input
-      class="search"
-      type="search"
-      bind:value={searchTerm}
-      placeholder="Search by name or forage part (fruit, leaf, mushroom, sap…)"
-    />
+    <div class="filter-row">
+      <input
+        class="search"
+        type="search"
+        bind:value={searchTerm}
+        placeholder="Search by name or forage part (fruit, leaf, mushroom, sap…)"
+      />
+      {#if zoneOptions.length > 0}
+        <label class="zone-pick" title="Filter to species with public pins or calibration data in this USDA hardiness zone.">
+          <span class="zp-label">USDA zone</span>
+          <select bind:value={activeZone}>
+            <option value="all">all</option>
+            {#each zoneOptions as z}
+              <option value={z}>{z} ({(speciesByZone.get(z) ?? new Set()).size})</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
+    </div>
 
     <div class="group-filters">
       <button class="gf" class:active={activeGroup === 'all'} on:click={() => (activeGroup = 'all')}>
@@ -188,14 +240,45 @@
   .muted { color: #6b7a6b; }
   .small { font-size: 0.78rem; }
   .error { color: #b03030; }
+  .filter-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
   .search {
-    width: 100%;
+    flex: 1;
+    min-width: 16rem;
     box-sizing: border-box;
     padding: 0.55rem 0.75rem;
     font-size: 0.95rem;
     border: 1px solid #c7d0c7;
     border-radius: 0.4rem;
-    margin-bottom: 0.6rem;
+  }
+  .zone-pick {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.4rem;
+    background: white;
+    cursor: pointer;
+  }
+  .zp-label {
+    font-size: 0.7rem;
+    color: #6b7a6b;
+  }
+  .zone-pick select {
+    border: 0;
+    padding: 0.1rem 0;
+    font-size: 0.9rem;
+    color: #1f2a1f;
+    background: transparent;
+    font-variant-numeric: tabular-nums;
+    min-width: 6rem;
+    cursor: pointer;
   }
   .group-filters {
     display: flex;
