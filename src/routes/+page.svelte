@@ -1334,114 +1334,11 @@
       Filters
       <span class="caret">{filtersPanelOpen ? '▴' : '▾'}</span>
     </button>
-    <!-- AddressSearch sits at the top alongside the Filters toggle so
-         the search field is reachable without expanding the filter
-         panel. Premium-real-estate placement on phones. -->
-    <AddressSearch on:select={handleGeocodeSelect} />
-    <div class="filterbar-controls" class:open={filtersPanelOpen}>
-    <div class="species-filter">
-      <button
-        class="species-toggle"
-        on:click={() => (speciesPanelOpen = !speciesPanelOpen)}
-      >
-        Species:
-        {#if selectedSpeciesIds === null}
-          All ({speciesInRegion.length})
-        {:else if selectedSpeciesIds.has(HIDE_ALL)}
-          None
-        {:else}
-          {selectedSpeciesIds.size} hidden
-        {/if}
-        <span class="caret">{speciesPanelOpen ? '▴' : '▾'}</span>
-      </button>
-
-      {#if speciesPanelOpen}
-        <div class="species-panel">
-          <div class="species-panel-actions">
-            <button on:click={selectAllSpecies}>Select all</button>
-            <button on:click={clearSpecies}>Clear</button>
-            <button on:click={() => (speciesPanelOpen = false)}>Done</button>
-          </div>
-          <div class="species-cats">
-            {#each SPECIES_CATS as cat}
-              {@const count = speciesInRegion.filter(
-                (s) => (categoryBySpecies[s.id] ?? 'other') === cat.k
-              ).length}
-              {#if count > 0}
-                <label class="cat-toggle">
-                  <input
-                    type="checkbox"
-                    checked={visibleCats.has(cat.k)}
-                    on:change={() => toggleCat(cat.k)}
-                  />
-                  {cat.label}
-                  <span class="count">{count}</span>
-                </label>
-              {/if}
-            {/each}
-          </div>
-          <ul class="species-list">
-            {#each groupedSpecies as [groupName, list]}
-              {@const shape = shapeForGroup(groupName)}
-              {@const color = colorForGroupLabel(groupName, list[0])}
-              <li class="group-header">
-                {#if shape === 'triangle'}
-                  <span class="legend-shape triangle" style="border-bottom-color: {color};"></span>
-                {:else if shape === 'star'}
-                  <svg class="legend-shape" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true">
-                    <polygon
-                      points="7,1 8.6,5.5 13.5,5.5 9.5,8.5 11.1,13 7,10 2.9,13 4.5,8.5 0.5,5.5 5.4,5.5"
-                      fill={color} stroke="#1f2a1f" stroke-width="1" stroke-linejoin="round" />
-                  </svg>
-                {:else}
-                  <span class="legend-shape {shape}" style="background: {color};"></span>
-                {/if}
-                {groupName}
-              </li>
-              {#each list as s}
-                <li class="indented">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={isSelected(s.id)}
-                      on:change={() => toggleSpecies(s.id)}
-                    />
-                    <span class="sp-name">{s.common_name}</span>
-                    <span class="count">({summaryCountFor(s.id)})</span>
-                  </label>
-                </li>
-              {/each}
-            {/each}
-          </ul>
-        </div>
-      {/if}
-    </div>
-    <!-- Show + Make sit on a single row so the filter panel stays
-         compact on mobile. They're both single-select dropdowns and
-         conceptually paired ("show edible · make jam"), so a shared
-         row reads better than the previous stacked layout. -->
-    <div class="show-make-row">
-      <label>
-        Show:
-        <select bind:value={filterStatus}>
-          <option value="all">All ({statusCounts.all})</option>
-          <option value="active">Active ({statusCounts.active})</option>
-          <option value="edible_today">Edible today ({statusCounts.edible_today}{capHit ? '+' : ''})</option>
-          <option value="productive">Productive ({statusCounts.productive}{capHit ? '+' : ''})</option>
-        </select>
-      </label>
-      {#if availableCookbookMethods.length > 0}
-        <label>
-          Make:
-          <select bind:value={cookbookFilter}>
-            <option value="">anything</option>
-            {#each availableCookbookMethods as m}
-              <option value={m.method}>{m.method.replace(/_/g, ' ')} ({m.count})</option>
-            {/each}
-          </select>
-        </label>
-      {/if}
-    </div>
+    <!-- Layers + AddressSearch live at the top of the filterbar so
+         they're always reachable without expanding the Filters
+         toggle. Premium real estate on phones. The Layers panel
+         pops out of this position; on mobile it goes position-fixed
+         below so it can overlay the screen without clipping. -->
     <div class="layers-filter">
       <button
         class="layers-toggle"
@@ -1573,6 +1470,111 @@
             </select>
           </label>
         </div>
+      {/if}
+    </div>
+    <AddressSearch on:select={handleGeocodeSelect} />
+    <div class="filterbar-controls" class:open={filtersPanelOpen}>
+    <div class="species-filter">
+      <button
+        class="species-toggle"
+        on:click={() => (speciesPanelOpen = !speciesPanelOpen)}
+      >
+        Species:
+        {#if selectedSpeciesIds === null}
+          All ({speciesInRegion.length})
+        {:else if selectedSpeciesIds.has(HIDE_ALL)}
+          None
+        {:else}
+          {selectedSpeciesIds.size} hidden
+        {/if}
+        <span class="caret">{speciesPanelOpen ? '▴' : '▾'}</span>
+      </button>
+
+      {#if speciesPanelOpen}
+        <div class="species-panel">
+          <div class="species-panel-actions">
+            <button on:click={selectAllSpecies}>Select all</button>
+            <button on:click={clearSpecies}>Clear</button>
+            <button on:click={() => (speciesPanelOpen = false)}>Done</button>
+          </div>
+          <div class="species-cats">
+            {#each SPECIES_CATS as cat}
+              {@const count = speciesInRegion.filter(
+                (s) => (categoryBySpecies[s.id] ?? 'other') === cat.k
+              ).length}
+              {#if count > 0}
+                <label class="cat-toggle">
+                  <input
+                    type="checkbox"
+                    checked={visibleCats.has(cat.k)}
+                    on:change={() => toggleCat(cat.k)}
+                  />
+                  {cat.label}
+                  <span class="count">{count}</span>
+                </label>
+              {/if}
+            {/each}
+          </div>
+          <ul class="species-list">
+            {#each groupedSpecies as [groupName, list]}
+              {@const shape = shapeForGroup(groupName)}
+              {@const color = colorForGroupLabel(groupName, list[0])}
+              <li class="group-header">
+                {#if shape === 'triangle'}
+                  <span class="legend-shape triangle" style="border-bottom-color: {color};"></span>
+                {:else if shape === 'star'}
+                  <svg class="legend-shape" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true">
+                    <polygon
+                      points="7,1 8.6,5.5 13.5,5.5 9.5,8.5 11.1,13 7,10 2.9,13 4.5,8.5 0.5,5.5 5.4,5.5"
+                      fill={color} stroke="#1f2a1f" stroke-width="1" stroke-linejoin="round" />
+                  </svg>
+                {:else}
+                  <span class="legend-shape {shape}" style="background: {color};"></span>
+                {/if}
+                {groupName}
+              </li>
+              {#each list as s}
+                <li class="indented">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={isSelected(s.id)}
+                      on:change={() => toggleSpecies(s.id)}
+                    />
+                    <span class="sp-name">{s.common_name}</span>
+                    <span class="count">({summaryCountFor(s.id)})</span>
+                  </label>
+                </li>
+              {/each}
+            {/each}
+          </ul>
+        </div>
+      {/if}
+    </div>
+    <!-- Show + Make sit on a single row so the filter panel stays
+         compact on mobile. They're both single-select dropdowns and
+         conceptually paired ("show edible · make jam"), so a shared
+         row reads better than the previous stacked layout. -->
+    <div class="show-make-row">
+      <label>
+        Show:
+        <select bind:value={filterStatus}>
+          <option value="all">All ({statusCounts.all})</option>
+          <option value="active">Active ({statusCounts.active})</option>
+          <option value="edible_today">Edible today ({statusCounts.edible_today}{capHit ? '+' : ''})</option>
+          <option value="productive">Productive ({statusCounts.productive}{capHit ? '+' : ''})</option>
+        </select>
+      </label>
+      {#if availableCookbookMethods.length > 0}
+        <label>
+          Make:
+          <select bind:value={cookbookFilter}>
+            <option value="">anything</option>
+            {#each availableCookbookMethods as m}
+              <option value={m.method}>{m.method.replace(/_/g, ' ')} ({m.count})</option>
+            {/each}
+          </select>
+        </label>
       {/if}
     </div>
     </div>
@@ -2190,6 +2192,21 @@
       max-height: 50vh;
       overflow-y: auto;
     }
+    /* Layers panel: pin to the upper-right of the viewport so it
+     * never gets clipped by parent overflow or covered by the
+     * record button at the bottom. Same dropdown content; just
+     * different anchoring. */
+    .layers-panel {
+      position: fixed;
+      top: 7.5rem;
+      right: 0.5rem;
+      left: auto;
+      max-width: 18rem;
+      max-height: 70vh;
+    }
+    /* Tighten the Layers toggle so the always-visible top row
+     * (Filters / Layers / search) fits one line on iPhones. */
+    .layers-toggle { font-size: 0.85rem; padding: 0.25rem 0.5rem; }
   }
   .panel-header {
     flex: 0 0 auto;
