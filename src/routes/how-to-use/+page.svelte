@@ -45,7 +45,6 @@
     <li><strong>Year history</strong> — stacked annual timelines combining your observations with weather.</li>
     <li><strong>My tracks</strong> — upload GPX/KML files or record live tracks; turn on the foraging heatmap.</li>
     <li><strong>Harvest windows</strong> — view the year-long timeline of fruiting stages. Click any colored bar to edit its dates.</li>
-    <li><strong>Options</strong> — basemap, marker color, photo license, heatmap toggle.</li>
     <li><strong>Help</strong> — this page, plus <a href={base + '/about'}>About</a> and <a href={base + '/sources'}>Data sources</a>.</li>
   </ul>
 
