@@ -502,11 +502,15 @@
     border-radius: 0.4rem;
     padding: 0.4rem;
   }
+  /* Flex layout instead of grid: explicit widths on the side columns
+     so the timeline always renders at the same width regardless of how
+     many source pills land in the meta column. Without this, rows
+     with more pills squeezed the timeline narrower and DOYs didn't
+     line up across rows. */
   .zone-row {
-    display: grid;
-    grid-template-columns: 6rem 1fr auto;
-    gap: 0.6rem;
+    display: flex;
     align-items: center;
+    gap: 0.6rem;
     padding: 0.2rem 0.4rem;
     border-radius: 0.25rem;
   }
@@ -515,11 +519,14 @@
     display: flex;
     flex-direction: column;
     line-height: 1.15;
+    width: 6rem;
+    flex-shrink: 0;
   }
   .zone-label strong { color: #1f2a1f; }
   .zone-name { font-size: 0.72rem; }
   .timeline {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     height: auto;
   }
   :global(.timeline .axis-label) {
@@ -533,7 +540,8 @@
     align-items: center;
     flex-wrap: wrap;
     justify-content: flex-end;
-    min-width: 6rem;
+    width: 12rem;
+    flex-shrink: 0;
   }
   .src-pill {
     font-size: 0.72rem;
