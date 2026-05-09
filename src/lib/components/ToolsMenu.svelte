@@ -141,6 +141,7 @@
       </button>
       {#if helpOpen}
         <div class="submenu">
+          <a href={base + '/feedback'} on:click={closeMenu}>Send feedback</a>
           <a href={base + '/how-to-use'} on:click={closeMenu}>How to use</a>
           <a href={base + '/about'} on:click={closeMenu}>About</a>
           <a href={base + '/sources'} on:click={closeMenu}>Data sources</a>
