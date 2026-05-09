@@ -389,11 +389,14 @@ export async function listRegionPinDensity(
   return (data ?? []) as unknown as PinDensityBucket[];
 }
 
-/** Map a zoom level to its density-grid band. Mirrors the server's
- *  band_for_zoom in migration 36 — keep in sync. The client needs
- *  this to know the cell size when rendering the heatmap rectangles. */
+/** Map a zoom level to its density-grid band. Keep this in sync with
+ *  the server's band_for_zoom in migration 36 + later refinements.
+ *  Band 0 is 0.5° cells (~55km — only useful at z<=4 / continental
+ *  view); band 1 is 0.1° (~11km, fits z5+ nicely). The user's
+ *  feedback: z5 at band 0 looked like coarse country-sized blocks;
+ *  pushing z5 → band 1 keeps the heatmap legible at that zoom. */
 export function densityBandForZoom(zoom: number): number {
-  if (zoom < 6) return 0;
+  if (zoom < 5) return 0;
   if (zoom < 8) return 1;
   if (zoom < 10) return 2;
   if (zoom < 12) return 3;
