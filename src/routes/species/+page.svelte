@@ -7,10 +7,11 @@
   // species that have pins in the current bbox, and there was no other
   // way to browse the catalog.
 
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { base } from '$app/paths';
   import { goto } from '$lib/utils/nav';
   import { supabase } from '$lib/supabase';
+  import { browser } from '$app/environment';
   import { INTEREST_GROUPS, type InterestGroup } from '$lib/utils/interestGroups';
   import ToolsMenu from '$lib/components/ToolsMenu.svelte';
 
@@ -36,9 +37,40 @@
   let speciesByZone: Map<string, Set<string>> = new Map();
   let loaded = false;
   let errorMsg = '';
-  let searchTerm = '';
-  let activeGroup: InterestGroup | 'all' = 'all';
-  let activeZone: string | 'all' = 'all';
+
+  // Initial state pulled from URL search params so back-navigation
+  // restores the filters the user had set when they clicked through
+  // to a species detail page.
+  function initialFromUrl<T extends string>(key: string, fallback: T): T {
+    if (!browser) return fallback;
+    try {
+      const v = new URLSearchParams(window.location.search).get(key);
+      return (v ?? fallback) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  let searchTerm = initialFromUrl('q', '');
+  let activeGroup: InterestGroup | 'all' = initialFromUrl('group', 'all') as InterestGroup | 'all';
+  let activeZone: string | 'all' = initialFromUrl('zone', 'all');
+
+  // Push state to the URL via history.replaceState so back-button
+  // restores the same filters but we don't spam history with every
+  // keystroke. Skip until after mount so the initial values don't
+  // trigger a redundant replace.
+  let mounted = false;
+  $: if (mounted && browser) {
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) params.set('q', searchTerm.trim());
+    if (activeGroup !== 'all') params.set('group', activeGroup as string);
+    if (activeZone !== 'all') params.set('zone', activeZone);
+    const qs = params.toString();
+    const next = qs ? '?' + qs : window.location.pathname;
+    if (window.location.search.replace(/^\?/, '') !== qs) {
+      try { window.history.replaceState(null, '', next); } catch { /* no-op */ }
+    }
+  }
 
   onMount(async () => {
     try {
@@ -77,6 +109,8 @@
       errorMsg = err instanceof Error ? err.message : 'Failed to load.';
     } finally {
       loaded = true;
+      await tick();
+      mounted = true;
     }
   });
 
