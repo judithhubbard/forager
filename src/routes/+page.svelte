@@ -1443,7 +1443,7 @@
               checked={$settings.showInvasives}
               on:change={onInvasivesToggle}
             />
-            <span class="layer-name">Invasives</span>
+            <span class="layer-name">Non-forageable</span>
           </label>
 
           <div class="layer-section-head">Overlays</div>

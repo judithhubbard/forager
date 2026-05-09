@@ -239,11 +239,13 @@
         on:change={onInvasiveOptin}
       />
       <div class="invasive-text">
-        <strong>Also show invasive species (management mode)</strong>
+        <strong>Also show non-forageable species</strong>
         <span class="invasive-hint">
-          Optional. Adds inedible invasives like tree of heaven, knotweed, and
-          callery pear to the map so you can flag and help remove them. They
-          render with a red ✗ so you don't mistake them for foragables.
+          Optional. Some non-forageable trees (e.g., Norway maple, tree of
+          heaven) appear in city tree inventories. Edible foragable species
+          that happen to be invasive (autumn olive, wineberry, knotweed
+          shoots, etc.) are always shown — picking them is foraging, and it
+          also helps control their spread.
         </span>
       </div>
     </label>
