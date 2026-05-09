@@ -7,6 +7,7 @@
   import { recentRain, formatMm } from '$lib/services/weatherService';
   import { formatElapsed, autoTrackTitle } from '$lib/utils/formatTime';
   import { nearestMetro } from '$lib/utils/metros';
+  import { getMetroTotals } from '$lib/services/metroTotalsService';
   import {
     recording,
     start as startRec,
@@ -314,6 +315,10 @@
     renderClusters(clusters);
   }
   let pinHeatGroup: import('leaflet').LayerGroup | undefined;
+  /** Per-metro pin totals, lazily fetched on first heatmap render and
+   *  cached 24h. Used in cell tooltips so each cell within a metro
+   *  shows the metro-wide total rather than just that cell's count. */
+  let metroTotals: Record<string, number> = {};
   $: if (map && LCache) renderPinHeat(pinDensityBuckets);
 
   // USDA hardiness zone overlay. Polygon GeoJSON cached after first
@@ -884,6 +889,15 @@
       pinHeatGroup = undefined;
     }
     if (buckets.length === 0) return;
+    // Fire-and-forget: first call populates metroTotals from the global
+    // band-1 grid (cached 24h). Subsequent calls return immediately
+    // from cache. Triggers a single re-render once it resolves.
+    if (Object.keys(metroTotals).length === 0) {
+      void getMetroTotals().then((t) => {
+        metroTotals = t;
+        if (map && LCache) renderPinHeat(pinDensityBuckets);
+      });
+    }
     const L = LCache;
     const group = L.layerGroup();
     for (const b of buckets) {
@@ -893,8 +907,9 @@
         [b.centroid_lat + halfEps, b.centroid_lng + halfEps]
       ];
       const metro = nearestMetro(b.centroid_lat, b.centroid_lng);
-      const countLabel = `${b.count_pins.toLocaleString()} pin${b.count_pins === 1 ? '' : 's'}`;
-      const tooltip = metro ? `${metro.name} · ${countLabel}` : countLabel;
+      const tooltip = metro
+        ? `${metro.name} · ${(metroTotals[metro.name] ?? b.count_pins).toLocaleString()} pins`
+        : `${b.count_pins.toLocaleString()} pin${b.count_pins === 1 ? '' : 's'}`;
       L.rectangle(bounds, {
         fillColor: heatColor(b.count_pins),
         fillOpacity: 0.78,

@@ -116,3 +116,17 @@ export function nearestMetro(lat: number, lng: number): Metro | null {
   }
   return best;
 }
+
+/** Sum density-grid cells into per-metro pin totals. Cell is attributed
+ *  to whatever metro its centroid lies in (approximate at metro edges
+ *  but fine for a tooltip). Cells with no metro are not counted. */
+export function aggregateByMetro(
+  cells: { centroid_lat: number; centroid_lng: number; count_pins: number }[]
+): Record<string, number> {
+  const totals: Record<string, number> = {};
+  for (const c of cells) {
+    const m = nearestMetro(c.centroid_lat, c.centroid_lng);
+    if (m) totals[m.name] = (totals[m.name] ?? 0) + c.count_pins;
+  }
+  return totals;
+}
