@@ -596,8 +596,68 @@
   const plotW = 720;
   const ROW_H = 22;
   const STAGE_H = 6;
-  const TIMELINE_H = 56;
+  // Evidence bars: thin lanes stacked under the synthesized DB bar so
+  // each cited source's claimed window is plottable side-by-side. With
+  // up to 6 visible lanes plus a small reserve for the legacy JSON
+  // sidecar overlay, the timeline grows from 56 → 80.
+  const EV_LANE_H = 3;
+  const EV_LANE_GAP = 1;
+  const EV_LANE_PITCH = EV_LANE_H + EV_LANE_GAP; // 4
+  const EV_MAX_LANES = 6;
+  const TIMELINE_H = 80;
   const totalW = xPad + plotW + 16;
+
+  /** Pull each evidence entry whose `supports` block has both
+   *  start_doy and end_doy and surface them as flat objects. The SVG
+   *  template can then bind without TS non-null assertions, which the
+   *  Svelte compiler struggles with inside attributes. */
+  function supportingEvidenceFor(w: DBWindow): {
+    source: string;
+    summary: string;
+    start_doy: number;
+    end_doy: number;
+    peak_doy: number | null;
+  }[] {
+    const out: {
+      source: string;
+      summary: string;
+      start_doy: number;
+      end_doy: number;
+      peak_doy: number | null;
+    }[] = [];
+    for (const ev of w.evidence ?? []) {
+      const s = ev.supports;
+      if (!s || s.start_doy == null || s.end_doy == null) continue;
+      out.push({
+        source: ev.source,
+        summary: ev.summary,
+        start_doy: s.start_doy,
+        end_doy: s.end_doy,
+        peak_doy: s.peak_doy ?? null
+      });
+    }
+    return out;
+  }
+
+  /** Visual tier for a row's confidence value. Substantial rows render
+   *  as solid bars; thin rows render dashed; heuristic rows (no real
+   *  source — AI-seeded or frost-offset propagation) render dotted and
+   *  faded so the timeline shows at a glance which zones rest on real
+   *  evidence vs. propagated guesses. */
+  function confidenceStyle(c: string | null | undefined): {
+    dash: string;
+    opacity: number;
+    tier: 'substantial' | 'thin' | 'heuristic';
+  } {
+    if (c === 'expert_verified' || c === 'regional_guide' ||
+        c === 'empirical_npn' || c === 'empirical_community') {
+      return { dash: '', opacity: 0.85, tier: 'substantial' };
+    }
+    if (c === 'cited_thin') {
+      return { dash: '4,2', opacity: 0.7, tier: 'thin' };
+    }
+    return { dash: '1,2', opacity: 0.5, tier: 'heuristic' };
+  }
 
   function doyX(doy: number): number {
     return xPad + (doy / 365) * plotW;
@@ -739,7 +799,15 @@
       </div>
 
       <div class="legend">
-        <span class="legend-item"><span class="swatch swatch-db"></span>Current DB row</span>
+        <span class="legend-item"><span class="swatch swatch-db"></span>Synthesized DB row (per zone)</span>
+        <span class="legend-item"><span class="swatch swatch-evidence"></span>Per-source range (1 lane per cited window)</span>
+        <span class="legend-item" title="Solid: substantial citation (expert_verified, regional_guide, NPN, community).
+Long dashes: thin citation — single weak fact stretched into a window.
+Tight dots: heuristic only (AI-seeded or frost-offset propagation, no real source).">
+          <span class="swatch-line swatch-line-solid"></span>solid = substantial ·
+          <span class="swatch-line swatch-line-dashed"></span>dashed = thin ·
+          <span class="swatch-line swatch-line-dotted"></span>dotted = heuristic
+        </span>
         <span class="legend-item"><span class="swatch swatch-guide"></span>Regional guide (JSON sidecar)</span>
         <label class="toggle" title="Off: show zones that have either cal data or pins for this species. On: show every USDA zone, even ones with neither.">
           <input type="checkbox" bind:checked={showEmptyZones} />
@@ -782,22 +850,29 @@
                 <line x1={doyX(0)} x2={doyX(365)} y1={TIMELINE_H - 12} y2={TIMELINE_H - 12}
                       stroke="#c7d0c7" stroke-width="1" />
 
-                <!-- DB layer (gray bars, top half) -->
+                <!-- DB layer (synthesized window for primary stage, plus
+                     any other recorded stages stacked above). Stroke
+                     dash conveys confidence tier so thin-citation rows
+                     visually stand apart from substantial ones. -->
                 {#if dbStages}
                   {#each [...dbStages.values()] as w}
                     {#if w.start_doy != null && w.end_doy != null}
+                      {@const cs = confidenceStyle(w.confidence)}
                       <rect
                         x={doyX(w.start_doy)}
                         y={6}
                         width={Math.max(2, doyX(w.end_doy) - doyX(w.start_doy))}
                         height={STAGE_H}
                         fill={stageColor(w.stage)}
-                        opacity="0.55"
+                        opacity={cs.tier === 'heuristic' ? 0.32 : cs.tier === 'thin' ? 0.45 : 0.6}
+                        stroke={stageColor(w.stage)}
+                        stroke-width={cs.tier === 'substantial' ? 0 : 1}
+                        stroke-dasharray={cs.dash}
                       >
                         <title>DB · {w.stage} · DOY {w.start_doy}–{w.end_doy}{w.confidence ? ` · ${w.confidence}` : ''}</title>
                       </rect>
                       {#if w.peak_doy != null}
-                        <circle cx={doyX(w.peak_doy)} cy={6 + STAGE_H / 2} r="3" fill="#1f2a1f">
+                        <circle cx={doyX(w.peak_doy)} cy={6 + STAGE_H / 2} r="3" fill="#1f2a1f" opacity={cs.opacity}>
                           <title>DB peak · DOY {w.peak_doy}</title>
                         </circle>
                       {/if}
@@ -805,12 +880,57 @@
                   {/each}
                 {/if}
 
-                <!-- Layer 2 guide bars (orange, lower half) -->
+                <!-- Per-evidence range bars: each cited source's claimed
+                     window for the primary stage, stacked as thin lanes
+                     so spread/agreement is visible at a glance. Only
+                     evidence entries with both start_doy and end_doy in
+                     their `supports` block contribute a bar. -->
+                {#if dbStages}
+                  {@const ripe = dbStages.get(primaryStage)}
+                  {#if ripe}
+                    {@const cs = confidenceStyle(ripe.confidence)}
+                    {@const supportingEv = supportingEvidenceFor(ripe)}
+                    {#each supportingEv.slice(0, EV_MAX_LANES) as ev, i}
+                      {@const y = 6 + STAGE_H + 2 + i * EV_LANE_PITCH}
+                      <line
+                        x1={doyX(ev.start_doy)}
+                        x2={doyX(ev.end_doy)}
+                        y1={y + EV_LANE_H / 2}
+                        y2={y + EV_LANE_H / 2}
+                        stroke={stageColor(ripe.stage)}
+                        stroke-width={EV_LANE_H}
+                        stroke-dasharray={cs.dash}
+                        opacity={cs.opacity}
+                        stroke-linecap="butt"
+                      >
+                        <title>{ev.source}{cs.tier === 'thin' ? ' (thin)' : ''} · DOY {ev.start_doy}–{ev.end_doy}{ev.peak_doy != null ? ` · peak ${ev.peak_doy}` : ''}{'\n'}{ev.summary}</title>
+                      </line>
+                      {#if ev.peak_doy != null}
+                        <circle
+                          cx={doyX(ev.peak_doy)}
+                          cy={y + EV_LANE_H / 2}
+                          r="2"
+                          fill={stageColor(ripe.stage)}
+                          opacity={cs.opacity}
+                        />
+                      {/if}
+                    {/each}
+                    {#if supportingEv.length > EV_MAX_LANES}
+                      <text x={xPad} y={6 + STAGE_H + 2 + EV_MAX_LANES * EV_LANE_PITCH + 8}
+                            class="axis-label">+{supportingEv.length - EV_MAX_LANES} more</text>
+                    {/if}
+                  {/if}
+                {/if}
+
+                <!-- Layer 2: legacy JSON sidecar guide bars. Stacked
+                     beneath the evidence band to keep both visible. -->
                 {#each jsonRegions as r, idx}
                   {#if r.window.ripe}
+                    {@const evRow = dbStages?.get(primaryStage)}
+                    {@const evCount = evRow ? Math.min(EV_MAX_LANES, supportingEvidenceFor(evRow).length) : 0}
                     <rect
                       x={doyX(r.window.ripe.start_doy)}
-                      y={6 + STAGE_H + 4 + idx * (STAGE_H + 2)}
+                      y={6 + STAGE_H + 4 + evCount * EV_LANE_PITCH + idx * (STAGE_H + 2)}
                       width={Math.max(2, doyX(r.window.ripe.end_doy) - doyX(r.window.ripe.start_doy))}
                       height={STAGE_H}
                       fill="#e07b3a"
@@ -1170,9 +1290,28 @@
     display: inline-block;
   }
   .swatch-db { background: #c84545; opacity: 0.55; }
+  .swatch-evidence {
+    background: linear-gradient(to bottom,
+      transparent 0, transparent 1px,
+      #c84545 1px, #c84545 3px,
+      transparent 3px, transparent 5px,
+      #c84545 5px, #c84545 7px,
+      transparent 7px);
+    opacity: 0.85;
+  }
   .swatch-guide { background: #e07b3a; opacity: 0.85; }
   .swatch-pending .swatch { background: #c0c0c0; opacity: 0.4; }
   .swatch-pending { color: #8a948a; }
+  .swatch-line {
+    display: inline-block;
+    width: 1.6rem;
+    height: 0;
+    border-top: 2px solid #4a554a;
+    margin: 0 0.15rem;
+    vertical-align: middle;
+  }
+  .swatch-line-dashed { border-top-style: dashed; }
+  .swatch-line-dotted { border-top-style: dotted; }
   .toggle { font-size: 0.83rem; color: #4a554a; cursor: pointer; }
   .toggle input { margin-right: 0.3rem; }
 
