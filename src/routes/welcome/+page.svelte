@@ -11,6 +11,11 @@
   } from '$lib/utils/interestGroups';
   import { applyInterestGroups, removeAllMine } from '$lib/services/userPreferencesService';
   import { loadFromServer as reloadUserPrefs } from '$lib/stores/userPreferences';
+  import { settings, setShowInvasives } from '$lib/stores/settings';
+
+  function onInvasiveOptin(e: Event) {
+    setShowInvasives((e.currentTarget as HTMLInputElement).checked);
+  }
 
   type Mode = 'choose' | 'join' | 'group' | 'personal' | 'interests';
 
@@ -213,6 +218,24 @@
       on:submit={onInterestsSubmit}
       on:skipAll={onSkipInterests}
     />
+    <!-- Invasive opt-in: parallel question to interests, but a different
+         axis (management vs foraging). Default off — most users come for
+         food, not removal. Anyone can toggle later in Layers or here. -->
+    <label class="invasive-optin">
+      <input
+        type="checkbox"
+        checked={$settings.showInvasives}
+        on:change={onInvasiveOptin}
+      />
+      <div class="invasive-text">
+        <strong>Also show invasive species (management mode)</strong>
+        <span class="invasive-hint">
+          Optional. Adds inedible invasives like tree of heaven, knotweed, and
+          callery pear to the map so you can flag and help remove them. They
+          render with a red ✗ so you don't mistake them for foragables.
+        </span>
+      </div>
+    </label>
   {/if}
 </main>
 
@@ -263,6 +286,26 @@
     font-size: 1rem;
   }
   .error { color: #b03030; font-size: 0.9rem; margin-top: 0.6rem; }
+  .invasive-optin {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin-top: 1.2rem;
+    padding: 0.7rem 0.85rem;
+    background: #fbf0e8;
+    border: 1px solid #d8a880;
+    border-radius: 0.4rem;
+    cursor: pointer;
+  }
+  .invasive-optin input[type='checkbox'] {
+    margin-top: 0.2rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+  }
+  .invasive-text { display: flex; flex-direction: column; gap: 0.15rem; }
+  .invasive-text strong { color: #5e3920; font-size: 0.92rem; }
+  .invasive-hint { color: #5e3920; font-size: 0.83rem; line-height: 1.4; }
   .actions {
     display: flex;
     gap: 0.5rem;

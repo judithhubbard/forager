@@ -21,6 +21,11 @@
     removeAllMine
   } from '$lib/services/userPreferencesService';
   import { loadFromServer as reloadUserPrefs } from '$lib/stores/userPreferences';
+  import { settings, setShowInvasives } from '$lib/stores/settings';
+
+  function onInvasiveOptin(e: Event) {
+    setShowInvasives((e.currentTarget as HTMLInputElement).checked);
+  }
 
   interface SpeciesRow {
     id: string;
@@ -242,6 +247,25 @@
         </li>
       {/each}
     </ul>
+    <!-- Invasive opt-in: parallel to the per-group foraging picker
+         above, but a different axis (management vs harvest). Toggling
+         this flips the same Layers > "Invasives" setting users can
+         change ad hoc on the map. -->
+    <label class="invasive-optin">
+      <input
+        type="checkbox"
+        checked={$settings.showInvasives}
+        on:change={onInvasiveOptin}
+      />
+      <div class="invasive-text">
+        <strong>Also show invasive species (management mode)</strong>
+        <span class="invasive-hint">
+          Adds inedible invasives like tree of heaven, knotweed, and callery
+          pear to the map so you can flag and help remove them. They render
+          with a red ✗ so you don't mistake them for foragables.
+        </span>
+      </div>
+    </label>
     <div class="actions">
       <button type="button" class="link-btn" on:click={showEverything} disabled={busy}>
         Reset — show me everything
@@ -265,6 +289,26 @@
     box-sizing: border-box;
   }
   header h1 { margin: 0; font-size: 1.05rem; color: #3a5a3a; }
+  .invasive-optin {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    padding: 0.7rem 0.85rem;
+    background: #fbf0e8;
+    border: 1px solid #d8a880;
+    border-radius: 0.4rem;
+    cursor: pointer;
+  }
+  .invasive-optin input[type='checkbox'] {
+    margin-top: 0.2rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+  }
+  .invasive-text { display: flex; flex-direction: column; gap: 0.15rem; }
+  .invasive-text strong { color: #5e3920; font-size: 0.92rem; }
+  .invasive-hint { color: #5e3920; font-size: 0.83rem; line-height: 1.4; }
   .back {
     background: transparent;
     border: 0;
