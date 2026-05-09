@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "regions": {
+    "Seattle metro": {
+      "zone_codes": ["8a", "8b"],
+      "lat": 47.61,
+      "lng": -122.33,
+      "source": "CityFruit Ripeness Guides 2024",
+      "source_url": "https://www.cityfruit.org/wp-content/uploads/2024/04/Ripeness-Guides-3.pdf",
+      "license_note": "Nonprofit copyright; cited reference, not ingested wholesale",
+      "windows": {
+        "Prunus salicina": {
+          "ripe": { "start_doy": 182, "end_doy": 273 },
+          "notes": "JUL-SEP per guide (Asian/Japanese plums)"
+        },
+        "Prunus domestica": {
+          "ripe": { "start_doy": 182, "end_doy": 273 },
+          "notes": "JUL-SEP per guide (European plums incl. Italian, Greengage)"
+        },
+        "Malus domestica": {
+          "ripe": { "start_doy": 182, "end_doy": 334 },
+          "notes": "JUL-NOV per guide; Transparent variety ripens late June, span covers many cultivars"
+        },
+        "Pyrus pyrifolia": {
+          "ripe": { "start_doy": 213, "end_doy": 304 },
+          "notes": "AUG-OCT per guide (Asian pears)"
+        },
+        "Pyrus communis": {
+          "ripe": { "start_doy": 213, "end_doy": 304 },
+          "notes": "AUG-OCT per guide (European pears, picked unripe to ripen off-tree)"
+        },
+        "Cydonia oblonga": {
+          "ripe": { "start_doy": 244, "end_doy": 334 },
+          "notes": "SEP-NOV per guide"
+        },
+        "Vitis vinifera": {
+          "ripe": { "start_doy": 213, "end_doy": 304 },
+          "notes": "AUG-OCT per guide"
+        },
+        "Ficus carica": {
+          "ripe": { "start_doy": 213, "end_doy": 273 },
+          "notes": "AUG-SEP per guide; main crop only"
+        },
+        "Diospyros kaki": {
+          "ripe": { "start_doy": 274, "end_doy": 365 },
+          "notes": "OCT-DEC per guide"
+        },
+        "Diospyros virginiana": {
+          "ripe": { "start_doy": 274, "end_doy": 365 },
+          "notes": "OCT-DEC per guide; co-listed with kaki"
+        },
+        "Actinidia deliciosa": {
+          "ripe": { "start_doy": 244, "end_doy": 304 },
+          "notes": "SEP-OCT per guide"
+        },
+        "Prunus avium": {
+          "ripe": { "start_doy": 152, "end_doy": 191 },
+          "notes": "Early June to early July per guide; Bing and Rainier dominant"
+        }
+      }
+    },
+    "Ottawa metro": {
+      "zone_codes": ["5a", "5b"],
+      "lat": 45.42,
+      "lng": -75.69,
+      "source": "Hidden Harvest Ottawa — Fruit Ripening Guide",
+      "source_url": "https://ottawa.hiddenharvest.ca/fruit-ripening-guide",
+      "license_note": "Nonprofit copyright; Ottawa-localized but explicitly derives from Not Far From The Tree (Toronto)",
+      "windows": {
+        "Prunus avium": {
+          "ripe": { "start_doy": 152, "end_doy": 212 },
+          "notes": "Early June to late July (sweet cherries)"
+        },
+        "Prunus cerasus": {
+          "ripe": { "start_doy": 161, "end_doy": 212 },
+          "notes": "Mid-June to late July (sour cherries)"
+        },
+        "Amelanchier canadensis": {
+          "ripe": { "start_doy": 161, "end_doy": 191 },
+          "notes": "Mid-June to mid-July (serviceberries)"
+        },
+        "Morus rubra": {
+          "ripe": { "start_doy": 171, "end_doy": 222 },
+          "notes": "Late June to early August"
+        },
+        "Prunus domestica": {
+          "ripe": { "start_doy": 191, "end_doy": 253 },
+          "notes": "Mid-July to early September; Ottawa-localized, matches NFFTT Toronto"
+        },
+        "Malus domestica": {
+          "ripe": { "start_doy": 202, "end_doy": 304 },
+          "notes": "Late July to late October; Ottawa-localized, matches NFFTT Toronto"
+        },
+        "Pyrus communis": {
+          "ripe": { "start_doy": 222, "end_doy": 273 },
+          "notes": "Mid-August to late September"
+        },
+        "Vitis riparia": {
+          "ripe": { "start_doy": 222, "end_doy": 253 },
+          "notes": "Mid-August to mid-September"
+        },
+        "Sambucus canadensis": {
+          "ripe": { "start_doy": 222, "end_doy": 253 },
+          "notes": "Mid-August to mid-September (American elderberry; raw berries toxic)"
+        }
+      }
+    },
+    "Toronto metro": {
+      "zone_codes": ["6a", "6b"],
+      "lat": 43.65,
+      "lng": -79.38,
+      "source": "Not Far From The Tree — Fruit Ripening and Picking Guides",
+      "source_url": "https://notfarfromthetree.org/fruit/fruit-ripening-and-picking-guides/",
+      "license_note": "Nonprofit copyright; original observational source for the Toronto/E. Ontario zone",
+      "windows": {
+        "Malus domestica": {
+          "ripe": { "start_doy": 202, "end_doy": 304 },
+          "notes": "Late July to late October"
+        },
+        "Prunus armeniaca": {
+          "ripe": { "start_doy": 191, "end_doy": 222 },
+          "notes": "Mid-July to mid-August"
+        },
+        "Juglans nigra": {
+          "ripe": { "start_doy": 253, "end_doy": 304 },
+          "notes": "Mid-September to late October"
+        },
+        "Prunus avium": {
+          "ripe": { "start_doy": 152, "end_doy": 201 },
+          "notes": "Early June to mid-July; sweet/sour not separately distinguished by NFFTT"
+        },
+        "Sambucus canadensis": {
+          "ripe": { "start_doy": 222, "end_doy": 253 },
+          "notes": "Mid-August to mid-September"
+        },
+        "Ginkgo biloba": {
+          "ripe": { "start_doy": 253, "end_doy": 304 },
+          "notes": "Mid-September to late October (seeds)"
+        },
+        "Vitis riparia": {
+          "ripe": { "start_doy": 222, "end_doy": 253 },
+          "notes": "Mid-August to mid-September"
+        },
+        "Morus rubra": {
+          "ripe": { "start_doy": 171, "end_doy": 222 },
+          "notes": "Late June to early August"
+        },
+        "Asimina triloba": {
+          "ripe": { "start_doy": 253, "end_doy": 283 },
+          "notes": "Mid-September to mid-October"
+        },
+        "Prunus persica": {
+          "ripe": { "start_doy": 191, "end_doy": 222 },
+          "notes": "Mid-July to mid-August"
+        },
+        "Pyrus communis": {
+          "ripe": { "start_doy": 222, "end_doy": 273 },
+          "notes": "Mid-August to late September"
+        },
+        "Prunus domestica": {
+          "ripe": { "start_doy": 191, "end_doy": 253 },
+          "notes": "Mid-July to early September; European plum dominant in Toronto"
+        },
+        "Cydonia oblonga": {
+          "ripe": { "start_doy": 244, "end_doy": 304 },
+          "notes": "Early September to late October"
+        },
+        "Amelanchier canadensis": {
+          "ripe": { "start_doy": 161, "end_doy": 191 },
+          "notes": "Mid-June to mid-July"
+        }
+      }
+    },
+    "Philadelphia metro": {
+      "zone_codes": ["7a", "7b"],
+      "lat": 39.95,
+      "lng": -75.17,
+      "source": "Philadelphia Orchard Project — POP Harvest Guide 2025 + Fruit Harvest Calendar",
+      "source_url": "https://www.phillyorchards.org/wp-content/uploads/2025/09/POP-Harvest-Guide-2025.pdf",
+      "license_note": "Nonprofit copyright; calendar uses month-buckets only (no early/mid/late granularity)",
+      "windows": {
+        "Prunus avium": {
+          "ripe": { "start_doy": 152, "end_doy": 212 },
+          "notes": "JUN-JUL per calendar"
+        },
+        "Prunus cerasus": {
+          "ripe": { "start_doy": 152, "end_doy": 212 },
+          "notes": "JUN-JUL per calendar; not split sweet/sour"
+        },
+        "Rubus idaeus": {
+          "ripe": { "start_doy": 152, "end_doy": 273 },
+          "notes": "JUN-SEP per calendar; everbearing extends to OCT"
+        },
+        "Vaccinium corymbosum": {
+          "ripe": { "start_doy": 152, "end_doy": 212 },
+          "notes": "JUN-JUL per calendar"
+        },
+        "Amelanchier canadensis": {
+          "ripe": { "start_doy": 152, "end_doy": 181 },
+          "notes": "JUN per calendar (juneberry)"
+        },
+        "Ribes rubrum": {
+          "ripe": { "start_doy": 152, "end_doy": 212 },
+          "notes": "JUN-JUL per calendar (currants)"
+        },
+        "Ribes nigrum": {
+          "ripe": { "start_doy": 152, "end_doy": 212 },
+          "notes": "JUN-JUL per calendar (currants)"
+        },
+        "Rubus allegheniensis": {
+          "ripe": { "start_doy": 182, "end_doy": 243 },
+          "notes": "JUL-AUG per calendar (blackberry)"
+        },
+        "Prunus armeniaca": {
+          "ripe": { "start_doy": 182, "end_doy": 212 },
+          "notes": "JUL per calendar"
+        },
+        "Prunus persica": {
+          "ripe": { "start_doy": 182, "end_doy": 243 },
+          "notes": "JUL-AUG per calendar"
+        },
+        "Morus rubra": {
+          "ripe": { "start_doy": 182, "end_doy": 212 },
+          "notes": "JUL per calendar"
+        },
+        "Prunus domestica": {
+          "ripe": { "start_doy": 213, "end_doy": 243 },
+          "notes": "AUG per calendar; species not specified, European plum assumed for Mid-Atlantic mix"
+        },
+        "Ficus carica": {
+          "ripe": { "start_doy": 213, "end_doy": 273 },
+          "notes": "AUG-SEP per calendar"
+        },
+        "Pyrus pyrifolia": {
+          "ripe": { "start_doy": 213, "end_doy": 273 },
+          "notes": "AUG-SEP per calendar"
+        },
+        "Sambucus canadensis": {
+          "ripe": { "start_doy": 213, "end_doy": 243 },
+          "notes": "AUG per calendar"
+        },
+        "Malus domestica": {
+          "ripe": { "start_doy": 244, "end_doy": 304 },
+          "notes": "SEP-OCT per calendar"
+        },
+        "Pyrus communis": {
+          "ripe": { "start_doy": 244, "end_doy": 304 },
+          "notes": "SEP-OCT per calendar"
+        },
+        "Vitis labrusca": {
+          "ripe": { "start_doy": 244, "end_doy": 304 },
+          "notes": "SEP-OCT per calendar"
+        },
+        "Asimina triloba": {
+          "ripe": { "start_doy": 244, "end_doy": 273 },
+          "notes": "SEP per calendar"
+        },
+        "Cydonia oblonga": {
+          "ripe": { "start_doy": 244, "end_doy": 304 },
+          "notes": "SEP-OCT per calendar"
+        },
+        "Punica granatum": {
+          "ripe": { "start_doy": 244, "end_doy": 273 },
+          "notes": "SEP per calendar"
+        },
+        "Diospyros virginiana": {
+          "ripe": { "start_doy": 274, "end_doy": 334 },
+          "notes": "OCT-NOV per calendar"
+        },
+        "Diospyros kaki": {
+          "ripe": { "start_doy": 274, "end_doy": 334 },
+          "notes": "OCT-NOV per calendar; co-listed with native"
+        },
+        "Ginkgo biloba": {
+          "ripe": { "start_doy": 305, "end_doy": 334 },
+          "notes": "NOV per calendar"
+        }
+      }
+    },
+    "California (UCANR statewide)": {
+      "zone_codes": ["8b", "9a", "9b", "10a"],
+      "lat": 36.78,
+      "lng": -119.42,
+      "source": "UCANR California Backyard Orchard / Harvest Calendar",
+      "source_url": "https://ucanr.edu/site/online-agricultural-resources/harvest-calendar",
+      "license_note": "UC ANR public extension content; cited reference",
+      "windows": {
+        "Citrus limon": {
+          "ripe": { "start_doy": 1, "end_doy": 365 },
+          "notes": "Year-round in CA; calendar lists JAN-MAY peak but available throughout"
+        },
+        "Citrus sinensis": {
+          "ripe": { "start_doy": 1, "end_doy": 334 },
+          "notes": "Navel JAN-APR; Valencia MAY-NOV; combined window"
+        },
+        "Citrus paradisi": {
+          "ripe": { "start_doy": 60, "end_doy": 334 },
+          "notes": "MAR-NOV per calendar"
+        },
+        "Citrus reticulata": {
+          "ripe": { "start_doy": 1, "end_doy": 90 },
+          "notes": "JAN-MAR per calendar (tangerines/tangelos)"
+        },
+        "Persea americana": {
+          "ripe": { "start_doy": 1, "end_doy": 365 },
+          "notes": "Year-round in CA with JAN-MAY peak"
+        },
+        "Prunus persica": {
+          "ripe": { "start_doy": 152, "end_doy": 304 },
+          "notes": "JUN-OCT per calendar"
+        },
+        "Prunus salicina": {
+          "ripe": { "start_doy": 152, "end_doy": 273 },
+          "notes": "JUN-SEP per calendar; Japanese plum dominant in CA"
+        },
+        "Prunus armeniaca": {
+          "ripe": { "start_doy": 152, "end_doy": 243 },
+          "notes": "JUN/AUG per calendar"
+        },
+        "Vitis vinifera": {
+          "ripe": { "start_doy": 182, "end_doy": 304 },
+          "notes": "JUL-OCT per calendar"
+        },
+        "Malus domestica": {
+          "ripe": { "start_doy": 182, "end_doy": 334 },
+          "notes": "JUL-NOV per calendar"
+        },
+        "Ficus carica": {
+          "ripe": { "start_doy": 182, "end_doy": 304 },
+          "notes": "JUL-OCT per calendar; covers both breba and main crop"
+        },
+        "Pyrus communis": {
+          "ripe": { "start_doy": 182, "end_doy": 334 },
+          "notes": "JUL-NOV per calendar"
+        },
+        "Pyrus pyrifolia": {
+          "ripe": { "start_doy": 182, "end_doy": 334 },
+          "notes": "JUL-NOV per calendar"
+        },
+        "Diospyros kaki": {
+          "ripe": { "start_doy": 182, "end_doy": 334 },
+          "notes": "JUL/NOV per calendar; Japanese persimmon dominant in CA"
+        },
+        "Actinidia deliciosa": {
+          "ripe": { "start_doy": 305, "end_doy": 365 },
+          "notes": "NOV-DEC per calendar"
+        }
+      }
+    }
+  },
+  "extraction_notes": [
+    "Month-bracket conversions used early/mid/late conventions: early=days 1-10, mid=10-20, late=20-end of month, full month = day 1 to month-end. Non-leap-year DOY values throughout.",
+    "CityFruit graphics use month-band rectangles (e.g. 'JUL-SEP', 'AUG-OCT') rather than within-month granularity; full-month spans were used.",
+    "Hidden Harvest Ottawa explicitly cites NFFTT Toronto as a source. Where windows overlap (Malus, Prunus domestica, Pyrus, Vitis, Sambucus, Amelanchier), Ottawa values are tagged as Ottawa-localized but matching NFFTT.",
+    "NFFTT cherry page does not split sweet vs. sour; mapped to Prunus avium based on Toronto urban-tree dominance. Hidden Harvest does split sweet/sour and is preferred for that distinction.",
+    "POP guide uses bare month buckets (no early/mid/late). All POP windows therefore use full-month spans.",
+    "POP 'Plums' species not specified; mapped to Prunus domestica per Mid-Atlantic urban-tree convention. POP 'Cherry' is co-listed sweet+sour, not split.",
+    "POP grapes mapped to Vitis labrusca (Concord-type) per common Mid-Atlantic backyard varieties; vinifera also possible.",
+    "UCANR calendar provides month presence only, not maturity-stage detail. Year-round California crops (lemon, avocado) given full-year span; calendar peak documented in notes.",
+    "UCANR plum mapped to Prunus salicina (Japanese) per CA commercial dominance.",
+    "Cornell Lake Ontario page (lof.cce.cornell.edu/harvest_storage.php) was fetched but contains no published month-bracket data — it gates that behind paid newsletter subscription. Skipped per brief.",
+    "New England Tree Fruit Management Guide (netreefruit.org) covers harvest *practices* but no published month-bracket calendar at the URLs surveyed (apple/peach harvest pages 404 or empty). Skipped per brief.",
+    "LifeCycles Project Victoria BC booklet was successfully extracted (38 pages); the 'Determining Fruit Ripeness' section (pp. 31-32) is a ripeness-indicator checklist (color/feel/separation test) only, with no month brackets. Skipped per brief.",
+    "Cherry species disambiguation: Hidden Harvest distinguishes sweet (Prunus avium) from sour (Prunus cerasus); NFFTT and POP do not. CityFruit names Bing+Rainier explicitly = Prunus avium."
+  ],
+  "missing": [
+    "NETFMG: No month-bracket harvest calendar published; harvest pages either 404 (peaches/harvest, apples/cider-apples/harvest valid but text-only) or empty. NE harvest timing for apples/pears/peaches/plums/apricots/cherries is left to other regional anchors (Toronto for the cooler end of the range, Philadelphia for the warmer end).",
+    "Cornell Lake Ontario: harvest_storage.php exists but no month-bracket data on the page; commercial maturity-index data is gated behind paid 'Harvest Maturity Reports' subscription.",
+    "LifeCycles Project Victoria BC: PDF extracted cleanly but content is ripeness-indicator checklists, not month brackets. Vancouver Island timing approximated as similar to Seattle metro for cross-reference.",
+    "NFFTT serviceberry data not extracted — fetched but page lacked explicit harvest range (used Hidden Harvest Ottawa value for Toronto Amelanchier instead via mid-June to mid-July match).",
+    "POP Harvest Guide includes Cornelian cherry, jujube, rose hips, chokeberry, maypop, kiwiberry, akebia, lingonberry, wintergreen, medlar, hawthorn, sunchoke, Che fruit — all dropped because they do not match a Forager species in the prompt's list.",
+    "UCANR calendar lists strawberries (skipped per brief instructions on generic Fragaria) and does not list olives, pomegranates, or loquats (so those CA species have no UCANR data here)."
+  ]
+}

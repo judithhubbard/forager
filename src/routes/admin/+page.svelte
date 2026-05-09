@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { base } from '$app/paths';
   import { goto } from '$lib/utils/nav';
   import { activeRegion } from '$lib/stores/activeRegion';
   import { profile } from '$lib/stores/profile';
@@ -196,6 +197,14 @@
     {#if errorMessage}<p class="error">{errorMessage}</p>{/if}
 
     <section>
+      <h2>Tools</h2>
+      <ul class="tools-list">
+        <li><a href="{base}/admin/calibration">Calibration viewer</a> — review per-species, per-zone harvest windows across data sources</li>
+        <li><a href="{base}/admin/feedback">Feedback inbox</a> — user-submitted bug reports + suggestions</li>
+      </ul>
+    </section>
+
+    <section>
       <h2>Members <span class="muted">({members.length})</span></h2>
       <ul class="members">
         {#each members as m}
@@ -311,6 +320,24 @@
 
   section { margin-bottom: 1.6rem; }
   h2 { color: #3a5a3a; font-size: 1rem; margin: 0 0 0.5rem; }
+
+  ul.tools-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  ul.tools-list li {
+    padding: 0.5rem 0.7rem;
+    background: white;
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    font-size: 0.9rem;
+  }
+  ul.tools-list a { color: #3a5a3a; font-weight: 600; text-decoration: none; }
+  ul.tools-list a:hover { text-decoration: underline; }
 
   ul.members, ul.invites {
     list-style: none; margin: 0; padding: 0;
