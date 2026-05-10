@@ -985,7 +985,10 @@ const COMPLEXES = [
   },
   {
     name: 'Spruce tips (multi-species)',
-    members: ['Picea glauca', 'Picea pungens', 'Picea sp.', 'Pinus contorta', 'Pinus sylvestris', 'Pinus sp.', 'Larix sibirica'],
+    // Pinus sp. removed 2026-05-10 — too generic, soft-deleted from
+    // catalog. Specific Pinus species (contorta, sylvestris, edulis)
+    // still get tips windows via their own membership.
+    members: ['Picea glauca', 'Picea pungens', 'Picea sp.', 'Pinus contorta', 'Pinus sylvestris', 'Larix sibirica'],
     // Audit found "early-to-mid May" was interpreted as 31 days for spruce
     // tips when the cited window is famously 10-14 days. Tightened.
     // Replaces the earlier "Conifer tips" entry — same target zones,
