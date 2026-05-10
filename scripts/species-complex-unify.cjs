@@ -588,7 +588,11 @@ const COMPLEXES = [
     stage: 'mushroom_flush',
     source_name: 'Chicken of the woods (Mushroom Expert + Audubon)',
     source_url: 'https://www.mushroomexpert.com/laetiporus_sulphureus.html',
-    summary: 'Chicken of the woods (Laetiporus sulphureus): bright orange shelf fungus on hardwoods (esp. oak). Peak flush Aug-Oct (zone 6a); occasional spring flush.'
+    summary: 'Chicken of the woods (Laetiporus sulphureus): bright orange shelf fungus on hardwoods (esp. oak). Peak flush Aug-Oct (zone 6a); occasional spring flush.',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Northeast Mycological Federation', url: 'https://newenglandmushrooms.com/', summary: 'NE: Aug-Oct main flush; occasional Jun fruiting.', peak_doy: 244, half_window: 35 },
+      { zones: ['7a','7b','8a','8b'], source: 'NC State Extension', url: 'https://content.ces.ncsu.edu/', summary: 'Mid-Atlantic / South: Jul-Sep flush.', peak_doy: 220, half_window: 30 }
+    ]
   },
 
   // ── Tier 1: must-have foragables (added 2026-05-10) ──
@@ -673,7 +677,11 @@ const COMPLEXES = [
     stage: 'sap_run',
     source_name: 'Sweet/yellow birch sap (Cornell Maple Program + UVM Extension)',
     source_url: 'https://maple.dnr.cornell.edu/pubs/birch_sap.htm',
-    summary: 'Sweet/yellow birch sap: late-winter / early-spring tap. ~2 weeks after maple sap window closes; lower sugar yield (~100:1 ratio for syrup).'
+    summary: 'Sweet/yellow birch sap: late-winter / early-spring tap. ~2 weeks after maple sap window closes; lower sugar yield (~100:1 ratio for syrup).',
+    regional_anchors: [
+      { zones: ['3a','3b','4a','4b','5a'], source: 'Cornell Maple Program (Adirondack/Catskills)', url: 'https://maple.dnr.cornell.edu/pubs/birch_sap.htm', summary: 'NE highlands: tap mid-March to late-April for birch sap.', peak_doy: 90, half_window: 21 },
+      { zones: ['5b','6a','6b','7a'], source: 'UVM Maple Sugar Makers (Vermont birches)', url: 'https://www.uvm.edu/extension/sugarmakers/', summary: 'VT/NH: tap late Feb to late March; ~2 weeks after maple finishes.', peak_doy: 70, half_window: 21 }
+    ]
   },
 
   // ── Tier 2: roadside greens ──
@@ -739,7 +747,11 @@ const COMPLEXES = [
     stage: 'mushroom_flush',
     source_name: 'Common puffball (Audubon mushroom guide + Mushroom Expert)',
     source_url: 'https://www.mushroomexpert.com/lycoperdon_perlatum.html',
-    summary: 'Common puffball: Aug-Oct. Cut in half — pure white interior confirms (rules out toxic Amanita "egg" stage).'
+    summary: 'Common puffball: Aug-Oct. Cut in half — pure white interior confirms (rules out toxic Amanita "egg" stage).',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a','6b','7a'], source: 'Northeast foraging guides (Wild Mushrooms of NE)', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE forager consensus: Aug-Oct flush, peak Sep.', peak_doy: 244, half_window: 28 },
+      { zones: ['7a','7b','8a','8b'], source: 'NC State Extension (Carolinas mushroom timing)', url: 'https://content.ces.ncsu.edu/', summary: 'Southern Appalachians: Jul-Sep flush, peak mid-Aug.', peak_doy: 227, half_window: 30 }
+    ]
   },
   {
     name: 'Giant puffball',
@@ -749,7 +761,11 @@ const COMPLEXES = [
     stage: 'mushroom_flush',
     source_name: 'Giant puffball (Mushroom Expert + foraging guides)',
     source_url: 'https://www.mushroomexpert.com/calvatia_gigantea.html',
-    summary: 'Giant puffball: late-Aug to early-Oct. Soccer-ball-sized; one mushroom can feed a family.'
+    summary: 'Giant puffball: late-Aug to early-Oct. Soccer-ball-sized; one mushroom can feed a family.',
+    regional_anchors: [
+      { zones: ['3a','3b','4a','4b','5a','5b','6a'], source: 'Audubon Field Guide (Northeast)', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE Audubon: Aug-Oct flush.', peak_doy: 258, half_window: 30 },
+      { zones: ['6b','7a','7b','8a','8b'], source: 'NC State Extension', url: 'https://content.ces.ncsu.edu/', summary: 'Mid-Atlantic / South: Jul-Sep flush.', peak_doy: 240, half_window: 28 }
+    ]
   },
   {
     name: 'Black trumpet',
@@ -759,7 +775,11 @@ const COMPLEXES = [
     stage: 'mushroom_flush',
     source_name: 'Black trumpet (Mushroom Expert + Wild Mushrooms of NE)',
     source_url: 'https://www.mushroomexpert.com/craterellus_cornucopioides.html',
-    summary: 'Black trumpet: Jul-Sep under hardwoods (oak/beech). Earthy, smoky flavor; dries beautifully.'
+    summary: 'Black trumpet: Jul-Sep under hardwoods (oak/beech). Earthy, smoky flavor; dries beautifully.',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Northeast Mycological Federation', url: 'https://newenglandmushrooms.com/', summary: 'NE: Jul-Sep, hardwood forests with oak and beech.', peak_doy: 227, half_window: 35 },
+      { zones: ['6b','7a','7b','8a'], source: 'NC State Extension (Carolinas mushroom timing)', url: 'https://content.ces.ncsu.edu/', summary: 'Carolinas: Jun-Aug flush in oak forests.', peak_doy: 196, half_window: 35 }
+    ]
   },
   {
     name: 'Wood blewit',
@@ -769,7 +789,11 @@ const COMPLEXES = [
     stage: 'mushroom_flush',
     source_name: 'Wood blewit (Mushroom Expert)',
     source_url: 'https://www.mushroomexpert.com/lepista_nuda.html',
-    summary: 'Wood blewit: late-fall mushroom (Oct-Dec), often after first frosts. Lavender coloring; spore print pinkish-buff.'
+    summary: 'Wood blewit: late-fall mushroom (Oct-Dec), often after first frosts. Lavender coloring; spore print pinkish-buff.',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a','6b','7a'], source: 'Audubon Field Guide (Northeast)', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE: Oct-Dec, often after first frost. Look in leaf litter under hardwoods.', peak_doy: 288, half_window: 35 },
+      { zones: ['7a','7b','8a','8b'], source: 'Wild Food Girl + Forager Chef', url: 'https://www.wildfoodgirl.com/', summary: 'Southern range: Nov-Jan flush.', peak_doy: 320, half_window: 35 }
+    ]
   },
 
   // ── Tier 4: spring ephemerals ──
@@ -865,7 +889,11 @@ const COMPLEXES = [
     stage: 'mushroom_flush',
     source_name: 'Lobster mushroom (Mushroom Expert)',
     source_url: 'https://www.mushroomexpert.com/hypomyces_lactifluorum.html',
-    summary: 'Lobster mushroom: Aug-Sep. Parasitic fungus on Russula/Lactarius hosts; firm, seafood-like flavor.'
+    summary: 'Lobster mushroom: Aug-Sep. Parasitic fungus on Russula/Lactarius hosts; firm, seafood-like flavor.',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a'], source: 'Northeast Mycological Federation', url: 'https://newenglandmushrooms.com/', summary: 'NE: Aug-early Oct flush, conifer + hardwood mixed forests.', peak_doy: 237, half_window: 28 },
+      { zones: ['7a','7b','8a'], source: 'Pacific NW Key Council', url: 'http://www.svims.ca/council/', summary: 'PNW: Aug-Oct, more abundant under Douglas fir.', peak_doy: 250, half_window: 30 }
+    ]
   },
   {
     name: 'Wapato (rhizome)',
