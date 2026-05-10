@@ -1238,7 +1238,11 @@
       attributionControl: true,
       // Render vector layers (CircleMarker etc) on a single canvas instead
       // of as individual SVG nodes. Big speedup with thousands of markers.
-      preferCanvas: true
+      preferCanvas: true,
+      // Cap map zoom at the tile layers' native max (19). Without this
+      // users could scroll-wheel zoom past 19 and the tile layer would
+      // serve nothing — basemap goes blank.
+      maxZoom: 19
     }).setView(center, zoom);
 
     // Tile layer is set by the reactive applyBasemap above as soon as

@@ -513,6 +513,12 @@
     if (speciesPanelOpen && !t.closest('.species-filter')) speciesPanelOpen = false;
     if (layersPanelOpen && !t.closest('.layers-filter')) layersPanelOpen = false;
     if (filtersPanelOpen && !t.closest('.filterbar')) filtersPanelOpen = false;
+    // Pin detail panel: any click outside the panel itself, including
+    // a tap on the map, closes it. Pin marker clicks set selectedPinId
+    // BEFORE this handler runs so the new selection survives.
+    if (selectedPinId && !t.closest('.pin-panel') && !t.closest('.leaflet-marker-icon') && !t.closest('.leaflet-interactive')) {
+      selectedPinId = null;
+    }
   }
   /** Mobile-only: whether the collapsed filter controls are
    *  expanded. On desktop the controls are always inline and this

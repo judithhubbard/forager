@@ -347,48 +347,180 @@
   ],
   "Ribes nigrum": [
     {
-      "name": "Ribes (currant) complex",
+      "name": "Ribes (currant + gooseberry) complex",
       "members": [
         "Ribes nigrum",
         "Ribes rubrum",
         "Ribes uva-crispa",
-        "Ribes sp."
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
       ],
       "stage": "ripe"
     }
   ],
   "Ribes rubrum": [
     {
-      "name": "Ribes (currant) complex",
+      "name": "Ribes (currant + gooseberry) complex",
       "members": [
         "Ribes nigrum",
         "Ribes rubrum",
         "Ribes uva-crispa",
-        "Ribes sp."
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
       ],
       "stage": "ripe"
     }
   ],
   "Ribes uva-crispa": [
     {
-      "name": "Ribes (currant) complex",
+      "name": "Ribes (currant + gooseberry) complex",
       "members": [
         "Ribes nigrum",
         "Ribes rubrum",
         "Ribes uva-crispa",
-        "Ribes sp."
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
       ],
       "stage": "ripe"
     }
   ],
   "Ribes sp.": [
     {
-      "name": "Ribes (currant) complex",
+      "name": "Ribes (currant + gooseberry) complex",
       "members": [
         "Ribes nigrum",
         "Ribes rubrum",
         "Ribes uva-crispa",
-        "Ribes sp."
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes cynosbati": [
+    {
+      "name": "Ribes (currant + gooseberry) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes hirtellum": [
+    {
+      "name": "Ribes (currant + gooseberry) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes missouriense": [
+    {
+      "name": "Ribes (currant + gooseberry) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes americanum": [
+    {
+      "name": "Ribes (currant + gooseberry) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes triste": [
+    {
+      "name": "Ribes (currant + gooseberry) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes glandulosum": [
+    {
+      "name": "Ribes (currant + gooseberry) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp.",
+        "Ribes cynosbati",
+        "Ribes hirtellum",
+        "Ribes missouriense",
+        "Ribes americanum",
+        "Ribes triste",
+        "Ribes glandulosum"
       ],
       "stage": "ripe"
     }

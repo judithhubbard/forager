@@ -441,22 +441,34 @@ const COMPLEXES = [
     summary: 'Black chokeberry (Aronia melanocarpa): heat-driven late-summer to early-fall fruit. Tight ±21d window centered on Sep 7 in zone 6a; mild -2 d/half-zone gradient.'
   },
 
-  // Ribes (currant) complex — black currant, red currant, gooseberries.
-  // Heat-driven early-summer fruit (Jun-Jul). Strong commercial crop
-  // with well-documented timing. Anchor 6a peak Jul 14 (DOY 195),
-  // shift -5 (matches mulberry / similar early-summer berries).
+  // Ribes (currant + gooseberry) complex — cultivated black/red currant,
+  // gooseberry, and wild NA congeners (prickly gooseberry, smooth
+  // gooseberry, Missouri gooseberry, American black currant, red swamp
+  // currant, skunk currant). All share the same heat-driven early-
+  // summer fruit pattern. Anchor 6a peak Jul 14 (DOY 195), shift -5
+  // (matches mulberry / similar early-summer berries).
   {
-    name: 'Ribes (currant) complex',
-    members: ['Ribes nigrum', 'Ribes rubrum', 'Ribes uva-crispa', 'Ribes sp.'],
+    name: 'Ribes (currant + gooseberry) complex',
+    members: [
+      // Cultivated
+      'Ribes nigrum', 'Ribes rubrum', 'Ribes uva-crispa', 'Ribes sp.',
+      // Wild NA congeners
+      'Ribes cynosbati',     // prickly gooseberry
+      'Ribes hirtellum',     // smooth gooseberry
+      'Ribes missouriense',  // Missouri gooseberry
+      'Ribes americanum',    // American black currant
+      'Ribes triste',        // red swamp currant
+      'Ribes glandulosum'    // skunk currant (boreal)
+    ],
     anchor_zone: '6a',
     anchor_peak: 195,           // Jul 14
     shift_per_half_zone: -5,
     half_window: 18,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'ripe',
-    source_name: 'Ribes complex (Cornell CE + commercial currant timing)',
+    source_name: 'Ribes complex (Cornell CE + USDA Silvics + commercial timing)',
     source_url: 'https://gardening.cals.cornell.edu/plants/currant-gooseberry/',
-    summary: 'Ribes complex (currants + gooseberries): heat-driven early-summer fruit. Anchor 6a peak Jul 14, shift -5 d/half-zone matching similar early-summer berries.'
+    summary: 'Ribes complex (cultivated currants + gooseberries + wild NA congeners): heat-driven early-summer fruit. Anchor 6a peak Jul 14, shift -5 d/half-zone matching similar early-summer berries.'
   },
 
   // Pyrus (pear) complex — Asian + European pear, including the
