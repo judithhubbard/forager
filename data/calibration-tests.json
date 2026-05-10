@@ -275,11 +275,11 @@
       "species": "Sassafras albidum",
       "common": "Sassafras",
       "zone": "6a",
-      "stage": "shoot",
-      "peak_doy": 110,
-      "tolerance": 28,
-      "source": "Wild foraging tradition (root bark + spring shoots)",
-      "notes": "Sassafras spring shoots / root harvest in early-mid spring. Wide tolerance — sassafras is multi-stage (sap, shoot, root)."
+      "stage": "leaf",
+      "peak_doy": 244,
+      "tolerance": 30,
+      "source": "Wild foraging tradition (root bark + leaf for filé powder)",
+      "notes": "Sassafras leaves harvested across summer for filé. Wide tolerance — broad harvest window for the leaf stage."
     },
     {
       "species": "Asparagus officinalis",
@@ -312,8 +312,8 @@
       "notes": "Wild cranberry peak ~Oct 7 in zone 5a (frost-tinted bog harvest)."
     },
     {
-      "species": "Mentha spicata",
-      "common": "Spearmint",
+      "species": "Mentha",
+      "common": "Wild mint",
       "zone": "6a",
       "stage": "leaf",
       "peak_doy": 152,
