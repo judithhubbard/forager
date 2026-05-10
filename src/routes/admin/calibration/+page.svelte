@@ -643,6 +643,23 @@
    *  them toward the curve. */
   const MIN_INAT_ANCHOR_OBS = 30;
 
+  /** Fuzzy-language detection: agent-interpreted vague seasonal
+   *  phrasing ("mid-to-late summer", "early fall") into hard DOY
+   *  ranges. Those bounds are not real precision and shouldn't
+   *  anchor a zone — they stay as evidence but rendered as soft.
+   *  Mirrors the same regex used in the rederive + smooth scripts. */
+  const FUZZY_LANGUAGE_RE = /\b(mid[\s-]+(?:to[\s-]+late\s+)?(?:spring|summer|fall|autumn|winter)|late\s+(?:spring|summer|fall|autumn|winter)|early\s+(?:spring|summer|fall|autumn|winter)|around\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|in\s+(?:spring|summer|fall|autumn|winter))\b/i;
+  const PRECISE_DATE_RE = /\b(?:\d{1,2}\/\d{1,2}|january\s+\d{1,2}|february\s+\d{1,2}|march\s+\d{1,2}|april\s+\d{1,2}|may\s+\d{1,2}|june\s+\d{1,2}|july\s+\d{1,2}|august\s+\d{1,2}|september\s+\d{1,2}|october\s+\d{1,2}|november\s+\d{1,2}|december\s+\d{1,2}|DOY\s*\d+|first\s+frost|after\s+(?:first|hard)\s+frost)\b/i;
+  function isFuzzy(ev: { summary?: string; supports?: { start_doy?: number; end_doy?: number } }): boolean {
+    const s = ev.summary ?? '';
+    if (!s) return false;
+    if (PRECISE_DATE_RE.test(s)) return false;
+    if (FUZZY_LANGUAGE_RE.test(s)) return true;
+    const sd = ev.supports?.start_doy, ed = ev.supports?.end_doy;
+    if (sd != null && ed != null && (ed - sd) > 45) return true;
+    return false;
+  }
+
   function isAnchorRow(w: DBWindow | undefined): boolean {
     if (!w) return false;
     const ev = w.evidence ?? [];
@@ -652,6 +669,7 @@
     if (supporting.length === 0) return false;
     return supporting.some((e) => {
       const p = provenanceFor(e.source ?? '', e.summary ?? '');
+      if (isFuzzy(e)) return false;
       if (p === 'regional') return true;
       if (p === 'empirical_inat') {
         const n = (e.supports as { n_obs?: number } | undefined)?.n_obs ?? 0;

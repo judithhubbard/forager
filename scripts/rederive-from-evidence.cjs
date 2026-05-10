@@ -70,6 +70,45 @@ const INAT_WRONG_STAGE = new Set([
   'Corylus americana', 'Corylus cornuta'
 ]);
 
+/** Detect when an evidence summary describes its window in fuzzy
+ *  seasonal language ("mid-to-late summer", "early fall", "around
+ *  August") rather than precise dates. The agent processing such
+ *  sources tends to interpret vague phrases as full DOY ranges
+ *  (e.g. "mid-to-late summer" → DOY 196-243), which creates false
+ *  precision when those bounds get used in the envelope. Fuzzy
+ *  sources should contribute their MIDPOINT ± a tighter window
+ *  (15 days) to the envelope, not their full agent-derived range. */
+const FUZZY_LANGUAGE_RE = /\b(mid[\s-]+(?:to[\s-]+late\s+)?(?:spring|summer|fall|autumn|winter)|late\s+(?:spring|summer|fall|autumn|winter)|early\s+(?:spring|summer|fall|autumn|winter)|around\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|in\s+(?:spring|summer|fall|autumn|winter))\b/i;
+const PRECISE_DATE_RE = /\b(?:\d{1,2}\/\d{1,2}|january\s+\d{1,2}|february\s+\d{1,2}|march\s+\d{1,2}|april\s+\d{1,2}|may\s+\d{1,2}|june\s+\d{1,2}|july\s+\d{1,2}|august\s+\d{1,2}|september\s+\d{1,2}|october\s+\d{1,2}|november\s+\d{1,2}|december\s+\d{1,2}|DOY\s*\d+|first\s+frost|after\s+(?:first|hard)\s+frost)\b/i;
+const FUZZY_HALF_WINDOW = 15; // days each side of midpoint for fuzzy sources
+
+function isFuzzyEvidence(ev) {
+  if (!ev?.summary) return false;
+  // Precise dates or specific phenological events override fuzzy language.
+  if (PRECISE_DATE_RE.test(ev.summary)) return false;
+  // Vague seasonal phrasing without precise anchors.
+  if (FUZZY_LANGUAGE_RE.test(ev.summary)) return true;
+  // Long span (>45 days) without specific dates is also a sign.
+  const s = ev.supports?.start_doy, e = ev.supports?.end_doy;
+  if (s != null && e != null && (e - s) > 45) return true;
+  return false;
+}
+
+/** Effective supports for envelope calculation. For fuzzy sources,
+ *  shrinks the contribution to midpoint ± FUZZY_HALF_WINDOW so the
+ *  vague language doesn't manufacture precision. iNat sources are
+ *  always treated as their stored bounds (real observations). */
+function effectiveSupports(ev, isInat) {
+  const s = ev.supports?.start_doy, e = ev.supports?.end_doy;
+  if (s == null || e == null) return null;
+  if (isInat) return { start: s, end: e, peak: ev.supports.peak_doy };
+  if (isFuzzyEvidence(ev)) {
+    const mid = ev.supports.peak_doy ?? Math.round((s + e) / 2);
+    return { start: mid - FUZZY_HALF_WINDOW, end: mid + FUZZY_HALF_WINDOW, peak: mid, fuzzy: true };
+  }
+  return { start: s, end: e, peak: ev.supports.peak_doy };
+}
+
 function provenanceFor(source, summary) {
   const src = (source || '').toLowerCase();
   if (src.startsWith('inaturalist')) return 'empirical_inat';
@@ -181,10 +220,17 @@ function median(nums) {
       continue;
     }
 
-    const newStart = Math.min(...pool.map(e => e.supports.start_doy));
-    const newEnd   = Math.max(...pool.map(e => e.supports.end_doy));
-    const peaks    = pool.map(e => e.supports.peak_doy).filter(p => p != null);
+    // Apply fuzzy-language correction: vague seasonal sources contribute
+    // midpoint ± 15 days, not their full agent-derived range, so phrases
+    // like "mid-to-late summer" don't manufacture false precision in the
+    // envelope.
+    const effective = pool.map((e) => effectiveSupports(e, e._provenance === 'empirical_inat')).filter(x => x != null);
+    if (effective.length === 0) { skippedNoSupports++; continue; }
+    const newStart = Math.min(...effective.map(e => e.start));
+    const newEnd   = Math.max(...effective.map(e => e.end));
+    const peaks    = effective.map(e => e.peak).filter(p => p != null);
     const newPeak  = peaks.length > 0 ? median(peaks) : Math.round((newStart + newEnd) / 2);
+    const fuzzyCount = effective.filter(e => e.fuzzy).length;
 
     if (newStart === r.start_doy && newEnd === r.end_doy && newPeak === r.peak_doy) {
       unchanged++;
@@ -199,7 +245,7 @@ function median(nums) {
     if (poolKind === 'regional' && inat.length) droppedNote.push(`${inat.length} iNat (kept as evidence, not used in envelope)`);
     if ((poolKind === 'regional' || poolKind === 'inat') && generic.length) droppedNote.push(`${generic.length} generic`);
     const droppedStr = droppedNote.length ? ', dropped ' + droppedNote.join(' + ') : '';
-    const change = `${r.common_name} ${r.zone_code} ${r.stage}: ${r.start_doy}-${r.end_doy} → ${newStart}-${newEnd} (peak ${r.peak_doy ?? '—'} → ${newPeak}, pool=${poolKind} N=${pool.length}${droppedStr})`;
+    const change = `${r.common_name} ${r.zone_code} ${r.stage}: ${r.start_doy}-${r.end_doy} → ${newStart}-${newEnd} (peak ${r.peak_doy ?? '—'} → ${newPeak}, pool=${poolKind} N=${pool.length}${fuzzyCount > 0 ? `, ${fuzzyCount} fuzzy` : ''}${droppedStr})`;
 
     if (delta < 0) narrowed.push(change);
     else widened.push(change);

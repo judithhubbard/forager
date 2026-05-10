@@ -83,13 +83,27 @@ function directionFor(scientificName, stage) {
   return DEFAULT_DIRECTION[stage] ?? 0;
 }
 
+// Fuzzy-language detection — same heuristic as the rederive script.
+// Vague seasonal phrasing ("mid-to-late summer", "early fall") gets
+// agent-interpreted as a hard DOY range, but it's really a pointer to
+// a season ± uncertainty. The smoother shouldn't anchor on that
+// false-precision range.
+const FUZZY_LANGUAGE_RE = /\b(mid[\s-]+(?:to[\s-]+late\s+)?(?:spring|summer|fall|autumn|winter)|late\s+(?:spring|summer|fall|autumn|winter)|early\s+(?:spring|summer|fall|autumn|winter)|around\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|in\s+(?:spring|summer|fall|autumn|winter))\b/i;
+const PRECISE_DATE_RE = /\b(?:\d{1,2}\/\d{1,2}|january\s+\d{1,2}|february\s+\d{1,2}|march\s+\d{1,2}|april\s+\d{1,2}|may\s+\d{1,2}|june\s+\d{1,2}|july\s+\d{1,2}|august\s+\d{1,2}|september\s+\d{1,2}|october\s+\d{1,2}|november\s+\d{1,2}|december\s+\d{1,2}|DOY\s*\d+|first\s+frost|after\s+(?:first|hard)\s+frost)\b/i;
+
+function isFuzzyEvidence(ev) {
+  if (!ev?.summary) return false;
+  if (PRECISE_DATE_RE.test(ev.summary)) return false;
+  if (FUZZY_LANGUAGE_RE.test(ev.summary)) return true;
+  const s = ev.supports?.start_doy, e = ev.supports?.end_doy;
+  if (s != null && e != null && (e - s) > 45) return true;
+  return false;
+}
+
 function provenanceFor(source, summary) {
   const src = (source || '').toLowerCase();
   if (src.startsWith('inaturalist')) return 'empirical_inat';
   const s = summary || '';
-  // Only [zone-shift means a real per-zone offset was applied;
-  // (interpreted: alone is just date-text → DOY conversion (still
-  // generic but a legitimate quote of the source's claim).
   if (/\[zone-shift/i.test(s)) return 'shifted';
   if (/\b(zone\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic)\b/.test(s)) return 'regional';
   return 'generic';
@@ -107,6 +121,10 @@ function isAnchor(evidence) {
   if (supporting.length === 0) return false;
   return supporting.some(e => {
     const p = provenanceFor(e?.source, e?.summary);
+    // Fuzzy-language sources don't anchor — their bounds are agent
+    // interpretations of vague phrasing, not precise observations.
+    // They stay as evidence but the smoother should pull around them.
+    if (isFuzzyEvidence(e)) return false;
     if (p === 'regional') return true;
     if (p === 'empirical_inat' && (e?.supports?.n_obs ?? 0) >= MIN_INAT_ANCHOR_OBS) return true;
     return false;
@@ -127,8 +145,11 @@ function interp(qZone, aZone, aVal, bZone, bVal) {
 const PER_ZONE_DAYS = 7;
 
 function extrapolate(qZone, anchorZone, anchorVal, direction) {
-  // direction = -1: warmer zones earlier; +1: warmer zones later
-  return Math.round(anchorVal - direction * PER_ZONE_DAYS * (qZone - anchorZone));
+  // direction = -1: warmer zones earlier; +1: warmer zones later.
+  // Formula: delta_DOY = direction * step * delta_zone. So a colder
+  // zone (delta_zone < 0) of a heat-driven species (direction=-1)
+  // gets +step days, i.e. later peak.
+  return Math.round(anchorVal + direction * PER_ZONE_DAYS * (qZone - anchorZone));
 }
 
 function smoothCurve(rows, direction) {
