@@ -515,6 +515,82 @@ const COMPLEXES = [
     summary: 'Dandelion (Taraxacum officinale) leaves: tender spring leaves preferred (mid-Apr in 6a); becomes bitter post-flowering. Wide harvest window. Mild heat-driven gradient.'
   },
 
+  // ── Per-user review-batch 2026-05-10 ──
+
+  // Adam's needle (Yucca filamentosa) — edible flowers only. Native
+  // SE US, naturalized further north. Blooms mid-summer (Jun-Jul);
+  // flowers are sweet, used in salads or fritters. Heat-driven mild.
+  {
+    name: "Adam's needle (flowers)",
+    members: ['Yucca filamentosa'],
+    anchor_zone: '6a', anchor_peak: 182, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
+    stage: 'flower_harvest',
+    source_name: "Adam's needle (USDA Plant Profile + foraging guides)",
+    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=YUFI',
+    summary: "Adam's needle (Yucca filamentosa): edible flowers Jun-Jul, sweet pea-like flavor. Bloom stalks 4-8 ft; pick individual flowers."
+  },
+
+  // Almond (Prunus dulcis) — commercial nut crop, dominant in CA (zones
+  // 9-10). Hull-split / harvest Aug to mid-Sep depending on cultivar.
+  // Anchor 9a peak Aug 25 (DOY 237), shift -7 (heat-driven, earlier in
+  // warmest zones); narrow window since commercial harvest is well-
+  // defined.
+  {
+    name: 'Almond',
+    members: ['Prunus dulcis'],
+    anchor_zone: '9a', anchor_peak: 237, shift_per_half_zone: -7, half_window: 21,
+    target_zones: ['7b','8a','8b','9a','9b','10a','10b'],
+    stage: 'ripe',
+    source_name: 'Almond (UC ANR + Almond Board of California)',
+    source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=3364',
+    summary: 'Almond (Prunus dulcis): commercial harvest hull-split Aug to mid-Sep in CA Central Valley (zone 9). Cultivar variability spans ~3 weeks.'
+  },
+
+  // Cherimoya (Annona cherimola) — subtropical / tropical fruit. Peak
+  // harvest Nov-May depending on cultivar; wide window. Anchor 10a peak
+  // Jan 30 (DOY 30); use small mild shift since equatorial gradient is
+  // microclimate-driven.
+  {
+    name: 'Cherimoya',
+    members: ['Annona cherimola'],
+    anchor_zone: '10a', anchor_peak: 30, shift_per_half_zone: -2, half_window: 90,
+    target_zones: ['9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Cherimoya (UC ANR + California Rare Fruit Growers)',
+    source_url: 'https://www.crfg.org/pubs/ff/cherimoya.html',
+    summary: 'Cherimoya (Annona cherimola): subtropical evergreen, harvest Nov to May in coastal CA; wide window reflects cultivar spread.'
+  },
+
+  // Cherry/Plum (unspecified) (Prunus sp.) — generic Prunus catch-all.
+  // Wide window covering plum + cherry timing (~Jul-Aug zone 6a). Use
+  // when species ID is uncertain.
+  {
+    name: 'Cherry/Plum (unspecified)',
+    members: ['Prunus sp.'],
+    anchor_zone: '6a', anchor_peak: 207, shift_per_half_zone: -4, half_window: 35,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'ripe',
+    source_name: 'Prunus sp. (genus catch-all — wide window)',
+    source_url: 'https://en.wikipedia.org/wiki/Prunus',
+    summary: 'Generic Prunus (cherries / plums): catch-all when species not identified. Wide window (~Jun-Sep in 6a) covers genus variability.'
+  },
+
+  // Chicken of the woods (Laetiporus sulphureus) — choice fall mushroom,
+  // bright orange shelf fungus on hardwoods (oak especially). Peak
+  // flush Aug-Oct in NE; can also fruit in spring (May-Jun) but fall
+  // is dominant.
+  {
+    name: 'Chicken of the woods',
+    members: ['Laetiporus sulphureus'],
+    anchor_zone: '6a', anchor_peak: 244, shift_per_half_zone: -3, half_window: 35,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'mushroom_flush',
+    source_name: 'Chicken of the woods (Mushroom Expert + Audubon)',
+    source_url: 'https://www.mushroomexpert.com/laetiporus_sulphureus.html',
+    summary: 'Chicken of the woods (Laetiporus sulphureus): bright orange shelf fungus on hardwoods (esp. oak). Peak flush Aug-Oct (zone 6a); occasional spring flush.'
+  },
+
   // ── Tier 1: must-have foragables (added 2026-05-10) ──
 
   // Cattail (Typha) — multi-stage forage. Spring shoots, summer pollen,
