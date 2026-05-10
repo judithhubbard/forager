@@ -645,10 +645,20 @@
     const m: CatMap = {};
     for (const s of speciesList) {
       const parts = s.forage_parts ?? [];
-      // Brambles (Rubus) get their own category — they're forage-relevant
-      // in a different way than tree fruits (canes vs trees, harvest
-      // technique, ripeness behavior).
-      const isBramble = s.scientific_name.startsWith('Rubus');
+      // Small-shrub berries get their own category — distinct from
+      // tree fruits in canes/cluster harvest pattern, ripeness behavior,
+      // and visual appearance on the map. Members: Rubus (brambles
+      // proper), Ribes (currants + gooseberries), Vaccinium (blueberry
+      // + cranberry + huckleberry), Aronia (chokeberry), Mahonia
+      // (Oregon grape). Sambucus / Viburnum / Gaultheria are excluded
+      // — distinct harvest patterns (umbels / drupes / single berries).
+      const sci = s.scientific_name;
+      const isBramble =
+        sci.startsWith('Rubus') ||
+        sci.startsWith('Ribes') ||
+        sci.startsWith('Vaccinium') ||
+        sci.startsWith('Aronia') ||
+        sci.startsWith('Mahonia');
       let cat: Cat = 'other';
       if (isBramble) cat = 'bramble';
       else if (parts.includes('mushroom')) cat = 'mushroom';
