@@ -35,7 +35,11 @@ const ZONE_NUM = {
 // Anything nut-frost-fix anchors with a positive offset-from-frost
 // is frost-driven for monotonicity purposes (warmer = later).
 const FROST_DRIVEN_RIPE = new Set([
-  'Fagus grandifolia', 'Diospyros virginiana', 'Vaccinium macrocarpon',
+  // Vaccinium macrocarpon REMOVED: iNat shows ripe in early Sep across
+  // zones; frost is flavor-sweetening folklore, not ripening.
+  // Diospyros virginiana REMOVED: iNat shows ripe peak ~Sep 27
+  // (N=909+ in zone 7a), 30-60 days earlier than frost-driven model.
+  'Fagus grandifolia',
   'Castanea dentata', 'Castanea mollissima', 'Castanea sativa',
   'Castanea sp.',
   'Quercus alba', 'Quercus macrocarpa',

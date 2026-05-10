@@ -48,12 +48,19 @@ const FROST_PEAKS = {
 const NUT_SPECIES = {
   // Beech — done by beech-frost-fix.cjs but harmless to re-apply
   'Fagus grandifolia':    { offset:   0, half_window: 20, common: 'American beech' },
-  // Persimmon — frost-driven later than first frost (canon: "wait
-  // for first frost"; fruit clings to tree until frost softens it).
-  'Diospyros virginiana': { offset: +14, half_window: 21, common: 'American persimmon' },
-  // American cranberry — frost-tinted late fruit; tart in Sept, peak
-  // sweet harvest after first frost. Cape Cod tradition: Oct-Nov.
-  'Vaccinium macrocarpon': { offset: +14, half_window: 21, common: 'American cranberry' },
+  // American persimmon REMOVED: iNat shows ripe peak DOY ~270 (Sep 27)
+  // in zone 7a with N=909, vs frost-driven prediction of 311 (Nov 7).
+  // The folk "wait for first frost" wisdom is a quality-control
+  // heuristic for non-experts (avoid astringent under-ripe fruit),
+  // not actual ripening — native persimmons fall from the tree when
+  // fully ripe, before first frost in most zones. Now handled by
+  // species-complex-unify with iNat-empirical anchor.
+  // 'Diospyros virginiana': handled by species-complex-unify
+  // American cranberry REMOVED: iNat shows ripe red fruit in early
+  // September across zones (peak DOY ~250) — the "after first frost"
+  // tradition is about flavor (frost sweetens), not ripening. Now
+  // handled by species-complex-unify with iNat-empirical anchor.
+  // 'Vaccinium macrocarpon': handled by species-complex-unify
   // Chestnuts: drop before frost (Sept)
   'Castanea dentata':     { offset: -10, half_window: 20, common: 'American chestnut' },
   'Castanea mollissima':  { offset: -10, half_window: 20, common: 'Chinese chestnut' },

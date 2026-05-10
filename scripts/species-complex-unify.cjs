@@ -222,7 +222,7 @@ const COMPLEXES = [
     members: ['Mahonia aquifolium', 'Mahonia repens'],
     anchor_zone: '6a',
     anchor_peak: 215,           // Aug 3
-    shift_per_half_zone: -5,    // empirical iNat -5.2
+    shift_per_half_zone: -3,    // re-fit from per-species iNat (-2.4 to -5.2 range; -3 splits the difference)
     half_window: 21,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'ripe',
@@ -249,6 +249,25 @@ const COMPLEXES = [
     source_name: 'Sambucus complex (iNat-empirical heat-shift fit + cited regional sources)',
     source_url: 'https://en.wikipedia.org/wiki/Sambucus',
     summary: 'Sambucus complex (S. canadensis, S. nigra, S. cerulea): edible black/blue elderberries share late-summer ripening. Empirical iNat slope -4 d/half-zone (n=25). Anchor zone 6a peak Aug 24.'
+  },
+
+  // Sambucus elderflowers — flowers bloom ~6 weeks before berries.
+  // Anchor 6a peak Jun 14 (DOY 165) per cross-source consensus:
+  // PSR (VT zone 4) late-June peak → ~173 in zone 5a, fitting -4
+  // d/half-zone from a 6a anchor at 165. The "mid-Jun to mid-Jul"
+  // manual note was the full window, not the peak.
+  {
+    name: 'Sambucus (elderflower) complex',
+    members: ['Sambucus canadensis', 'Sambucus nigra', 'Sambucus cerulea'],
+    anchor_zone: '6a',
+    anchor_peak: 165,           // Jun 14
+    shift_per_half_zone: -4,
+    half_window: 14,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'flower_harvest',
+    source_name: 'Sambucus flowers (Backyard Forager + Practical Self Reliance + foraging consensus)',
+    source_url: 'https://practicalselfreliance.com/elderflower-cordial/',
+    summary: 'Sambucus elderflower complex: cream-colored flat-topped umbels for cordial / fritters / champagne. PSR (VT zone 4) cites late-June peak; BF (mid-Atlantic) cites mid-June. Anchor 6a peak Jun 14, shift -4 d/half-zone (same gradient as fruit, which follows ~6 weeks later).'
   },
 
   // Wild Vitis (grape) — riverbank grape (V. riparia), summer grape
@@ -287,6 +306,213 @@ const COMPLEXES = [
     source_name: 'Crataegus complex (USDA Silvics + cited foraging guides)',
     source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/crataegus/',
     summary: 'Crataegus complex (~200 freely-hybridizing NA hawthorn species): cited Sep-Oct ripe across the genus range. Conservative -3 d/half-zone gradient; iNat is wrong-stage (captures developing fruit).'
+  },
+
+  // Fraxinus (ash) edible samaras — green ash, white ash, black ash.
+  // The "ripe" stage in our schema means "harvestable" — for ash, that's
+  // the brief mid-April to late-May window when samaras (winged seeds)
+  // are tender and papery-soft, before the seed coat hardens. iNat for
+  // Fraxinus captures persistent samaras on the tree (Aug-Oct), which
+  // is the WRONG stage for foraging — that data dominates the rederive
+  // synthesis and pushes the peak to ~220-240 (late summer). Override
+  // with cited spring-samara timing: anchor 6a peak Apr 30 (DOY 120).
+  // Heat-driven gradient -3 d/half-zone (very mild — early-spring
+  // foliation tracks chill hours more than warmth). Same as the Siberian
+  // elm edible-samara window (Ulmus pumila correctly already shows
+  // peak ~Apr in iNat because observers tag the right stage there).
+  {
+    name: 'Fraxinus (ash) edible samara complex',
+    members: ['Fraxinus pennsylvanica', 'Fraxinus americana', 'Fraxinus nigra'],
+    anchor_zone: '6a',
+    anchor_peak: 120,           // Apr 30
+    shift_per_half_zone: -3,    // mild heat-driven (early-spring tender stage)
+    half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Fraxinus edible samara complex (foraging guides + manual prose)',
+    source_url: 'https://practicalselfreliance.com/foraging-ash-seeds/',
+    summary: 'Fraxinus complex (green ash, white ash, black ash): tender edible samaras mid-April to late-May; hardens after that. iNat for these species captures persistent visible samaras (Aug-Oct) which is the wrong stage — overriding with cited spring-samara timing. Anchor 6a peak Apr 30, mild -3 d/half-zone heat shift.'
+  },
+
+  // Common plantain (Plantago major) — leaves stage. forage_parts on
+  // the species record lists ['leaf','seed']; seed-head timing was
+  // already covered by an iNat-derived 'ripe' stage (peak ~Sep 4),
+  // but the leaves stage was missing entirely. Young tender leaves
+  // are best harvested mid-Apr to early-Jun in zone 6a; tougher
+  // (still edible cooked) through summer. Mild heat-driven gradient
+  // (early-spring greens follow soil warming).
+  {
+    name: 'Common plantain (leaves)',
+    members: ['Plantago major'],
+    anchor_zone: '6a',
+    anchor_peak: 130,           // May 10
+    shift_per_half_zone: -3,
+    half_window: 30,            // wide: leaves harvestable for weeks
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
+    stage: 'leaf',
+    source_name: 'Common plantain leaves (foraging consensus)',
+    source_url: 'https://practicalselfreliance.com/foraging-plantain/',
+    summary: 'Common plantain (Plantago major) leaves: young tender leaves preferred (mid-Apr to early-Jun in 6a); becomes tougher / stringier through summer but still edible cooked. The seed-head stage is a separate ripe-stage row (peak Sep).'
+  },
+
+  // American persimmon (Diospyros virginiana) — heat-driven late-summer
+  // / early-fall fruit. Long miscategorized as frost-driven because of
+  // the folk "wait for first frost" wisdom — but iNat data (N=909 in
+  // zone 7a alone, ~5000 total observations across zones) clearly
+  // shows ripe peak DOY ~270 in 7a (Sep 27), declining 4 days per
+  // warmer half-zone. Anchor 6a peak DOY 275 (Oct 2) per empirical fit.
+  // Native persimmons fall from the tree when ripe — that's the harvest
+  // signal, not first-frost.
+  {
+    name: 'American persimmon',
+    members: ['Diospyros virginiana'],
+    anchor_zone: '6a',
+    anchor_peak: 275,           // Oct 2
+    shift_per_half_zone: -4,    // empirical iNat -4 (n=9 zones, total N≈5000)
+    half_window: 28,            // wide: ripening drops scattered over weeks
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'ripe',
+    source_name: 'American persimmon (iNat-empirical, N≈5000 across zones)',
+    source_url: 'https://www.inaturalist.org/taxa/47885-Diospyros-virginiana',
+    summary: 'American persimmon (Diospyros virginiana): heat-driven late-summer/early-fall fruit. iNat empirical data (N=909 in zone 7a alone) shows peak ~Sep 27, declining -4 d/half-zone in warmer zones. Native persimmons drop from the tree when fully ripe — the drop is the harvest cue, not first frost.'
+  },
+
+  // American cranberry (Vaccinium macrocarpon) — bog-loving plant.
+  // Cited foraging guides converge on October harvest peak with a
+  // Sep-Nov window: Never A Goose Chase (MN zone 4) "early-to-mid
+  // October; berries persist well after a frost"; Herb Society of
+  // America "September through first part of November"; Wikipedia
+  // "fall crop, peak harvest in October." iNat captures the moment
+  // berries first turn red (early Sept) but the actual harvest peak
+  // is later when berries are fully sized and tannins have reduced.
+  // Cranberry is *primarily* heat-driven (ripening accumulates GDD)
+  // but folkloric "after first frost" tradition reflects flavor
+  // improvement (tannin reduction), not the ripening event itself.
+  {
+    name: 'American cranberry',
+    members: ['Vaccinium macrocarpon'],
+    anchor_zone: '6a',
+    anchor_peak: 280,           // Oct 7 — per cited foraging guides
+    shift_per_half_zone: -3,    // mild heat-driven; bog microclimate buffers
+    half_window: 35,            // wide: cited Sep-Nov window
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'ripe',
+    source_name: 'American cranberry (Herb Society of America + Never A Goose Chase + Wikipedia)',
+    source_url: 'https://www.herbsociety.org/file_download/inline/c2c2c8df-0ef1-43e6-a90d-b6017c3b0a32',
+    summary: 'American cranberry (Vaccinium macrocarpon): cited foraging guides converge on October harvest peak (Sep through first part of November). iNat shows berries turn red in early Sept but the cited harvest peak is later when berries are fully sized. Anchor 6a peak Oct 7, mild -3 d/half-zone gradient.'
+  },
+
+  // Chokecherry (Prunus virginiana) — heat-driven, mild gradient.
+  // iNat slope is +1.9 d/half-zone (slight warmer-later) but this is
+  // an artifact of persistent fruit on stem in warm zones; biology is
+  // mildly heat-driven. Pre-existing synth had a -7d/half-zone gradient
+  // that's too steep — chokecherry doesn't ripen 60+ days earlier in
+  // warm zones. Anchor 6a peak Aug 1 (DOY 213), shift -2.
+  {
+    name: 'Chokecherry',
+    members: ['Prunus virginiana'],
+    anchor_zone: '6a',
+    anchor_peak: 213,           // Aug 1
+    shift_per_half_zone: -2,    // mild; iNat artifact +1.9 reflects persistent fruit
+    half_window: 21,
+    target_zones: ['2b','3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'ripe',
+    source_name: 'Chokecherry (Minnesota Wildflowers + USDA Silvics + iNat)',
+    source_url: 'https://www.minnesotawildflowers.info/shrub/choke-cherry',
+    summary: 'Chokecherry (Prunus virginiana): heat-driven mid-summer to early-fall fruit. Mild gradient (-2 d/half-zone); iNat slight warmer-later signal is from persistent fruit on stem, not biological ripening. Anchor 6a peak Aug 1.'
+  },
+
+  // Black chokeberry (Aronia melanocarpa) — heat-driven, very mild
+  // gradient (iNat -1.1 d/half-zone). Cold-zone synth window currently
+  // includes August (DOY 213-?) which is too early-leaning per cited
+  // foraging guides — Aronia ripens late-Aug to mid-Oct depending on
+  // zone, with a peak ~Sep 7 in 6a. Anchor 6a peak DOY 250, shift -2.
+  {
+    name: 'Black chokeberry',
+    members: ['Aronia melanocarpa'],
+    anchor_zone: '6a',
+    anchor_peak: 250,           // Sep 7
+    shift_per_half_zone: -2,    // empirical iNat -1.1, conservative
+    half_window: 21,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Black chokeberry (USDA Silvics + Cornell CE + iNat)',
+    source_url: 'https://www.fs.fed.us/database/feis/plants/shrub/aromel/all.html',
+    summary: 'Black chokeberry (Aronia melanocarpa): heat-driven late-summer to early-fall fruit. Tight ±21d window centered on Sep 7 in zone 6a; mild -2 d/half-zone gradient.'
+  },
+
+  // Ribes (currant) complex — black currant, red currant, gooseberries.
+  // Heat-driven early-summer fruit (Jun-Jul). Strong commercial crop
+  // with well-documented timing. Anchor 6a peak Jul 14 (DOY 195),
+  // shift -5 (matches mulberry / similar early-summer berries).
+  {
+    name: 'Ribes (currant) complex',
+    members: ['Ribes nigrum', 'Ribes rubrum', 'Ribes uva-crispa', 'Ribes sp.'],
+    anchor_zone: '6a',
+    anchor_peak: 195,           // Jul 14
+    shift_per_half_zone: -5,
+    half_window: 18,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Ribes complex (Cornell CE + commercial currant timing)',
+    source_url: 'https://gardening.cals.cornell.edu/plants/currant-gooseberry/',
+    summary: 'Ribes complex (currants + gooseberries): heat-driven early-summer fruit. Anchor 6a peak Jul 14, shift -5 d/half-zone matching similar early-summer berries.'
+  },
+
+  // Pyrus (pear) complex — Asian + European pear, including the
+  // commonly-volunteer Pyrus pyrifolia. Heat-driven late-summer fruit.
+  // Cold zones (5a-6b in Ithaca region) need cold-zone coverage —
+  // current Asian pear was capped at 7a despite trees growing in 5b.
+  // European pear iNat (n=4) suggests anchor ~225 (Aug 13) for 6a.
+  // Take a balanced anchor 240 (Aug 28) per cited guides.
+  {
+    name: 'Pyrus (pear) complex',
+    members: ['Pyrus communis', 'Pyrus pyrifolia', 'Pyrus calleryana'],
+    anchor_zone: '6a',
+    anchor_peak: 240,           // Aug 28
+    shift_per_half_zone: -4,
+    half_window: 28,            // wide: cultivar variation
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
+    stage: 'ripe',
+    source_name: 'Pyrus complex (Cornell CE + Toronto NFFTT + Backyard Forager)',
+    source_url: 'https://gardening.cals.cornell.edu/plants/pear/',
+    summary: 'Pyrus complex (Asian, European, callery pears): heat-driven late-summer fruit. Anchor 6a peak Aug 28, shift -4 d/half-zone. Window widened (±28d) for cultivar variability.'
+  },
+
+  // American plum (Prunus americana) — heat-driven, very mild gradient.
+  // iNat slope -1 (essentially flat). User flagged "do not apply
+  // monotonic behavior" — the curve is genuinely flat across zones.
+  // Anchor 6a peak Aug 11 (DOY 223), shift -1.
+  {
+    name: 'American plum',
+    members: ['Prunus americana'],
+    anchor_zone: '6a',
+    anchor_peak: 223,           // Aug 11
+    shift_per_half_zone: -1,    // empirical iNat ~-1; nearly flat
+    half_window: 18,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'American plum (Minnesota Wildflowers + USDA Silvics)',
+    source_url: 'https://www.minnesotawildflowers.info/shrub/wild-plum',
+    summary: 'American plum (Prunus americana): heat-driven late-summer fruit with very mild cross-zone gradient (-1 d/half-zone). Curve is essentially flat — variability is within-zone, not across zones.'
+  },
+
+  // Dandelion (Taraxacum officinale) leaves — extends to all zones
+  // (was previously limited to 5a-6a). Spring tender leaves preferred;
+  // bitter post-flowering. Heat-driven (early-spring greens follow
+  // soil warming). Anchor 6a peak Apr 17 (DOY 107), shift -3.
+  {
+    name: 'Dandelion (leaves)',
+    members: ['Taraxacum officinale'],
+    anchor_zone: '6a',
+    anchor_peak: 107,           // Apr 17
+    shift_per_half_zone: -3,
+    half_window: 30,            // wide: leaves harvestable for weeks
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
+    stage: 'leaf',
+    source_name: 'Dandelion leaves (foraging consensus)',
+    source_url: 'https://practicalselfreliance.com/foraging-dandelion/',
+    summary: 'Dandelion (Taraxacum officinale) leaves: tender spring leaves preferred (mid-Apr in 6a); becomes bitter post-flowering. Wide harvest window. Mild heat-driven gradient.'
   },
 
   // Black cherry (Prunus serotina) — heat-driven late-summer fruit.

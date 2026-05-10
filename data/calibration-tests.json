@@ -306,10 +306,10 @@
       "common": "American cranberry",
       "zone": "5a",
       "stage": "ripe",
-      "peak_doy": 280,
+      "peak_doy": 286,
       "tolerance": 21,
-      "source": "Cape Cod Cranberry Growers + UMass Extension",
-      "notes": "Wild cranberry peak ~Oct 7 in zone 5a (frost-tinted bog harvest)."
+      "source": "Herb Society of America + Never A Goose Chase + Wikipedia",
+      "notes": "Cited foraging guides converge on October peak (Sep through first part of November). iNat shows berries first turn red in early Sept but actual harvest peak is later when berries are fully sized."
     },
     {
       "species": "Mentha",

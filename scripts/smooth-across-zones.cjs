@@ -79,8 +79,12 @@ const DEFAULT_DIRECTION = {
 // frost-tinted late fruits.
 const FROST_DRIVEN_RIPE = new Set([
   'Fagus grandifolia',      // American beech
-  'Diospyros virginiana',   // American persimmon
-  'Vaccinium macrocarpon',  // American cranberry
+  // Diospyros virginiana REMOVED: iNat shows ripe peak ~Sep 27 in
+  // zone 7a (N=909+); frost-driven was off by 30-60 days. Folk
+  // "wait for frost" is a quality-control heuristic, not biology.
+  // Vaccinium macrocarpon REMOVED: iNat shows cranberries ripe in
+  // early September across zones; "after first frost" is flavor-
+  // sweetening folklore, not actual ripening. Now heat-driven.
   // Chestnuts (drop -10 to -25 days before first frost; still frost-anchored)
   // Castanea pumila REMOVED — heat-driven, handled by chinkapin-fix.
   'Castanea dentata', 'Castanea mollissima', 'Castanea sativa', 'Castanea sp.',
@@ -306,17 +310,24 @@ function detectAnchorViolations(rows, direction) {
   const violations = [];
   const changes = [];
 
-  // Species whose synthesis comes from nut-frost-fix (frost-driven
-  // anchors). Smoothing should leave these alone — their per-zone
-  // values are already correct, and the iNat evidence on these
-  // species is wrong-stage so shouldn't drive any smoothing.
+  // Species where iNat captures the wrong stage relative to the
+  // foraging window — smoothing should leave these alone because
+  // averaging in iNat data would pull synthesis toward the wrong
+  // cluster. The species-complex-unify framework writes the correct
+  // foraging-stage anchor; smoothing must respect it.
+  // (Diospyros virginiana / Vaccinium macrocarpon REMOVED from this
+  // list — iNat is reliable for both, just biased to color-change
+  // not harvest-peak.)
   const NUT_FROST_FIX_SPECIES = new Set([
-    'Fagus grandifolia', 'Diospyros virginiana', 'Vaccinium macrocarpon',
+    'Fagus grandifolia',
     'Castanea dentata', 'Castanea mollissima', 'Castanea sativa', 'Castanea sp.',
     'Quercus alba', 'Quercus macrocarpa',
     'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
     'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
-    'Corylus americana', 'Corylus cornuta'
+    'Corylus americana', 'Corylus cornuta',
+    // Ash samaras: iNat captures persistent visible samaras (Aug-Oct)
+    // not the brief edible spring window (Apr-May).
+    'Fraxinus americana', 'Fraxinus pennsylvanica', 'Fraxinus nigra'
   ]);
 
   for (const [key, grp] of groups) {

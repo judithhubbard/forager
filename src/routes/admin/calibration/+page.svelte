@@ -622,19 +622,22 @@
   // Cross-zone smoothing status. Same heuristic as the smoothing
   // script — heat-driven default, frost-driven override list, and
   // some stages have no monotonic signal at all.
-  // Frost-driven ripe — must mirror the smoothing script. All
-  // hardwood mast nuts (timing tracks first frost) plus frost-tinted
-  // late fruits.
+  // Frost-driven ripe — must mirror the smoothing/enforce-monotonic
+  // scripts. Hardwood mast nuts (timing tracks first frost) + frost-
+  // tinted late fruits (persimmon, cranberry, beech).
+  // Castanea pumila (chinkapin) and Corylus (hazelnuts) REMOVED:
+  // both are heat-driven (cited Aug-Sep harvest with no first-frost
+  // requirement), now handled by species-complex-unify.
   const FROST_DRIVEN_RIPE = new Set([
     'Fagus grandifolia',
-    'Diospyros virginiana',
-    'Vaccinium macrocarpon',
+    // Diospyros virginiana REMOVED: iNat (N=909+ in zone 7a) shows
+    // ripe peak ~Sep 27, 30-60d earlier than frost-driven model.
+    // Vaccinium macrocarpon REMOVED: heat-driven (frost is flavor folklore).
     'Castanea dentata', 'Castanea mollissima', 'Castanea sativa',
-    'Castanea pumila', 'Castanea sp.',
+    'Castanea sp.',
     'Quercus alba', 'Quercus macrocarpa',
     'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
-    'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
-    'Corylus americana', 'Corylus cornuta'
+    'Juglans nigra', 'Juglans cinerea', 'Juglans regia'
   ]);
   const STAGE_DIRECTION: Record<string, -1 | 0 | 1> = {
     ripe: -1, ripening: -1, green: -1,
@@ -916,10 +919,13 @@
    *  Mirrors the script's INAT_WRONG_STAGE list. The viewer fades
    *  iNat lanes for these species so it's visually obvious that
    *  iNat is not contributing to the synthesized DOY. */
+  // Castanea pumila (chinkapin) REMOVED: iNat captures the actual
+  // ripe fruit and is reliable enough to drive the empirical slope
+  // fit (-2.6 d/half-zone, n=6).
   const INAT_WRONG_STAGE = new Set([
     'Fagus grandifolia',
     'Castanea dentata', 'Castanea mollissima', 'Castanea sativa',
-    'Castanea sp.', 'Castanea pumila',
+    'Castanea sp.',
     'Quercus alba', 'Quercus macrocarpa',
     'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
     'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
