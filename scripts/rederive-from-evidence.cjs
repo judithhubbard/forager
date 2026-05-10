@@ -79,43 +79,70 @@ const INAT_WRONG_STAGE = new Set([
   'Vaccinium macrocarpon'
 ]);
 
-/** Detect when an evidence summary describes its window in fuzzy
- *  seasonal language ("mid-to-late summer", "early fall", "around
- *  August") rather than precise dates. The agent processing such
- *  sources tends to interpret vague phrases as full DOY ranges
- *  (e.g. "mid-to-late summer" → DOY 196-243), which creates false
- *  precision when those bounds get used in the envelope. Fuzzy
- *  sources should contribute their MIDPOINT ± a tighter window
- *  (15 days) to the envelope, not their full agent-derived range. */
-const FUZZY_LANGUAGE_RE = /\b(mid[\s-]+(?:to[\s-]+late\s+)?(?:spring|summer|fall|autumn|winter)|late\s+(?:spring|summer|fall|autumn|winter)|early\s+(?:spring|summer|fall|autumn|winter)|around\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|in\s+(?:spring|summer|fall|autumn|winter))\b/i;
+/** Three-tier precision detection. Sources differ in how precisely
+ *  they describe harvest timing:
+ *    PRECISE — explicit dates ("Aug 15", "DOY 227", "Sep 14, 2024",
+ *      "after first frost"). Use raw supports values; trust them.
+ *    INTERMEDIATE — month-level reference ("early September",
+ *      "mid-July", "JUL-AUG", "in October"). Months are pinned but
+ *      day-precision is implied. Effective range: peak ± 12 days
+ *      (~3 weeks total, the typical "first half of August" span).
+ *    FUZZY — vague seasonal ("late summer", "early fall", "around
+ *      September"). Effective range: peak ± 18 days (~5 weeks).
+ *  The agent processing source quotes tends to interpret all three
+ *  as full DOY ranges, manufacturing false precision. The tiered
+ *  shrink keeps each evidence entry contributing roughly the spread
+ *  it actually claims.
+ *
+ *  iNat is excluded from this — its supports are real observation
+ *  percentiles (p15-p85), already empirically grounded.  */
 const PRECISE_DATE_RE = /\b(?:\d{1,2}\/\d{1,2}|january\s+\d{1,2}|february\s+\d{1,2}|march\s+\d{1,2}|april\s+\d{1,2}|may\s+\d{1,2}|june\s+\d{1,2}|july\s+\d{1,2}|august\s+\d{1,2}|september\s+\d{1,2}|october\s+\d{1,2}|november\s+\d{1,2}|december\s+\d{1,2}|DOY\s*\d+|first\s+frost|after\s+(?:first|hard)\s+frost)\b/i;
-const FUZZY_HALF_WINDOW = 15; // days each side of midpoint for fuzzy sources
+const INTERMEDIATE_LANGUAGE_RE = /\b((?:early|mid|late)\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(?:[-\s]+(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC))?|in\s+(?:january|february|march|april|may|june|july|august|september|october|november|december))\b/i;
+const FUZZY_LANGUAGE_RE = /\b(mid[\s-]+(?:to[\s-]+late\s+)?(?:spring|summer|fall|autumn|winter)|late\s+(?:spring|summer|fall|autumn|winter)|early\s+(?:spring|summer|fall|autumn|winter)|around\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|in\s+(?:spring|summer|fall|autumn|winter))\b/i;
+const INTERMEDIATE_HALF_WINDOW = 12; // peak ± 12d for intermediate (month-level)
+const FUZZY_HALF_WINDOW = 18;        // peak ± 18d for fuzzy (seasonal)
 
-function isFuzzyEvidence(ev) {
-  if (!ev?.summary) return false;
-  // Precise dates or specific phenological events override fuzzy language.
-  if (PRECISE_DATE_RE.test(ev.summary)) return false;
-  // Vague seasonal phrasing without precise anchors.
-  if (FUZZY_LANGUAGE_RE.test(ev.summary)) return true;
-  // Long span (>45 days) without specific dates is also a sign.
-  const s = ev.supports?.start_doy, e = ev.supports?.end_doy;
-  if (s != null && e != null && (e - s) > 45) return true;
-  return false;
+function precisionTier(ev) {
+  if (!ev?.summary) return 'precise';
+  // Strip agent metadata before precision detection — the
+  // `(interpreted: ... DOY 207-258 ...)` parenthetical and the
+  // `[zone-shift +/-Nd]` tag are the agent's added context, not
+  // the source's actual quoted claim. A vague "late summer" quote
+  // shouldn't get classified precise just because the agent wrote
+  // "(interpreted: DOY 207-258)" alongside it.
+  const s = ev.summary
+    .replace(/\(interpreted:[^)]*\)/gi, '')
+    .replace(/\[zone-shift[^\]]*\]/gi, '');
+  // Precise dates or phenological events override everything.
+  if (PRECISE_DATE_RE.test(s)) return 'precise';
+  // Fuzzy seasonal language is the loosest tier.
+  if (FUZZY_LANGUAGE_RE.test(s)) return 'fuzzy';
+  // Month-level references (no day) are intermediate.
+  if (INTERMEDIATE_LANGUAGE_RE.test(s)) return 'intermediate';
+  // Fall back to span heuristic when language doesn't tell us.
+  const sd = ev.supports?.start_doy, ed = ev.supports?.end_doy;
+  if (sd != null && ed != null) {
+    const span = ed - sd;
+    if (span > 60) return 'fuzzy';
+    if (span > 30) return 'intermediate';
+  }
+  return 'precise';
 }
 
-/** Effective supports for envelope calculation. For fuzzy sources,
- *  shrinks the contribution to midpoint ± FUZZY_HALF_WINDOW so the
- *  vague language doesn't manufacture precision. iNat sources are
- *  always treated as their stored bounds (real observations). */
+// Backwards-compat shim used by detectAnchorViolations / smoothing.
+function isFuzzyEvidence(ev) {
+  return precisionTier(ev) !== 'precise';
+}
+
 function effectiveSupports(ev, isInat) {
   const s = ev.supports?.start_doy, e = ev.supports?.end_doy;
   if (s == null || e == null) return null;
   if (isInat) return { start: s, end: e, peak: ev.supports.peak_doy };
-  if (isFuzzyEvidence(ev)) {
-    const mid = ev.supports.peak_doy ?? Math.round((s + e) / 2);
-    return { start: mid - FUZZY_HALF_WINDOW, end: mid + FUZZY_HALF_WINDOW, peak: mid, fuzzy: true };
-  }
-  return { start: s, end: e, peak: ev.supports.peak_doy };
+  const tier = precisionTier(ev);
+  if (tier === 'precise') return { start: s, end: e, peak: ev.supports.peak_doy };
+  const halfWindow = tier === 'intermediate' ? INTERMEDIATE_HALF_WINDOW : FUZZY_HALF_WINDOW;
+  const mid = ev.supports.peak_doy ?? Math.round((s + e) / 2);
+  return { start: mid - halfWindow, end: mid + halfWindow, peak: mid, fuzzy: true, tier };
 }
 
 function provenanceFor(source, summary, rowZoneCode) {
@@ -196,11 +223,8 @@ function median(nums) {
     if (supporting.length === 0) { skippedNoSupports++; continue; }
 
     // For nut species (frost-driven by nut-frost-fix), rederive only
-    // overrides when there's explicit-zone-match regional evidence —
-    // that's the case where a real source for THIS zone trumps the
-    // generic frost-date model. (Eat The Weeds Florida 9a → use it
-    // for 9a; not for any other zone.) Without strong evidence,
-    // preserve nut-frost-fix's synthesis.
+    // overrides when there's explicit-zone-match regional evidence.
+    // Without strong evidence, preserve nut-frost-fix's value.
     if (isNutSpecies) {
       const strongRegional = supporting.filter((e) => e._provenance === 'regional');
       if (strongRegional.length === 0) {

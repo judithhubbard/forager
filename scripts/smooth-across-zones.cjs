@@ -215,19 +215,25 @@ function detectAnchorViolations(rows, direction) {
   for (let i = 1; i < anchors.length; i++) {
     const prev = anchors[i - 1];
     const cur  = anchors[i];
-    // For direction=-1 (heat): cur.start_doy should be <= prev.start_doy (earlier as zone warms)
-    // For direction=+1 (frost): cur.start_doy should be >= prev.start_doy (later as zone warms)
+    // Check monotonicity on all three: start, end, and peak (when
+    // both rows have a peak set). For direction=-1 (heat-driven):
+    // values should DECREASE as zone warms. direction=+1 (frost):
+    // values should INCREASE.
     const startDelta = cur.start_doy - prev.start_doy;
     const endDelta   = cur.end_doy   - prev.end_doy;
+    const peakDelta  = (cur.peak_doy != null && prev.peak_doy != null)
+      ? cur.peak_doy - prev.peak_doy : null;
     const expectedSign = direction;
-    const startOk = (startDelta * expectedSign) >= -3; // 3-day tolerance
-    const endOk   = (endDelta   * expectedSign) >= -3;
-    if (!startOk || !endOk) {
+    const TOL = 3; // 3-day tolerance — small drift OK
+    const startOk = (startDelta * expectedSign) >= -TOL;
+    const endOk   = (endDelta   * expectedSign) >= -TOL;
+    const peakOk  = peakDelta == null || (peakDelta * expectedSign) >= -TOL;
+    if (!startOk || !endOk || !peakOk) {
       violations.push({
         from: prev.zone_code, to: cur.zone_code,
-        prev_doy: `${prev.start_doy}-${prev.end_doy}`,
-        cur_doy:  `${cur.start_doy}-${cur.end_doy}`,
-        startDelta, endDelta
+        prev_doy: `${prev.start_doy}-${prev.end_doy}` + (prev.peak_doy != null ? ` peak ${prev.peak_doy}` : ''),
+        cur_doy:  `${cur.start_doy}-${cur.end_doy}` + (cur.peak_doy != null ? ` peak ${cur.peak_doy}` : ''),
+        startDelta, endDelta, peakDelta
       });
     }
   }
@@ -324,7 +330,8 @@ function detectAnchorViolations(rows, direction) {
   for (const v of violations.slice(0, 20)) {
     console.log(`\n  ${v.common} (${v.scientific}) stage=${v.stage} dir=${v.direction === -1 ? 'heat→earlier' : 'frost→later'}`);
     for (const x of v.vios) {
-      console.log(`    ${x.from} → ${x.to}: ${x.prev_doy} → ${x.cur_doy}  (Δstart=${x.startDelta}, Δend=${x.endDelta})`);
+      const peakStr = x.peakDelta != null ? `, Δpeak=${x.peakDelta}` : '';
+      console.log(`    ${x.from} → ${x.to}: ${x.prev_doy} → ${x.cur_doy}  (Δstart=${x.startDelta}, Δend=${x.endDelta}${peakStr})`);
     }
   }
   if (violations.length > 20) console.log(`\n  +${violations.length - 20} more violations (truncated)`);

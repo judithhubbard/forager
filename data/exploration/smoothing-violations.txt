@@ -3,77 +3,96 @@
 Total (species,stage) groups: 115
   skipped (no zone signal):    2
   skipped (<3 rows):           8
-  skipped (no anchor zones):   47
-Rows WOULD update:  8
+  skipped (no anchor zones):   38
+Rows WOULD update:  0
 
 === Anchor monotonicity violations (review needed) ===
-Total combos with violations: 18
-
-  Amur maple (Acer ginnala) stage=sap_run dir=heat→earlier
-    3b → 4a: 50-89 → 50-304  (Δstart=0, Δend=215)
+Total combos with violations: 42
 
   Kiwifruit (Actinidia deliciosa) stage=ripe dir=heat→earlier
-    9a → 9b: 274-365 → 305-365  (Δstart=31, Δend=0)
+    8b → 8b: 244-304 peak 274 → 305-365 peak 335  (Δstart=61, Δend=61, Δpeak=61)
+    9a → 9b: 274-312 peak 297 → 305-365 peak 335  (Δstart=31, Δend=53, Δpeak=38)
+
+  Eastern serviceberry (Amelanchier canadensis) stage=ripe dir=heat→earlier
+    5a → 5b: 161-191 peak 176 → 161-196 peak 179  (Δstart=0, Δend=5, Δpeak=3)
+    6b → 7a: 161-191 peak 176 → 152-196 peak 174  (Δstart=-9, Δend=5, Δpeak=-2)
 
   Allegheny serviceberry (Amelanchier laevis) stage=ripe dir=heat→earlier
-    6a → 6b: 168-198 → 173-196  (Δstart=5, Δend=-2)
+    5b → 6a: 152-196 peak 184 → 168-198 peak 183  (Δstart=16, Δend=2, Δpeak=-1)
+
+  Chinese chestnut (Castanea mollissima) stage=ripe dir=frost→later
+    6a → 6b: 265-296 peak 281 → 259-289 peak 274  (Δstart=-6, Δend=-7, Δpeak=-7)
+
+  Sweet chestnut (Castanea sativa) stage=ripe dir=frost→later
+    7a → 9a: 288-313 peak 301 → 260-285 peak 273  (Δstart=-28, Δend=-28, Δpeak=-28)
+
+  Lemon (Citrus limon) stage=ripe dir=heat→earlier
+    8b → 9a: 1-365 peak 183 → 168-335 peak 228  (Δstart=167, Δend=-30, Δpeak=45)
+    9a → 9b: 168-335 peak 228 → 1-365 peak 183  (Δstart=-167, Δend=30, Δpeak=-45)
 
   Grapefruit (Citrus paradisi) stage=ripe dir=heat→earlier
-    9a → 9b: 31-334 → 60-334  (Δstart=29, Δend=0)
+    9a → 9b: 31-243 peak 137 → 60-334 peak 197  (Δstart=29, Δend=91, Δpeak=60)
 
-  Beaked hazelnut (Corylus cornuta) stage=ripe dir=heat→earlier
-    3a → 3b: 190-225 → 216-252  (Δstart=26, Δend=27)
-    3b → 4a: 216-252 → 223-259  (Δstart=7, Δend=7)
-    4a → 4b: 223-259 → 233-304  (Δstart=10, Δend=45)
+  Mandarin orange (Citrus reticulata) stage=ripe dir=heat→earlier
+    8b → 9a: 1-90 peak 46 → 305-90 peak 198  (Δstart=304, Δend=0, Δpeak=152)
+
+  Sweet orange (Citrus sinensis) stage=ripe dir=heat→earlier
+    8b → 9a: 1-334 peak 168 → 274-151 peak 213  (Δstart=273, Δend=-183, Δpeak=45)
+    9a → 9b: 274-151 peak 213 → 1-334 peak 168  (Δstart=-273, Δend=183, Δpeak=-45)
+
+  Beaked hazelnut (Corylus cornuta) stage=ripe dir=frost→later
+    3a → 3b: 254-294 peak 273 → 247-287 peak 266  (Δstart=-7, Δend=-7, Δpeak=-7)
+    3b → 4a: 247-287 peak 266 → 240-280 peak 259  (Δstart=-7, Δend=-7, Δpeak=-7)
+    4a → 4b: 240-280 peak 259 → 233-273 peak 252  (Δstart=-7, Δend=-7, Δpeak=-7)
+
+  Quince (Cydonia oblonga) stage=ripe dir=heat→earlier
+    7a → 7b: 244-304 peak 274 → 270-300 peak 285  (Δstart=26, Δend=-4, Δpeak=11)
+    7b → 8a: 270-300 peak 285 → 244-334 peak 289  (Δstart=-26, Δend=34, Δpeak=4)
 
   Japanese persimmon (Diospyros kaki) stage=ripe dir=heat→earlier
-    7b → 8b: 295-320 → 182-334  (Δstart=-113, Δend=14)
+    7a → 7b: 274-334 peak 304 → 295-320 peak 308  (Δstart=21, Δend=-14, Δpeak=4)
+    7b → 8a: 295-320 peak 308 → 274-365 peak 320  (Δstart=-21, Δend=45, Δpeak=12)
+    8b → 9a: 182-334 peak 258 → 266-296 peak 281  (Δstart=84, Δend=-38, Δpeak=23)
+    9a → 9b: 266-296 peak 281 → 182-334 peak 300  (Δstart=-84, Δend=38, Δpeak=19)
+
+  American persimmon (Diospyros virginiana) stage=ripe dir=frost→later
+    7a → 7b: 274-334 peak 289 → 267-297 peak 282  (Δstart=-7, Δend=-37, Δpeak=-7)
+    7b → 8a: 267-297 peak 282 → 260-365 peak 275  (Δstart=-7, Δend=68, Δpeak=-7)
+    8a → 8b: 260-365 peak 275 → 253-283 peak 268  (Δstart=-7, Δend=-82, Δpeak=-7)
+
+  Autumn olive (Elaeagnus umbellata) stage=ripe dir=heat→earlier
+    5b → 6a: 231-305 peak 275 → 221-305 peak 290  (Δstart=-10, Δend=0, Δpeak=15)
+
+  Common fig (Ficus carica) stage=ripe dir=heat→earlier
+    8a → 8b: 213-273 peak 243 → 182-304 peak 243  (Δstart=-31, Δend=31, Δpeak=0)
+    8b → 9a: 182-304 peak 243 → 244-274 peak 259  (Δstart=62, Δend=-30, Δpeak=16)
+    9a → 9b: 244-274 peak 259 → 110-304 peak 210  (Δstart=-134, Δend=30, Δpeak=-49)
+
+  Ginkgo (Ginkgo biloba) stage=ripe dir=heat→earlier
+    6b → 7a: 253-304 peak 279 → 293-334 peak 308  (Δstart=40, Δend=30, Δpeak=29)
+
+  Apple (Malus domestica) stage=ripe dir=heat→earlier
+    5a → 5b: 202-304 peak 265 → 209-281 peak 240  (Δstart=7, Δend=-23, Δpeak=-25)
+    5b → 6a: 209-281 peak 240 → 202-304 peak 254  (Δstart=-7, Δend=23, Δpeak=14)
+    6b → 7a: 204-280 peak 245 → 197-304 peak 225  (Δstart=-7, Δend=24, Δpeak=-20)
+    7a → 7b: 197-304 peak 225 → 150-304 peak 231  (Δstart=-47, Δend=0, Δpeak=6)
+    7b → 8a: 150-304 peak 231 → 182-334 peak 258  (Δstart=32, Δend=30, Δpeak=27)
+    8b → 8b: 182-334 peak 237 → 182-334 peak 258  (Δstart=0, Δend=0, Δpeak=21)
+    8b → 9a: 182-334 peak 258 → 252-282 peak 267  (Δstart=70, Δend=-52, Δpeak=9)
+    9a → 9b: 252-282 peak 267 → 182-334 peak 258  (Δstart=-70, Δend=52, Δpeak=-9)
 
   White mulberry (Morus alba) stage=ripe dir=heat→earlier
-    5a → 5b: 160-186 → 161-191  (Δstart=1, Δend=5)
+    5a → 5b: 160-186 peak 173 → 161-191 peak 174  (Δstart=1, Δend=5, Δpeak=1)
 
   Avocado (Persea americana) stage=ripe dir=heat→earlier
-    10a → 10b: 1-365 → 152-198  (Δstart=151, Δend=-167)
+    8b → 9a: 1-365 peak 183 → 168-213 peak 198  (Δstart=167, Δend=-152, Δpeak=15)
+    9a → 9b: 168-213 peak 198 → 168-259 peak 214  (Δstart=0, Δend=46, Δpeak=16)
+    9b → 10a: 168-259 peak 214 → 152-198 peak 244  (Δstart=-16, Δend=-61, Δpeak=30)
+    10a → 10b: 152-198 peak 244 → 168-198 peak 183  (Δstart=16, Δend=0, Δpeak=-61)
 
-  Apricot (Prunus armeniaca) stage=ripe dir=heat→earlier
-    7b → 8b: 145-195 → 145-243  (Δstart=0, Δend=48)
+  American plum (Prunus americana) stage=ripe dir=heat→earlier
+    4a → 6b: 202-251 peak 239 → 218-248 peak 232  (Δstart=16, Δend=-3, Δpeak=-7)
 
-  Sweet cherry (Prunus avium) stage=ripe dir=heat→earlier
-    7b → 8b: 138-174 → 153-188  (Δstart=15, Δend=14)
-    8b → 9a: 153-188 → 161-187  (Δstart=8, Δend=-1)
-
-  Black cherry (Prunus serotina) stage=ripe dir=heat→earlier
-    5b → 8a: 172-266 → 124-276  (Δstart=-48, Δend=10)
-
-  Asian pear (Pyrus pyrifolia) stage=ripe dir=heat→earlier
-    7a → 8b: 233-258 → 182-334  (Δstart=-51, Δend=76)
-
-  Red raspberry (Rubus idaeus) stage=ripe dir=heat→earlier
-    3a → 3b: 187-308 → 197-234  (Δstart=10, Δend=-74)
-    4b → 6a: 194-225 → 188-233  (Δstart=-6, Δend=8)
-    6a → 7b: 188-233 → 195-234  (Δstart=7, Δend=1)
-
-  Black raspberry (Rubus occidentalis) stage=ripe dir=heat→earlier
-    6a → 6b: 168-196 → 163-212  (Δstart=-5, Δend=16)
-
-  Thimbleberry (Rubus parviflorus) stage=ripe dir=heat→earlier
-    5b → 6a: 192-232 → 199-238  (Δstart=7, Δend=6)
-
-  Wineberry (Rubus phoenicolasius) stage=ripe dir=heat→earlier
-    6b → 7a: 187-208 → 173-212  (Δstart=-14, Δend=4)
-
-  American basswood (Tilia americana) stage=leaf dir=heat→earlier
-    6a → 6b: 122-152 → 152-196  (Δstart=30, Δend=44)
-
-  American elm (Ulmus americana) stage=ripe dir=heat→earlier
-    7a → 7b: 78-135 → 85-135  (Δstart=7, Δend=0)
+  +22 more violations (truncated)
 
 === Sample smoothing changes (first 30) ===
-  Apple 4b ripe: 238-366 peak 314 → 238-366 peak 293
-  Apple 5a ripe: 231-366 peak 307 → 231-366 peak 286
-  Apple 5b ripe: 224-366 peak 300 → 224-366 peak 279
-  Apple 6a ripe: 217-366 peak 293 → 217-366 peak 272
-  Apple 6b ripe: 210-362 peak 286 → 210-362 peak 265
-  Apple 7a ripe: 203-355 peak 279 → 203-355 peak 258
-  Apple 7b ripe: 196-348 peak 272 → 196-348 peak 251
-  Apple 8a ripe: 189-341 peak 265 → 189-341 peak 244
