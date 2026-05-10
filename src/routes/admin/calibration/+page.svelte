@@ -519,7 +519,94 @@
       });
 
   $: currentSpecies = species.find((s) => s.id === currentSpeciesId) ?? null;
-  $: primaryStage = primaryStageFor(currentSpecies?.forage_parts);
+  /** Stages that have at least one DB row for the current species.
+   *  Multi-stage species (basswood: leaf + flower_harvest; elderberry:
+   *  ripe + flower_harvest) get a stage selector so each stage's
+   *  trajectory + evidence + smoothing analysis can be viewed
+   *  separately. */
+  $: stagesWithData = (() => {
+    if (!currentSpeciesId) return [] as Stage[];
+    const set = new Set<Stage>();
+    for (const w of dbWindows) {
+      if (w.species_id === currentSpeciesId) set.add(w.stage);
+    }
+    const order: Stage[] = [
+      'ripe', 'ripening', 'green', 'flowering', 'flower_harvest',
+      'shoot', 'leaf', 'sap_run', 'mushroom_flush', 'root_dig',
+      'bark_strip', 'past', 'bare', 'unknown'
+    ];
+    return order.filter((s) => set.has(s));
+  })();
+
+  /** User-selected stage override; resets to null when species
+   *  changes so each species starts at its primaryStageFor default. */
+  let selectedStage: Stage | null = null;
+  let lastSpeciesForStageReset: string | null = null;
+  $: if (currentSpeciesId !== lastSpeciesForStageReset) {
+    lastSpeciesForStageReset = currentSpeciesId;
+    selectedStage = null;
+  }
+
+  $: primaryStage = (() => {
+    const def = primaryStageFor(currentSpecies?.forage_parts);
+    if (selectedStage && stagesWithData.includes(selectedStage)) return selectedStage;
+    // If the heuristic-default stage has no data but other stages do,
+    // fall through to the first stage with data so the user always
+    // sees something on first load.
+    if (stagesWithData.length > 0 && !stagesWithData.includes(def)) {
+      return stagesWithData[0];
+    }
+    return def;
+  })();
+
+  /** Smoothing analysis for the current species + primary stage —
+   *  used to render the across-zone trajectory chart and the status
+   *  badge in the species head. Computed live from the loaded DB
+   *  rows, not historically; reflects the current state regardless
+   *  of when the smoothing script last ran. */
+  $: smoothingAnalysis = (() => {
+    if (!currentSpecies) return null;
+    const direction = directionFor(currentSpecies.scientific_name, primaryStage);
+    // Collect rows for this (species, primary stage) keyed by zone numeric.
+    const points: {
+      zone_id: string;
+      zone_code: string;
+      zoneNum: number;
+      start_doy: number;
+      end_doy: number;
+      peak_doy: number | null;
+      isAnchor: boolean;
+    }[] = [];
+    for (const z of sortedZones) {
+      const w = dbBySpeciesZone.get(z.id)?.get(primaryStage);
+      if (!w || w.start_doy == null || w.end_doy == null) continue;
+      points.push({
+        zone_id: z.id,
+        zone_code: z.code,
+        zoneNum: zoneSortKey(z.code),
+        start_doy: w.start_doy,
+        end_doy: w.end_doy,
+        peak_doy: w.peak_doy,
+        isAnchor: isAnchorRow(w)
+      });
+    }
+    points.sort((a, b) => a.zoneNum - b.zoneNum);
+    const anchors = points.filter((p) => p.isAnchor);
+    const soft = points.filter((p) => !p.isAnchor);
+    let status: string;
+    if (direction === 0) {
+      status = `exempt — ${stageLabel(primaryStage)} has no zone signal`;
+    } else if (points.length < 3) {
+      status = `too few zones (${points.length}) — smoothing skipped`;
+    } else if (anchors.length === 0) {
+      status = `no anchor zones (no regional or iNat evidence) — smoothing skipped`;
+    } else if (soft.length === 0) {
+      status = `${anchors.length} anchor zones, no interpolation needed`;
+    } else {
+      status = `${anchors.length} anchor zones · ${soft.length} interpolated`;
+    }
+    return { direction, points, anchors, soft, status };
+  })();
 
   /** Climate-zone code natural sort: 3a < 3b < 4a < … < 11b. */
   function zoneSortKey(code: string): number {
@@ -531,6 +618,37 @@
   }
 
   $: sortedZones = [...zones].sort((a, b) => zoneSortKey(a.code) - zoneSortKey(b.code));
+
+  // Cross-zone smoothing status. Same heuristic as the smoothing
+  // script — heat-driven default, frost-driven override list, and
+  // some stages have no monotonic signal at all.
+  const FROST_DRIVEN_RIPE = new Set([
+    'Fagus grandifolia',     // American beech
+    'Diospyros virginiana'   // American persimmon
+  ]);
+  const STAGE_DIRECTION: Record<string, -1 | 0 | 1> = {
+    ripe: -1, ripening: -1, green: -1,
+    flowering: -1, flower_harvest: -1,
+    shoot: -1, leaf: -1, sap_run: -1,
+    past: 0, root_dig: 0, mushroom_flush: 0, bark_strip: 0,
+    bare: 0, unknown: 0
+  };
+  function directionFor(sci: string | undefined, stage: Stage): -1 | 0 | 1 {
+    if (stage === 'ripe' && sci && FROST_DRIVEN_RIPE.has(sci)) return 1;
+    return (STAGE_DIRECTION[stage] ?? 0) as -1 | 0 | 1;
+  }
+  function isAnchorRow(w: DBWindow | undefined): boolean {
+    if (!w) return false;
+    const ev = w.evidence ?? [];
+    const supporting = ev.filter(
+      (e) => e.supports?.start_doy != null && e.supports?.end_doy != null
+    );
+    if (supporting.length === 0) return false;
+    return supporting.some((e) => {
+      const p = provenanceFor(e.source ?? '', e.summary ?? '');
+      return p === 'regional' || p === 'empirical_inat';
+    });
+  }
 
   /** For the current species, group DB windows by zone id, by stage. */
   $: dbBySpeciesZone = (() => {
@@ -619,6 +737,20 @@
   const EV_MAX_LANES = 6;
   const TIMELINE_H = 80;
   const totalW = xPad + plotW + 16;
+
+  // Helpers for the across-zone trajectory chart. Defined here so
+  // they're typed and reusable; the template uses these instead of
+  // inline arrow functions in {@const} blocks (which Svelte's parser
+  // requires to be untyped, but tsc then complains about).
+  const TRAJ_PAD = 28;
+  const TRAJ_H = 110;
+  function trajX(zn: number, minZ: number, maxZ: number): number {
+    const span = Math.max(1, maxZ - minZ);
+    return TRAJ_PAD + ((zn - minZ) / span) * (totalW - TRAJ_PAD - 16);
+  }
+  function trajY(doy: number): number {
+    return 6 + ((doy - 1) / 365) * (TRAJ_H - 18);
+  }
 
   /** Heuristic provenance classification per evidence entry. Real
    *  regional observations (someone in that zone reporting a specific
@@ -859,6 +991,29 @@
         <div class="stage-tag" title="Forage parts: {(currentSpecies.forage_parts ?? []).join(', ') || 'none'}">
           harvest stage: <strong>{stageLabel(primaryStage)}</strong>
         </div>
+        {#if stagesWithData.length > 1}
+          <div class="stage-tabs" title="This species has data for multiple harvest stages — switch which one the trajectory + evidence analysis below focuses on.">
+            {#each stagesWithData as s}
+              <button
+                class="stage-tab"
+                class:active={s === primaryStage}
+                on:click={() => (selectedStage = s)}
+                type="button"
+              >{stageLabel(s)}</button>
+            {/each}
+          </div>
+        {/if}
+        {#if smoothingAnalysis}
+          <span class="smoothing-chip" title={
+            smoothingAnalysis.direction === 0
+              ? 'This stage has no monotonic zone signal — smoothing is not applicable. The synthesized DOYs come from per-row evidence only.'
+              : smoothingAnalysis.anchors.length === 0
+                ? 'No regional or iNat evidence on any zone for this species/stage — smoothing was skipped. Synthesized DOYs come from per-row evidence (generic / shifted only).'
+                : `Anchor zones (${smoothingAnalysis.anchors.length}) have regional or iNat evidence — their synthesized DOYs come from that evidence directly. Soft zones (${smoothingAnalysis.soft.length}) had only generic / shifted evidence and got their DOYs interpolated from flanking anchors. Direction: ${smoothingAnalysis.direction === -1 ? 'heat-driven (warmer → earlier)' : 'frost-driven (warmer → later)'}.`
+          }>
+            smoothing: {smoothingAnalysis.status}
+          </span>
+        {/if}
       </div>
 
       <div class="review-actions">
@@ -925,6 +1080,80 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
       {#if visibleZones.length === 0}
         <p class="muted">No data in any zone for this species. Toggle "Show zones with no data" to see the empty matrix.</p>
       {:else}
+        {#if smoothingAnalysis && smoothingAnalysis.points.length >= 2}
+          <!-- Across-zone trajectory: peak DOY vs zone with start/end
+               envelope. Anchor zones drawn as filled circles; soft
+               (interpolated) zones as hollow circles. Lets the user see
+               the cross-zone pattern at a glance and which zones drive
+               the curve. -->
+          {@const az = smoothingAnalysis}
+          {@const minZ = az.points[0].zoneNum}
+          {@const maxZ = az.points[az.points.length - 1].zoneNum}
+          <div class="trajectory">
+            <div class="trajectory-head">
+              <strong>Across zones — {stageLabel(primaryStage)} peak DOY vs zone</strong>
+              <span class="muted small">
+                {az.direction === -1 ? '↘ heat-driven (warmer = earlier)' :
+                 az.direction === 1 ? '↗ frost-driven (warmer = later)' :
+                 'no monotonic signal'}
+              </span>
+            </div>
+            <svg viewBox="0 0 {totalW} {TRAJ_H}" width={totalW} height={TRAJ_H} class="trajectory-svg">
+              <!-- Month gridlines -->
+              {#each [32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335] as doy}
+                <line x1={TRAJ_PAD} x2={totalW - 16} y1={trajY(doy)} y2={trajY(doy)}
+                      stroke="#eef1ee" stroke-width="0.5" />
+              {/each}
+              <!-- Month labels (Y axis) -->
+              {#each [{d:32,l:'F'},{d:60,l:'M'},{d:91,l:'A'},{d:121,l:'M'},{d:152,l:'J'},{d:182,l:'J'},{d:213,l:'A'},{d:244,l:'S'},{d:274,l:'O'},{d:305,l:'N'}] as m}
+                <text x={2} y={trajY(m.d) + 3} class="axis-label">{m.l}</text>
+              {/each}
+              <!-- Zone labels (X axis) -->
+              {#each az.points as p}
+                <text x={trajX(p.zoneNum, minZ, maxZ)} y={TRAJ_H - 2} class="axis-label" text-anchor="middle">{p.zone_code}</text>
+              {/each}
+              <!-- Start-end envelope band -->
+              {#if az.points.length >= 2}
+                {@const bandPath = az.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${trajX(p.zoneNum, minZ, maxZ)} ${trajY(p.start_doy)}`).join(' ') + ' ' + az.points.slice().reverse().map((p) => `L ${trajX(p.zoneNum, minZ, maxZ)} ${trajY(p.end_doy)}`).join(' ') + ' Z'}
+                <path d={bandPath} fill={stageColor(primaryStage)} opacity="0.18" />
+              {/if}
+              <!-- Peak line -->
+              {#if az.points.some(p => p.peak_doy != null)}
+                {@const peakPts = az.points.filter(p => p.peak_doy != null)}
+                <polyline points={peakPts.map(p => `${trajX(p.zoneNum, minZ, maxZ)},${trajY(p.peak_doy ?? 0)}`).join(' ')}
+                          fill="none" stroke={stageColor(primaryStage)}
+                          stroke-width="1.5" opacity="0.7" />
+              {/if}
+              <!-- Per-zone markers: filled = anchor, hollow = soft -->
+              {#each az.points as p}
+                {@const cx = trajX(p.zoneNum, minZ, maxZ)}
+                {@const cy = trajY(p.peak_doy ?? Math.round((p.start_doy + p.end_doy) / 2))}
+                {#if p.isAnchor}
+                  <circle cx={cx} cy={cy} r="3.5" fill={stageColor(primaryStage)}
+                          stroke="#1f2a1f" stroke-width="0.5">
+                    <title>{p.zone_code} · ANCHOR (regional or iNat evidence) · DOY {p.start_doy}-{p.end_doy} peak {p.peak_doy ?? '—'}</title>
+                  </circle>
+                {:else}
+                  <circle cx={cx} cy={cy} r="3" fill="white"
+                          stroke={stageColor(primaryStage)} stroke-width="1.5"
+                          stroke-dasharray="2,1">
+                    <title>{p.zone_code} · soft (interpolated from anchors or generic-evidence-only) · DOY {p.start_doy}-{p.end_doy} peak {p.peak_doy ?? '—'}</title>
+                  </circle>
+                {/if}
+              {/each}
+            </svg>
+            <div class="trajectory-legend">
+              <span class="legend-item">
+                <span class="dot dot-anchor" style="background: {stageColor(primaryStage)}"></span>
+                anchor (regional / iNat)
+              </span>
+              <span class="legend-item">
+                <span class="dot dot-soft" style="border-color: {stageColor(primaryStage)}"></span>
+                soft (interpolated)
+              </span>
+            </div>
+          </div>
+        {/if}
         <div class="rows">
           {#each visibleZones as z (z.id)}
             {@const dbStages = dbBySpeciesZone.get(z.id)}
@@ -1353,13 +1582,80 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
     cursor: help;
   }
 
-  .src-count, .review-chip {
+  .src-count, .review-chip, .smoothing-chip {
     font-size: 0.75rem;
     border-radius: 1rem;
     padding: 0.15rem 0.65rem;
     border: 1px solid;
     cursor: help;
     font-variant-numeric: tabular-nums;
+  }
+  .smoothing-chip {
+    color: #4a554a;
+    background: #f0f5ef;
+    border-color: #c7d0c7;
+  }
+  .stage-tabs {
+    display: inline-flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+  .stage-tab {
+    font-size: 0.78rem;
+    padding: 0.2rem 0.65rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 1rem;
+    background: white;
+    color: #4a554a;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .stage-tab:hover { background: #f0f5ef; }
+  .stage-tab.active {
+    background: #3a5a3a;
+    color: white;
+    border-color: #3a5a3a;
+  }
+  .trajectory {
+    margin: 0.5rem 0 0.75rem;
+    padding: 0.5rem;
+    border: 1px solid #e1e8e1;
+    border-radius: 0.4rem;
+    background: #fafdf9;
+  }
+  .trajectory-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+  }
+  .trajectory-svg { display: block; max-width: 100%; }
+  .trajectory-legend {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.78rem;
+    color: #4a554a;
+    margin-top: 0.2rem;
+  }
+  .trajectory-legend .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .trajectory-legend .dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .trajectory-legend .dot-anchor {
+    border: 0.5px solid #1f2a1f;
+  }
+  .trajectory-legend .dot-soft {
+    background: white;
+    border: 1.5px dashed;
   }
   .src-none   { color: #963535; background: #fff0f0; border-color: #d99090; }
   .src-thin   { color: #8a4f10; background: #fbf0e8; border-color: #d8a880; }
