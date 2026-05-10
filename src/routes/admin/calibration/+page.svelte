@@ -333,7 +333,11 @@
   onMount(async () => {
     try {
       const [speciesRes, zonesRes] = await Promise.all([
-        supabase.from('species').select('id, common_name, scientific_name, forage_parts').order('common_name'),
+        supabase
+          .from('species')
+          .select('id, common_name, scientific_name, forage_parts')
+          .eq('is_forageable', true)
+          .order('common_name'),
         supabase.from('climate_zones').select('id, code, name').order('code')
       ]);
       if (speciesRes.error) throw speciesRes.error;
