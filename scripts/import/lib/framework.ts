@@ -184,6 +184,31 @@ export async function fetchOpendatasoftRecords(opts: {
   return all;
 }
 
+/** Fetch a single GeoJSON FeatureCollection from a URL. Use for
+ *  datasets published as a one-shot static .geojson download
+ *  (Données Québec / Longueuil, GitHub raw blobs, etc). The whole
+ *  file is loaded into memory — fine up to ~150MB; for larger
+ *  datasets prefer a paginated API. */
+export async function fetchGeoJsonUrl(opts: {
+  url: string;
+  /** Optional descriptive label for logging. */
+  label?: string;
+}): Promise<unknown[]> {
+  const label = opts.label ?? opts.url;
+  process.stdout.write(`  downloading ${label} …\n`);
+  const res = await fetch(opts.url, {
+    // GitHub raw + Données Québec both follow redirects; allow them.
+    redirect: 'follow'
+  });
+  if (!res.ok) {
+    throw new Error(`GeoJSON fetch ${res.status} on ${opts.url}`);
+  }
+  const body = (await res.json()) as { features?: unknown[] };
+  const features = body.features ?? [];
+  process.stdout.write(`  parsed ${features.length} features from ${label}\n`);
+  return features;
+}
+
 /** CKAN DataStore API (used by Toronto's open.toronto.ca, lots of
  *  Canadian/UK municipal portals). Endpoint shape:
  *  https://<host>/api/3/action/datastore_search?resource_id=<uuid>
