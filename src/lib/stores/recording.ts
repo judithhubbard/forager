@@ -131,7 +131,11 @@ let lastFixAt = 0;
  *  is long enough that a normal indoor "no signal" gap doesn't fire,
  *  short enough that a real glitch is caught before the user has
  *  walked far. */
-const WATCHDOG_SILENT_MS = 60_000;
+// 30s silent gap → re-arm. Was 60s, but mobile users were seeing the
+// dot freeze for up to a minute before the watchdog kicked in. 30s
+// trades faster recovery against slightly more aggressive re-arms
+// during intermittent GPS (under tree cover, urban canyons).
+const WATCHDOG_SILENT_MS = 30_000;
 let watchdogTimer: ReturnType<typeof setInterval> | null = null;
 let visListener: (() => void) | null = null;
 

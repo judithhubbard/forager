@@ -675,7 +675,12 @@
           if (locationError === reason) locationError = '';
         }, 6000);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      // maximumAge: 0 forbids the browser from returning a cached
+      // fix — without it, mobile browsers commonly serve a position
+      // from minutes ago, so the user-dot doesn't move when they
+      // tap locate-me after walking. timeout: 15s gives slow GPS
+      // hardware time to actually deliver a fresh fix.
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }
 
