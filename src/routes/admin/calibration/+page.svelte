@@ -324,15 +324,27 @@
   }
 
   async function loadWindows() {
-    const { data, error } = await supabase
-      .from('species_fruiting_windows')
-      .select(
-        'id, species_id, climate_zone_id, stage, start_doy, end_doy, peak_doy, confidence, notes, evidence' as never
-      );
-    if (error) throw error;
-    // Cast via unknown — generated types lag the schema (mig #46/#83/#07
-    // added confidence/peak/evidence which aren't in src/lib/database.types.ts).
-    dbWindows = ((data ?? []) as unknown as DBWindow[]).map((w) => ({
+    // Supabase REST silently caps responses at 1000 rows. The
+    // species_fruiting_windows table has grown past that, so we
+    // paginate explicitly via .range() to fetch all rows. Each page
+    // is 1000 rows; loop until we get less than a full page.
+    const PAGE = 1000;
+    let all: DBWindow[] = [];
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from('species_fruiting_windows')
+        .select(
+          'id, species_id, climate_zone_id, stage, start_doy, end_doy, peak_doy, confidence, notes, evidence' as never
+        )
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      const page = (data ?? []) as unknown as DBWindow[];
+      all = all.concat(page);
+      if (page.length < PAGE) break;
+      from += PAGE;
+    }
+    dbWindows = all.map((w) => ({
       ...w,
       evidence: (w.evidence ?? []) as Evidence[]
     }));
