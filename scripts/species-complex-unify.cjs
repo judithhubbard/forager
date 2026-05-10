@@ -515,6 +515,323 @@ const COMPLEXES = [
     summary: 'Dandelion (Taraxacum officinale) leaves: tender spring leaves preferred (mid-Apr in 6a); becomes bitter post-flowering. Wide harvest window. Mild heat-driven gradient.'
   },
 
+  // ── Tier 1: must-have foragables (added 2026-05-10) ──
+
+  // Cattail (Typha) — multi-stage forage. Spring shoots, summer pollen,
+  // fall corm/rhizome. Heat-driven for shoots (early spring); cattail
+  // pollen tracks the same gradient ~6 weeks later; rhizome dig is
+  // year-round but traditional in fall.
+  {
+    name: 'Cattail (spring shoots)',
+    members: ['Typha latifolia', 'Typha angustifolia'],
+    anchor_zone: '6a', anchor_peak: 121, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'shoot',
+    source_name: 'Cattail spring shoots (foraging consensus + Wikipedia)',
+    source_url: 'https://en.wikipedia.org/wiki/Typha',
+    summary: 'Cattail spring shoots: tender white core of young rhizome shoots. Apr-Jun depending on zone; mild heat-driven gradient.'
+  },
+  {
+    name: 'Cattail (pollen / flower)',
+    members: ['Typha latifolia', 'Typha angustifolia'],
+    anchor_zone: '6a', anchor_peak: 176, shift_per_half_zone: -3, half_window: 14,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'flower_harvest',
+    source_name: 'Cattail pollen (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Typha',
+    summary: 'Cattail pollen: tap mature spike into a bag, shake out. Brief 1-2 week window in late June (zone 6a).'
+  },
+  {
+    name: 'Cattail (fall rhizome)',
+    members: ['Typha latifolia', 'Typha angustifolia'],
+    anchor_zone: '6a', anchor_peak: 285, shift_per_half_zone: -2, half_window: 35,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'root_dig',
+    source_name: 'Cattail rhizome harvest (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Typha',
+    summary: 'Cattail rhizome: starchy fall through early-spring food. Best after first frost when starch is concentrated.'
+  },
+
+  // Ostrich fern fiddleheads — major NE / Maritime spring forage.
+  {
+    name: 'Ostrich fern fiddleheads',
+    members: ['Matteuccia struthiopteris'],
+    anchor_zone: '6a', anchor_peak: 121, shift_per_half_zone: -3, half_window: 14,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a'],
+    stage: 'shoot',
+    source_name: 'Ostrich fern (Maine + Vermont extension services)',
+    source_url: 'https://extension.umaine.edu/publications/2540e/',
+    summary: 'Ostrich fern fiddleheads: tightly-coiled croziers, brief 1-2 week window mid-Apr to mid-May. Boil 15 min before eating.'
+  },
+
+  // Wild strawberry complex — F. virginiana + F. vesca share timing.
+  {
+    name: 'Wild strawberry (Fragaria) complex',
+    members: ['Fragaria virginiana', 'Fragaria vesca'],
+    anchor_zone: '6a', anchor_peak: 176, shift_per_half_zone: -4, half_window: 21,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Wild strawberry complex (USDA Silvics + foraging guides)',
+    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=FRVI',
+    summary: 'Wild strawberry: Jun-Jul ripe across temperate NA. F. virginiana (meadows) and F. vesca (woodland) share harvest timing.'
+  },
+
+  // Mayapple — fruit only edible (rest toxic).
+  {
+    name: 'Mayapple',
+    members: ['Podophyllum peltatum'],
+    anchor_zone: '6a', anchor_peak: 213, shift_per_half_zone: -4, half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'ripe',
+    source_name: 'Mayapple (Eat The Weeds + USDA Silvics)',
+    source_url: 'https://www.eattheweeds.com/podophyllum-mayapple-mandrake-mountain-apple-2/',
+    summary: 'Mayapple fruit: yellow-translucent ripe in late summer (Jul-Aug). Only ripe yellow fruit edible; all other parts toxic.'
+  },
+
+  // Sweet birch (Betula lenta) — sap_run + wintergreen-twig forage.
+  {
+    name: 'Sweet birch (sap)',
+    members: ['Betula lenta', 'Betula alleghaniensis'],
+    anchor_zone: '6a', anchor_peak: 65, shift_per_half_zone: 3, half_window: 28,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a'],
+    stage: 'sap_run',
+    source_name: 'Sweet/yellow birch sap (Cornell Maple Program + UVM Extension)',
+    source_url: 'https://maple.dnr.cornell.edu/pubs/birch_sap.htm',
+    summary: 'Sweet/yellow birch sap: late-winter / early-spring tap. ~2 weeks after maple sap window closes; lower sugar yield (~100:1 ratio for syrup).'
+  },
+
+  // ── Tier 2: roadside greens ──
+
+  {
+    name: 'Wood sorrel (leaves)',
+    members: ['Oxalis stricta'],
+    anchor_zone: '6a', anchor_peak: 152, shift_per_half_zone: -2, half_window: 60,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
+    stage: 'leaf',
+    source_name: 'Wood sorrel (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Oxalis_stricta',
+    summary: 'Wood sorrel leaves: tart-citrusy three-leaflet weed. Edible all growing season; small amounts due to oxalic acid.'
+  },
+  {
+    name: 'Curly dock (leaves)',
+    members: ['Rumex crispus'],
+    anchor_zone: '6a', anchor_peak: 105, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'leaf',
+    source_name: 'Curly dock (foraging consensus + USDA Silvics)',
+    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=RUCR',
+    summary: 'Curly dock young leaves: pre-flower-stalk rosette stage, late spring. Older leaves more bitter; cook with greens.'
+  },
+  {
+    name: 'Sheep sorrel (leaves)',
+    members: ['Rumex acetosella'],
+    anchor_zone: '6a', anchor_peak: 121, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'leaf',
+    source_name: 'Sheep sorrel (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Rumex_acetosella',
+    summary: 'Sheep sorrel leaves: tart, lemony, distinctive arrow-shaped leaves. Best young; oxalic-acid caveat.'
+  },
+  {
+    name: 'Mugwort (leaves)',
+    members: ['Artemisia vulgaris'],
+    anchor_zone: '6a', anchor_peak: 152, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'leaf',
+    source_name: 'Mugwort (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Artemisia_vulgaris',
+    summary: 'Mugwort: bitter herb, harvest before flowering. Pregnancy contraindication (thujone).'
+  },
+  {
+    name: 'Highbush cranberry',
+    members: ['Viburnum trilobum'],
+    anchor_zone: '6a', anchor_peak: 270, shift_per_half_zone: -3, half_window: 35,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'ripe',
+    source_name: 'Highbush cranberry (USDA Silvics + foraging guides)',
+    source_url: 'https://www.fs.fed.us/database/feis/plants/shrub/vibtri/all.html',
+    summary: 'Highbush cranberry (Viburnum trilobum): bright red drupes Sep-Nov, sweetened by frost. Distinct from European V. opulus (toxic).'
+  },
+
+  // ── Tier 3: edible mushrooms ──
+
+  {
+    name: 'Common puffball',
+    members: ['Lycoperdon perlatum'],
+    anchor_zone: '6a', anchor_peak: 244, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'mushroom_flush',
+    source_name: 'Common puffball (Audubon mushroom guide + Mushroom Expert)',
+    source_url: 'https://www.mushroomexpert.com/lycoperdon_perlatum.html',
+    summary: 'Common puffball: Aug-Oct. Cut in half — pure white interior confirms (rules out toxic Amanita "egg" stage).'
+  },
+  {
+    name: 'Giant puffball',
+    members: ['Calvatia gigantea'],
+    anchor_zone: '6a', anchor_peak: 258, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'mushroom_flush',
+    source_name: 'Giant puffball (Mushroom Expert + foraging guides)',
+    source_url: 'https://www.mushroomexpert.com/calvatia_gigantea.html',
+    summary: 'Giant puffball: late-Aug to early-Oct. Soccer-ball-sized; one mushroom can feed a family.'
+  },
+  {
+    name: 'Black trumpet',
+    members: ['Craterellus cornucopioides'],
+    anchor_zone: '6a', anchor_peak: 213, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'mushroom_flush',
+    source_name: 'Black trumpet (Mushroom Expert + Wild Mushrooms of NE)',
+    source_url: 'https://www.mushroomexpert.com/craterellus_cornucopioides.html',
+    summary: 'Black trumpet: Jul-Sep under hardwoods (oak/beech). Earthy, smoky flavor; dries beautifully.'
+  },
+  {
+    name: 'Wood blewit',
+    members: ['Lepista nuda'],
+    anchor_zone: '6a', anchor_peak: 288, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'mushroom_flush',
+    source_name: 'Wood blewit (Mushroom Expert)',
+    source_url: 'https://www.mushroomexpert.com/lepista_nuda.html',
+    summary: 'Wood blewit: late-fall mushroom (Oct-Dec), often after first frosts. Lavender coloring; spore print pinkish-buff.'
+  },
+
+  // ── Tier 4: spring ephemerals ──
+
+  {
+    name: 'Trout lily (leaves + corm)',
+    members: ['Erythronium americanum'],
+    anchor_zone: '6a', anchor_peak: 115, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'leaf',
+    source_name: 'Trout lily (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Erythronium_americanum',
+    summary: 'Trout lily: spring ephemeral, Apr-May only. Forage sparingly; populations are slow-growing.'
+  },
+  {
+    name: 'Spring beauty',
+    members: ['Claytonia virginica'],
+    anchor_zone: '6a', anchor_peak: 91, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'leaf',
+    source_name: 'Spring beauty (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Claytonia_virginica',
+    summary: 'Spring beauty: Mar-May. Tubers ("fairy spuds") are sweet starchy potato-substitute; flowers and leaves edible too.'
+  },
+  {
+    name: 'Cut-leaf toothwort',
+    members: ['Cardamine concatenata'],
+    anchor_zone: '6a', anchor_peak: 110, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'leaf',
+    source_name: 'Cut-leaf toothwort (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Cardamine_concatenata',
+    summary: 'Cut-leaf toothwort: spring ephemeral. Root tastes like horseradish (use fresh, flavor fades quickly).'
+  },
+
+  // ── Tier 5: herbal / minor ──
+
+  {
+    name: 'Wild bergamot (flowers)',
+    members: ['Monarda fistulosa'],
+    anchor_zone: '6a', anchor_peak: 196, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'flower_harvest',
+    source_name: 'Wild bergamot (USDA Plant Profile)',
+    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=MOFI',
+    summary: 'Wild bergamot: Jun-Aug bloom. Tea, tincture, thyme-like seasoning.'
+  },
+  {
+    name: 'Common blue violet (flowers)',
+    members: ['Viola sororia'],
+    anchor_zone: '6a', anchor_peak: 115, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'flower_harvest',
+    source_name: 'Common blue violet (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Viola_sororia',
+    summary: 'Common blue violet: Apr-May peak bloom. Flowers candied, syrup-ed; leaves salad-edible.'
+  },
+  {
+    name: 'Catnip (leaves)',
+    members: ['Nepeta cataria'],
+    anchor_zone: '6a', anchor_peak: 182, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'leaf',
+    source_name: 'Catnip (foraging consensus)',
+    source_url: 'https://en.wikipedia.org/wiki/Catnip',
+    summary: 'Catnip: tea / sleep aid. Pick flowering tops Jun-Aug.'
+  },
+  {
+    name: 'Canada goldenrod (flowers)',
+    members: ['Solidago canadensis'],
+    anchor_zone: '6a', anchor_peak: 244, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'flower_harvest',
+    source_name: 'Canada goldenrod (USDA Plant Profile)',
+    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=SOCA6',
+    summary: 'Canada goldenrod: Aug-Oct bright yellow tops. Tea / tincture; pollinator favorite.'
+  },
+  {
+    name: 'Pin cherry',
+    members: ['Prunus pensylvanica'],
+    anchor_zone: '6a', anchor_peak: 213, shift_per_half_zone: -4, half_window: 21,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a'],
+    stage: 'ripe',
+    source_name: 'Pin cherry (USDA Silvics)',
+    source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/prunus/pensylvanica.htm',
+    summary: 'Pin cherry: small tart red cherries Jul-Aug. Mostly used for jelly / wine.'
+  },
+  {
+    name: 'Lobster mushroom',
+    members: ['Hypomyces lactifluorum'],
+    anchor_zone: '6a', anchor_peak: 237, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'mushroom_flush',
+    source_name: 'Lobster mushroom (Mushroom Expert)',
+    source_url: 'https://www.mushroomexpert.com/hypomyces_lactifluorum.html',
+    summary: 'Lobster mushroom: Aug-Sep. Parasitic fungus on Russula/Lactarius hosts; firm, seafood-like flavor.'
+  },
+  {
+    name: 'Wapato (rhizome)',
+    members: ['Sagittaria latifolia'],
+    anchor_zone: '6a', anchor_peak: 288, shift_per_half_zone: -2, half_window: 35,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'root_dig',
+    source_name: 'Wapato (USDA Plant Profile + indigenous food traditions)',
+    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=SALA2',
+    summary: 'Wapato: late-fall to early-spring tuber harvest. Walnut-sized starchy tubers.'
+  },
+  {
+    name: 'Bunchberry',
+    members: ['Cornus canadensis'],
+    anchor_zone: '6a', anchor_peak: 237, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a'],
+    stage: 'ripe',
+    source_name: 'Bunchberry (USDA Plant Profile)',
+    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=COCA13',
+    summary: 'Bunchberry: northern boreal groundcover, Aug-Sep. Mild flavor, used in northern Indigenous traditions.'
+  },
+  {
+    name: 'Partridgeberry',
+    members: ['Mitchella repens'],
+    anchor_zone: '6a', anchor_peak: 258, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'ripe',
+    source_name: 'Partridgeberry (USDA Plant Profile)',
+    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=MIRE',
+    summary: 'Partridgeberry: trailing evergreen with persistent paired red berries. Available Sep through following spring.'
+  },
+  {
+    name: 'Flowering dogwood',
+    members: ['Cornus florida'],
+    anchor_zone: '6a', anchor_peak: 258, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Flowering dogwood (USDA Silvics)',
+    source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/cornus/florida.htm',
+    summary: 'Flowering dogwood: red drupes Sep-Oct, edible cooked only (bitter raw). Minor culinary forage.'
+  },
+
   // Black cherry (Prunus serotina) — heat-driven late-summer fruit.
   // Empirical iNat slope -8 d/half-zone (n=11). Anchor zone 7a peak
   // Jul 8 (DOY 189).

@@ -78,6 +78,7 @@ const STEPS = [
   { name: '8. beech-frost-fix',           script: 'beech-frost-fix.cjs',           optional: false },
   { name: '9. blackberry-fix',            script: 'blackberry-fix.cjs',            optional: false },
   { name: '10. smooth-across-zones',      script: 'smooth-across-zones.cjs',       optional: false },
+  { name: '10b. interpolate-zone-gaps',   script: 'interpolate-zone-gaps.cjs',     optional: false },
   { name: '11. enforce-monotonic',        script: 'enforce-monotonic.cjs',         optional: false },
 ];
 if (!skipTests) {
