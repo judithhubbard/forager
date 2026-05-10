@@ -661,7 +661,14 @@
         locating = false;
         if (!map) return;
         const { latitude, longitude } = pos.coords;
-        map.setView([latitude, longitude], 15);
+        // Preserve the user's current zoom if they were already
+        // zoomed in (≥13). Earlier code force-set zoom to 15 every
+        // time, which yanked users out of street-level views back
+        // to ~neighborhood. Now: pan only if already at street
+        // level; zoom in to 15 only if currently zoomed out.
+        const curZoom = map.getZoom();
+        const targetZoom = curZoom >= 13 ? curZoom : 15;
+        map.setView([latitude, longitude], targetZoom);
         placeUserMarker(latitude, longitude, pos.coords.accuracy ?? null);
         track('locate_me_success', {
           latency_ms: Date.now() - t0,
