@@ -42,6 +42,11 @@ const sql = require('/Users/jk/Dropbox/Claude/forager/node_modules/postgres')(
 
 const dryRun = process.argv.includes('--dry-run');
 
+// iNat samples below this size aren't statistically reliable enough
+// to anchor a zone — small samples produce noisy p15/p85 estimates
+// that show up as non-monotonic jumps in the across-zone curve.
+const MIN_INAT_ANCHOR_OBS = 30;
+
 // USDA hardiness zones map cleanly to a numeric axis (each half-zone =
 // 5°F minimum-temp step ≈ 7 days of frost-date offset in temperate North
 // America). The integer index lets us interpolate.
@@ -102,7 +107,9 @@ function isAnchor(evidence) {
   if (supporting.length === 0) return false;
   return supporting.some(e => {
     const p = provenanceFor(e?.source, e?.summary);
-    return p === 'regional' || p === 'empirical_inat';
+    if (p === 'regional') return true;
+    if (p === 'empirical_inat' && (e?.supports?.n_obs ?? 0) >= MIN_INAT_ANCHOR_OBS) return true;
+    return false;
   });
 }
 

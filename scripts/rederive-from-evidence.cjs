@@ -39,6 +39,37 @@ const sql = require('/Users/jk/Dropbox/Claude/forager/node_modules/postgres')(
 
 const dryRun = process.argv.includes('--dry-run');
 
+// iNat samples below this size aren't statistically reliable enough
+// to anchor a zone's synthesized DOY. They stay as evidence (visible
+// in the viewer's per-source range bar) but get treated as 'soft' so
+// the smoother can interpolate from larger anchors. 30 is a balance
+// between statistical reliability and not throwing out too many data
+// points; below that, p15/p85 estimates are sensitive to a couple of
+// outlier observations.
+const MIN_INAT_ANCHOR_OBS = 30;
+
+// Species where iNat 'Fruiting' captures the wrong stage for foraging.
+// For hardwood mast nuts, observers tag developing burrs/hulls visible
+// on the tree (summer) — but harvest is post-frost dropped nuts (fall).
+// iNat values are weeks too early for these. Cited regional/silviculture
+// sources are the only valid synthesis pool; iNat stays as evidence for
+// spread visibility but is excluded from the envelope.
+const INAT_WRONG_STAGE = new Set([
+  // Beech
+  'Fagus grandifolia',
+  // Chestnuts
+  'Castanea dentata', 'Castanea mollissima', 'Castanea sativa',
+  'Castanea sp.', 'Castanea pumila',
+  // Oaks
+  'Quercus alba', 'Quercus macrocarpa',
+  // Hickories
+  'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
+  // Walnuts
+  'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
+  // Hazelnuts
+  'Corylus americana', 'Corylus cornuta'
+]);
+
 function provenanceFor(source, summary) {
   const src = (source || '').toLowerCase();
   if (src.startsWith('inaturalist')) return 'empirical_inat';
@@ -93,34 +124,45 @@ function median(nums) {
     if (supporting.length === 0) { skippedNoSupports++; continue; }
 
     const regional = supporting.filter(e => e._provenance === 'regional');
-    const inat     = supporting.filter(e => e._provenance === 'empirical_inat');
+    // Split iNat by sample size: anchor-quality (>=30 obs) vs thin (drops to 'soft' / generic).
+    const inat     = supporting.filter(
+      (e) => e._provenance === 'empirical_inat' &&
+             (e?.supports?.n_obs ?? 0) >= MIN_INAT_ANCHOR_OBS
+    );
+    const inatThin = supporting.filter(
+      (e) => e._provenance === 'empirical_inat' &&
+             (e?.supports?.n_obs ?? 0) < MIN_INAT_ANCHOR_OBS
+    );
     const generic  = supporting.filter(e => e._provenance === 'generic');
     const shifted  = supporting.filter(e => e._provenance === 'shifted');
 
     let pool;
     let poolKind;
-    if (regional.length > 0) {
+    const wrongStage = INAT_WRONG_STAGE.has(r.scientific_name);
+    if (regional.length > 0 && inat.length > 0 && !wrongStage) {
+      // Both real-observation sources present — envelope them together
+      // so the synthesized window captures the union of "ripe per
+      // forager" and "visible-on-plant per iNat", which gives a
+      // smoother across-zone curve (avoids step jumps when one zone
+      // has only regional and the next has only iNat).
+      pool = [...regional, ...inat];
+      poolKind = 'regional+inat';
+    } else if (regional.length > 0) {
       pool = regional;
-      poolKind = 'regional';
-    } else if (inat.length > 0) {
+      poolKind = wrongStage && inat.length > 0
+        ? 'regional (iNat excluded — wrong-stage species)'
+        : 'regional';
+    } else if (inat.length > 0 && !wrongStage) {
       // Sanity guards on iNat-only re-derives. iNat zone-binning lumps
       // cross-country observations into one USDA zone (e.g. zone 7b
-      // spans CA, OR, NC, GA — wildly different fruit timing). And
-      // iNat 'Fruiting' annotations don't differentiate green vs ripe
-      // fruit, so percentile ranges over-stretch the harvest window.
+      // spans CA, OR, NC, GA — wildly different fruit timing).
       const inatStart = Math.min(...inat.map(e => e.supports.start_doy));
       const inatEnd   = Math.max(...inat.map(e => e.supports.end_doy));
       const span      = inatEnd - inatStart;
-      // Skip if the iNat range spans >150 days (multi-region noise).
       if (span > 150) {
         skippedNoRealObs++;
         continue;
       }
-      // If a curated peak already exists, don't let iNat shift it by
-      // more than 30 days — iNat alone shouldn't catastrophically
-      // relocate a window that was previously synthesized from other
-      // sources. When peak_doy is null, this gate doesn't apply (truly
-      // fresh row, iNat fills it in).
       if (r.peak_doy != null) {
         const newMid = Math.round((inatStart + inatEnd) / 2);
         if (Math.abs(newMid - r.peak_doy) > 30) {
@@ -130,9 +172,9 @@ function median(nums) {
       }
       pool = inat;
       poolKind = 'inat';
-    } else if (generic.length > 0) {
-      pool = generic;
-      poolKind = 'generic';
+    } else if (generic.length > 0 || inatThin.length > 0) {
+      pool = [...generic, ...inatThin];
+      poolKind = inatThin.length > 0 && generic.length === 0 ? 'inat-thin' : 'generic';
     } else {
       // Only shifted estimates available — never let them drive the synthesized DOY.
       skippedNoRealObs++;

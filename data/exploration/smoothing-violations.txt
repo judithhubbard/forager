@@ -3,11 +3,11 @@
 Total (species,stage) groups: 115
   skipped (no zone signal):    2
   skipped (<3 rows):           8
-  skipped (no anchor zones):   3
+  skipped (no anchor zones):   8
 Rows WOULD update:  0
 
 === Anchor monotonicity violations (review needed) ===
-Total combos with violations: 74
+Total combos with violations: 64
 
   Amur maple (Acer ginnala) stage=sap_run dir=heat→earlier
     3b → 4a: 50-89 → 50-304  (Δstart=0, Δend=215)
@@ -16,10 +16,7 @@ Total combos with violations: 74
     5b → 6b: 113-130 → 75-135  (Δstart=-38, Δend=5)
 
   Downy serviceberry (Amelanchier arborea) stage=ripe dir=heat→earlier
-    4b → 5a: 161-188 → 160-199  (Δstart=-1, Δend=11)
     7a → 7b: 102-171 → 139-165  (Δstart=37, Δend=-6)
-    8a → 8b: 125-157 → 98-189  (Δstart=-27, Δend=32)
-    8b → 9a: 98-189 → 127-177  (Δstart=29, Δend=-12)
 
   Allegheny serviceberry (Amelanchier laevis) stage=ripe dir=heat→earlier
     5b → 6a: 173-196 → 152-213  (Δstart=-21, Δend=17)
@@ -31,67 +28,84 @@ Total combos with violations: 74
     6b → 7a: 208-274 → 213-273  (Δstart=5, Δend=-1)
 
   Pawpaw (Asimina triloba) stage=ripe dir=heat→earlier
-    6a → 6b: 181-261 → 244-290  (Δstart=63, Δend=29)
+    6a → 6b: 181-261 → 175-290  (Δstart=-6, Δend=29)
     7b → 8a: 163-252 → 185-276  (Δstart=22, Δend=24)
 
   Pecan (Carya illinoinensis) stage=ripe dir=heat→earlier
-    8a → 8b: 181-282 → 181-297  (Δstart=0, Δend=15)
-    9a → 9b: 80-293 → 176-291  (Δstart=96, Δend=-2)
-
-  Shellbark hickory (Carya laciniosa) stage=ripe dir=heat→earlier
-    6b → 7b: 216-294 → 244-304  (Δstart=28, Δend=10)
+    8a → 8b: 299-343 → 309-353  (Δstart=10, Δend=10)
 
   Shagbark hickory (Carya ovata) stage=ripe dir=heat→earlier
-    4b → 5a: 258-304 → 258-318  (Δstart=0, Δend=14)
-    7a → 7b: 188-291 → 170-299  (Δstart=-18, Δend=8)
-    7b → 8a: 170-299 → 216-276  (Δstart=46, Δend=-23)
+    5a → 5b: 249-289 → 244-320  (Δstart=-5, Δend=31)
+    6a → 6b: 244-304 → 270-310  (Δstart=26, Δend=6)
+    6b → 7a: 270-310 → 277-317  (Δstart=7, Δend=7)
 
   American chestnut (Castanea dentata) stage=ripe dir=heat→earlier
-    7b → 8a: 223-283 → 206-291  (Δstart=-17, Δend=8)
+    5a → 5b: 239-279 → 244-304  (Δstart=5, Δend=25)
+    6a → 6b: 244-304 → 260-300  (Δstart=16, Δend=-4)
+    6b → 7a: 260-300 → 244-304  (Δstart=-16, Δend=4)
+    7a → 7b: 244-304 → 275-315  (Δstart=31, Δend=11)
 
   Chinese chestnut (Castanea mollissima) stage=ripe dir=heat→earlier
     6a → 6b: 236-279 → 244-304  (Δstart=8, Δend=25)
-    8b → 9a: 195-264 → 214-278  (Δstart=19, Δend=14)
+    6b → 7a: 244-304 → 267-307  (Δstart=23, Δend=3)
+    7a → 7b: 267-307 → 275-315  (Δstart=8, Δend=8)
+    7b → 8a: 275-315 → 284-324  (Δstart=9, Δend=9)
+    8a → 8b: 284-324 → 294-334  (Δstart=10, Δend=10)
 
   Allegheny chinkapin (Castanea pumila) stage=ripe dir=heat→earlier
-    6b → 7a: 203-270 → 213-273  (Δstart=10, Δend=3)
-    7b → 8a: 176-269 → 198-255  (Δstart=22, Δend=-14)
-    8a → 8b: 198-255 → 182-278  (Δstart=-16, Δend=23)
+    7a → 7b: 213-273 → 262-298  (Δstart=49, Δend=25)
+    7b → 8a: 262-298 → 271-307  (Δstart=9, Δend=9)
+    8a → 8b: 271-307 → 281-317  (Δstart=10, Δend=10)
 
   Sweet chestnut (Castanea sativa) stage=ripe dir=heat→earlier
-    6b → 7a: 285-320 → 274-334  (Δstart=-11, Δend=14)
+    7a → 8b: 274-334 → 297-337  (Δstart=23, Δend=3)
 
   Common hackberry (Celtis occidentalis) stage=ripe dir=heat→earlier
-    5b → 6a: 138-255 → 154-269  (Δstart=16, Δend=14)
-    6a → 6b: 154-269 → 147-291  (Δstart=-7, Δend=22)
+    5b → 6b: 138-255 → 147-291  (Δstart=9, Δend=36)
     6b → 7a: 147-291 → 144-298  (Δstart=-3, Δend=7)
-    7b → 8a: 123-279 → 158-268  (Δstart=35, Δend=-11)
 
   Sea grape (Coccoloba uvifera) stage=ripe dir=heat→earlier
     11a → 11b: 120-255 → 119-267  (Δstart=-1, Δend=12)
 
-  Cornelian cherry (Cornus mas) stage=ripe dir=heat→earlier
-    6b → 7a: 178-258 → 191-252  (Δstart=13, Δend=-6)
-    7a → 7b: 191-252 → 208-231  (Δstart=17, Δend=-21)
-
   American hazelnut (Corylus americana) stage=ripe dir=heat→earlier
-    3a → 3b: 193-225 → 210-332  (Δstart=17, Δend=107)
-    5a → 5b: 186-226 → 233-273  (Δstart=47, Δend=47)
-    6a → 6b: 187-251 → 185-255  (Δstart=-2, Δend=4)
-    6b → 7a: 185-255 → 191-248  (Δstart=6, Δend=-7)
-    7b → 8a: 182-250 → 147-269  (Δstart=-35, Δend=19)
+    3b → 4a: 177-249 → 223-259  (Δstart=46, Δend=10)
+    4a → 4b: 223-259 → 230-266  (Δstart=7, Δend=7)
+    4b → 5a: 230-266 → 237-273  (Δstart=7, Δend=7)
+    5b → 6a: 233-273 → 251-287  (Δstart=18, Δend=14)
+    6a → 6b: 251-287 → 258-294  (Δstart=7, Δend=7)
+    6b → 7a: 258-294 → 265-301  (Δstart=7, Δend=7)
+    7a → 7b: 265-301 → 273-309  (Δstart=8, Δend=8)
 
   Beaked hazelnut (Corylus cornuta) stage=ripe dir=heat→earlier
-    6b → 7a: 169-234 → 213-273  (Δstart=44, Δend=39)
-    8b → 9a: 154-203 → 154-226  (Δstart=0, Δend=23)
+    3a → 3b: 190-225 → 216-252  (Δstart=26, Δend=27)
+    3b → 4a: 216-252 → 223-259  (Δstart=7, Δend=7)
+    4a → 4b: 223-259 → 233-304  (Δstart=10, Δend=45)
+    4b → 5a: 233-304 → 237-273  (Δstart=4, Δend=-31)
+    5a → 5b: 237-273 → 244-280  (Δstart=7, Δend=7)
+    5b → 6a: 244-280 → 251-287  (Δstart=7, Δend=7)
+    6a → 6b: 251-287 → 258-294  (Δstart=7, Δend=7)
+    7a → 8b: 213-273 → 292-328  (Δstart=79, Δend=55)
 
-  Hawthorn (unspecified) (Crataegus sp.) stage=ripe dir=heat→earlier
-    8a → 8b: 152-314 → 169-307  (Δstart=17, Δend=-7)
-    9a → 9b: 100-297 → 115-334  (Δstart=15, Δend=37)
+  American persimmon (Diospyros virginiana) stage=ripe dir=frost→later
+    6a → 6b: 258-348 → 251-341  (Δstart=-7, Δend=-7)
+    6b → 7a: 251-341 → 217-302  (Δstart=-34, Δend=-39)
+    7a → 7b: 217-302 → 212-302  (Δstart=-5, Δend=0)
+    7b → 8a: 212-302 → 200-295  (Δstart=-12, Δend=-7)
+    8a → 8b: 200-295 → 196-304  (Δstart=-4, Δend=9)
+    8b → 9a: 196-304 → 185-293  (Δstart=-11, Δend=-11)
+    9b → 10a: 188-290 → 161-286  (Δstart=-27, Δend=-4)
 
-  Quince (Cydonia oblonga) stage=ripe dir=heat→earlier
-    8b → 9a: 168-269 → 186-250  (Δstart=18, Δend=-19)
+  Autumn olive (Elaeagnus umbellata) stage=ripe dir=heat→earlier
+    8a → 8b: 170-335 → 184-266  (Δstart=14, Δend=-69)
 
-  +54 more violations (truncated)
+  American beech (Fagus grandifolia) stage=ripe dir=frost→later
+    5a → 5b: 244-304 → 256-296  (Δstart=12, Δend=-8)
+    7a → 7b: 277-317 → 244-280  (Δstart=-33, Δend=-37)
+
+  Green ash (Fraxinus pennsylvanica) stage=ripe dir=heat→earlier
+    4a → 5b: 119-311 → 163-306  (Δstart=44, Δend=-5)
+    8b → 9a: 120-253 → 123-262  (Δstart=3, Δend=9)
+
+  +44 more violations (truncated)
 
 === Sample smoothing changes (first 30) ===

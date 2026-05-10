@@ -637,6 +637,12 @@
     if (stage === 'ripe' && sci && FROST_DRIVEN_RIPE.has(sci)) return 1;
     return (STAGE_DIRECTION[stage] ?? 0) as -1 | 0 | 1;
   }
+  /** iNat samples below this size aren't statistically reliable
+   *  enough to anchor a zone — they stay visible as evidence but get
+   *  treated as soft (interpolatable) so the smoothing analysis pulls
+   *  them toward the curve. */
+  const MIN_INAT_ANCHOR_OBS = 30;
+
   function isAnchorRow(w: DBWindow | undefined): boolean {
     if (!w) return false;
     const ev = w.evidence ?? [];
@@ -646,7 +652,12 @@
     if (supporting.length === 0) return false;
     return supporting.some((e) => {
       const p = provenanceFor(e.source ?? '', e.summary ?? '');
-      return p === 'regional' || p === 'empirical_inat';
+      if (p === 'regional') return true;
+      if (p === 'empirical_inat') {
+        const n = (e.supports as { n_obs?: number } | undefined)?.n_obs ?? 0;
+        return n >= MIN_INAT_ANCHOR_OBS;
+      }
+      return false;
     });
   }
 
