@@ -28,3 +28,6 @@ data/wikipedia-extracts.txt
 data/exploration/great-morel-raw/
 data/exploration/layer1-npn-raw.json
 data/exploration/web-crawl-cache/
+
+# Local DB backup snapshots (large; not source)
+backups/

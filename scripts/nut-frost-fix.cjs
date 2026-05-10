@@ -78,9 +78,10 @@ const NUT_SPECIES = {
   'Juglans nigra':        { offset:  -7, half_window: 20, common: 'Black walnut' },
   'Juglans cinerea':      { offset:  -7, half_window: 20, common: 'Butternut' },
   'Juglans regia':        { offset:   0, half_window: 20, common: 'English walnut' },
-  // Hazelnuts: drop in late summer / early fall, before frost
-  'Corylus americana':    { offset: -14, half_window: 18, common: 'American hazelnut' },
-  'Corylus cornuta':      { offset: -14, half_window: 18, common: 'Beaked hazelnut' }
+  // Hazelnuts removed: heat-driven (drop Aug-Sep before frost),
+  // handled by species-complex-unify with anchor 6a peak Aug 27.
+  // 'Corylus americana': handled by species-complex-unify
+  // 'Corylus cornuta':   handled by species-complex-unify
 };
 
 function noteFor(common, offset) {
@@ -137,8 +138,28 @@ function noteFor(common, offset) {
         : `${Math.abs(cfg.offset)} days before first frost`
       }. Per-zone peak DOY anchored to NOAA first-frost climatology (1991-2020 normals); ±${cfg.half_window} days for the harvest window. Cited consensus from USDA Forest Service Silvics + regional foraging sources. iNat Fruiting evidence is RETAINED on this row for spread visibility but EXCLUDED from the synthesized DOY: iNat observers tag developing nuts visible on the tree (summer), which is the developing stage, not the harvest stage.`;
 
+      // Build the frost-driven citation evidence entry. Surfaces the
+      // NOAA + USDA Silvics justification in the viewer's evidence
+      // panel (was previously only visible in the notes column).
+      const evRow = await sql`
+        select coalesce(evidence, '[]'::jsonb) as evidence
+          from species_fruiting_windows where id = ${w.id}`;
+      const ev = Array.isArray(evRow[0]?.evidence) ? evRow[0].evidence : [];
+      const citationSource = `Frost-driven harvest model (NOAA first-frost climatology + USDA Silvics)`;
+      const citationEntry = {
+        source: citationSource,
+        url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/',
+        consulted_at: '2026-05-10T00:00:00Z',
+        summary: `${cfg.common}: frost-driven harvest. Drops ${cfg.offset === 0 ? 'at first hard frost' : cfg.offset > 0 ? cfg.offset + ' days after first frost' : Math.abs(cfg.offset) + ' days before first frost'}. Per-zone peak DOY anchored to NOAA first-frost climatology (1991-2020 normals).`,
+        supports: { start_doy: start, end_doy: end, peak_doy: peak }
+      };
+      const newEv = ev.some(e => e?.source === citationSource)
+        ? ev.map(e => e?.source === citationSource ? citationEntry : e)
+        : ev.concat([citationEntry]);
+
       if (w.start_doy === start && w.end_doy === end && w.peak_doy === peak &&
-          w.confidence === 'regional_guide' && (w.notes ?? '').includes('Frost-driven harvest')) {
+          w.confidence === 'regional_guide' && (w.notes ?? '').includes('Frost-driven harvest') &&
+          ev.some(e => e?.source === citationSource)) {
         skipped++;
         continue;
       }
@@ -150,6 +171,7 @@ function noteFor(common, offset) {
                peak_doy = ${peak},
                confidence = 'regional_guide'::public.window_confidence,
                notes = ${note},
+               evidence = ${sql.json(newEv)},
                updated_at = now()
          where id = ${w.id}`;
       console.log(`  ${w.code}: ${w.start_doy}-${w.end_doy}/peak ${w.peak_doy} → ${start}-${end}/peak ${peak}`);

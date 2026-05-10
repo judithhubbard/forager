@@ -40,13 +40,10 @@ const FROST_DRIVEN_RIPE = new Set([
   'Castanea sp.',
   'Quercus alba', 'Quercus macrocarpa',
   'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
-  'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
-  // Hazelnuts: nut-frost-fix anchors them with offset -14 (drop
-  // before frost), but the per-zone curve still follows first-frost
-  // timing (warmer = later first frost = later harvest). Treat as
-  // frost-driven for monotonic purposes.
-  'Corylus americana', 'Corylus cornuta'
+  'Juglans nigra', 'Juglans cinerea', 'Juglans regia'
   // Castanea pumila is heat-driven (chinkapin-fix); not in this list.
+  // Hazelnuts (Corylus): heat-driven (drop Aug-Sep before frost),
+  // handled by species-complex-unify; not frost-driven.
 ]);
 
 const STAGE_DIRECTION = {

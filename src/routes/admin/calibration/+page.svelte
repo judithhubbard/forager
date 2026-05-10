@@ -1249,6 +1249,9 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
               <div class="zone-label">
                 <strong>{z.code}</strong>
                 <span class="zone-name muted">{z.name.replace('USDA hardiness zone ', '')}</span>
+                {#if pinsByZoneId[z.id]}
+                  <span class="zone-pin-count" title="Pins in this zone for this species">{pinsByZoneId[z.id].toLocaleString()} pins</span>
+                {/if}
               </div>
               <svg viewBox="0 0 {totalW} {TIMELINE_H}" width={totalW} height={TIMELINE_H} class="timeline">
                 <!-- Month grid -->
@@ -1426,9 +1429,6 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                       on:click={() => (expandedZoneId = expandedZoneId === z.id ? null : z.id)}
                     >note</button>
                   {/if}
-                {/if}
-                {#if pinsByZoneId[z.id]}
-                  <span class="pin-count" title="Pins in this zone for this species">{pinsByZoneId[z.id].toLocaleString()} pins</span>
                 {/if}
                 {#if editMode && editingZoneId !== z.id}
                   <button class="edit-btn" on:click={() => startEdit(z.id)}>
@@ -1942,10 +1942,11 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
   .note-pill.clickable:hover { background: #f5f8f5; }
   .ev-pill.clickable:hover { background: #e3f0db; }
 
-  .pin-count {
-    font-size: 0.7rem;
+  .zone-pin-count {
+    font-size: 0.68rem;
     color: #6b7a6b;
     font-variant-numeric: tabular-nums;
+    margin-top: 0.05rem;
   }
 
   .row-detail {

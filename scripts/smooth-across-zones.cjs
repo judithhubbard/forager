@@ -82,16 +82,17 @@ const FROST_DRIVEN_RIPE = new Set([
   'Diospyros virginiana',   // American persimmon
   'Vaccinium macrocarpon',  // American cranberry
   // Chestnuts (drop -10 to -25 days before first frost; still frost-anchored)
-  'Castanea dentata', 'Castanea mollissima', 'Castanea sativa',
-  'Castanea pumila', 'Castanea sp.',
+  // Castanea pumila REMOVED — heat-driven, handled by chinkapin-fix.
+  'Castanea dentata', 'Castanea mollissima', 'Castanea sativa', 'Castanea sp.',
   // Oaks (acorns drop at first frost)
   'Quercus alba', 'Quercus macrocarpa',
   // Hickories (husks split at first frost)
   'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
   // Walnuts (husks blacken pre-frost; timing tracks frost arrival)
-  'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
-  // Hazelnuts (Aug-Sep, before frost)
-  'Corylus americana', 'Corylus cornuta'
+  'Juglans nigra', 'Juglans cinerea', 'Juglans regia'
+  // Hazelnuts: heat-driven (drop Aug-Sep before frost). Handled by
+  // species-complex-unify; not in this list. Castanea pumila also
+  // heat-driven (chinkapin-fix); not in this list.
 ]);
 
 function directionFor(scientificName, stage) {
