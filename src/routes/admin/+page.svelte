@@ -201,6 +201,7 @@
       <ul class="tools-list">
         <li><a href="{base}/admin/calibration">Calibration viewer</a> — review per-species, per-zone harvest windows across data sources</li>
         <li><a href="{base}/admin/feedback">Feedback inbox</a> — user-submitted bug reports + suggestions</li>
+        <li><a href="{base}/admin/ux-events">UX events</a> — anonymized event log: locate-me hits, recording lifecycle, GPS errors, wake-lock outcomes</li>
       </ul>
     </section>
 
