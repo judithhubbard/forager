@@ -64,6 +64,65 @@ A note on the $30/yr price: this is **competitive but not premium**. AllTrails i
 
 ---
 
+## 3a. Year-by-year growth model
+
+Steady-state numbers above are year-5 endpoints. Here's a realistic ramp showing how the curve gets there. SaaS growth is usually slow in year 1 (no audience yet), accelerates in years 2–3 as SEO / content / referrals compound, then tapers in years 4–5 as the product approaches its addressable market.
+
+**Mid case** (most likely outcome):
+
+| Year | Anonymous MAU | Free signed-in | Paid subs | Gross/yr | Costs/yr | Net/yr | Cumulative net |
+|---|---|---|---|---|---|---|---|
+| 1 | 2,500 | 500 | 75 | $2,250 | $720 | ~$1,500 | $1,500 |
+| 2 | 7,500 | 1,500 | 300 | $9,000 | $1,200 | ~$7,500 | $9,000 |
+| 3 | 15,000 | 3,000 | 750 | $22,500 | $1,800 | ~$19,500 | $28,500 |
+| 4 | 22,000 | 4,200 | 1,200 | $36,000 | $2,200 | ~$31,500 | $60,000 |
+| 5 | 25,000 | 5,000 | 1,500 | $45,000 | $2,400 | ~$40,000 | $100,000 |
+
+Mid-case **5-year cumulative net: ~$100K**. Break-even on infrastructure spend: month 4 of year 1. The single-developer hours-per-week peak around year 2–3 (15–20 hrs/wk during SEO + content push) before settling to ~7–10 hrs/wk steady state.
+
+**Pessimistic case** (Falling Fruit dominates the niche, no breakout moment, slow word-of-mouth only):
+
+| Year | Anonymous MAU | Free signed-in | Paid subs | Gross/yr | Costs/yr | Net/yr | Cumulative net |
+|---|---|---|---|---|---|---|---|
+| 1 | 500 | 50 | 5 | $150 | $480 | -$330 | -$330 |
+| 2 | 1,500 | 200 | 20 | $600 | $480 | $120 | -$210 |
+| 3 | 3,000 | 400 | 50 | $1,500 | $540 | ~$960 | $750 |
+| 4 | 4,000 | 600 | 80 | $2,400 | $600 | ~$1,800 | $2,550 |
+| 5 | 5,000 | 800 | 100 | $3,000 | $600 | ~$2,400 | $4,950 |
+
+Pessimistic **5-year cumulative net: ~$5K** — net-negative through year 1, nominal returns thereafter. The product would still pay for itself but not return on the time invested. Worth running for personal use; not worth it as a side-business if this is the actual trajectory.
+
+**Optimistic case** (one breakthrough content moment in year 2, durable SEO from per-city foraging-map pages, watchlist conversion lands well):
+
+| Year | Anonymous MAU | Free signed-in | Paid subs | Gross/yr | Costs/yr | Net/yr | Cumulative net |
+|---|---|---|---|---|---|---|---|
+| 1 | 5,000 | 1,000 | 200 | $6,000 | $720 | ~$4,500 | $4,500 |
+| 2 | 25,000 | 4,000 | 1,000 | $30,000 | $2,400 | ~$25,000 | $29,500 |
+| 3 | 60,000 | 12,000 | 3,000 | $90,000 | $5,400 | ~$80,000 | $109,500 |
+| 4 | 90,000 | 17,000 | 4,500 | $135,000 | $7,800 | ~$120,000 | $229,500 |
+| 5 | 100,000 | 20,000 | 6,000 | $180,000 | $9,600 | ~$160,000 | $389,500 |
+
+Optimistic **5-year cumulative net: ~$390K**. Break-even on Apple Dev Program + total infra: month 2. At this scale, the time investment becomes the constraint — at 4.5K paying users, support and content-update demands push toward 25–30 hrs/wk, which forces either hiring help or quality erosion.
+
+**Cross-case comparison at year 3** (the most informative "is this working?" milestone):
+
+| Case | Y3 paid subs | Y3 net/yr | Cumulative through Y3 |
+|---|---|---|---|
+| Pessimistic | 50 | ~$1K | $750 |
+| Mid | 750 | ~$20K | $28K |
+| Optimistic | 3,000 | ~$80K | $110K |
+
+Year 3 is the decision point: if Forager is in the pessimistic trajectory by then, the realistic move is to make peace with it as a personal-use tool and stop investing growth time. Mid case at year 3 is when it starts looking like a real side income; optimistic is when it could plausibly become full-time.
+
+**Conversion model assumptions** (constant across years; you can sanity-check these against your own funnel data once live):
+
+- 16–20% of anonymous browsers eventually create a free account (driven by watchlist + ripening notifications)
+- 15% of free signed-in convert to paid in year 1 (early adopters, foraging hobbyists with disposable income); rises to 30% by year 5 as the watchlist features deepen
+- 10–15% annual churn on paid (typical for $30/yr subscription apps without aggressive lock-in features); offset by gross adds
+- These ramp curves assume **steady content output** (~1 blog post/week or equivalent SEO content). Cut content production and the curves flatten by year 2.
+
+---
+
 ## 4. Cost model (monthly, by tier)
 
 | Item | Pess. (~5K MAU) | Mid (~25K MAU) | Optim. (~100K MAU) |
