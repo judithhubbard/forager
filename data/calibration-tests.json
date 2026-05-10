@@ -200,6 +200,126 @@
       "tolerance": 21,
       "source": "Cornell Cooperative Extension + Concord grape harvest data",
       "notes": "Concord-type fox grape peak ~early Sep. DOY 252 = Sep 9."
+    },
+    {
+      "species": "Morus rubra",
+      "common": "Red mulberry",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 175,
+      "tolerance": 14,
+      "source": "Cornell Cooperative Extension + Practical Self Reliance",
+      "notes": "Red mulberry peak ~Jun 24 in zone 6a. Ripens before blackberries."
+    },
+    {
+      "species": "Cornus mas",
+      "common": "Cornelian cherry",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 233,
+      "tolerance": 21,
+      "source": "Penn State Extension + Cornell",
+      "notes": "Cornelian cherry harvest ~late Aug in zone 6a."
+    },
+    {
+      "species": "Malus domestica",
+      "common": "Apple",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 258,
+      "tolerance": 28,
+      "source": "Penn State Extension + UMass Tree Fruit",
+      "notes": "Apple harvest spans early/mid/late season cultivars; broad ±28d tolerance for the species window. DOY 258 = Sep 15 (mid-season cultivars)."
+    },
+    {
+      "species": "Prunus americana",
+      "common": "American plum",
+      "zone": "5a",
+      "stage": "ripe",
+      "peak_doy": 230,
+      "tolerance": 21,
+      "source": "USDA NRCS + Practical Self Reliance",
+      "notes": "Wild plum harvest ~mid-Aug in zone 5a. DOY 230 = Aug 18."
+    },
+    {
+      "species": "Lindera benzoin",
+      "common": "Spicebush",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 263,
+      "tolerance": 21,
+      "source": "Forager Chef + Practical Self Reliance",
+      "notes": "Spicebush berries ripen ~Sep 20 in zone 6a, dark red drupes."
+    },
+    {
+      "species": "Rubus idaeus",
+      "common": "Red raspberry",
+      "zone": "5a",
+      "stage": "ripe",
+      "peak_doy": 200,
+      "tolerance": 14,
+      "source": "Practical Self Reliance + UMaine Extension",
+      "notes": "Wild red raspberry summer-bearing peak ~Jul 19 in zone 5a."
+    },
+    {
+      "species": "Rubus occidentalis",
+      "common": "Black raspberry",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 188,
+      "tolerance": 14,
+      "source": "Forager Chef + UVM Extension",
+      "notes": "Black raspberry peak ~Jul 7 in zone 6a, before blackberries."
+    },
+    {
+      "species": "Sassafras albidum",
+      "common": "Sassafras",
+      "zone": "6a",
+      "stage": "shoot",
+      "peak_doy": 110,
+      "tolerance": 28,
+      "source": "Wild foraging tradition (root bark + spring shoots)",
+      "notes": "Sassafras spring shoots / root harvest in early-mid spring. Wide tolerance — sassafras is multi-stage (sap, shoot, root)."
+    },
+    {
+      "species": "Asparagus officinalis",
+      "common": "Wild asparagus",
+      "zone": "6a",
+      "stage": "shoot",
+      "peak_doy": 122,
+      "tolerance": 21,
+      "source": "Forager Chef + Practical Self Reliance",
+      "notes": "Wild asparagus spring shoots peak ~May 2 in zone 6a."
+    },
+    {
+      "species": "Helianthus tuberosus",
+      "common": "Jerusalem artichoke",
+      "zone": "6a",
+      "stage": "root_dig",
+      "peak_doy": 305,
+      "tolerance": 30,
+      "source": "Forager Chef + multiple foraging guides",
+      "notes": "Sunchoke root harvest is post-frost through winter. DOY 305 = Nov 1; broad tolerance because it's a wide harvest window."
+    },
+    {
+      "species": "Vaccinium macrocarpon",
+      "common": "American cranberry",
+      "zone": "5a",
+      "stage": "ripe",
+      "peak_doy": 280,
+      "tolerance": 21,
+      "source": "Cape Cod Cranberry Growers + UMass Extension",
+      "notes": "Wild cranberry peak ~Oct 7 in zone 5a (frost-tinted bog harvest)."
+    },
+    {
+      "species": "Mentha spicata",
+      "common": "Spearmint",
+      "zone": "6a",
+      "stage": "leaf",
+      "peak_doy": 152,
+      "tolerance": 30,
+      "source": "Foraging guides — herbs harvested at peak fragrance just before flowering",
+      "notes": "Mint leaves harvested late spring before flowering. Tolerance wide; mint is harvestable across a long season."
     }
   ]
 }
