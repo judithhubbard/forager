@@ -101,6 +101,7 @@
     'cited_thin',
     'regional_guide',
     'empirical_npn',
+    'empirical_inat',
     'empirical_community',
     'curated',
     'frost_offset'
@@ -650,7 +651,8 @@
     tier: 'substantial' | 'thin' | 'heuristic';
   } {
     if (c === 'expert_verified' || c === 'regional_guide' ||
-        c === 'empirical_npn' || c === 'empirical_community') {
+        c === 'empirical_npn' || c === 'empirical_inat' ||
+        c === 'empirical_community') {
       return { dash: '', opacity: 0.85, tier: 'substantial' };
     }
     if (c === 'cited_thin') {
@@ -690,6 +692,7 @@
     if (c === 'cited_thin') return 'thin citation';
     if (c === 'regional_guide') return 'regional guide';
     if (c === 'empirical_npn') return 'NPN empirical';
+    if (c === 'empirical_inat') return 'iNat empirical';
     if (c === 'empirical_community') return 'community sightings';
     return c ?? '';
   }
@@ -700,6 +703,7 @@
     if (c === 'cited_thin') return 'Single citation, often weak — DOY values came from agent general knowledge with one tangential web fact attached. Treat as approximate; re-cite or revise.';
     if (c === 'regional_guide') return 'Source: a regional expert guide (CityFruit / Hidden Harvest / NFFTT / POP / UCANR).';
     if (c === 'empirical_npn') return 'Source: USA-NPN observations aggregated per zone with leading-edge offset.';
+    if (c === 'empirical_inat') return 'Source: iNaturalist research-grade Fruiting-annotated observations binned by climate zone (p10/p90). N≥10 obs per zone. Broader species coverage than NPN but noisier annotation.';
     if (c === 'empirical_community') return 'Source: community-reporting tracker (e.g. The Great Morel).';
     return '';
   }
