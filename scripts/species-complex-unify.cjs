@@ -754,7 +754,7 @@ const COMPLEXES = [
   {
     name: 'Black trumpet',
     members: ['Craterellus cornucopioides'],
-    anchor_zone: '6a', anchor_peak: 213, shift_per_half_zone: -3, half_window: 28,
+    anchor_zone: '6a', anchor_peak: 227, shift_per_half_zone: -3, half_window: 45,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'mushroom_flush',
     source_name: 'Black trumpet (Mushroom Expert + Wild Mushrooms of NE)',
@@ -1024,5 +1024,21 @@ const COMPLEXES = [
     }
   }
   console.log(`\nTotal: ${totalInserted} inserted, ${totalUpdated} updated.`);
+
+  // Emit a static JSON with complex-membership info so the calibration
+  // viewer can show "this species is part of {complex}; {N}/{M} members
+  // confirmed" notes.
+  const path = require('node:path');
+  const memberToComplex = {};
+  for (const cx of COMPLEXES) {
+    for (const sci of cx.members) {
+      if (!memberToComplex[sci]) memberToComplex[sci] = [];
+      memberToComplex[sci].push({ name: cx.name, members: cx.members, stage: cx.stage ?? 'ripe' });
+    }
+  }
+  const outPath = path.join('/Users/jk/Dropbox/Claude/forager/static/species-complexes.json');
+  fs.writeFileSync(outPath, JSON.stringify(memberToComplex, null, 2));
+  console.log(`Wrote complex-membership JSON: ${outPath} (${Object.keys(memberToComplex).length} species)`);
+
   await sql.end();
 })();

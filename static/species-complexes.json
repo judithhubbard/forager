@@ -1,0 +1,809 @@
+{
+  "Corylus americana": [
+    {
+      "name": "Corylus (hazelnut) complex",
+      "members": [
+        "Corylus americana",
+        "Corylus cornuta",
+        "Corylus sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Corylus cornuta": [
+    {
+      "name": "Corylus (hazelnut) complex",
+      "members": [
+        "Corylus americana",
+        "Corylus cornuta",
+        "Corylus sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Corylus sp.": [
+    {
+      "name": "Corylus (hazelnut) complex",
+      "members": [
+        "Corylus americana",
+        "Corylus cornuta",
+        "Corylus sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Amelanchier arborea": [
+    {
+      "name": "Amelanchier (serviceberry) complex",
+      "members": [
+        "Amelanchier arborea",
+        "Amelanchier canadensis",
+        "Amelanchier laevis",
+        "Amelanchier sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Amelanchier canadensis": [
+    {
+      "name": "Amelanchier (serviceberry) complex",
+      "members": [
+        "Amelanchier arborea",
+        "Amelanchier canadensis",
+        "Amelanchier laevis",
+        "Amelanchier sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Amelanchier laevis": [
+    {
+      "name": "Amelanchier (serviceberry) complex",
+      "members": [
+        "Amelanchier arborea",
+        "Amelanchier canadensis",
+        "Amelanchier laevis",
+        "Amelanchier sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Amelanchier sp.": [
+    {
+      "name": "Amelanchier (serviceberry) complex",
+      "members": [
+        "Amelanchier arborea",
+        "Amelanchier canadensis",
+        "Amelanchier laevis",
+        "Amelanchier sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Morus rubra": [
+    {
+      "name": "Mulberry complex",
+      "members": [
+        "Morus rubra",
+        "Morus alba",
+        "Morus nigra"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Morus alba": [
+    {
+      "name": "Mulberry complex",
+      "members": [
+        "Morus rubra",
+        "Morus alba",
+        "Morus nigra"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Morus nigra": [
+    {
+      "name": "Mulberry complex",
+      "members": [
+        "Morus rubra",
+        "Morus alba",
+        "Morus nigra"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Asimina triloba": [
+    {
+      "name": "Pawpaw",
+      "members": [
+        "Asimina triloba"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Castanea pumila": [
+    {
+      "name": "Allegheny chinkapin",
+      "members": [
+        "Castanea pumila"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Vitis labrusca": [
+    {
+      "name": "Fox grape",
+      "members": [
+        "Vitis labrusca"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Prunus persica": [
+    {
+      "name": "Peach",
+      "members": [
+        "Prunus persica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Gaultheria procumbens": [
+    {
+      "name": "Wintergreen",
+      "members": [
+        "Gaultheria procumbens"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Mahonia aquifolium": [
+    {
+      "name": "Mahonia (Oregon grape) complex",
+      "members": [
+        "Mahonia aquifolium",
+        "Mahonia repens"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Mahonia repens": [
+    {
+      "name": "Mahonia (Oregon grape) complex",
+      "members": [
+        "Mahonia aquifolium",
+        "Mahonia repens"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Sambucus canadensis": [
+    {
+      "name": "Sambucus (elderberry) complex",
+      "members": [
+        "Sambucus canadensis",
+        "Sambucus nigra",
+        "Sambucus cerulea"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Sambucus (elderflower) complex",
+      "members": [
+        "Sambucus canadensis",
+        "Sambucus nigra",
+        "Sambucus cerulea"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Sambucus nigra": [
+    {
+      "name": "Sambucus (elderberry) complex",
+      "members": [
+        "Sambucus canadensis",
+        "Sambucus nigra",
+        "Sambucus cerulea"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Sambucus (elderflower) complex",
+      "members": [
+        "Sambucus canadensis",
+        "Sambucus nigra",
+        "Sambucus cerulea"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Sambucus cerulea": [
+    {
+      "name": "Sambucus (elderberry) complex",
+      "members": [
+        "Sambucus canadensis",
+        "Sambucus nigra",
+        "Sambucus cerulea"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Sambucus (elderflower) complex",
+      "members": [
+        "Sambucus canadensis",
+        "Sambucus nigra",
+        "Sambucus cerulea"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Vitis riparia": [
+    {
+      "name": "Wild Vitis (grape) complex",
+      "members": [
+        "Vitis riparia",
+        "Vitis aestivalis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Vitis aestivalis": [
+    {
+      "name": "Wild Vitis (grape) complex",
+      "members": [
+        "Vitis riparia",
+        "Vitis aestivalis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Crataegus sp.": [
+    {
+      "name": "Crataegus (hawthorn) complex",
+      "members": [
+        "Crataegus sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Fraxinus pennsylvanica": [
+    {
+      "name": "Fraxinus (ash) edible samara complex",
+      "members": [
+        "Fraxinus pennsylvanica",
+        "Fraxinus americana",
+        "Fraxinus nigra"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Fraxinus americana": [
+    {
+      "name": "Fraxinus (ash) edible samara complex",
+      "members": [
+        "Fraxinus pennsylvanica",
+        "Fraxinus americana",
+        "Fraxinus nigra"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Fraxinus nigra": [
+    {
+      "name": "Fraxinus (ash) edible samara complex",
+      "members": [
+        "Fraxinus pennsylvanica",
+        "Fraxinus americana",
+        "Fraxinus nigra"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Plantago major": [
+    {
+      "name": "Common plantain (leaves)",
+      "members": [
+        "Plantago major"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Diospyros virginiana": [
+    {
+      "name": "American persimmon",
+      "members": [
+        "Diospyros virginiana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Vaccinium macrocarpon": [
+    {
+      "name": "American cranberry",
+      "members": [
+        "Vaccinium macrocarpon"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Prunus virginiana": [
+    {
+      "name": "Chokecherry",
+      "members": [
+        "Prunus virginiana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Aronia melanocarpa": [
+    {
+      "name": "Black chokeberry",
+      "members": [
+        "Aronia melanocarpa"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes nigrum": [
+    {
+      "name": "Ribes (currant) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes rubrum": [
+    {
+      "name": "Ribes (currant) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes uva-crispa": [
+    {
+      "name": "Ribes (currant) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ribes sp.": [
+    {
+      "name": "Ribes (currant) complex",
+      "members": [
+        "Ribes nigrum",
+        "Ribes rubrum",
+        "Ribes uva-crispa",
+        "Ribes sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Pyrus communis": [
+    {
+      "name": "Pyrus (pear) complex",
+      "members": [
+        "Pyrus communis",
+        "Pyrus pyrifolia",
+        "Pyrus calleryana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Pyrus pyrifolia": [
+    {
+      "name": "Pyrus (pear) complex",
+      "members": [
+        "Pyrus communis",
+        "Pyrus pyrifolia",
+        "Pyrus calleryana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Pyrus calleryana": [
+    {
+      "name": "Pyrus (pear) complex",
+      "members": [
+        "Pyrus communis",
+        "Pyrus pyrifolia",
+        "Pyrus calleryana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Prunus americana": [
+    {
+      "name": "American plum",
+      "members": [
+        "Prunus americana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Taraxacum officinale": [
+    {
+      "name": "Dandelion (leaves)",
+      "members": [
+        "Taraxacum officinale"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Yucca filamentosa": [
+    {
+      "name": "Adam's needle (flowers)",
+      "members": [
+        "Yucca filamentosa"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Prunus dulcis": [
+    {
+      "name": "Almond",
+      "members": [
+        "Prunus dulcis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Annona cherimola": [
+    {
+      "name": "Cherimoya",
+      "members": [
+        "Annona cherimola"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Prunus sp.": [
+    {
+      "name": "Cherry/Plum (unspecified)",
+      "members": [
+        "Prunus sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Laetiporus sulphureus": [
+    {
+      "name": "Chicken of the woods",
+      "members": [
+        "Laetiporus sulphureus"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Typha latifolia": [
+    {
+      "name": "Cattail (spring shoots)",
+      "members": [
+        "Typha latifolia",
+        "Typha angustifolia"
+      ],
+      "stage": "shoot"
+    },
+    {
+      "name": "Cattail (pollen / flower)",
+      "members": [
+        "Typha latifolia",
+        "Typha angustifolia"
+      ],
+      "stage": "flower_harvest"
+    },
+    {
+      "name": "Cattail (fall rhizome)",
+      "members": [
+        "Typha latifolia",
+        "Typha angustifolia"
+      ],
+      "stage": "root_dig"
+    }
+  ],
+  "Typha angustifolia": [
+    {
+      "name": "Cattail (spring shoots)",
+      "members": [
+        "Typha latifolia",
+        "Typha angustifolia"
+      ],
+      "stage": "shoot"
+    },
+    {
+      "name": "Cattail (pollen / flower)",
+      "members": [
+        "Typha latifolia",
+        "Typha angustifolia"
+      ],
+      "stage": "flower_harvest"
+    },
+    {
+      "name": "Cattail (fall rhizome)",
+      "members": [
+        "Typha latifolia",
+        "Typha angustifolia"
+      ],
+      "stage": "root_dig"
+    }
+  ],
+  "Matteuccia struthiopteris": [
+    {
+      "name": "Ostrich fern fiddleheads",
+      "members": [
+        "Matteuccia struthiopteris"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Fragaria virginiana": [
+    {
+      "name": "Wild strawberry (Fragaria) complex",
+      "members": [
+        "Fragaria virginiana",
+        "Fragaria vesca"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Fragaria vesca": [
+    {
+      "name": "Wild strawberry (Fragaria) complex",
+      "members": [
+        "Fragaria virginiana",
+        "Fragaria vesca"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Podophyllum peltatum": [
+    {
+      "name": "Mayapple",
+      "members": [
+        "Podophyllum peltatum"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Betula lenta": [
+    {
+      "name": "Sweet birch (sap)",
+      "members": [
+        "Betula lenta",
+        "Betula alleghaniensis"
+      ],
+      "stage": "sap_run"
+    }
+  ],
+  "Betula alleghaniensis": [
+    {
+      "name": "Sweet birch (sap)",
+      "members": [
+        "Betula lenta",
+        "Betula alleghaniensis"
+      ],
+      "stage": "sap_run"
+    }
+  ],
+  "Oxalis stricta": [
+    {
+      "name": "Wood sorrel (leaves)",
+      "members": [
+        "Oxalis stricta"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Rumex crispus": [
+    {
+      "name": "Curly dock (leaves)",
+      "members": [
+        "Rumex crispus"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Rumex acetosella": [
+    {
+      "name": "Sheep sorrel (leaves)",
+      "members": [
+        "Rumex acetosella"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Artemisia vulgaris": [
+    {
+      "name": "Mugwort (leaves)",
+      "members": [
+        "Artemisia vulgaris"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Viburnum trilobum": [
+    {
+      "name": "Highbush cranberry",
+      "members": [
+        "Viburnum trilobum"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Lycoperdon perlatum": [
+    {
+      "name": "Common puffball",
+      "members": [
+        "Lycoperdon perlatum"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Calvatia gigantea": [
+    {
+      "name": "Giant puffball",
+      "members": [
+        "Calvatia gigantea"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Craterellus cornucopioides": [
+    {
+      "name": "Black trumpet",
+      "members": [
+        "Craterellus cornucopioides"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Lepista nuda": [
+    {
+      "name": "Wood blewit",
+      "members": [
+        "Lepista nuda"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Erythronium americanum": [
+    {
+      "name": "Trout lily (leaves + corm)",
+      "members": [
+        "Erythronium americanum"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Claytonia virginica": [
+    {
+      "name": "Spring beauty",
+      "members": [
+        "Claytonia virginica"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Cardamine concatenata": [
+    {
+      "name": "Cut-leaf toothwort",
+      "members": [
+        "Cardamine concatenata"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Monarda fistulosa": [
+    {
+      "name": "Wild bergamot (flowers)",
+      "members": [
+        "Monarda fistulosa"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Viola sororia": [
+    {
+      "name": "Common blue violet (flowers)",
+      "members": [
+        "Viola sororia"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Nepeta cataria": [
+    {
+      "name": "Catnip (leaves)",
+      "members": [
+        "Nepeta cataria"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Solidago canadensis": [
+    {
+      "name": "Canada goldenrod (flowers)",
+      "members": [
+        "Solidago canadensis"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Prunus pensylvanica": [
+    {
+      "name": "Pin cherry",
+      "members": [
+        "Prunus pensylvanica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Hypomyces lactifluorum": [
+    {
+      "name": "Lobster mushroom",
+      "members": [
+        "Hypomyces lactifluorum"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Sagittaria latifolia": [
+    {
+      "name": "Wapato (rhizome)",
+      "members": [
+        "Sagittaria latifolia"
+      ],
+      "stage": "root_dig"
+    }
+  ],
+  "Cornus canadensis": [
+    {
+      "name": "Bunchberry",
+      "members": [
+        "Cornus canadensis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Mitchella repens": [
+    {
+      "name": "Partridgeberry",
+      "members": [
+        "Mitchella repens"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Cornus florida": [
+    {
+      "name": "Flowering dogwood",
+      "members": [
+        "Cornus florida"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Prunus serotina": [
+    {
+      "name": "Black cherry",
+      "members": [
+        "Prunus serotina"
+      ],
+      "stage": "ripe"
+    }
+  ]
+}
