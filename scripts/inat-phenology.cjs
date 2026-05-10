@@ -212,10 +212,14 @@ async function processSpecies(scientificName) {
       console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  (skipped — below MIN_OBS_PER_ZONE=${MIN_OBS_PER_ZONE})`);
       continue;
     }
-    // Raw percentiles for reporting; the user-observed "first fruit"
-    // bias means p10/p90 over-stretch the window (observers post early
-    // novelties and stop posting once a species is common). Bias-
-    // corrected p15/p85 are used for the synthesized DOY range.
+    // Full distribution summary: min, p10, p15, p50, p85, p90, max.
+    // The synthesized DOY range we publish is the inner-70% inset
+    // (p15-p85). Raw outer percentiles + min/max are kept in the
+    // supports object so the viewer can plot the full spread as
+    // dots-flanking-line. We don't shift any observations — this is
+    // a tail-trim, not a bias correction.
+    const min_doy = doys[0];
+    const max_doy = doys[doys.length - 1];
     const p10 = percentile(doys, 0.1);
     const p15 = percentile(doys, 0.15);
     const p50 = percentile(doys, 0.5);
@@ -227,10 +231,18 @@ async function processSpecies(scientificName) {
       url: inatUrl,
       consulted_at: TIME_CONSULTED,
       summary: `${doys.length} research-grade Fruiting obs in zone ${code}. ` +
-               `Bias-corrected DOY p15=${p15}, p50=${p50}, p85=${p85}. ` +
-               `Raw range p10=${p10}, p90=${p90}. ` +
-               `Note: 'first fruit' reporting bias — observer attention skews early; raw percentiles can over-stretch the harvest window.`,
-      supports: { start_doy: p15, end_doy: p85, peak_doy: p50 }
+               `Distribution: min=${min_doy}, p10=${p10}, p15=${p15}, p50=${p50}, p85=${p85}, p90=${p90}, max=${max_doy}. ` +
+               `Published range is the inner-70% inset (p15-p85) to discount 'first fruit' tail outliers — no data was shifted.`,
+      supports: {
+        start_doy: p15,
+        end_doy: p85,
+        peak_doy: p50,
+        min_doy,
+        p10_doy: p10,
+        p90_doy: p90,
+        max_doy,
+        n_obs: doys.length
+      }
     };
 
     const exist = existingByZone.get(code);
@@ -254,24 +266,38 @@ async function processSpecies(scientificName) {
       console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p15=${String(p15).padStart(3)} p50=${String(p50).padStart(3)} p85=${String(p85).padStart(3)}  → INSERT (empirical_inat)`);
       inserted++;
     } else {
-      // APPEND iNat evidence if not already cited (idempotent on URL)
+      // APPEND or REPLACE iNat evidence. Idempotent on URL — but if
+      // an existing iNat entry from an earlier script version lacks
+      // the extended distribution fields (min_doy, p10_doy, etc.),
+      // we swap it for the new shape so the viewer can render the
+      // full distribution as dots-flanking-line.
       const ev = Array.isArray(exist.evidence) ? exist.evidence : [];
-      const already = ev.some(e => e?.url === inatUrl);
-      if (already) {
-        console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p10=${String(p10).padStart(3)} p50=${String(p50).padStart(3)} p90=${String(p90).padStart(3)}  → already cited, skip`);
+      const existingIdx = ev.findIndex(e => e?.url === inatUrl);
+      const hasFullDist = existingIdx >= 0
+        && ev[existingIdx]?.supports?.min_doy != null
+        && ev[existingIdx]?.supports?.p90_doy != null;
+      if (hasFullDist) {
+        console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p15=${String(p15).padStart(3)} p50=${String(p50).padStart(3)} p85=${String(p85).padStart(3)}  → already cited, skip`);
         skipped++;
         continue;
       }
-      // Compare bias-corrected iNat range to existing synthesized window
+      // Compare iNat published range (p15-p85) to existing synthesized window.
       const inEnv = (p15 >= exist.start_doy - 7 && p85 <= exist.end_doy + 7);
       const note = inEnv ? 'IN-ENVELOPE' : 'OUTSIDE-ENVELOPE';
-      const updated = ev.concat([inatEntry]);
+      let updated;
+      if (existingIdx >= 0) {
+        updated = ev.slice();
+        updated[existingIdx] = inatEntry;
+      } else {
+        updated = ev.concat([inatEntry]);
+      }
       await sql`
         update public.species_fruiting_windows
            set evidence = ${sql.json(updated)},
                updated_at = now()
          where id = ${exist.id}`;
-      console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p15=${String(p15).padStart(3)} p50=${String(p50).padStart(3)} p85=${String(p85).padStart(3)}  vs DB ${exist.start_doy}-${exist.end_doy}  → APPEND (${note})`);
+      const verb = existingIdx >= 0 ? 'UPGRADE' : 'APPEND';
+      console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p15=${String(p15).padStart(3)} p50=${String(p50).padStart(3)} p85=${String(p85).padStart(3)}  vs DB ${exist.start_doy}-${exist.end_doy}  → ${verb} (${note})`);
       appended++;
     }
   }

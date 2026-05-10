@@ -617,10 +617,11 @@
    *  template can then bind without TS non-null assertions, which the
    *  Svelte compiler struggles with inside attributes.
    *
-   *  `is_inat` flags entries from the iNaturalist phenology pipeline
-   *  so the viewer can render them distinctly — those are empirical
-   *  ranges from research-grade Fruiting observations, with a known
-   *  "first fruit" left-shift bias relative to actual harvest. */
+   *  iNat entries (from the iNaturalist phenology pipeline) carry
+   *  extra percentile fields (min_doy, p10_doy, p90_doy, max_doy,
+   *  n_obs) so the viewer can plot the full Fruiting-observation
+   *  distribution as dots-flanking-line: min dot · p10 dot · line
+   *  p15→p85 · p90 dot · max dot, with the median marked. */
   function supportingEvidenceFor(w: DBWindow): {
     source: string;
     summary: string;
@@ -628,17 +629,23 @@
     end_doy: number;
     peak_doy: number | null;
     is_inat: boolean;
+    min_doy: number | null;
+    p10_doy: number | null;
+    p90_doy: number | null;
+    max_doy: number | null;
+    n_obs: number | null;
   }[] {
-    const out: {
-      source: string;
-      summary: string;
-      start_doy: number;
-      end_doy: number;
-      peak_doy: number | null;
-      is_inat: boolean;
-    }[] = [];
+    const out: ReturnType<typeof supportingEvidenceFor> = [];
     for (const ev of w.evidence ?? []) {
-      const s = ev.supports;
+      const s = ev.supports as
+        | (NonNullable<typeof ev.supports> & {
+            min_doy?: number;
+            p10_doy?: number;
+            p90_doy?: number;
+            max_doy?: number;
+            n_obs?: number;
+          })
+        | undefined;
       if (!s || s.start_doy == null || s.end_doy == null) continue;
       out.push({
         source: ev.source,
@@ -646,7 +653,12 @@
         start_doy: s.start_doy,
         end_doy: s.end_doy,
         peak_doy: s.peak_doy ?? null,
-        is_inat: ev.source?.toLowerCase().startsWith('inaturalist') ?? false
+        is_inat: ev.source?.toLowerCase().startsWith('inaturalist') ?? false,
+        min_doy: s.min_doy ?? null,
+        p10_doy: s.p10_doy ?? null,
+        p90_doy: s.p90_doy ?? null,
+        max_doy: s.max_doy ?? null,
+        n_obs: s.n_obs ?? null
       });
     }
     // Sort iNat last so its lane is visually grouped at the bottom of
@@ -723,7 +735,7 @@
     if (c === 'cited_thin') return 'Single citation, often weak — DOY values came from agent general knowledge with one tangential web fact attached. Treat as approximate; re-cite or revise.';
     if (c === 'regional_guide') return 'Source: a regional expert guide (CityFruit / Hidden Harvest / NFFTT / POP / UCANR).';
     if (c === 'empirical_npn') return 'Source: USA-NPN observations aggregated per zone with leading-edge offset.';
-    if (c === 'empirical_inat') return 'Source: iNaturalist research-grade Fruiting-annotated observations binned by climate zone (p10/p90). N≥10 obs per zone. Broader species coverage than NPN but noisier annotation.';
+    if (c === 'empirical_inat') return 'Source: iNaturalist research-grade Fruiting-annotated observations binned by climate zone. Published DOY range is the inner-70% inset (p15-p85) of the per-zone DOY distribution; outer percentiles (min/p10/p90/max) plotted as dots flanking the line. N>=10 obs per zone. Broader species coverage than NPN but noisier annotations (Fruiting includes green/ripe/over-ripe; observers post first-fruit novelties unevenly).';
     if (c === 'empirical_community') return 'Source: community-reporting tracker (e.g. The Great Morel).';
     return '';
   }
@@ -825,8 +837,8 @@
       <div class="legend">
         <span class="legend-item"><span class="swatch swatch-db"></span>Synthesized DB row (per zone)</span>
         <span class="legend-item"><span class="swatch swatch-evidence"></span>Per-source range (1 lane per cited window)</span>
-        <span class="legend-item" title="iNaturalist research-grade Fruiting observations binned by climate zone. Bias-corrected p15-p85. Leading square marker + dark-teal stroke. Has known 'first fruit' left-shift bias.">
-          <span class="swatch swatch-inat"></span>iNat empirical (Fruiting obs)
+        <span class="legend-item" title="iNaturalist research-grade Fruiting observations binned by climate zone. Faded outer dots = first/last single observation. Inner dots = p10/p90 (trimmed from published range). Solid line = p15-p85 published range. Hollow center dot = median. The trim discounts 'first fruit' tail outliers; no observation is shifted in time.">
+          <span class="swatch swatch-inat"></span>iNat: <span class="inat-legend-glyph">·•━●━•·</span>min p10 p15-p85 p90 max
         </span>
         <span class="legend-item" title="Solid: substantial citation (expert_verified, regional_guide, NPN, community).
 Long dashes: thin citation — single weak fact stretched into a window.
@@ -919,42 +931,77 @@ Tight dots: heuristic only (AI-seeded or frost-offset propagation, no real sourc
                     {@const supportingEv = supportingEvidenceFor(ripe)}
                     {#each supportingEv.slice(0, EV_MAX_LANES) as ev, i}
                       {@const y = 6 + STAGE_H + 2 + i * EV_LANE_PITCH}
+                      {@const cy = y + EV_LANE_H / 2}
                       {@const stroke = ev.is_inat ? INAT_COLOR : stageColor(ripe.stage)}
-                      <line
-                        x1={doyX(ev.start_doy)}
-                        x2={doyX(ev.end_doy)}
-                        y1={y + EV_LANE_H / 2}
-                        y2={y + EV_LANE_H / 2}
-                        stroke={stroke}
-                        stroke-width={EV_LANE_H}
-                        stroke-dasharray={cs.dash}
-                        opacity={cs.opacity}
-                        stroke-linecap="butt"
-                      >
-                        <title>{ev.source}{cs.tier === 'thin' ? ' (thin)' : ''} · DOY {ev.start_doy}–{ev.end_doy}{ev.peak_doy != null ? ` · peak ${ev.peak_doy}` : ''}{'\n'}{ev.summary}</title>
-                      </line>
-                      {#if ev.is_inat}
-                        <!-- Small leading-square marker to flag iNat
-                             rows even with the timeline at low zoom. -->
-                        <rect
-                          x={doyX(ev.start_doy) - 4}
-                          y={y + EV_LANE_H / 2 - 2}
-                          width={3}
-                          height={3}
-                          fill={INAT_COLOR}
+                      {#if ev.is_inat && ev.min_doy != null && ev.max_doy != null}
+                        <!-- Full distribution: min · p10 · ━ p15-p85 ━ · p90 · max
+                             with median marked. Outer dots faded (outliers,
+                             trimmed); inner dots solid (the percentile bracket
+                             we discount, but show); line is the published
+                             p15-p85 inner-70% range. -->
+                        {#if ev.min_doy < ev.start_doy}
+                          <circle cx={doyX(ev.min_doy)} cy={cy} r="1.6"
+                                  fill={INAT_COLOR} opacity={0.35}>
+                            <title>iNat first observation (DOY {ev.min_doy}) — earliest single Fruiting obs in this zone</title>
+                          </circle>
+                        {/if}
+                        {#if ev.p10_doy != null && ev.p10_doy < ev.start_doy}
+                          <circle cx={doyX(ev.p10_doy)} cy={cy} r="1.6"
+                                  fill={INAT_COLOR} opacity={0.55}>
+                            <title>iNat p10 (DOY {ev.p10_doy}) — 10th percentile, trimmed from published range</title>
+                          </circle>
+                        {/if}
+                        <line x1={doyX(ev.start_doy)} x2={doyX(ev.end_doy)}
+                              y1={cy} y2={cy}
+                              stroke={INAT_COLOR}
+                              stroke-width={EV_LANE_H}
+                              opacity={cs.opacity}
+                              stroke-linecap="butt">
+                          <title>iNat published range p15-p85 (DOY {ev.start_doy}-{ev.end_doy}) · N={ev.n_obs ?? '?'} obs{'\n'}{ev.summary}</title>
+                        </line>
+                        {#if ev.p90_doy != null && ev.p90_doy > ev.end_doy}
+                          <circle cx={doyX(ev.p90_doy)} cy={cy} r="1.6"
+                                  fill={INAT_COLOR} opacity={0.55}>
+                            <title>iNat p90 (DOY {ev.p90_doy}) — 90th percentile, trimmed from published range</title>
+                          </circle>
+                        {/if}
+                        {#if ev.max_doy > ev.end_doy}
+                          <circle cx={doyX(ev.max_doy)} cy={cy} r="1.6"
+                                  fill={INAT_COLOR} opacity={0.35}>
+                            <title>iNat last observation (DOY {ev.max_doy}) — latest single Fruiting obs in this zone</title>
+                          </circle>
+                        {/if}
+                        {#if ev.peak_doy != null}
+                          <circle cx={doyX(ev.peak_doy)} cy={cy} r="2.2"
+                                  fill="white" stroke={INAT_COLOR}
+                                  stroke-width="1" opacity={cs.opacity}>
+                            <title>iNat median (DOY {ev.peak_doy})</title>
+                          </circle>
+                        {/if}
+                      {:else}
+                        <line
+                          x1={doyX(ev.start_doy)}
+                          x2={doyX(ev.end_doy)}
+                          y1={cy} y2={cy}
+                          stroke={stroke}
+                          stroke-width={EV_LANE_H}
+                          stroke-dasharray={cs.dash}
                           opacity={cs.opacity}
+                          stroke-linecap="butt"
                         >
-                          <title>iNaturalist empirical (Fruiting annotations)</title>
-                        </rect>
-                      {/if}
-                      {#if ev.peak_doy != null}
-                        <circle
-                          cx={doyX(ev.peak_doy)}
-                          cy={y + EV_LANE_H / 2}
-                          r="2"
-                          fill={stroke}
-                          opacity={cs.opacity}
-                        />
+                          <title>{ev.source}{cs.tier === 'thin' ? ' (thin)' : ''} · DOY {ev.start_doy}–{ev.end_doy}{ev.peak_doy != null ? ` · peak ${ev.peak_doy}` : ''}{'\n'}{ev.summary}</title>
+                        </line>
+                        {#if ev.is_inat}
+                          <rect x={doyX(ev.start_doy) - 4} y={cy - 2}
+                                width={3} height={3}
+                                fill={INAT_COLOR} opacity={cs.opacity}>
+                            <title>iNaturalist empirical (Fruiting annotations)</title>
+                          </rect>
+                        {/if}
+                        {#if ev.peak_doy != null}
+                          <circle cx={doyX(ev.peak_doy)} cy={cy} r="2"
+                                  fill={stroke} opacity={cs.opacity} />
+                        {/if}
                       {/if}
                     {/each}
                     {#if supportingEv.length > EV_MAX_LANES}
