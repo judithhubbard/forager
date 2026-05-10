@@ -23,6 +23,7 @@
     "import:hamilton-trees": "tsx scripts/import/hamilton-trees.ts",
     "import:seattle-trees": "tsx scripts/import/seattle-trees.ts",
     "import:portland-trees": "tsx scripts/import/portland-trees.ts",
+    "import:la-trees": "tsx scripts/import/la-trees.ts",
     "import:pittsburgh-trees": "tsx scripts/import/pittsburgh-trees.ts",
     "import:madison-trees": "tsx scripts/import/madison-trees.ts",
     "import:cambridge-trees": "tsx scripts/import/cambridge-trees.ts",
