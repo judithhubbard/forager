@@ -110,8 +110,8 @@ const COMPLEXES = [
     name: 'Mulberry complex',
     members: ['Morus rubra', 'Morus alba', 'Morus nigra'],
     anchor_zone: '6a',
-    anchor_peak: 175,           // Jun 24
-    shift_per_half_zone: -6,
+    anchor_peak: 170,           // Jun 19 (was 175 Jun 24; re-anchored to iNat 6a peak)
+    shift_per_half_zone: -7,    // was -6; warm-zone synth was lagging iNat by 14-27d
     half_window: 18,
     target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'ripe',
@@ -908,6 +908,35 @@ const COMPLEXES = [
     summary: 'Flowering dogwood: red drupes Sep-Oct, edible cooked only (bitter raw). Minor culinary forage.'
   },
 
+  // Apple (Malus domestica) — heat-driven, mild gradient. Cited
+  // evidence anchors at "Sep-Oct" peak; iNat shows ~3-week earlier
+  // ripening in 8a-9a (warm-zone summer cultivars). Anchor 6a peak
+  // Sep 12 (DOY 255), mild -3 d/half-zone.
+  {
+    name: 'Apple',
+    members: ['Malus domestica'],
+    anchor_zone: '6a', anchor_peak: 255, shift_per_half_zone: -3, half_window: 35,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'ripe',
+    source_name: 'Apple (Cornell CE + UMass Extension + iNat-empirical fit)',
+    source_url: 'https://gardening.cals.cornell.edu/plants/apple/',
+    summary: 'Apple (Malus domestica): heat-driven late-summer to fall ripe. Anchor 6a peak Sep 12, mild -3 d/half-zone. Wide ±35d window reflects cultivar variability.'
+  },
+
+  // Pomegranate (Punica granatum) — Mediterranean / Mediterranean-like
+  // climate. Heat-driven late-fall ripening. Anchor 9a peak Oct 1
+  // (DOY 274), mild -3 d/half-zone.
+  {
+    name: 'Pomegranate',
+    members: ['Punica granatum'],
+    anchor_zone: '9a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['7b','8a','8b','9a','9b','10a','10b'],
+    stage: 'ripe',
+    source_name: 'Pomegranate (UC ANR + Mediterranean cultivar timing)',
+    source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8576',
+    summary: 'Pomegranate (Punica granatum): heat-driven late-fall ripe. Best in zones 7b-10b; anchor 9a peak Oct 1.'
+  },
+
   // Black cherry (Prunus serotina) — heat-driven late-summer fruit.
   // Empirical iNat slope -8 d/half-zone (n=11). Anchor zone 7a peak
   // Jul 8 (DOY 189).
@@ -942,8 +971,8 @@ const COMPLEXES = [
       consulted_at: '2026-05-10T00:00:00Z',
       summary: cx.summary,
       supports: {
-        start_doy: cx.anchor_peak - cx.half_window,
-        end_doy: cx.anchor_peak + cx.half_window,
+        start_doy: Math.max(1, cx.anchor_peak - cx.half_window),
+        end_doy: Math.min(366, cx.anchor_peak + cx.half_window),
         peak_doy: cx.anchor_peak
       }
     };
