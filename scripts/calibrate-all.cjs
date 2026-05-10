@@ -74,6 +74,7 @@ const STEPS = [
   { name: '6. mulberry-fix',              script: 'mulberry-fix.cjs',              optional: false },
   { name: '6b. chinkapin-fix',            script: 'chinkapin-fix.cjs',             optional: false },
   { name: '7. foxgrape-fix',              script: 'foxgrape-fix.cjs',              optional: false },
+  { name: '7b. serviceberry-unify-fix',   script: 'serviceberry-unify-fix.cjs',    optional: false },
   { name: '8. beech-frost-fix',           script: 'beech-frost-fix.cjs',           optional: false },
   { name: '9. blackberry-fix',            script: 'blackberry-fix.cjs',            optional: false },
   { name: '10. smooth-across-zones',      script: 'smooth-across-zones.cjs',       optional: false },

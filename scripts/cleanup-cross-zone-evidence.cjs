@@ -32,12 +32,21 @@ const sql = require('/Users/jk/Dropbox/Claude/forager/node_modules/postgres')(
  *  for "zone Xy" or "zones Xy, Y'z" patterns in the source's text
  *  (which typically appears at the start of the summary as the
  *  attribution parenthetical, e.g. "Green Deane (Eat The Weeds,
- *  Florida, zone 9a):" — the zone is "9a"). */
+ *  Florida, zone 9a):" — the zone is "9a"). For multi-zone declarations
+ *  like "(zones 7a, 7b)" or "(zones 7a-7b)", extracts all listed
+ *  zones, not just the first. */
 function extractClaimedZones(source, summary) {
-  // Look in both source name and the leading parenthetical of the summary.
-  const text = `${source ?? ''} ${(summary ?? '').slice(0, 250)}`;
-  const matches = [...text.matchAll(/\bzones?\s+([0-9]+[ab])\b/gi)];
-  return new Set(matches.map((m) => m[1].toLowerCase()));
+  const text = `${source ?? ''} ${(summary ?? '').slice(0, 300)}`;
+  const zones = new Set();
+  // Find each "zones?" declaration and extract every zone code in
+  // the immediately following comma/dash-separated list. Stop at
+  // the first character that isn't a zone code, comma, dash, or whitespace.
+  for (const m of text.matchAll(/\bzones?\s+((?:[0-9]+[ab](?:\s*[-,]\s*)?)+)/gi)) {
+    for (const z of m[1].matchAll(/\b([0-9]+[ab])\b/gi)) {
+      zones.add(z[1].toLowerCase());
+    }
+  }
+  return zones;
 }
 
 (async () => {

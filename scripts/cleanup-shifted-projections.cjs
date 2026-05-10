@@ -34,6 +34,17 @@ function parseShiftTag(summary) {
   return { shift: parseInt(m[1], 10), base: m[2].toLowerCase(), target: m[3].toLowerCase() };
 }
 
+/** Does the source's quoted text explicitly name the row's zone?
+ *  e.g., source name "Green Deane (Eat The Weeds, Florida, zone 9a)"
+ *  on the 9a row → keep, even if [zone-shift -28d from base 7a -> 9a]
+ *  is present. The shift was the agent's DOY-projection mechanism,
+ *  but the source itself describes 9a. */
+function sourceMentionsZone(source, summary, zone) {
+  const text = `${source ?? ''} ${(summary ?? '').slice(0, 250)}`;
+  const re = new RegExp(`\\bzones?\\s*${zone.replace(/[ab]/, m => `[${m}]`)}\\b`, 'i');
+  return re.test(text);
+}
+
 (async () => {
   // For each row, identify shifted-projection entries and remove them.
   // A shifted-projection entry is one with a [zone-shift] tag where
@@ -53,9 +64,12 @@ function parseShiftTag(summary) {
       const tag = parseShiftTag(e?.summary);
       if (!tag) return true; // no shift tag → keep (base or non-shifted entry)
       if (tag.base === tag.target) return true; // base==target (shift +0d) is base entry, keep
+      // Don't remove if the source's QUOTE mentions the row's zone
+      // explicitly — Eat The Weeds "Florida, zone 9a" on the 9a row
+      // is a real regional citation, even with a [zone-shift] tag.
+      if (sourceMentionsZone(e?.source, e?.summary, r.zone_code)) return true;
       // Shifted projection: target != base, this row IS the target
       // (i.e., the shifted copy that doesn't belong elsewhere).
-      // Remove it — the base-zone copy already exists on the base row.
       return false;
     });
     if (filtered.length === ev.length) continue;

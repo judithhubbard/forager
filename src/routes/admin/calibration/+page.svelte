@@ -957,15 +957,27 @@
   const MONTH_STARTS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
   const MONTH_LABELS = ['J','F','M','A','M','J','J','A','S','O','N','D'];
 
-  /** Color per stage so the bars are distinguishable. */
+  /** Color per stage so the bars are distinguishable. Multi-stage
+   *  species (basswood: leaf + flower_harvest; elderberry: ripe +
+   *  flower_harvest) need distinct colors per stage so the viewer
+   *  doesn't conflate them visually. */
   function stageColor(stage: Stage): string {
     switch (stage) {
-      case 'flowering': return '#d199e3';
-      case 'green':     return '#85c285';
-      case 'ripening':  return '#e8b04a';
-      case 'ripe':      return '#c84545';
-      case 'past':      return '#7a7a7a';
-      default:          return '#bbb';
+      case 'flowering':       return '#d199e3'; // light purple — pre-fruit flowers
+      case 'flower_harvest':  return '#c252a8'; // magenta — flowers as forage target
+      case 'green':           return '#9bd6a3'; // light green — green fruit
+      case 'ripening':        return '#e8b04a'; // amber — ripening fruit
+      case 'ripe':            return '#c84545'; // red — ripe fruit/nut
+      case 'past':            return '#7a7a7a'; // gray
+      case 'shoot':           return '#5fa84a'; // medium green — spring shoots
+      case 'leaf':            return '#3e8a58'; // dark green — spring greens / leaves
+      case 'sap_run':         return '#9b7a4f'; // tan — sap
+      case 'root_dig':        return '#7a5a3a'; // brown — roots
+      case 'mushroom_flush':  return '#8b5a8b'; // mushroom purple
+      case 'bark_strip':      return '#5a4030'; // dark brown — bark
+      case 'bare':            return '#bbb';
+      case 'unknown':         return '#bbb';
+      default:                return '#bbb';
     }
   }
 
