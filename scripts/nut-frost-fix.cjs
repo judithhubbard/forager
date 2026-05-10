@@ -48,6 +48,9 @@ const FROST_PEAKS = {
 const NUT_SPECIES = {
   // Beech — done by beech-frost-fix.cjs but harmless to re-apply
   'Fagus grandifolia':    { offset:   0, half_window: 20, common: 'American beech' },
+  // Persimmon — frost-driven later than first frost (canon: "wait
+  // for first frost"; fruit clings to tree until frost softens it).
+  'Diospyros virginiana': { offset: +14, half_window: 21, common: 'American persimmon' },
   // Chestnuts: drop before frost (Sept)
   'Castanea dentata':     { offset: -10, half_window: 20, common: 'American chestnut' },
   'Castanea mollissima':  { offset: -10, half_window: 20, common: 'Chinese chestnut' },
@@ -117,9 +120,9 @@ function noteFor(common, offset) {
         outOfRange++;
         continue;
       }
-      const peak = frostPeak + cfg.offset;
-      const start = peak - cfg.half_window;
-      const end = peak + cfg.half_window;
+      const peak = Math.min(366, frostPeak + cfg.offset);
+      const start = Math.max(1, peak - cfg.half_window);
+      const end = Math.min(366, peak + cfg.half_window);
       const note = `Frost-driven harvest: ${cfg.common} drops ${
         cfg.offset === 0 ? 'at first hard frost'
         : cfg.offset > 0 ? `${cfg.offset} days after first frost`

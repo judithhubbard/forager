@@ -67,7 +67,13 @@ const INAT_WRONG_STAGE = new Set([
   // Walnuts
   'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
   // Hazelnuts
-  'Corylus americana', 'Corylus cornuta'
+  'Corylus americana', 'Corylus cornuta',
+  // Persimmon — frost-driven late-season fruit, fruit clings to tree
+  // until frost; iNat captures developing fruit visible all summer
+  'Diospyros virginiana',
+  // Pawpaw — slow-ripening fruit; iNat captures developing fruit
+  // weeks before harvest (visible May-Aug; ripens Aug-Sep)
+  'Asimina triloba'
 ]);
 
 /** Detect when an evidence summary describes its window in fuzzy
