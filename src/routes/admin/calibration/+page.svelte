@@ -619,6 +619,51 @@
     return groups;
   })();
 
+  /** Sidebar grouping mode: 'status' (default) or 'complex'. Complex
+   *  mode lists each species-complex (e.g. Sambucus elderberry,
+   *  Corylus hazelnut) with all its member species nested under one
+   *  heading so the user can review combined species side-by-side. */
+  let sidebarMode: 'status' | 'complex' = 'status';
+
+  /** Build complex-grouped sidebar: one group per unique complex name,
+   *  members listed under it. Species not in any complex go in a
+   *  trailing "Solo species" bucket so nothing disappears.
+   *  Multi-stage species (basswood: leaf+flower; elderberry:
+   *  ripe+flower) appear in the complex for each stage they're in. */
+  $: sidebarByComplex = (() => {
+    const groups: Array<{ name: string; members: typeof species; key: string }> = [];
+    const seenInComplex = new Set<string>();
+    // Order: iterate species so groups appear in catalog order; first-
+    // encounter wins. Stage suffix is appended to disambiguate the
+    // same species appearing in ripe+flower complexes (basswood etc.).
+    const byKey = new Map<string, { name: string; members: typeof species; key: string }>();
+    for (const sp of species) {
+      const cxs = complexesByScientific[sp.scientific_name] ?? [];
+      for (const cx of cxs) {
+        const key = `${cx.name}::${cx.stage}`;
+        let g = byKey.get(key);
+        if (!g) {
+          g = { name: cx.name, members: [], key };
+          byKey.set(key, g);
+          groups.push(g);
+        }
+        if (!g.members.find((m) => m.id === sp.id)) {
+          g.members.push(sp);
+          seenInComplex.add(sp.id);
+        }
+      }
+    }
+    // Sort members within each group + groups alphabetically.
+    for (const g of groups) {
+      g.members.sort((a, b) => (a.common_name || '').localeCompare(b.common_name || ''));
+    }
+    groups.sort((a, b) => a.name.localeCompare(b.name));
+    const solo = species
+      .filter((sp) => !seenInComplex.has(sp.id))
+      .sort((a, b) => (a.common_name || '').localeCompare(b.common_name || ''));
+    return { groups, solo };
+  })();
+
   $: currentSpecies = species.find((s) => s.id === currentSpeciesId) ?? null;
   /** Stages that have at least one DB row for the current species.
    *  Multi-stage species (basswood: leaf + flower_harvest; elderberry:
@@ -1133,29 +1178,83 @@
     <p class="muted">Admin only.</p>
   {:else}
     <div class="layout">
-    <!-- Species sidebar: grouped by review status. Click any to select. -->
+    <!-- Species sidebar: grouped by review status by default, or by
+         complex membership when the user toggles "Group by complex". -->
     <aside class="species-sidebar" aria-label="Species list">
-      {#each [['needs_work','⚠ Needs work'], ['unreviewed','◌ Not reviewed'], ['confirmed','✓ Confirmed']] as [k, label]}
-        {@const list = sidebarGroups[k]}
-        {#if list && list.length > 0}
-          <div class="sb-group">
-            <div class="sb-heading sb-status-{k}">
-              {label} <span class="sb-count">{list.length}</span>
+      <div class="sb-mode-toggle" title="Switch sidebar grouping">
+        <button
+          class="sb-mode-btn"
+          class:active={sidebarMode === 'status'}
+          on:click={() => (sidebarMode = 'status')}
+        >Status</button>
+        <button
+          class="sb-mode-btn"
+          class:active={sidebarMode === 'complex'}
+          on:click={() => (sidebarMode = 'complex')}
+        >Complex</button>
+      </div>
+      {#if sidebarMode === 'status'}
+        {#each [['needs_work','⚠ Needs work'], ['unreviewed','◌ Not reviewed'], ['confirmed','✓ Confirmed']] as [k, label]}
+          {@const list = sidebarGroups[k]}
+          {#if list && list.length > 0}
+            <div class="sb-group">
+              <div class="sb-heading sb-status-{k}">
+                {label} <span class="sb-count">{list.length}</span>
+              </div>
+              {#each list as sp (sp.id)}
+                <button
+                  class="sb-item"
+                  class:active={sp.id === currentSpeciesId}
+                  on:click={() => pickSpecies(sp.id)}
+                  title={sp.scientific_name}
+                >
+                  <span class="sb-dot sb-status-{k}"></span>
+                  <span class="sb-name">{sp.common_name}</span>
+                </button>
+              {/each}
             </div>
-            {#each list as sp (sp.id)}
+          {/if}
+        {/each}
+      {:else}
+        {#each sidebarByComplex.groups as g (g.key)}
+          <div class="sb-group">
+            <div class="sb-heading sb-complex">
+              ◇ {g.name} <span class="sb-count">{g.members.length}</span>
+            </div>
+            {#each g.members as sp (sp.id)}
+              {@const status = speciesSummaryById[sp.id]?.review_status ?? 'unreviewed'}
               <button
                 class="sb-item"
                 class:active={sp.id === currentSpeciesId}
                 on:click={() => pickSpecies(sp.id)}
                 title={sp.scientific_name}
               >
-                <span class="sb-dot sb-status-{k}"></span>
+                <span class="sb-dot sb-status-{status}"></span>
+                <span class="sb-name">{sp.common_name}</span>
+              </button>
+            {/each}
+          </div>
+        {/each}
+        {#if sidebarByComplex.solo.length > 0}
+          <div class="sb-group">
+            <div class="sb-heading sb-complex sb-solo">
+              Solo species <span class="sb-count">{sidebarByComplex.solo.length}</span>
+            </div>
+            {#each sidebarByComplex.solo as sp (sp.id)}
+              {@const status = speciesSummaryById[sp.id]?.review_status ?? 'unreviewed'}
+              <button
+                class="sb-item"
+                class:active={sp.id === currentSpeciesId}
+                on:click={() => pickSpecies(sp.id)}
+                title={sp.scientific_name}
+              >
+                <span class="sb-dot sb-status-{status}"></span>
                 <span class="sb-name">{sp.common_name}</span>
               </button>
             {/each}
           </div>
         {/if}
-      {/each}
+      {/if}
     </aside>
     <div class="content">
     <!-- Species selector: search box + prev/next -->
@@ -1859,6 +1958,24 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
   .sb-dot.sb-status-needs_work { background: #d68030; }
   .sb-dot.sb-status-unreviewed { background: #b8c4b0; }
   .sb-dot.sb-status-confirmed  { background: #4a9050; }
+  .sb-mode-toggle {
+    display: flex; gap: 0.25rem; margin-bottom: 0.5rem; padding: 0 0.25rem;
+  }
+  .sb-mode-btn {
+    flex: 1; font-size: 0.78rem; padding: 0.25rem 0.5rem;
+    border: 1px solid #c7d0c7; border-radius: 0.3rem;
+    background: white; cursor: pointer; color: #6b7a6b;
+  }
+  .sb-mode-btn:hover { background: #f0f5ec; }
+  .sb-mode-btn.active {
+    background: #2a4a2a; border-color: #2a4a2a; color: white;
+  }
+  .sb-heading.sb-complex {
+    color: #2a4a4a; border-left: 3px solid #6b9aa0; padding-left: 0.4rem;
+  }
+  .sb-heading.sb-solo {
+    color: #6b7a6b; border-left-color: #c7d0c7;
+  }
   .sb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .complex-note {
     margin-top: 0.6rem;
