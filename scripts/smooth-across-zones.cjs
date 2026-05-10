@@ -186,7 +186,7 @@ function extrapolate(qZone, anchorZone, anchorVal, direction) {
 }
 
 function smoothCurve(rows, direction) {
-  // rows: [{ zoneNum, zone_code, start_doy, end_doy, peak_doy, isAnchor }] sorted by zoneNum
+  // rows: [{ zoneNum, zone_code, start_doy, end_doy, peak_doy, isAnchor, evidence }] sorted by zoneNum
   const anchors = rows.filter(r => r.isAnchor);
   if (anchors.length === 0) return null; // can't smooth without any anchor
   const out = rows.map(r => ({ ...r }));
@@ -215,10 +215,32 @@ function smoothCurve(rows, direction) {
     } else {
       continue;
     }
-    // Clamp to valid DOY range so interpolation never wraps around.
+    // Clamp to valid DOY range.
     newStart = Math.max(1, Math.min(366, newStart));
     newEnd   = Math.max(1, Math.min(366, newEnd));
     newPeak  = Math.max(1, Math.min(366, newPeak));
+
+    // Evidence-floor cap: when the soft zone has its OWN evidence
+    // (sub-anchor sources like low-N iNat or generic citations),
+    // don't let the extrapolated bounds extend past that evidence's
+    // range. Extrapolating before the earliest observation or after
+    // the latest claim is unsupported by data — fall back to the
+    // evidence range when extrapolation would overshoot.
+    if (Array.isArray(r.evidence)) {
+      const supps = r.evidence
+        .filter((e) => e?.supports?.start_doy != null && e?.supports?.end_doy != null)
+        .map((e) => e.supports);
+      if (supps.length > 0) {
+        const evMinStart = Math.min(...supps.map((s) => s.start_doy));
+        const evMaxEnd   = Math.max(...supps.map((s) => s.end_doy));
+        // Don't go before earliest observation, or after latest claim.
+        if (newStart < evMinStart) newStart = evMinStart;
+        if (newEnd > evMaxEnd) newEnd = evMaxEnd;
+        // Peak should fall within [evMinStart, evMaxEnd].
+        if (newPeak < evMinStart) newPeak = evMinStart;
+        if (newPeak > evMaxEnd) newPeak = evMaxEnd;
+      }
+    }
     r.newStart = newStart;
     r.newEnd = newEnd;
     r.newPeak = newPeak;
