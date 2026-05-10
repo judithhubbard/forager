@@ -46,6 +46,36 @@ const DEFAULT_SPECIES = [
   'Castanea pumila'       // recently calibrated, validate vs. iNat
 ];
 
+/** Pull all forageable species whose primary edible is fruit / nut /
+ *  seed — those are the species where iNat's `Fruiting` annotation
+ *  yields a meaningful harvest window. Sap-run, leaf, shoot, root, and
+ *  mushroom species don't have Fruiting-annotated observations that
+ *  map onto their forage cycle, so we skip them.
+ *
+ *  When `skipCited` is true, also skips species that already have any
+ *  iNat-source evidence on any of their windows — pure speedup since
+ *  the script is already idempotent. */
+async function pickAllForageable(skipCited) {
+  const rows = await sql`
+    select s.id, s.scientific_name, s.common_name, s.forage_parts,
+           exists (
+             select 1
+               from public.species_fruiting_windows w,
+                    jsonb_array_elements(
+                      case when jsonb_typeof(w.evidence) = 'array'
+                           then w.evidence else '[]'::jsonb end
+                    ) ev
+              where w.species_id = s.id
+                and ev->>'source' like 'iNaturalist%'
+           ) as has_inat
+      from public.species s
+     where s.is_forageable = true
+       and s.forage_parts && array['fruit','nut','seed']
+     order by s.common_name`;
+  const list = skipCited ? rows.filter(r => !r.has_inat) : rows;
+  return list.map(r => r.scientific_name);
+}
+
 /** Look up an iNat taxon_id by exact scientific-name match. Returns
  *  null if not found. iNat sometimes has multiple matches when a name
  *  is shared across kingdoms; we filter to Plantae. */
@@ -182,16 +212,25 @@ async function processSpecies(scientificName) {
       console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  (skipped — below MIN_OBS_PER_ZONE=${MIN_OBS_PER_ZONE})`);
       continue;
     }
+    // Raw percentiles for reporting; the user-observed "first fruit"
+    // bias means p10/p90 over-stretch the window (observers post early
+    // novelties and stop posting once a species is common). Bias-
+    // corrected p15/p85 are used for the synthesized DOY range.
     const p10 = percentile(doys, 0.1);
+    const p15 = percentile(doys, 0.15);
     const p50 = percentile(doys, 0.5);
+    const p85 = percentile(doys, 0.85);
     const p90 = percentile(doys, 0.9);
     const inatUrl = `https://www.inaturalist.org/observations?taxon_id=${taxonId}&term_id=${PHENOLOGY_TERM_ID}&term_value_id=${PHENOLOGY_FRUITING}&place_id=any`;
     const inatEntry = {
       source: 'iNaturalist (Fruiting annotations)',
       url: inatUrl,
       consulted_at: TIME_CONSULTED,
-      summary: `${doys.length} research-grade Fruiting observations in zone ${code}; DOY p10=${p10}, p50=${p50}, p90=${p90}.`,
-      supports: { start_doy: p10, end_doy: p90, peak_doy: p50 }
+      summary: `${doys.length} research-grade Fruiting obs in zone ${code}. ` +
+               `Bias-corrected DOY p15=${p15}, p50=${p50}, p85=${p85}. ` +
+               `Raw range p10=${p10}, p90=${p90}. ` +
+               `Note: 'first fruit' reporting bias — observer attention skews early; raw percentiles can over-stretch the harvest window.`,
+      supports: { start_doy: p15, end_doy: p85, peak_doy: p50 }
     };
 
     const exist = existingByZone.get(code);
@@ -201,16 +240,18 @@ async function processSpecies(scientificName) {
       // INSERT new row with empirical_inat. No ON CONFLICT — there's
       // no unique index on (species_id, climate_zone_id, stage), and
       // we've already verified `exist` is undefined for this zone+stage.
+      // Synthesized DOY uses bias-corrected p15-p85 (not raw p10-p90)
+      // to avoid the iNat "first fruit" left-skew.
       await sql`
         insert into public.species_fruiting_windows
           (species_id, climate_zone_id, stage, start_doy, end_doy, peak_doy, confidence, notes, evidence)
         values
           (${species.id}, ${zoneId}, ${stage}::public.stage,
-           ${p10}, ${p90}, ${p50},
+           ${p15}, ${p85}, ${p50},
            'empirical_inat'::public.window_confidence,
-           ${'iNaturalist phenology empirical: N=' + doys.length + ', p10/p50/p90 = ' + p10 + '/' + p50 + '/' + p90 + '.'},
+           ${'iNaturalist phenology empirical: N=' + doys.length + ', bias-corrected p15/p50/p85 = ' + p15 + '/' + p50 + '/' + p85 + '. Raw p10=' + p10 + ', p90=' + p90 + '.'},
            ${sql.json([inatEntry])})`;
-      console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p10=${String(p10).padStart(3)} p50=${String(p50).padStart(3)} p90=${String(p90).padStart(3)}  → INSERT (empirical_inat)`);
+      console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p15=${String(p15).padStart(3)} p50=${String(p50).padStart(3)} p85=${String(p85).padStart(3)}  → INSERT (empirical_inat)`);
       inserted++;
     } else {
       // APPEND iNat evidence if not already cited (idempotent on URL)
@@ -221,8 +262,8 @@ async function processSpecies(scientificName) {
         skipped++;
         continue;
       }
-      // Compare to existing synthesized window
-      const inEnv = (p10 >= exist.start_doy - 7 && p90 <= exist.end_doy + 7);
+      // Compare bias-corrected iNat range to existing synthesized window
+      const inEnv = (p15 >= exist.start_doy - 7 && p85 <= exist.end_doy + 7);
       const note = inEnv ? 'IN-ENVELOPE' : 'OUTSIDE-ENVELOPE';
       const updated = ev.concat([inatEntry]);
       await sql`
@@ -230,7 +271,7 @@ async function processSpecies(scientificName) {
            set evidence = ${sql.json(updated)},
                updated_at = now()
          where id = ${exist.id}`;
-      console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p10=${String(p10).padStart(3)} p50=${String(p50).padStart(3)} p90=${String(p90).padStart(3)}  vs DB ${exist.start_doy}-${exist.end_doy}  → APPEND (${note})`);
+      console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p15=${String(p15).padStart(3)} p50=${String(p50).padStart(3)} p85=${String(p85).padStart(3)}  vs DB ${exist.start_doy}-${exist.end_doy}  → APPEND (${note})`);
       appended++;
     }
   }
@@ -239,9 +280,21 @@ async function processSpecies(scientificName) {
 
 async function main() {
   const args = process.argv.slice(2);
-  const targets = args.length > 0 ? args : DEFAULT_SPECIES;
+  const flags = new Set(args.filter(a => a.startsWith('--')));
+  const named = args.filter(a => !a.startsWith('--'));
 
+  let targets;
+  if (flags.has('--all')) {
+    targets = await pickAllForageable(flags.has('--skip-cited'));
+    console.log(`Batch mode: ${targets.length} forageable species (fruit/nut/seed). skip-cited=${flags.has('--skip-cited')}`);
+  } else {
+    targets = named.length > 0 ? named : DEFAULT_SPECIES;
+  }
+
+  let i = 0;
   for (const sci of targets) {
+    i++;
+    console.log(`\n[${i}/${targets.length}] ${sci}`);
     try {
       await processSpecies(sci);
     } catch (e) {

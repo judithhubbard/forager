@@ -611,13 +611,19 @@
   /** Pull each evidence entry whose `supports` block has both
    *  start_doy and end_doy and surface them as flat objects. The SVG
    *  template can then bind without TS non-null assertions, which the
-   *  Svelte compiler struggles with inside attributes. */
+   *  Svelte compiler struggles with inside attributes.
+   *
+   *  `is_inat` flags entries from the iNaturalist phenology pipeline
+   *  so the viewer can render them distinctly — those are empirical
+   *  ranges from research-grade Fruiting observations, with a known
+   *  "first fruit" left-shift bias relative to actual harvest. */
   function supportingEvidenceFor(w: DBWindow): {
     source: string;
     summary: string;
     start_doy: number;
     end_doy: number;
     peak_doy: number | null;
+    is_inat: boolean;
   }[] {
     const out: {
       source: string;
@@ -625,6 +631,7 @@
       start_doy: number;
       end_doy: number;
       peak_doy: number | null;
+      is_inat: boolean;
     }[] = [];
     for (const ev of w.evidence ?? []) {
       const s = ev.supports;
@@ -634,11 +641,20 @@
         summary: ev.summary,
         start_doy: s.start_doy,
         end_doy: s.end_doy,
-        peak_doy: s.peak_doy ?? null
+        peak_doy: s.peak_doy ?? null,
+        is_inat: ev.source?.toLowerCase().startsWith('inaturalist') ?? false
       });
     }
+    // Sort iNat last so its lane is visually grouped at the bottom of
+    // the evidence band (and uses a distinct color to mark the source).
+    out.sort((a, b) => Number(a.is_inat) - Number(b.is_inat));
     return out;
   }
+
+  /** Distinct color for iNaturalist-source bars so the empirical
+   *  observations layer is visually separable from cited foraging
+   *  blogs / extension services. */
+  const INAT_COLOR = '#1f6f8b';
 
   /** Visual tier for a row's confidence value. Substantial rows render
    *  as solid bars; thin rows render dashed; heuristic rows (no real
@@ -805,6 +821,9 @@
       <div class="legend">
         <span class="legend-item"><span class="swatch swatch-db"></span>Synthesized DB row (per zone)</span>
         <span class="legend-item"><span class="swatch swatch-evidence"></span>Per-source range (1 lane per cited window)</span>
+        <span class="legend-item" title="iNaturalist research-grade Fruiting observations binned by climate zone. Bias-corrected p15-p85. Leading square marker + dark-teal stroke. Has known 'first fruit' left-shift bias.">
+          <span class="swatch swatch-inat"></span>iNat empirical (Fruiting obs)
+        </span>
         <span class="legend-item" title="Solid: substantial citation (expert_verified, regional_guide, NPN, community).
 Long dashes: thin citation — single weak fact stretched into a window.
 Tight dots: heuristic only (AI-seeded or frost-offset propagation, no real source).">
@@ -896,12 +915,13 @@ Tight dots: heuristic only (AI-seeded or frost-offset propagation, no real sourc
                     {@const supportingEv = supportingEvidenceFor(ripe)}
                     {#each supportingEv.slice(0, EV_MAX_LANES) as ev, i}
                       {@const y = 6 + STAGE_H + 2 + i * EV_LANE_PITCH}
+                      {@const stroke = ev.is_inat ? INAT_COLOR : stageColor(ripe.stage)}
                       <line
                         x1={doyX(ev.start_doy)}
                         x2={doyX(ev.end_doy)}
                         y1={y + EV_LANE_H / 2}
                         y2={y + EV_LANE_H / 2}
-                        stroke={stageColor(ripe.stage)}
+                        stroke={stroke}
                         stroke-width={EV_LANE_H}
                         stroke-dasharray={cs.dash}
                         opacity={cs.opacity}
@@ -909,12 +929,26 @@ Tight dots: heuristic only (AI-seeded or frost-offset propagation, no real sourc
                       >
                         <title>{ev.source}{cs.tier === 'thin' ? ' (thin)' : ''} · DOY {ev.start_doy}–{ev.end_doy}{ev.peak_doy != null ? ` · peak ${ev.peak_doy}` : ''}{'\n'}{ev.summary}</title>
                       </line>
+                      {#if ev.is_inat}
+                        <!-- Small leading-square marker to flag iNat
+                             rows even with the timeline at low zoom. -->
+                        <rect
+                          x={doyX(ev.start_doy) - 4}
+                          y={y + EV_LANE_H / 2 - 2}
+                          width={3}
+                          height={3}
+                          fill={INAT_COLOR}
+                          opacity={cs.opacity}
+                        >
+                          <title>iNaturalist empirical (Fruiting annotations)</title>
+                        </rect>
+                      {/if}
                       {#if ev.peak_doy != null}
                         <circle
                           cx={doyX(ev.peak_doy)}
                           cy={y + EV_LANE_H / 2}
                           r="2"
-                          fill={stageColor(ripe.stage)}
+                          fill={stroke}
                           opacity={cs.opacity}
                         />
                       {/if}
@@ -1303,6 +1337,7 @@ Tight dots: heuristic only (AI-seeded or frost-offset propagation, no real sourc
       transparent 7px);
     opacity: 0.85;
   }
+  .swatch-inat { background: #1f6f8b; opacity: 0.85; }
   .swatch-guide { background: #e07b3a; opacity: 0.85; }
   .swatch-pending .swatch { background: #c0c0c0; opacity: 0.4; }
   .swatch-pending { color: #8a948a; }
