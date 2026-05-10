@@ -612,6 +612,28 @@
   const TIMELINE_H = 80;
   const totalW = xPad + plotW + 16;
 
+  /** Heuristic provenance classification per evidence entry. Real
+   *  regional observations (someone in that zone reporting a specific
+   *  DOY window) are the strongest signal. Shifted estimates (the
+   *  blog-evidence-crawl agent took a generic statement like "fruit
+   *  in late summer" and applied a per-zone DOY offset) are weakest —
+   *  they should fill gaps where real observations don't exist, not
+   *  compete with real observations.
+   *
+   *  Detection rules (heuristic, not perfect):
+   *  - source starts with "iNaturalist" → 'empirical_inat'
+   *  - summary contains "[zone-shift" or "(interpreted:" → 'shifted'
+   *  - summary names a specific US state OR a zone code → 'regional'
+   *  - otherwise → 'generic' */
+  type Provenance = 'regional' | 'generic' | 'shifted' | 'empirical_inat';
+  function provenanceFor(source: string, summary: string): Provenance {
+    if (source?.toLowerCase().startsWith('inaturalist')) return 'empirical_inat';
+    const s = summary ?? '';
+    if (/\[zone-shift|\(interpreted:/i.test(s)) return 'shifted';
+    if (/\b(zone\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic)\b/.test(s)) return 'regional';
+    return 'generic';
+  }
+
   /** Pull each evidence entry whose `supports` block has both
    *  start_doy and end_doy and surface them as flat objects. The SVG
    *  template can then bind without TS non-null assertions, which the
@@ -628,6 +650,7 @@
     start_doy: number;
     end_doy: number;
     peak_doy: number | null;
+    provenance: Provenance;
     is_inat: boolean;
     min_doy: number | null;
     p10_doy: number | null;
@@ -647,13 +670,15 @@
           })
         | undefined;
       if (!s || s.start_doy == null || s.end_doy == null) continue;
+      const provenance = provenanceFor(ev.source ?? '', ev.summary ?? '');
       out.push({
         source: ev.source,
         summary: ev.summary,
         start_doy: s.start_doy,
         end_doy: s.end_doy,
         peak_doy: s.peak_doy ?? null,
-        is_inat: ev.source?.toLowerCase().startsWith('inaturalist') ?? false,
+        provenance,
+        is_inat: provenance === 'empirical_inat',
         min_doy: s.min_doy ?? null,
         p10_doy: s.p10_doy ?? null,
         p90_doy: s.p90_doy ?? null,
@@ -661,10 +686,27 @@
         n_obs: s.n_obs ?? null
       });
     }
-    // Sort iNat last so its lane is visually grouped at the bottom of
-    // the evidence band (and uses a distinct color to mark the source).
-    out.sort((a, b) => Number(a.is_inat) - Number(b.is_inat));
+    // Render order: regional first (most authoritative), then generic,
+    // then shifted estimates (faintest), then iNat at the bottom (its
+    // own visual band). Shifted-estimate lanes after generic so the
+    // viewer sees the strongest sources on top.
+    const order: Record<Provenance, number> = {
+      regional: 0, generic: 1, shifted: 2, empirical_inat: 3
+    };
+    out.sort((a, b) => order[a.provenance] - order[b.provenance]);
     return out;
+  }
+
+  /** Stroke style per evidence-source provenance — separate from the
+   *  row-level confidence dash. Each evidence entry now drives its
+   *  own visual presentation based on whether it's a real regional
+   *  observation, generic source, ad-hoc shifted estimate, or iNat
+   *  empirical. */
+  function provenanceStyle(p: Provenance): { dash: string; opacity: number } {
+    if (p === 'regional') return { dash: '', opacity: 0.9 };       // solid, full
+    if (p === 'generic')  return { dash: '6,2', opacity: 0.7 };    // long dash
+    if (p === 'shifted')  return { dash: '1,2', opacity: 0.4 };    // dotted, faint
+    return { dash: '', opacity: 0.85 };                            // iNat handled separately
   }
 
   /** Distinct color for iNaturalist-source bars so the empirical
@@ -840,12 +882,13 @@
         <span class="legend-item" title="iNaturalist research-grade Fruiting observations binned by climate zone. Faded outer dots = first/last single observation. Inner dots = p10/p90 (trimmed from published range). Solid line = p15-p85 published range. Hollow center dot = median. The trim discounts 'first fruit' tail outliers; no observation is shifted in time.">
           <span class="swatch swatch-inat"></span>iNat: <span class="inat-legend-glyph">·•━●━•·</span>min p10 p15-p85 p90 max
         </span>
-        <span class="legend-item" title="Solid: substantial citation (expert_verified, regional_guide, NPN, community).
-Long dashes: thin citation — single weak fact stretched into a window.
-Tight dots: heuristic only (AI-seeded or frost-offset propagation, no real source).">
-          <span class="swatch-line swatch-line-solid"></span>solid = substantial ·
-          <span class="swatch-line swatch-line-dashed"></span>dashed = thin ·
-          <span class="swatch-line swatch-line-dotted"></span>dotted = heuristic
+        <span class="legend-item" title="Source provenance — drives the per-source line style.
+Solid: regional observation (someone in that zone reporting specific timing — the strongest signal).
+Long dashes: generic source (e.g. Wikipedia general statement) — the cited fact applies, but the per-zone DOY is approximate.
+Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applied a per-zone offset like '+28d from base 6a -> 4a'). Should fill gaps where no real observations exist; should not compete with real observations.">
+          <span class="swatch-line swatch-line-solid"></span>regional ·
+          <span class="swatch-line swatch-line-dashed"></span>generic ·
+          <span class="swatch-line swatch-line-dotted"></span>shifted estimate
         </span>
         <span class="legend-item"><span class="swatch swatch-guide"></span>Regional guide (JSON sidecar)</span>
         <label class="toggle" title="Off: show zones that have either cal data or pins for this species. On: show every USDA zone, even ones with neither.">
@@ -979,28 +1022,22 @@ Tight dots: heuristic only (AI-seeded or frost-offset propagation, no real sourc
                           </circle>
                         {/if}
                       {:else}
+                        {@const ps = provenanceStyle(ev.provenance)}
                         <line
                           x1={doyX(ev.start_doy)}
                           x2={doyX(ev.end_doy)}
                           y1={cy} y2={cy}
                           stroke={stroke}
                           stroke-width={EV_LANE_H}
-                          stroke-dasharray={cs.dash}
-                          opacity={cs.opacity}
+                          stroke-dasharray={ps.dash}
+                          opacity={ps.opacity}
                           stroke-linecap="butt"
                         >
-                          <title>{ev.source}{cs.tier === 'thin' ? ' (thin)' : ''} · DOY {ev.start_doy}–{ev.end_doy}{ev.peak_doy != null ? ` · peak ${ev.peak_doy}` : ''}{'\n'}{ev.summary}</title>
+                          <title>{ev.source} ({ev.provenance}) · DOY {ev.start_doy}–{ev.end_doy}{ev.peak_doy != null ? ` · peak ${ev.peak_doy}` : ''}{'\n'}{ev.summary}</title>
                         </line>
-                        {#if ev.is_inat}
-                          <rect x={doyX(ev.start_doy) - 4} y={cy - 2}
-                                width={3} height={3}
-                                fill={INAT_COLOR} opacity={cs.opacity}>
-                            <title>iNaturalist empirical (Fruiting annotations)</title>
-                          </rect>
-                        {/if}
                         {#if ev.peak_doy != null}
                           <circle cx={doyX(ev.peak_doy)} cy={cy} r="2"
-                                  fill={stroke} opacity={cs.opacity} />
+                                  fill={stroke} opacity={ps.opacity} />
                         {/if}
                       {/if}
                     {/each}
