@@ -137,12 +137,15 @@ function isFuzzyEvidence(ev) {
 function effectiveSupports(ev, isInat) {
   const s = ev.supports?.start_doy, e = ev.supports?.end_doy;
   if (s == null || e == null) return null;
-  if (isInat) return { start: s, end: e, peak: ev.supports.peak_doy };
+  // Use raw supports for ALL sources — fuzzy and intermediate sources
+  // have stated ranges (e.g., "JUL-AUG" = ~60 days) that REPRESENT
+  // their uncertainty. Shrinking those ranges would manufacture false
+  // precision (a 60-day "JUL-AUG" claim becoming an 18-day window
+  // looks much more certain than the source actually is). PAV handles
+  // cross-zone monotonicity post-hoc; we don't need per-source shrinks.
+  // The precision tier is preserved on the entry for visualization.
   const tier = precisionTier(ev);
-  if (tier === 'precise') return { start: s, end: e, peak: ev.supports.peak_doy };
-  const halfWindow = tier === 'intermediate' ? INTERMEDIATE_HALF_WINDOW : FUZZY_HALF_WINDOW;
-  const mid = ev.supports.peak_doy ?? Math.round((s + e) / 2);
-  return { start: mid - halfWindow, end: mid + halfWindow, peak: mid, fuzzy: true, tier };
+  return { start: s, end: e, peak: ev.supports.peak_doy, tier };
 }
 
 function provenanceFor(source, summary, rowZoneCode) {
@@ -153,16 +156,17 @@ function provenanceFor(source, summary, rowZoneCode) {
   const hasShiftTag = /\[zone-shift/i.test(s);
   // Strongest signal: the row's zone is explicitly named in the
   // source quote. Eat The Weeds writing "Florida, zone 9a" is
-  // regional ONLY for the 9a row — the same source attached to a
-  // 7a row (via agent shifting) shouldn't claim regional status.
+  // regional ONLY for the 9a row. Sources with multi-zone declarations
+  // like "(zones 7a, 7b)" are regional for ALL zones listed — extract
+  // all zone codes from the summary, not just the first one.
   if (rowZoneCode) {
-    const rowZoneRegex = new RegExp(`\\bzones?\\s*${rowZoneCode.replace(/[ab]/, m => `[${m}]`)}\\b`, 'i');
-    if (rowZoneRegex.test(beforeShiftTag)) return 'regional';
-    // Source mentions a SPECIFIC zone different from the row's zone
-    // → treat as shifted (this entry is on this row only because of
-    // agent shifting, not because the source is about this zone).
-    const otherZoneMatch = beforeShiftTag.match(/\bzones?\s*([0-9]+[ab]?)\b/i);
-    if (otherZoneMatch && otherZoneMatch[1].toLowerCase() !== rowZoneCode.toLowerCase()) {
+    // Match all zone codes mentioned anywhere in the pre-shift summary.
+    const allZoneMatches = [...beforeShiftTag.matchAll(/\b([0-9]+[ab])\b/gi)];
+    const mentionedZones = new Set(allZoneMatches.map(m => m[1].toLowerCase()));
+    if (mentionedZones.has(rowZoneCode.toLowerCase())) return 'regional';
+    // Source mentions specific zones, but row's zone isn't among them
+    // → this entry is on this row only because of agent shifting.
+    if (mentionedZones.size > 0) {
       return hasShiftTag ? 'shifted' : 'generic';
     }
   }

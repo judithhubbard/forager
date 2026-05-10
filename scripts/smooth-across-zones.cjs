@@ -107,12 +107,29 @@ function directionFor(scientificName, stage) {
 const FUZZY_LANGUAGE_RE = /\b(mid[\s-]+(?:to[\s-]+late\s+)?(?:spring|summer|fall|autumn|winter)|late\s+(?:spring|summer|fall|autumn|winter)|early\s+(?:spring|summer|fall|autumn|winter)|around\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|in\s+(?:spring|summer|fall|autumn|winter))\b/i;
 const PRECISE_DATE_RE = /\b(?:\d{1,2}\/\d{1,2}|january\s+\d{1,2}|february\s+\d{1,2}|march\s+\d{1,2}|april\s+\d{1,2}|may\s+\d{1,2}|june\s+\d{1,2}|july\s+\d{1,2}|august\s+\d{1,2}|september\s+\d{1,2}|october\s+\d{1,2}|november\s+\d{1,2}|december\s+\d{1,2}|DOY\s*\d+|first\s+frost|after\s+(?:first|hard)\s+frost)\b/i;
 
+// Three-tier precision detection (mirrors rederive). Intermediate
+// month-level language ("late July through early August", "JUL-AUG")
+// is NOT fuzzy — it's reasonably precise. Only vague seasonal
+// language ("late summer", "early fall") triggers fuzzy.
+const INTERMEDIATE_LANGUAGE_RE = /\b((?:early|mid|late)\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(?:[-\s]+(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC))?|in\s+(?:january|february|march|april|may|june|july|august|september|october|november|december))\b/i;
+
 function isFuzzyEvidence(ev) {
   if (!ev?.summary) return false;
-  if (PRECISE_DATE_RE.test(ev.summary)) return false;
-  if (FUZZY_LANGUAGE_RE.test(ev.summary)) return true;
-  const s = ev.supports?.start_doy, e = ev.supports?.end_doy;
-  if (s != null && e != null && (e - s) > 45) return true;
+  // iNat sources are real empirical observations — their p15-p85
+  // span reflects biological variance, not source vagueness. Never
+  // classify iNat as fuzzy.
+  if ((ev.source || '').toLowerCase().startsWith('inaturalist')) return false;
+  // Strip agent metadata before testing.
+  const s = ev.summary
+    .replace(/\(interpreted:[^)]*\)/gi, '')
+    .replace(/\[zone-shift[^\]]*\]/gi, '');
+  if (PRECISE_DATE_RE.test(s)) return false;
+  // Intermediate language counts as non-fuzzy for anchor purposes.
+  if (INTERMEDIATE_LANGUAGE_RE.test(s)) return false;
+  if (FUZZY_LANGUAGE_RE.test(s)) return true;
+  // Fall back to span only when no language signal at all.
+  const sd = ev.supports?.start_doy, ed = ev.supports?.end_doy;
+  if (sd != null && ed != null && (ed - sd) > 60) return true;
   return false;
 }
 
