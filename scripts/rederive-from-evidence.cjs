@@ -113,11 +113,16 @@ function provenanceFor(source, summary) {
   const src = (source || '').toLowerCase();
   if (src.startsWith('inaturalist')) return 'empirical_inat';
   const s = summary || '';
-  // Only [zone-shift means a real per-zone offset was applied;
-  // (interpreted: alone is just date-text → DOY conversion (still
-  // generic but a legitimate quote of the source's claim).
-  if (/\[zone-shift/i.test(s)) return 'shifted';
-  if (/\b(zone\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic)\b/.test(s)) return 'regional';
+  // Strip [zone-shift ...] metadata before checking for regional
+  // indicators — that tag is decoration about how supports DOYs
+  // were computed, not about the source's regional specificity.
+  // Eat The Weeds writing "Florida, zone 9a" is regional even when
+  // the agent attached a [zone-shift] marker to the same entry.
+  const beforeShiftTag = s.split(/\[zone-shift/i)[0];
+  const hasShiftTag = /\[zone-shift/i.test(s);
+  if (/\b(zones?\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic|Philadelphia|Toronto|Ottawa|Seattle|Boston|Chicago|Portland|metro)\b/i.test(beforeShiftTag)) return 'regional';
+  if (hasShiftTag) return 'shifted';
+  if (/\b(zones?\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic|Philadelphia|Toronto|Ottawa|Seattle|Boston|Chicago|Portland|metro)\b/i.test(s)) return 'regional';
   return 'generic';
 }
 
