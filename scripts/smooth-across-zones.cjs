@@ -1,0 +1,296 @@
+// Cross-zone monotonic smoothing of harvest windows.
+//
+// For each (species, stage), enforce monotonic DOY across zones based on the
+// expected biological direction:
+//   - Heat-driven (default): warmer zones → earlier DOY (flowering, fruit
+//     ripe for most species, sap_run, shoot, leaf, flower_harvest)
+//   - Frost-driven (per-species override): warmer zones → LATER DOY (late
+//     nuts like American beech, persimmon, walnut, shagbark hickory — these
+//     ripen as the first frost approaches, which arrives later in warmer
+//     zones)
+//   - Skip stages with weak zone signal (mushroom_flush — driven by rain
+//     events; root_dig — year-round-ish; bark_strip — year-round-ish)
+//
+// Algorithm per (species, stage):
+//   1. Sort rows by zone-numeric order.
+//   2. Tag each row by evidence provenance — regional/iNat = ANCHOR (its
+//      synthesized DOYs are trusted); generic-only/shifted-only = SOFT
+//      (its DOYs were derived weakly and should be pulled toward the
+//      anchor curve via interpolation).
+//   3. Linearly interpolate SOFT zones between flanking ANCHOR zones.
+//      Extrapolate beyond the outermost anchor with a per-half-zone
+//      frost-date offset (~7 days, the same constant used in migration
+//      #47).
+//   4. Detect monotonicity violations among ANCHORS — report only;
+//      don't auto-fix anchor data (real conflicts are signal worth
+//      preserving).
+//
+// Idempotent: skips updates when computed values already match.
+//
+// Usage:
+//   node scripts/smooth-across-zones.cjs --dry-run    # report only
+//   node scripts/smooth-across-zones.cjs              # apply
+
+'use strict';
+
+const fs = require('node:fs');
+const env = fs.readFileSync('/Users/jk/Dropbox/Claude/forager/.env.local', 'utf8');
+const SUPABASE_DB_URL = env.match(/SUPABASE_DB_URL=(.+)/)[1].trim();
+const sql = require('/Users/jk/Dropbox/Claude/forager/node_modules/postgres')(
+  SUPABASE_DB_URL, { ssl: 'require', onnotice: () => undefined }
+);
+
+const dryRun = process.argv.includes('--dry-run');
+
+// USDA hardiness zones map cleanly to a numeric axis (each half-zone =
+// 5°F minimum-temp step ≈ 7 days of frost-date offset in temperate North
+// America). The integer index lets us interpolate.
+const ZONE_NUM = {
+  '0a': 0, '0b': 1, '1a': 2, '1b': 3, '2a': 4, '2b': 5, '3a': 6, '3b': 7,
+  '4a': 8, '4b': 9, '5a': 10, '5b': 11, '6a': 12, '6b': 13, '7a': 14, '7b': 15,
+  '8a': 16, '8b': 17, '9a': 18, '9b': 19, '10a': 20, '10b': 21, '11a': 22, '11b': 23,
+  '12a': 24, '12b': 25, '13a': 26, '13b': 27
+};
+
+// Direction by stage:
+//   -1 = warmer zones earlier (heat-driven, default for fruits/sap/flowers/greens)
+//    0 = no monotonic signal (skip — driven by other forces)
+const DEFAULT_DIRECTION = {
+  ripe: -1, ripening: -1, green: -1, past: 0,
+  flowering: -1, flower_harvest: -1,
+  shoot: -1, leaf: -1,
+  sap_run: -1,
+  root_dig: 0, mushroom_flush: 0, bark_strip: 0,
+  bare: 0, unknown: 0
+};
+
+// Frost-driven late species: warmer zones → later DOY (frost arrives later
+// in the year, so harvest happens later). Conservative — only the clearest
+// cases. Walnut / hickory / oak are intermediate (maturation is heat-driven
+// but drop is frost-loosened); leaving them as heat-driven default.
+const FROST_DRIVEN_RIPE = new Set([
+  'Fagus grandifolia',      // American beech — classic frost-trigger
+  'Diospyros virginiana'    // American persimmon — "wait for first frost" canon
+]);
+
+function directionFor(scientificName, stage) {
+  if (stage === 'ripe' && FROST_DRIVEN_RIPE.has(scientificName)) return +1;
+  return DEFAULT_DIRECTION[stage] ?? 0;
+}
+
+function provenanceFor(source, summary) {
+  const src = (source || '').toLowerCase();
+  if (src.startsWith('inaturalist')) return 'empirical_inat';
+  const s = summary || '';
+  if (/\[zone-shift|\(interpreted:/i.test(s)) return 'shifted';
+  if (/\b(zone\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic)\b/.test(s)) return 'regional';
+  return 'generic';
+}
+
+/** Is this row "anchor" quality? Anchors are zones where the dominant
+ *  supporting evidence is a real regional observation or iNat empirical
+ *  binning. SOFT rows have only generic / shifted-only evidence (or none
+ *  with supports) — those get pulled toward the anchor curve. */
+function isAnchor(evidence) {
+  if (!Array.isArray(evidence)) return false;
+  const supporting = evidence.filter(
+    e => e?.supports?.start_doy != null && e?.supports?.end_doy != null
+  );
+  if (supporting.length === 0) return false;
+  return supporting.some(e => {
+    const p = provenanceFor(e?.source, e?.summary);
+    return p === 'regional' || p === 'empirical_inat';
+  });
+}
+
+/** Linear interpolation between two points (a, b) in zone-numeric space at
+ *  query point q. Returns rounded integer DOY. */
+function interp(qZone, aZone, aVal, bZone, bVal) {
+  if (aZone === bZone) return aVal;
+  const t = (qZone - aZone) / (bZone - aZone);
+  return Math.round(aVal + t * (bVal - aVal));
+}
+
+/** Per-half-zone offset for extrapolation beyond the outermost anchor.
+ *  ~7 days per half-zone code, same magnitude as migration #47's frost-date
+ *  shifts. Sign matches direction. */
+const PER_ZONE_DAYS = 7;
+
+function extrapolate(qZone, anchorZone, anchorVal, direction) {
+  // direction = -1: warmer zones earlier; +1: warmer zones later
+  return Math.round(anchorVal - direction * PER_ZONE_DAYS * (qZone - anchorZone));
+}
+
+function smoothCurve(rows, direction) {
+  // rows: [{ zoneNum, zone_code, start_doy, end_doy, peak_doy, isAnchor }] sorted by zoneNum
+  const anchors = rows.filter(r => r.isAnchor);
+  if (anchors.length === 0) return null; // can't smooth without any anchor
+  const out = rows.map(r => ({ ...r }));
+
+  for (const r of out) {
+    if (r.isAnchor) continue; // anchor values stay
+    const before = anchors.filter(a => a.zoneNum < r.zoneNum).slice(-1)[0];
+    const after  = anchors.filter(a => a.zoneNum > r.zoneNum)[0];
+    let newStart, newEnd, newPeak;
+    if (before && after) {
+      newStart = interp(r.zoneNum, before.zoneNum, before.start_doy, after.zoneNum, after.start_doy);
+      newEnd   = interp(r.zoneNum, before.zoneNum, before.end_doy,   after.zoneNum, after.end_doy);
+      const beforePeak = before.peak_doy ?? Math.round((before.start_doy + before.end_doy) / 2);
+      const afterPeak  = after.peak_doy  ?? Math.round((after.start_doy  + after.end_doy)  / 2);
+      newPeak  = interp(r.zoneNum, before.zoneNum, beforePeak, after.zoneNum, afterPeak);
+    } else if (before) {
+      newStart = extrapolate(r.zoneNum, before.zoneNum, before.start_doy, direction);
+      newEnd   = extrapolate(r.zoneNum, before.zoneNum, before.end_doy,   direction);
+      const bp = before.peak_doy ?? Math.round((before.start_doy + before.end_doy) / 2);
+      newPeak  = extrapolate(r.zoneNum, before.zoneNum, bp, direction);
+    } else if (after) {
+      newStart = extrapolate(r.zoneNum, after.zoneNum, after.start_doy, direction);
+      newEnd   = extrapolate(r.zoneNum, after.zoneNum, after.end_doy,   direction);
+      const ap = after.peak_doy ?? Math.round((after.start_doy + after.end_doy) / 2);
+      newPeak  = extrapolate(r.zoneNum, after.zoneNum, ap, direction);
+    } else {
+      continue;
+    }
+    // Clamp to valid DOY range so interpolation never wraps around.
+    newStart = Math.max(1, Math.min(366, newStart));
+    newEnd   = Math.max(1, Math.min(366, newEnd));
+    newPeak  = Math.max(1, Math.min(366, newPeak));
+    r.newStart = newStart;
+    r.newEnd = newEnd;
+    r.newPeak = newPeak;
+  }
+  return out;
+}
+
+function detectAnchorViolations(rows, direction) {
+  const anchors = rows.filter(r => r.isAnchor);
+  const violations = [];
+  for (let i = 1; i < anchors.length; i++) {
+    const prev = anchors[i - 1];
+    const cur  = anchors[i];
+    // For direction=-1 (heat): cur.start_doy should be <= prev.start_doy (earlier as zone warms)
+    // For direction=+1 (frost): cur.start_doy should be >= prev.start_doy (later as zone warms)
+    const startDelta = cur.start_doy - prev.start_doy;
+    const endDelta   = cur.end_doy   - prev.end_doy;
+    const expectedSign = direction;
+    const startOk = (startDelta * expectedSign) >= -3; // 3-day tolerance
+    const endOk   = (endDelta   * expectedSign) >= -3;
+    if (!startOk || !endOk) {
+      violations.push({
+        from: prev.zone_code, to: cur.zone_code,
+        prev_doy: `${prev.start_doy}-${prev.end_doy}`,
+        cur_doy:  `${cur.start_doy}-${cur.end_doy}`,
+        startDelta, endDelta
+      });
+    }
+  }
+  return violations;
+}
+
+(async () => {
+  // Pull all rows joined with species + zone, then group in JS.
+  const rows = await sql`
+    select w.id, w.species_id, w.stage, cz.code as zone_code,
+           w.start_doy, w.end_doy, w.peak_doy,
+           coalesce(w.evidence, '[]'::jsonb) as evidence,
+           s.scientific_name, s.common_name
+      from species_fruiting_windows w
+      join species s on s.id = w.species_id
+      join climate_zones cz on cz.id = w.climate_zone_id
+     where s.is_forageable = true
+     order by s.scientific_name, w.stage, cz.code`;
+
+  const groups = new Map(); // key = "species_id::stage" -> rows[]
+  for (const r of rows) {
+    const k = `${r.species_id}::${r.stage}`;
+    let arr = groups.get(k);
+    if (!arr) { arr = []; groups.set(k, arr); }
+    arr.push(r);
+  }
+
+  let updated = 0;
+  let skippedDirZero = 0;
+  let skippedNoAnchor = 0;
+  let skippedTooFew = 0;
+  const violations = [];
+  const changes = [];
+
+  for (const [key, grp] of groups) {
+    const sample = grp[0];
+    const direction = directionFor(sample.scientific_name, sample.stage);
+    if (direction === 0) { skippedDirZero++; continue; }
+    if (grp.length < 3)   { skippedTooFew++;  continue; }
+
+    // Decorate with zoneNum + anchor flag, sort by zoneNum.
+    const decorated = grp
+      .filter(r => ZONE_NUM[r.zone_code] != null)
+      .map(r => ({
+        ...r,
+        zoneNum: ZONE_NUM[r.zone_code],
+        isAnchor: isAnchor(r.evidence)
+      }))
+      .sort((a, b) => a.zoneNum - b.zoneNum);
+
+    const anchorCount = decorated.filter(r => r.isAnchor).length;
+    if (anchorCount === 0) { skippedNoAnchor++; continue; }
+
+    const vios = detectAnchorViolations(decorated, direction);
+    if (vios.length > 0) {
+      violations.push({ scientific: sample.scientific_name, common: sample.common_name, stage: sample.stage, direction, vios });
+    }
+
+    const smoothed = smoothCurve(decorated, direction);
+    if (!smoothed) continue;
+
+    for (const r of smoothed) {
+      if (r.isAnchor) continue;
+      if (r.newStart == null) continue;
+      if (r.newStart === r.start_doy && r.newEnd === r.end_doy && r.newPeak === r.peak_doy) continue;
+      changes.push({
+        common: r.common_name, sci: r.scientific_name, stage: r.stage,
+        zone: r.zone_code,
+        old: `${r.start_doy}-${r.end_doy} peak ${r.peak_doy ?? '—'}`,
+        nu:  `${r.newStart}-${r.newEnd} peak ${r.newPeak}`
+      });
+      if (!dryRun) {
+        await sql`
+          update species_fruiting_windows
+             set start_doy = ${r.newStart},
+                 end_doy   = ${r.newEnd},
+                 peak_doy  = ${r.newPeak},
+                 updated_at = now()
+           where id = ${r.id}`;
+      }
+      updated++;
+    }
+  }
+
+  console.log('\n=== Smoothing summary ===');
+  console.log(`Total (species,stage) groups: ${groups.size}`);
+  console.log(`  skipped (no zone signal):    ${skippedDirZero}`);
+  console.log(`  skipped (<3 rows):           ${skippedTooFew}`);
+  console.log(`  skipped (no anchor zones):   ${skippedNoAnchor}`);
+  console.log(`Rows ${dryRun ? 'WOULD update' : 'updated'}:  ${updated}`);
+
+  console.log('\n=== Anchor monotonicity violations (review needed) ===');
+  console.log(`Total combos with violations: ${violations.length}`);
+  for (const v of violations.slice(0, 20)) {
+    console.log(`\n  ${v.common} (${v.scientific}) stage=${v.stage} dir=${v.direction === -1 ? 'heat→earlier' : 'frost→later'}`);
+    for (const x of v.vios) {
+      console.log(`    ${x.from} → ${x.to}: ${x.prev_doy} → ${x.cur_doy}  (Δstart=${x.startDelta}, Δend=${x.endDelta})`);
+    }
+  }
+  if (violations.length > 20) console.log(`\n  +${violations.length - 20} more violations (truncated)`);
+
+  console.log('\n=== Sample smoothing changes (first 30) ===');
+  for (const c of changes.slice(0, 30)) {
+    console.log(`  ${c.common} ${c.zone} ${c.stage}: ${c.old} → ${c.nu}`);
+  }
+  if (changes.length > 30) console.log(`  +${changes.length - 30} more changes`);
+
+  if (!dryRun && updated > 0) {
+    console.log('\nRefreshing zone-presence materialized view…');
+    await sql`select public.refresh_species_zone_presence()`;
+  }
+  await sql.end();
+})();

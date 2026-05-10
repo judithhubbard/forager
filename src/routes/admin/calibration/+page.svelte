@@ -207,6 +207,10 @@
       'species_zone_pins' as never,
       { p_species_id: speciesId } as never
     );
+    // Stale-response guard: if the user moved on to another species
+    // while this RPC was in flight, discard the result instead of
+    // letting it overwrite the newer species's pin counts.
+    if (currentSpeciesId !== speciesId) return;
     if (error) {
       console.warn('[calibration] species_zone_pins error', error);
       pinsByZoneId = {};
@@ -306,9 +310,13 @@
   }
 
   // Reload pin distribution + review notes when the species changes.
+  // Clear pinsByZoneId synchronously so a slow RPC response from the
+  // previous species can't briefly leak its values into the new
+  // species's view (Amur maple's 6k pins ≠ avocado's pins).
   let lastLoadedSpecies: string | null = null;
   $: if (currentSpeciesId !== lastLoadedSpecies) {
     lastLoadedSpecies = currentSpeciesId;
+    pinsByZoneId = {};
     expandedZoneId = null;
     if (reviewNotesTimer) { clearTimeout(reviewNotesTimer); reviewNotesTimer = null; }
     void loadPinZones(currentSpeciesId);
