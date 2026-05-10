@@ -530,6 +530,24 @@
         );
       });
 
+  // Sidebar species list grouped by review status. Order:
+  // needs_work (top — needs attention) → unreviewed → confirmed
+  // (bottom — already vetted, lowest priority).
+  $: sidebarGroups = (() => {
+    const groups: Record<string, typeof species> = {
+      needs_work: [], unreviewed: [], confirmed: []
+    };
+    for (const sp of species) {
+      const status = speciesSummaryById[sp.id]?.review_status ?? 'unreviewed';
+      const k = (status === 'confirmed' || status === 'needs_work') ? status : 'unreviewed';
+      groups[k].push(sp);
+    }
+    for (const k of Object.keys(groups)) {
+      groups[k].sort((a, b) => (a.common_name || '').localeCompare(b.common_name || ''));
+    }
+    return groups;
+  })();
+
   $: currentSpecies = species.find((s) => s.id === currentSpeciesId) ?? null;
   /** Stages that have at least one DB row for the current species.
    *  Multi-stage species (basswood: leaf + flower_harvest; elderberry:
@@ -1043,6 +1061,32 @@
   {:else if !isAdmin}
     <p class="muted">Admin only.</p>
   {:else}
+    <div class="layout">
+    <!-- Species sidebar: grouped by review status. Click any to select. -->
+    <aside class="species-sidebar" aria-label="Species list">
+      {#each [['needs_work','⚠ Needs work'], ['unreviewed','◌ Not reviewed'], ['confirmed','✓ Confirmed']] as [k, label]}
+        {@const list = sidebarGroups[k]}
+        {#if list && list.length > 0}
+          <div class="sb-group">
+            <div class="sb-heading sb-status-{k}">
+              {label} <span class="sb-count">{list.length}</span>
+            </div>
+            {#each list as sp (sp.id)}
+              <button
+                class="sb-item"
+                class:active={sp.id === currentSpeciesId}
+                on:click={() => pickSpecies(sp.id)}
+                title={sp.scientific_name}
+              >
+                <span class="sb-dot sb-status-{k}"></span>
+                <span class="sb-name">{sp.common_name}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+      {/each}
+    </aside>
+    <div class="content">
     <!-- Species selector: search box + prev/next -->
     <div class="picker">
       <button class="step" on:click={() => step(-1)} title="Previous species (←)">‹</button>
@@ -1596,6 +1640,8 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
         </div>
       {/if}
     {/if}
+    </div><!-- /.content -->
+    </div><!-- /.layout -->
   {/if}
 </main>
 
@@ -1618,10 +1664,85 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
   }
   .hint { font-size: 0.78rem; color: #6b7a6b; margin-left: auto; }
   main {
-    max-width: 60rem;
+    max-width: 80rem;
     margin: 0 auto;
     padding: 1rem 1.25rem 4rem;
     color: #1f2a1f;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 16rem 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  .content { min-width: 0; }
+  .species-sidebar {
+    position: sticky;
+    top: 0.5rem;
+    max-height: calc(100vh - 1rem);
+    overflow-y: auto;
+    border: 1px solid #e1e8e1;
+    border-radius: 0.4rem;
+    background: #fbfdfa;
+    padding: 0.4rem;
+    font-size: 0.85rem;
+  }
+  .sb-group + .sb-group { margin-top: 0.5rem; }
+  .sb-heading {
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.3rem 0.4rem;
+    color: #2a3a2a;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .sb-count {
+    margin-left: auto;
+    font-weight: 400;
+    color: #6b7a6b;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .sb-status-needs_work { color: #b85a1a; }
+  .sb-status-unreviewed { color: #6b7a6b; }
+  .sb-status-confirmed  { color: #2a6f2a; }
+  .sb-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    padding: 0.25rem 0.4rem;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    color: #1f2a1f;
+    font-family: inherit;
+    font-size: 0.85rem;
+  }
+  .sb-item:hover { background: #eaf2e6; }
+  .sb-item.active {
+    background: #d8eacc;
+    font-weight: 600;
+  }
+  .sb-dot {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sb-dot.sb-status-needs_work { background: #d68030; }
+  .sb-dot.sb-status-unreviewed { background: #b8c4b0; }
+  .sb-dot.sb-status-confirmed  { background: #4a9050; }
+  .sb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 60rem) {
+    .layout { grid-template-columns: 1fr; }
+    .species-sidebar { position: static; max-height: 12rem; }
   }
   .muted { color: #6b7a6b; }
   .small { font-size: 0.78rem; }
