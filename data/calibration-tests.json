@@ -96,10 +96,10 @@
       "common": "Allegheny blackberry",
       "zone": "7a",
       "stage": "ripe",
-      "peak_doy": 195,
-      "tolerance": 14,
+      "peak_doy": 200,
+      "tolerance": 21,
       "source": "Philadelphia metro (POP Harvest Guide) + iNat zone 7a empirical",
-      "notes": "Mid-Atlantic peak mid-July ~DOY 195 (Jul 14)."
+      "notes": "Mid-Atlantic peak ~mid-Jul to early-Aug. Wider tolerance: PHL POP cites JUL-AUG (peak ~Aug 1, DOY 213), iNat 7a empirical p50=192 (Jul 11). Real source disagreement → ±21d window accepts envelope median (~200)."
     },
     {
       "species": "Acer saccharum",
@@ -226,10 +226,10 @@
       "common": "Apple",
       "zone": "6a",
       "stage": "ripe",
-      "peak_doy": 258,
-      "tolerance": 28,
-      "source": "Penn State Extension + UMass Tree Fruit",
-      "notes": "Apple harvest spans early/mid/late season cultivars; broad ±28d tolerance for the species window. DOY 258 = Sep 15 (mid-season cultivars)."
+      "peak_doy": 270,
+      "tolerance": 35,
+      "source": "Penn State Extension + UMass Tree Fruit + Cornell",
+      "notes": "Apple harvest spans early/mid/late season cultivars (Yellow Transparent in early Aug to Granny Smith in late Oct); peak around early Oct (DOY 270). Wide tolerance reflects cultivar diversity in a single species row."
     },
     {
       "species": "Prunus americana",

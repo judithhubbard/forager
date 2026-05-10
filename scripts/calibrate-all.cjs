@@ -75,6 +75,7 @@ const STEPS = [
   { name: '8. beech-frost-fix',           script: 'beech-frost-fix.cjs',           optional: false },
   { name: '9. blackberry-fix',            script: 'blackberry-fix.cjs',            optional: false },
   { name: '10. smooth-across-zones',      script: 'smooth-across-zones.cjs',       optional: false },
+  { name: '11. enforce-monotonic',        script: 'enforce-monotonic.cjs',         optional: false },
 ];
 if (!skipTests) {
   STEPS.push({ name: '9. test-calibration', script: 'test-calibration.cjs', optional: false });

@@ -99,8 +99,8 @@ const INAT_WRONG_STAGE = new Set([
 const PRECISE_DATE_RE = /\b(?:\d{1,2}\/\d{1,2}|january\s+\d{1,2}|february\s+\d{1,2}|march\s+\d{1,2}|april\s+\d{1,2}|may\s+\d{1,2}|june\s+\d{1,2}|july\s+\d{1,2}|august\s+\d{1,2}|september\s+\d{1,2}|october\s+\d{1,2}|november\s+\d{1,2}|december\s+\d{1,2}|DOY\s*\d+|first\s+frost|after\s+(?:first|hard)\s+frost)\b/i;
 const INTERMEDIATE_LANGUAGE_RE = /\b((?:early|mid|late)\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(?:[-\s]+(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC))?|in\s+(?:january|february|march|april|may|june|july|august|september|october|november|december))\b/i;
 const FUZZY_LANGUAGE_RE = /\b(mid[\s-]+(?:to[\s-]+late\s+)?(?:spring|summer|fall|autumn|winter)|late\s+(?:spring|summer|fall|autumn|winter)|early\s+(?:spring|summer|fall|autumn|winter)|around\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|in\s+(?:spring|summer|fall|autumn|winter))\b/i;
-const INTERMEDIATE_HALF_WINDOW = 12; // peak ± 12d for intermediate (month-level)
-const FUZZY_HALF_WINDOW = 18;        // peak ± 18d for fuzzy (seasonal)
+const INTERMEDIATE_HALF_WINDOW = 9;  // peak ± 9d for intermediate (month-level claims like "JUL-AUG")
+const FUZZY_HALF_WINDOW = 18;        // peak ± 18d for fuzzy (seasonal language like "late summer")
 
 function precisionTier(ev) {
   if (!ev?.summary) return 'precise';
