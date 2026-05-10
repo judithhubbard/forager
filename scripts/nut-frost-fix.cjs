@@ -59,8 +59,13 @@ const NUT_SPECIES = {
   'Castanea mollissima':  { offset: -10, half_window: 20, common: 'Chinese chestnut' },
   'Castanea sativa':      { offset:  -7, half_window: 20, common: 'Sweet chestnut' },
   'Castanea sp.':         { offset: -10, half_window: 20, common: 'Chestnut (unspecified)' },
-  // Chinkapin — earliest of the chestnut family (Aug-early Sept)
-  'Castanea pumila':      { offset: -25, half_window: 18, common: 'Allegheny chinkapin' },
+  // Chinkapin: REMOVED from frost-driven treatment. Cited sources
+  // (Eat The Weeds Florida 9a, USDA Silvics, NC State, Wikipedia)
+  // describe heat-driven Aug-Sep harvest across the species's range
+  // with no requirement for first frost. Now handled by chinkapin-fix
+  // (heat-driven anchor 7a peak Sep 29). Leaving the entry commented
+  // here to document the change.
+  // 'Castanea pumila':   { offset: -25, half_window: 18, common: 'Allegheny chinkapin' },
   // Oaks: at or just after first frost (acorn drop)
   'Quercus alba':         { offset:   0, half_window: 20, common: 'White oak' },
   'Quercus macrocarpa':   { offset:   0, half_window: 20, common: 'Bur oak' },
