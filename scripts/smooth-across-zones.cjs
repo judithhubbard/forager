@@ -75,7 +75,8 @@ const DEFAULT_DIRECTION = {
 // but drop is frost-loosened); leaving them as heat-driven default.
 const FROST_DRIVEN_RIPE = new Set([
   'Fagus grandifolia',      // American beech — classic frost-trigger
-  'Diospyros virginiana'    // American persimmon — "wait for first frost" canon
+  'Diospyros virginiana',   // American persimmon — "wait for first frost" canon
+  'Vaccinium macrocarpon'   // American cranberry — frost-tinted late fruit
 ]);
 
 function directionFor(scientificName, stage) {

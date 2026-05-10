@@ -73,7 +73,10 @@ const INAT_WRONG_STAGE = new Set([
   'Diospyros virginiana',
   // Pawpaw — slow-ripening fruit; iNat captures developing fruit
   // weeks before harvest (visible May-Aug; ripens Aug-Sep)
-  'Asimina triloba'
+  'Asimina triloba',
+  // American cranberry — frost-tinted late fruit; tart through Sept,
+  // peak harvest after first frost (Oct-Nov)
+  'Vaccinium macrocarpon'
 ]);
 
 /** Detect when an evidence summary describes its window in fuzzy

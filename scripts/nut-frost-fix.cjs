@@ -51,6 +51,9 @@ const NUT_SPECIES = {
   // Persimmon — frost-driven later than first frost (canon: "wait
   // for first frost"; fruit clings to tree until frost softens it).
   'Diospyros virginiana': { offset: +14, half_window: 21, common: 'American persimmon' },
+  // American cranberry — frost-tinted late fruit; tart in Sept, peak
+  // sweet harvest after first frost. Cape Cod tradition: Oct-Nov.
+  'Vaccinium macrocarpon': { offset: +14, half_window: 21, common: 'American cranberry' },
   // Chestnuts: drop before frost (Sept)
   'Castanea dentata':     { offset: -10, half_window: 20, common: 'American chestnut' },
   'Castanea mollissima':  { offset: -10, half_window: 20, common: 'Chinese chestnut' },
