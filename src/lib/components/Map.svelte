@@ -8,6 +8,7 @@
   import { formatElapsed, autoTrackTitle } from '$lib/utils/formatTime';
   import { nearestMetro } from '$lib/utils/metros';
   import { getMetroTotals } from '$lib/services/metroTotalsService';
+  import { track } from '$lib/services/uxTracker';
   import {
     recording,
     start as startRec,
@@ -646,12 +647,15 @@
 
   async function locateMe() {
     if (!map) return;
+    track('locate_me_clicked');
     if (!navigator.geolocation) {
       locationError = 'This browser does not support geolocation.';
+      track('locate_me_unsupported');
       return;
     }
     locating = true;
     locationError = '';
+    const t0 = Date.now();
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         locating = false;
@@ -659,6 +663,14 @@
         const { latitude, longitude } = pos.coords;
         map.setView([latitude, longitude], 15);
         placeUserMarker(latitude, longitude, pos.coords.accuracy ?? null);
+        track('locate_me_success', {
+          latency_ms: Date.now() - t0,
+          accuracy_m: pos.coords.accuracy != null ? Math.round(pos.coords.accuracy) : null,
+          // Position-age compared to call: 0 means fresh; non-zero means
+          // browser served a cached fix (we ask for maximumAge=0 but
+          // some browsers serve cache anyway).
+          age_ms: Math.max(0, Date.now() - pos.timestamp)
+        });
       },
       (err) => {
         locating = false;
@@ -670,6 +682,7 @@
           : err.message || 'Could not get location.';
         locationError = reason;
         console.warn('[Map] geolocation failed:', err.code, err.message);
+        track('locate_me_failed', { code: err.code, latency_ms: Date.now() - t0 });
         // Auto-clear the error after a few seconds so it doesn't linger.
         setTimeout(() => {
           if (locationError === reason) locationError = '';

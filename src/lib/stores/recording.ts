@@ -13,6 +13,7 @@
 import { writable, get, type Writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { haversineMeters } from '$lib/utils/distance';
+import { track } from '$lib/services/uxTracker';
 
 export interface RecordedPoint {
   lat: number;
@@ -155,16 +156,24 @@ async function requestWakeLock(): Promise<void> {
   // The Wake Lock API isn't typed in lib.dom.d.ts on every TS version
   // — guard via 'in' rather than direct access.
   const nav = navigator as unknown as { wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinel> } };
-  if (!nav.wakeLock) return;
+  if (!nav.wakeLock) {
+    track('wake_lock_unavailable');
+    return;
+  }
   try {
     if (wakeLock) return;  // already held
     wakeLock = await nav.wakeLock.request('screen');
-    wakeLock?.addEventListener('release', () => { wakeLock = null; });
+    wakeLock?.addEventListener('release', () => {
+      wakeLock = null;
+      track('wake_lock_released_by_browser');
+    });
+    track('wake_lock_granted');
   } catch (err) {
     // Common reasons: page not focused, user gesture required (Safari),
     // permissions policy. Non-fatal — recording still works, just
     // without screen-keep-awake.
     console.warn('[recording] wakeLock.request failed:', err);
+    track('wake_lock_denied', { message: err instanceof Error ? err.message : String(err) });
   }
 }
 async function releaseWakeLock(): Promise<void> {
@@ -277,6 +286,7 @@ function startWatch() {
       if (s.status !== 'recording') return;
       const gap = Date.now() - lastFixAt;
       if (gap > WATCHDOG_SILENT_MS) {
+        track('gps_silent_detected', { gap_ms: gap });
         _store.update((cur) => ({
           ...cur,
           gpsSilent: true,
@@ -319,8 +329,10 @@ export function start(): void {
     // sessions sat at 0:00 until the first fix arrived, which the
     // user reasonably read as the timer being broken.
     _store.set({ ...emptyState(), status: 'recording', startedAt: Date.now() });
+    track('recording_started');
   } else {
     _store.update((cur) => ({ ...cur, status: 'recording', error: null }));
+    track('recording_resumed');
   }
   startWatch();
 }
@@ -331,6 +343,7 @@ export function pause(): void {
   clearWatch();
   void releaseWakeLock();
   _store.update((cur) => ({ ...cur, status: 'paused' }));
+  track('recording_paused', { points: s.points.length });
 }
 
 export function resume(): void {
@@ -348,6 +361,8 @@ export function stop(): RecorderState {
   void releaseWakeLock();
   const s = get(_store);
   _store.update((cur) => ({ ...cur, status: 'idle' }));
+  const dur_s = s.startedAt && s.endedAt ? Math.round((s.endedAt - s.startedAt) / 1000) : null;
+  track('recording_stopped', { points: s.points.length, duration_s: dur_s });
   return s;
 }
 
