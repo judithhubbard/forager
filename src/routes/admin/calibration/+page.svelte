@@ -622,10 +622,19 @@
   // Cross-zone smoothing status. Same heuristic as the smoothing
   // script — heat-driven default, frost-driven override list, and
   // some stages have no monotonic signal at all.
+  // Frost-driven ripe — must mirror the smoothing script. All
+  // hardwood mast nuts (timing tracks first frost) plus frost-tinted
+  // late fruits.
   const FROST_DRIVEN_RIPE = new Set([
-    'Fagus grandifolia',     // American beech
-    'Diospyros virginiana',  // American persimmon
-    'Vaccinium macrocarpon'  // American cranberry
+    'Fagus grandifolia',
+    'Diospyros virginiana',
+    'Vaccinium macrocarpon',
+    'Castanea dentata', 'Castanea mollissima', 'Castanea sativa',
+    'Castanea pumila', 'Castanea sp.',
+    'Quercus alba', 'Quercus macrocarpa',
+    'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
+    'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
+    'Corylus americana', 'Corylus cornuta'
   ]);
   const STAGE_DIRECTION: Record<string, -1 | 0 | 1> = {
     ripe: -1, ripening: -1, green: -1,

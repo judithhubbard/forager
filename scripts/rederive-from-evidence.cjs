@@ -118,18 +118,31 @@ function effectiveSupports(ev, isInat) {
   return { start: s, end: e, peak: ev.supports.peak_doy };
 }
 
-function provenanceFor(source, summary) {
+function provenanceFor(source, summary, rowZoneCode) {
   const src = (source || '').toLowerCase();
   if (src.startsWith('inaturalist')) return 'empirical_inat';
   const s = summary || '';
-  // Strip [zone-shift ...] metadata before checking for regional
-  // indicators — that tag is decoration about how supports DOYs
-  // were computed, not about the source's regional specificity.
-  // Eat The Weeds writing "Florida, zone 9a" is regional even when
-  // the agent attached a [zone-shift] marker to the same entry.
   const beforeShiftTag = s.split(/\[zone-shift/i)[0];
   const hasShiftTag = /\[zone-shift/i.test(s);
-  if (/\b(zones?\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic|Philadelphia|Toronto|Ottawa|Seattle|Boston|Chicago|Portland|metro)\b/i.test(beforeShiftTag)) return 'regional';
+  // Strongest signal: the row's zone is explicitly named in the
+  // source quote. Eat The Weeds writing "Florida, zone 9a" is
+  // regional ONLY for the 9a row — the same source attached to a
+  // 7a row (via agent shifting) shouldn't claim regional status.
+  if (rowZoneCode) {
+    const rowZoneRegex = new RegExp(`\\bzones?\\s*${rowZoneCode.replace(/[ab]/, m => `[${m}]`)}\\b`, 'i');
+    if (rowZoneRegex.test(beforeShiftTag)) return 'regional';
+    // Source mentions a SPECIFIC zone different from the row's zone
+    // → treat as shifted (this entry is on this row only because of
+    // agent shifting, not because the source is about this zone).
+    const otherZoneMatch = beforeShiftTag.match(/\bzones?\s*([0-9]+[ab]?)\b/i);
+    if (otherZoneMatch && otherZoneMatch[1].toLowerCase() !== rowZoneCode.toLowerCase()) {
+      return hasShiftTag ? 'shifted' : 'generic';
+    }
+  }
+  // Fallback: state/region names without explicit zone reference.
+  // Less precise but still meaningful (NC State Extension implies
+  // NC's zones; can't pin to one zone without a state→zones map).
+  if (/\b(VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic|Philadelphia|Toronto|Ottawa|Seattle|Boston|Chicago|Portland|metro)\b/i.test(beforeShiftTag)) return 'regional';
   if (hasShiftTag) return 'shifted';
   if (/\b(zones?\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic|Philadelphia|Toronto|Ottawa|Seattle|Boston|Chicago|Portland|metro)\b/i.test(s)) return 'regional';
   return 'generic';
@@ -169,23 +182,32 @@ function median(nums) {
   const narrowed = [];
 
   for (const r of rows) {
-    // Nut species (INAT_WRONG_STAGE) are authoritative-by-frost-date
-    // via nut-frost-fix.cjs. Their evidence supports values are often
-    // agent-shifted derivatives that don't reflect the source's
-    // actual zone-specific claim. Don't let rederive overwrite the
-    // frost-anchored synthesis here. Evidence still renders in the
-    // viewer's per-source range bars.
-    if (INAT_WRONG_STAGE.has(r.scientific_name)) {
-      skippedNoSupports++;
-      continue;
-    }
+    const isNutSpecies = INAT_WRONG_STAGE.has(r.scientific_name);
 
     const ev = Array.isArray(r.evidence) ? r.evidence : [];
+    // Pass row's zone to provenanceFor so explicit-zone-match wins
+    // over agent-shifted entries. e.g., Eat The Weeds (Florida, 9a)
+    // is regional ONLY on 9a; on 7a (where the agent shifted it)
+    // it's classified as shifted.
     const supporting = ev
-      .map(e => ({ ...e, _provenance: provenanceFor(e?.source, e?.summary) }))
+      .map(e => ({ ...e, _provenance: provenanceFor(e?.source, e?.summary, r.zone_code) }))
       .filter(e => e?.supports?.start_doy != null && e?.supports?.end_doy != null);
 
     if (supporting.length === 0) { skippedNoSupports++; continue; }
+
+    // For nut species (frost-driven by nut-frost-fix), rederive only
+    // overrides when there's explicit-zone-match regional evidence —
+    // that's the case where a real source for THIS zone trumps the
+    // generic frost-date model. (Eat The Weeds Florida 9a → use it
+    // for 9a; not for any other zone.) Without strong evidence,
+    // preserve nut-frost-fix's synthesis.
+    if (isNutSpecies) {
+      const strongRegional = supporting.filter((e) => e._provenance === 'regional');
+      if (strongRegional.length === 0) {
+        skippedNoSupports++;
+        continue;
+      }
+    }
 
     const regional = supporting.filter(e => e._provenance === 'regional');
     // Split iNat by sample size: anchor-quality (>=30 obs) vs thin (drops to 'soft' / generic).

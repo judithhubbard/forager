@@ -73,10 +73,25 @@ const DEFAULT_DIRECTION = {
 // in the year, so harvest happens later). Conservative — only the clearest
 // cases. Walnut / hickory / oak are intermediate (maturation is heat-driven
 // but drop is frost-loosened); leaving them as heat-driven default.
+// Frost-driven ripe: harvest tracks first-frost timing, so warmer
+// zones (later first frost) ripen LATER. This list mirrors the
+// nut-frost-fix species table — all hardwood mast nuts plus
+// frost-tinted late fruits.
 const FROST_DRIVEN_RIPE = new Set([
-  'Fagus grandifolia',      // American beech — classic frost-trigger
-  'Diospyros virginiana',   // American persimmon — "wait for first frost" canon
-  'Vaccinium macrocarpon'   // American cranberry — frost-tinted late fruit
+  'Fagus grandifolia',      // American beech
+  'Diospyros virginiana',   // American persimmon
+  'Vaccinium macrocarpon',  // American cranberry
+  // Chestnuts (drop -10 to -25 days before first frost; still frost-anchored)
+  'Castanea dentata', 'Castanea mollissima', 'Castanea sativa',
+  'Castanea pumila', 'Castanea sp.',
+  // Oaks (acorns drop at first frost)
+  'Quercus alba', 'Quercus macrocarpa',
+  // Hickories (husks split at first frost)
+  'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
+  // Walnuts (husks blacken pre-frost; timing tracks frost arrival)
+  'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
+  // Hazelnuts (Aug-Sep, before frost)
+  'Corylus americana', 'Corylus cornuta'
 ]);
 
 function directionFor(scientificName, stage) {
