@@ -1,0 +1,205 @@
+{
+  "_doc": "Calibration regression test set. Each entry is a (species, zone, stage) anchor with an expected peak DOY and a tolerance (days). Sources are authoritative single-zone or strongly-zone-anchored references — USDA Forest Service Silvics for native trees, regional foraging blogs explicitly for the cited zone, university extension fact sheets, NOAA first-frost climatology for frost-driven species. The runner queries the synthesized peak_doy on each row and asserts |peak - expected| <= tolerance. New entries added when we find authoritative pinning evidence; entries with broader uncertainty get larger tolerances.",
+  "tests": [
+    {
+      "species": "Fagus grandifolia",
+      "common": "American beech",
+      "zone": "5a",
+      "stage": "ripe",
+      "peak_doy": 269,
+      "tolerance": 14,
+      "source": "USDA Forest Service Silvics + NOAA first-frost climatology (zone 5a first frost ~Sep 26 = DOY 269)",
+      "notes": "Beech is frost-driven: nuts drop after first hard frost. Per NOAA 1991-2020 normals, zone 5a first frost is ~Sep 26."
+    },
+    {
+      "species": "Fagus grandifolia",
+      "common": "American beech",
+      "zone": "7b",
+      "stage": "ripe",
+      "peak_doy": 305,
+      "tolerance": 14,
+      "source": "USDA Forest Service Silvics + NOAA first-frost",
+      "notes": "Zone 7b first frost ~Nov 1 = DOY 305"
+    },
+    {
+      "species": "Diospyros virginiana",
+      "common": "American persimmon",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 290,
+      "tolerance": 21,
+      "source": "USDA Silvics + foraging guides (\"wait for first frost\" canon)",
+      "notes": "Frost-driven: drops after first frost. Zone 6a first frost ~Oct 10 = DOY 283; persimmon often clings 7-14d after frost so peak ~290-297."
+    },
+    {
+      "species": "Juglans nigra",
+      "common": "Black walnut",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 276,
+      "tolerance": 14,
+      "source": "USDA Silvics + Practical Self Reliance + foraging guides",
+      "notes": "Husks blacken and drop ~7d before first frost. Zone 6a: 283-7=276 (Oct 3)."
+    },
+    {
+      "species": "Carya ovata",
+      "common": "Shagbark hickory",
+      "zone": "5a",
+      "stage": "ripe",
+      "peak_doy": 269,
+      "tolerance": 21,
+      "source": "USDA Silvics + Cornell Maple (general silviculture)",
+      "notes": "Husks split at first frost; drops fall. Zone 5a first frost ~Sep 26."
+    },
+    {
+      "species": "Castanea pumila",
+      "common": "Allegheny chinkapin",
+      "zone": "7a",
+      "stage": "ripe",
+      "peak_doy": 272,
+      "tolerance": 21,
+      "source": "USDA Silvics + Eat The Weeds + NOAA first-frost",
+      "notes": "Earliest of chestnut family, drops ~25d before first frost. Zone 7a: 297-25=272 (Sep 29)."
+    },
+    {
+      "species": "Corylus americana",
+      "common": "American hazelnut",
+      "zone": "5a",
+      "stage": "ripe",
+      "peak_doy": 255,
+      "tolerance": 21,
+      "source": "USDA Silvics + extension services",
+      "notes": "Aug-Sep harvest, ~14d before first frost. Zone 5a: 269-14=255 (Sep 12)."
+    },
+    {
+      "species": "Rubus allegheniensis",
+      "common": "Allegheny blackberry",
+      "zone": "5a",
+      "stage": "ripe",
+      "peak_doy": 215,
+      "tolerance": 14,
+      "source": "Practical Self Reliance (Vermont, zone 4-5a)",
+      "notes": "Ashley Adamant: \"harvest peaks late July to early August in zones 4a-5a\". Late July = ~210, early Aug = ~220, midpoint ~215."
+    },
+    {
+      "species": "Rubus allegheniensis",
+      "common": "Allegheny blackberry",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 213,
+      "tolerance": 14,
+      "source": "Curious By Nature (MA, zone 6a)",
+      "notes": "MA mid-to-late summer (Jul-Aug). Peak ~Aug 1 = DOY 213."
+    },
+    {
+      "species": "Rubus allegheniensis",
+      "common": "Allegheny blackberry",
+      "zone": "7a",
+      "stage": "ripe",
+      "peak_doy": 195,
+      "tolerance": 14,
+      "source": "Philadelphia metro (POP Harvest Guide) + iNat zone 7a empirical",
+      "notes": "Mid-Atlantic peak mid-July ~DOY 195 (Jul 14)."
+    },
+    {
+      "species": "Acer saccharum",
+      "common": "Sugar maple",
+      "zone": "5a",
+      "stage": "sap_run",
+      "peak_doy": 60,
+      "tolerance": 14,
+      "source": "Cornell Maple Program + UVM Extension",
+      "notes": "Sap flow peaks late Feb-early Mar in zone 5a (freeze-thaw cycle). DOY 60 = Mar 1."
+    },
+    {
+      "species": "Acer saccharum",
+      "common": "Sugar maple",
+      "zone": "4a",
+      "stage": "sap_run",
+      "peak_doy": 75,
+      "tolerance": 14,
+      "source": "Cornell Maple Program",
+      "notes": "Colder zones, sap runs later. Zone 4a peak ~Mar 16."
+    },
+    {
+      "species": "Vaccinium corymbosum",
+      "common": "Highbush blueberry",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 207,
+      "tolerance": 14,
+      "source": "UMass Extension + Cornell Cooperative Extension",
+      "notes": "Mid-July harvest peak in zone 6a. DOY 207 = Jul 26."
+    },
+    {
+      "species": "Vaccinium angustifolium",
+      "common": "Lowbush blueberry",
+      "zone": "4a",
+      "stage": "ripe",
+      "peak_doy": 213,
+      "tolerance": 14,
+      "source": "UMaine Extension (Maine wild blueberry)",
+      "notes": "Maine wild blueberry harvest typically late Jul-early Aug. Peak ~Aug 1 = DOY 213."
+    },
+    {
+      "species": "Asimina triloba",
+      "common": "Pawpaw",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 258,
+      "tolerance": 21,
+      "source": "KSU Pawpaw Program + Ohio State Extension",
+      "notes": "Pawpaw harvest mid-Sep in zone 6a. DOY 258 = Sep 15."
+    },
+    {
+      "species": "Sambucus canadensis",
+      "common": "American elderberry",
+      "zone": "5a",
+      "stage": "ripe",
+      "peak_doy": 237,
+      "tolerance": 14,
+      "source": "Practical Self Reliance + UVM Extension",
+      "notes": "Late Aug ripe in zone 5a. DOY 237 = Aug 25."
+    },
+    {
+      "species": "Sambucus canadensis",
+      "common": "American elderberry",
+      "zone": "5a",
+      "stage": "flower_harvest",
+      "peak_doy": 173,
+      "tolerance": 14,
+      "source": "Practical Self Reliance + Forager Chef",
+      "notes": "Elderflower harvest ~Jun 22 in zone 5a."
+    },
+    {
+      "species": "Amelanchier canadensis",
+      "common": "Eastern serviceberry",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 175,
+      "tolerance": 14,
+      "source": "Backyard Forager + Practical Self Reliance",
+      "notes": "Late June peak in zone 6a. DOY 175 = Jun 24."
+    },
+    {
+      "species": "Allium tricoccum",
+      "common": "Ramps",
+      "zone": "5a",
+      "stage": "leaf",
+      "peak_doy": 110,
+      "tolerance": 21,
+      "source": "WV/NC Appalachian foraging tradition",
+      "notes": "Spring ephemeral; peak harvest mid-late April in zone 5a. DOY 110 = Apr 20."
+    },
+    {
+      "species": "Vitis labrusca",
+      "common": "Fox grape",
+      "zone": "6a",
+      "stage": "ripe",
+      "peak_doy": 252,
+      "tolerance": 21,
+      "source": "Cornell Cooperative Extension + Concord grape harvest data",
+      "notes": "Concord-type fox grape peak ~early Sep. DOY 252 = Sep 9."
+    }
+  ]
+}

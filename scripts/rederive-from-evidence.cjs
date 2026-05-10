@@ -160,6 +160,17 @@ function median(nums) {
   const narrowed = [];
 
   for (const r of rows) {
+    // Nut species (INAT_WRONG_STAGE) are authoritative-by-frost-date
+    // via nut-frost-fix.cjs. Their evidence supports values are often
+    // agent-shifted derivatives that don't reflect the source's
+    // actual zone-specific claim. Don't let rederive overwrite the
+    // frost-anchored synthesis here. Evidence still renders in the
+    // viewer's per-source range bars.
+    if (INAT_WRONG_STAGE.has(r.scientific_name)) {
+      skippedNoSupports++;
+      continue;
+    }
+
     const ev = Array.isArray(r.evidence) ? r.evidence : [];
     const supporting = ev
       .map(e => ({ ...e, _provenance: provenanceFor(e?.source, e?.summary) }))
