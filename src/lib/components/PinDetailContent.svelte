@@ -75,15 +75,29 @@
   type WindowRow = { stage: string; start_doy: number; end_doy: number };
 
   /** Earthy palette, must match the /windows page so this mini-timeline
-   *  reads consistently. */
+   *  reads consistently. Multi-stage species (elderberry: ripe +
+   *  flower_harvest; basswood: leaf + flower_harvest; cattail: shoot +
+   *  flower_harvest + root_dig; mushrooms: mushroom_flush; herbs/roots/
+   *  sap species: leaf / root_dig / sap_run) all need to render here. */
   const STAGE_COLORS: Record<string, string> = {
     flowering: '#9b7fb2',
     green: '#6b9442',
     ripening: '#b87a2f',
     ripe: '#8e2828',
-    past: '#7a7368'
+    past: '#7a7368',
+    flower_harvest: '#c252a8',
+    leaf: '#4a8a3a',
+    shoot: '#7ab26a',
+    root_dig: '#8b6b3a',
+    sap_run: '#c4a55c',
+    mushroom_flush: '#7d5c8a',
+    bark_strip: '#6b4f3a'
   };
-  const STAGE_ORDER = ['flowering', 'green', 'ripening', 'ripe', 'past'];
+  const STAGE_ORDER = [
+    'sap_run', 'shoot', 'leaf', 'flower_harvest',
+    'flowering', 'green', 'ripening', 'ripe', 'past',
+    'mushroom_flush', 'root_dig', 'bark_strip'
+  ];
 
   export let pinId: string;
 

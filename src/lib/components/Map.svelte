@@ -822,10 +822,12 @@
 
     if (dense) {
       // Single canvas circle: visible mark + click target combined.
-      // Ripeness rings, per-category shape, and tooltip are all skipped
-      // — at this density they're either invisible noise or a perf hit
-      // we can't afford. Inedible invasives get a thin red ring so
-      // they're still visually flagged.
+      // Ripeness rings and per-category shape are skipped — at this
+      // density they're either invisible noise or a perf hit we can't
+      // afford. Hover tooltip IS bound because tooltip rendering is
+      // on-demand (Leaflet only mounts one tooltip at a time), so it
+      // doesn't scale with pin count. Inedible invasives get a thin
+      // red ring so they're still visually flagged.
       const fillVisible = fillOpacity > 0.02 ? fill : 'transparent';
       const stroke = inedibleInvasive ? '#c84545' : '#1f2a1f';
       const strokeW = inedibleInvasive ? 1.0 : 0.5;
@@ -839,6 +841,10 @@
         bubblingMouseEvents: false
       });
       dot.on('click', () => dispatch('pinClick', { pinId }));
+      const label = labelOf(pin);
+      if (label) {
+        dot.bindTooltip(label, { direction: 'top', offset: [0, -2], sticky: true });
+      }
       dot.addTo(group);
       return group;
     }

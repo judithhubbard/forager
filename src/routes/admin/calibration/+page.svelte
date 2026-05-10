@@ -275,6 +275,40 @@
     }
   }
 
+  /** Bulk-apply a review status to every member of a complex (used by
+   *  the "approve all in complex" button in the complex-membership block).
+   *  Updates every member's species row + speciesSummaryById in one go. */
+  async function setComplexReviewStatus(memberNames: string[], status: ReviewStatus) {
+    if (reviewBusy) return;
+    const ids = memberNames
+      .map((sci) => species.find((s) => s.scientific_name === sci)?.id)
+      .filter((id): id is string => !!id);
+    if (ids.length === 0) return;
+    reviewBusy = true;
+    try {
+      const { error } = await supabase
+        .from('species')
+        .update({
+          review_status: status,
+          reviewed_at: status === 'unreviewed' ? null : new Date().toISOString()
+        } as never)
+        .in('id', ids);
+      if (error) throw error;
+      const next = { ...speciesSummaryById };
+      for (const id of ids) {
+        next[id] = {
+          ...(next[id] ?? { n_distinct_sources: 0, n_rows: 0, review_status: 'unreviewed' }),
+          review_status: status
+        };
+      }
+      speciesSummaryById = next;
+    } catch (err) {
+      console.warn('[calibration] setComplexReviewStatus error', err);
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
   /** Load the species' review notes when the current species changes.
    *  Cheap one-row select on the species table. */
   async function loadReviewNotes(speciesId: string | null) {
@@ -1187,6 +1221,7 @@
         {#if currentComplexes.length > 0}
           {#each currentComplexes as cx}
             {@const confirmedCount = cx.members.filter(m => m.review_status === 'confirmed').length}
+            {@const allConfirmed = confirmedCount === cx.members.length}
             <div class="complex-note" title="Members of this complex share a single calibrated harvest curve via species-complex-unify.cjs">
               <div class="complex-head">
                 Part of <strong>{cx.name}</strong>
@@ -1210,6 +1245,24 @@
                     >{m.common_name}</button>
                   {/if}
                 {/each}
+              </div>
+              <div class="complex-actions">
+                <button
+                  class="cx-bulk-confirm"
+                  disabled={reviewBusy || allConfirmed}
+                  title={allConfirmed ? 'All members already confirmed' : `Mark all ${cx.members.length} members of "${cx.name}" as confirmed`}
+                  on:click={() => setComplexReviewStatus(cx.members.map(m => m.scientific_name), 'confirmed')}
+                >
+                  ✓ Confirm all {cx.members.length}
+                </button>
+                <button
+                  class="cx-bulk-needswork"
+                  disabled={reviewBusy}
+                  title={`Mark all ${cx.members.length} members of "${cx.name}" as needs_work`}
+                  on:click={() => setComplexReviewStatus(cx.members.map(m => m.scientific_name), 'needs_work')}
+                >
+                  ✗ Needs work (all)
+                </button>
               </div>
             </div>
           {/each}
@@ -1841,6 +1894,19 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
   .cm-status-confirmed { border-color: #8fc5a0; }
   .cm-status-needs_work { border-color: #d8a880; color: #8a4f10; }
   .cm-status-unreviewed { border-color: #c7d0c7; color: #6b7a6b; }
+  .complex-actions {
+    display: flex; gap: 0.5rem; margin-top: 0.4rem; flex-wrap: wrap;
+  }
+  .cx-bulk-confirm, .cx-bulk-needswork {
+    font-size: 0.78rem; padding: 0.3rem 0.6rem; border-radius: 0.3rem;
+    border: 1px solid; cursor: pointer; background: white;
+  }
+  .cx-bulk-confirm { border-color: #6ba47a; color: #2a4a2a; }
+  .cx-bulk-confirm:hover:not(:disabled) { background: #e8f5e8; }
+  .cx-bulk-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+  .cx-bulk-needswork { border-color: #c79864; color: #8a4f10; }
+  .cx-bulk-needswork:hover:not(:disabled) { background: #fbf3e8; }
+  .cx-bulk-needswork:disabled { opacity: 0.4; cursor: not-allowed; }
   @media (max-width: 60rem) {
     .layout { grid-template-columns: 1fr; }
     .species-sidebar { position: static; max-height: 12rem; }

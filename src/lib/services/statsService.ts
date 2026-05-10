@@ -22,7 +22,10 @@ export interface GlobalStats {
   fetched_at: string;
 }
 
-const LS_KEY = 'forager.global-stats.v3';
+// v4 bumped 2026-05-10 after the +1.6M tree-import session (Wisconsin DNR,
+// Calgary direct, Montréal, Stiles LA-County, FEMC) — invalidates any
+// cached v3 totals that pre-date the new pin counts.
+const LS_KEY = 'forager.global-stats.v4';
 const TTL_MS = 24 * 60 * 60 * 1000;
 
 let inMemory: GlobalStats | null = null;

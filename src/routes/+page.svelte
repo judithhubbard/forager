@@ -224,7 +224,13 @@
   // size. Heatmap mode at z13 is sub-second because it reads from
   // the pre-aggregated pin_density_grid. Individual pins kick in
   // at z14 where the bbox is small enough that dedup is fast.
-  const CLUSTER_BELOW_ZOOM = 14;
+  // Heatmap below this zoom, individual pins at this zoom and above.
+  // Must match band_for_zoom() in SQL: bands 0-3 cover zoom 0-12 only,
+  // so anything z13+ has no density-grid data and MUST use the
+  // individual-pin path (public_pins_bbox dedups at ~60m at z13). The
+  // earlier value of 14 left z13 with no rendered data (heatmap-mode
+  // queried band 4 which the grid never built).
+  const CLUSTER_BELOW_ZOOM = 13;
   // Cluster bubbles removed — heatmap stays at zoom < 14, individual
   // pins via marker-sized grid decimation at zoom ≥ 14. The decimation
   // already drops same-cell duplicates so visually-obscured pins
@@ -939,17 +945,18 @@
     if (layersOff > 0) {
       parts.push(`${5 - layersOff}/5 layers`);
     }
-    // Cap-hit isn't strictly a filter, but for the user the symptom
-    // is the same: trees missing. Surface it loudly so they know to
-    // zoom in for full detail. Without this message, dense areas
-    // (Cornell campus + downtown Ithaca) show different tree subsets
-    // at different zoom levels and nothing explains why.
-    if (capHit) {
-      parts.push('many trees hidden — zoom in for more');
-    }
+    // Cap-hit is NOT a user filter — it's the server returning the
+    // first N pins because the bbox is too big. Don't include it in
+    // activeFilterParts (which drives the "XX hidden · clear" pill on
+    // mobile — confusing when the user hasn't filtered anything). It
+    // surfaces separately as the cap-hit hint below.
     return parts;
   })();
   $: hasActiveFilters = activeFilterParts.length > 0;
+  /** Cap-hit hint: shown as its own subtle chip rather than mixed in
+   *  with the user's actual filters. Different wording, no "clear"
+   *  affordance since clearing isn't the right action (zoom is). */
+  $: showCapHitHint = capHit && !hasActiveFilters;
 
   /** Reset every filter to its default. Called from the chip's
    *  "Show all" button. Persistent /interests selections are NOT
