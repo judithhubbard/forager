@@ -124,6 +124,34 @@ export async function fetchOpenDataApiJson(opts: {
   return all;
 }
 
+/** Opendatasoft Explore API v2.1 (used by Vancouver Open Data, many
+ *  European city portals, Province of Quebec). Endpoint shape:
+ *  https://<host>/api/explore/v2.1/catalog/datasets/<id>/records
+ *  Pagination via offset + limit; max page is 100 unless API key. */
+export async function fetchOpendatasoftRecords(opts: {
+  url: string;             // .../catalog/datasets/<id>/records
+  pageSize?: number;       // up to 100 anonymous
+}): Promise<Record<string, unknown>[]> {
+  const all: Record<string, unknown>[] = [];
+  const limit = opts.pageSize ?? 100;
+  let offset = 0;
+  for (;;) {
+    const url = `${opts.url}?limit=${limit}&offset=${offset}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Opendatasoft fetch ${res.status} on ${url}`);
+    const body = (await res.json()) as {
+      total_count?: number;
+      results?: Record<string, unknown>[];
+    };
+    const rows = body.results ?? [];
+    all.push(...rows);
+    process.stdout.write(`  fetched offset ${offset}: ${rows.length} (total ${all.length} of ${body.total_count ?? '?'})\n`);
+    if (rows.length < limit) break;
+    offset += rows.length;
+  }
+  return all;
+}
+
 /** CKAN DataStore API (used by Toronto's open.toronto.ca, lots of
  *  Canadian/UK municipal portals). Endpoint shape:
  *  https://<host>/api/3/action/datastore_search?resource_id=<uuid>
