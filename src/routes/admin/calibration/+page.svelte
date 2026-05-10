@@ -805,15 +805,28 @@
    *  - summary names a specific US state OR a zone code → 'regional'
    *  - otherwise → 'generic' */
   type Provenance = 'regional' | 'generic' | 'shifted' | 'empirical_inat';
-  function provenanceFor(source: string, summary: string): Provenance {
+  function provenanceFor(source: string, summary: string, rowZoneCode?: string): Provenance {
     if (source?.toLowerCase().startsWith('inaturalist')) return 'empirical_inat';
     const s = summary ?? '';
-    // Only flag as 'shifted' when an explicit zone-shift marker is
-    // present. "(interpreted: ...)" alone just means the agent
-    // converted a phrase like "August" to DOY values; that's a
-    // generic source quoting + date-math, not a per-zone offset.
-    if (/\[zone-shift/i.test(s)) return 'shifted';
-    if (/\b(zones?\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic|Philadelphia|Toronto|Ottawa|Seattle|Boston|Chicago|Portland|metro)\b/i.test(s)) return 'regional';
+    // Strip agent metadata before checking — [zone-shift] is
+    // decoration about how supports were computed, not about the
+    // source's regional specificity. Eat The Weeds writing
+    // "Florida, zone 9a" is regional ONLY for the 9a row.
+    const beforeShiftTag = s.split(/\[zone-shift/i)[0];
+    const hasShiftTag = /\[zone-shift/i.test(s);
+    if (rowZoneCode) {
+      // All zone codes mentioned in the source quote.
+      const allZoneMatches = [...beforeShiftTag.matchAll(/\b([0-9]+[ab])\b/gi)];
+      const mentionedZones = new Set(allZoneMatches.map((m) => m[1].toLowerCase()));
+      if (mentionedZones.has(rowZoneCode.toLowerCase())) return 'regional';
+      // Source mentions specific zones, but row's zone isn't among them.
+      if (mentionedZones.size > 0) {
+        return hasShiftTag ? 'shifted' : 'generic';
+      }
+    }
+    // Fallback: state/region names without explicit zone reference.
+    if (/\b(VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic|Philadelphia|Toronto|Ottawa|Seattle|Boston|Chicago|Portland|metro)\b/i.test(beforeShiftTag)) return 'regional';
+    if (hasShiftTag) return 'shifted';
     return 'generic';
   }
 
@@ -827,7 +840,7 @@
    *  n_obs) so the viewer can plot the full Fruiting-observation
    *  distribution as dots-flanking-line: min dot · p10 dot · line
    *  p15→p85 · p90 dot · max dot, with the median marked. */
-  function supportingEvidenceFor(w: DBWindow): {
+  function supportingEvidenceFor(w: DBWindow, rowZoneCode?: string): {
     source: string;
     summary: string;
     start_doy: number;
@@ -853,7 +866,7 @@
           })
         | undefined;
       if (!s || s.start_doy == null || s.end_doy == null) continue;
-      const provenance = provenanceFor(ev.source ?? '', ev.summary ?? '');
+      const provenance = provenanceFor(ev.source ?? '', ev.summary ?? '', rowZoneCode);
       out.push({
         source: ev.source,
         summary: ev.summary,
@@ -1274,7 +1287,7 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                   {@const ripe = dbStages.get(primaryStage)}
                   {#if ripe}
                     {@const cs = confidenceStyle(ripe.confidence)}
-                    {@const supportingEv = supportingEvidenceFor(ripe)}
+                    {@const supportingEv = supportingEvidenceFor(ripe, z.code)}
                     {#each supportingEv.slice(0, EV_MAX_LANES) as ev, i}
                       {@const y = 6 + STAGE_H + 2 + i * EV_LANE_PITCH}
                       {@const cy = y + EV_LANE_H / 2}
@@ -1362,7 +1375,7 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                 {#each jsonRegions as r, idx}
                   {#if r.window.ripe}
                     {@const evRow = dbStages?.get(primaryStage)}
-                    {@const evCount = evRow ? Math.min(EV_MAX_LANES, supportingEvidenceFor(evRow).length) : 0}
+                    {@const evCount = evRow ? Math.min(EV_MAX_LANES, supportingEvidenceFor(evRow, z.code).length) : 0}
                     <rect
                       x={doyX(r.window.ripe.start_doy)}
                       y={6 + STAGE_H + 4 + evCount * EV_LANE_PITCH + idx * (STAGE_H + 2)}

@@ -220,25 +220,23 @@ function smoothCurve(rows, direction) {
     newEnd   = Math.max(1, Math.min(366, newEnd));
     newPeak  = Math.max(1, Math.min(366, newPeak));
 
-    // Evidence-floor cap: when the soft zone has its OWN evidence
-    // (sub-anchor sources like low-N iNat or generic citations),
-    // don't let the extrapolated bounds extend past that evidence's
-    // range. Extrapolating before the earliest observation or after
-    // the latest claim is unsupported by data — fall back to the
-    // evidence range when extrapolation would overshoot.
+    // When the soft zone has its OWN evidence with supports, just
+    // use that evidence's envelope directly — don't extrapolate at
+    // all. Extrapolation only applies to zones with truly NO data.
+    // This avoids making the synthesized window earlier than any
+    // observation (Aug-blackberry showing Jul end is just wrong if
+    // iNat says fruiting through Aug).
     if (Array.isArray(r.evidence)) {
       const supps = r.evidence
         .filter((e) => e?.supports?.start_doy != null && e?.supports?.end_doy != null)
         .map((e) => e.supports);
       if (supps.length > 0) {
-        const evMinStart = Math.min(...supps.map((s) => s.start_doy));
-        const evMaxEnd   = Math.max(...supps.map((s) => s.end_doy));
-        // Don't go before earliest observation, or after latest claim.
-        if (newStart < evMinStart) newStart = evMinStart;
-        if (newEnd > evMaxEnd) newEnd = evMaxEnd;
-        // Peak should fall within [evMinStart, evMaxEnd].
-        if (newPeak < evMinStart) newPeak = evMinStart;
-        if (newPeak > evMaxEnd) newPeak = evMaxEnd;
+        newStart = Math.min(...supps.map((s) => s.start_doy));
+        newEnd   = Math.max(...supps.map((s) => s.end_doy));
+        const peaks = supps.map((s) => s.peak_doy).filter(p => p != null);
+        newPeak = peaks.length > 0
+          ? Math.round(peaks.reduce((a,b) => a+b, 0) / peaks.length)
+          : Math.round((newStart + newEnd) / 2);
       }
     }
     r.newStart = newStart;
@@ -307,8 +305,25 @@ function detectAnchorViolations(rows, direction) {
   const violations = [];
   const changes = [];
 
+  // Species whose synthesis comes from nut-frost-fix (frost-driven
+  // anchors). Smoothing should leave these alone — their per-zone
+  // values are already correct, and the iNat evidence on these
+  // species is wrong-stage so shouldn't drive any smoothing.
+  const NUT_FROST_FIX_SPECIES = new Set([
+    'Fagus grandifolia', 'Diospyros virginiana', 'Vaccinium macrocarpon',
+    'Castanea dentata', 'Castanea mollissima', 'Castanea sativa', 'Castanea sp.',
+    'Quercus alba', 'Quercus macrocarpa',
+    'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
+    'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
+    'Corylus americana', 'Corylus cornuta'
+  ]);
+
   for (const [key, grp] of groups) {
     const sample = grp[0];
+    if (NUT_FROST_FIX_SPECIES.has(sample.scientific_name)) {
+      skippedDirZero++;  // count under skipped-no-signal for reporting brevity
+      continue;
+    }
     const direction = directionFor(sample.scientific_name, sample.stage);
     if (direction === 0) { skippedDirZero++; continue; }
     if (grp.length < 3)   { skippedTooFew++;  continue; }

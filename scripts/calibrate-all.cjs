@@ -66,6 +66,7 @@ const STEPS = [
   { name: '1. migrate-regional-sidecar',  script: 'migrate-regional-sidecar.cjs',  optional: true },
   { name: '1b. cleanup-sidecar-notes',    script: 'cleanup-sidecar-notes.cjs',     optional: true },
   { name: '1c. cleanup-cross-zone-evidence', script: 'cleanup-cross-zone-evidence.cjs', optional: true },
+  { name: '1d. cleanup-shifted-projections', script: 'cleanup-shifted-projections.cjs', optional: true },
   { name: '2. nut-frost-fix',             script: 'nut-frost-fix.cjs',             optional: false },
   { name: '3. rederive-from-evidence',    script: 'rederive-from-evidence.cjs',    optional: false },
   { name: '4. maple-sap-fix',             script: 'maple-sap-fix.cjs',             optional: false },
