@@ -1,13 +1,13 @@
 
 === Smoothing summary ===
-Total (species,stage) groups: 114
+Total (species,stage) groups: 115
   skipped (no zone signal):    2
   skipped (<3 rows):           8
   skipped (no anchor zones):   3
 Rows WOULD update:  0
 
 === Anchor monotonicity violations (review needed) ===
-Total combos with violations: 73
+Total combos with violations: 74
 
   Amur maple (Acer ginnala) stage=sap_run dir=heat→earlier
     3b → 4a: 50-89 → 50-304  (Δstart=0, Δend=215)
@@ -39,10 +39,12 @@ Total combos with violations: 73
     9a → 9b: 80-293 → 176-291  (Δstart=96, Δend=-2)
 
   Shellbark hickory (Carya laciniosa) stage=ripe dir=heat→earlier
-    6b → 7b: 237-297 → 244-304  (Δstart=7, Δend=7)
+    6b → 7b: 216-294 → 244-304  (Δstart=28, Δend=10)
 
   Shagbark hickory (Carya ovata) stage=ripe dir=heat→earlier
     4b → 5a: 258-304 → 258-318  (Δstart=0, Δend=14)
+    7a → 7b: 188-291 → 170-299  (Δstart=-18, Δend=8)
+    7b → 8a: 170-299 → 216-276  (Δstart=46, Δend=-23)
 
   American chestnut (Castanea dentata) stage=ripe dir=heat→earlier
     7b → 8a: 223-283 → 206-291  (Δstart=-17, Δend=8)
@@ -90,6 +92,6 @@ Total combos with violations: 73
   Quince (Cydonia oblonga) stage=ripe dir=heat→earlier
     8b → 9a: 168-269 → 186-250  (Δstart=18, Δend=-19)
 
-  +53 more violations (truncated)
+  +54 more violations (truncated)
 
 === Sample smoothing changes (first 30) ===

@@ -637,7 +637,11 @@
   function provenanceFor(source: string, summary: string): Provenance {
     if (source?.toLowerCase().startsWith('inaturalist')) return 'empirical_inat';
     const s = summary ?? '';
-    if (/\[zone-shift|\(interpreted:/i.test(s)) return 'shifted';
+    // Only flag as 'shifted' when an explicit zone-shift marker is
+    // present. "(interpreted: ...)" alone just means the agent
+    // converted a phrase like "August" to DOY values; that's a
+    // generic source quoting + date-math, not a per-zone offset.
+    if (/\[zone-shift/i.test(s)) return 'shifted';
     if (/\b(zone\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic)\b/.test(s)) return 'regional';
     return 'generic';
   }

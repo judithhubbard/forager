@@ -43,7 +43,10 @@ function provenanceFor(source, summary) {
   const src = (source || '').toLowerCase();
   if (src.startsWith('inaturalist')) return 'empirical_inat';
   const s = summary || '';
-  if (/\[zone-shift|\(interpreted:/i.test(s)) return 'shifted';
+  // Only [zone-shift means a real per-zone offset was applied;
+  // (interpreted: alone is just date-text → DOY conversion (still
+  // generic but a legitimate quote of the source's claim).
+  if (/\[zone-shift/i.test(s)) return 'shifted';
   if (/\b(zone\s*[0-9]+[ab]?|VT|ME|NH|MA|NY|PA|MN|WI|MI|OH|IL|CA|FL|TX|GA|NC|SC|VA|MD|WA|OR|CO|UT|AZ|NM|Vermont|Maine|Minnesota|Wisconsin|California|Florida|northern New England|Upper Midwest|southeastern|Pacific Northwest|Mid-Atlantic)\b/.test(s)) return 'regional';
   return 'generic';
 }
