@@ -3,31 +3,40 @@
 Total (species,stage) groups: 115
   skipped (no zone signal):    2
   skipped (<3 rows):           8
-  skipped (no anchor zones):   54
-Rows WOULD update:  0
+  skipped (no anchor zones):   47
+Rows WOULD update:  8
 
 === Anchor monotonicity violations (review needed) ===
-Total combos with violations: 14
+Total combos with violations: 18
 
   Amur maple (Acer ginnala) stage=sap_run dir=heat→earlier
     3b → 4a: 50-89 → 50-304  (Δstart=0, Δend=215)
 
+  Kiwifruit (Actinidia deliciosa) stage=ripe dir=heat→earlier
+    9a → 9b: 274-365 → 305-365  (Δstart=31, Δend=0)
+
   Allegheny serviceberry (Amelanchier laevis) stage=ripe dir=heat→earlier
     6a → 6b: 168-198 → 173-196  (Δstart=5, Δend=-2)
+
+  Grapefruit (Citrus paradisi) stage=ripe dir=heat→earlier
+    9a → 9b: 31-334 → 60-334  (Δstart=29, Δend=0)
 
   Beaked hazelnut (Corylus cornuta) stage=ripe dir=heat→earlier
     3a → 3b: 190-225 → 216-252  (Δstart=26, Δend=27)
     3b → 4a: 216-252 → 223-259  (Δstart=7, Δend=7)
     4a → 4b: 223-259 → 233-304  (Δstart=10, Δend=45)
 
+  Japanese persimmon (Diospyros kaki) stage=ripe dir=heat→earlier
+    7b → 8b: 295-320 → 182-334  (Δstart=-113, Δend=14)
+
   White mulberry (Morus alba) stage=ripe dir=heat→earlier
     5a → 5b: 160-186 → 161-191  (Δstart=1, Δend=5)
 
   Avocado (Persea americana) stage=ripe dir=heat→earlier
-    8b → 9a: 152-198 → 152-213  (Δstart=0, Δend=15)
+    10a → 10b: 1-365 → 152-198  (Δstart=151, Δend=-167)
 
   Apricot (Prunus armeniaca) stage=ripe dir=heat→earlier
-    9a → 9b: 145-182 → 145-195  (Δstart=0, Δend=13)
+    7b → 8b: 145-195 → 145-243  (Δstart=0, Δend=48)
 
   Sweet cherry (Prunus avium) stage=ripe dir=heat→earlier
     7b → 8b: 138-174 → 153-188  (Δstart=15, Δend=14)
@@ -35,6 +44,9 @@ Total combos with violations: 14
 
   Black cherry (Prunus serotina) stage=ripe dir=heat→earlier
     5b → 8a: 172-266 → 124-276  (Δstart=-48, Δend=10)
+
+  Asian pear (Pyrus pyrifolia) stage=ripe dir=heat→earlier
+    7a → 8b: 233-258 → 182-334  (Δstart=-51, Δend=76)
 
   Red raspberry (Rubus idaeus) stage=ripe dir=heat→earlier
     3a → 3b: 187-308 → 197-234  (Δstart=10, Δend=-74)
@@ -57,3 +69,11 @@ Total combos with violations: 14
     7a → 7b: 78-135 → 85-135  (Δstart=7, Δend=0)
 
 === Sample smoothing changes (first 30) ===
+  Apple 4b ripe: 238-366 peak 314 → 238-366 peak 293
+  Apple 5a ripe: 231-366 peak 307 → 231-366 peak 286
+  Apple 5b ripe: 224-366 peak 300 → 224-366 peak 279
+  Apple 6a ripe: 217-366 peak 293 → 217-366 peak 272
+  Apple 6b ripe: 210-362 peak 286 → 210-362 peak 265
+  Apple 7a ripe: 203-355 peak 279 → 203-355 peak 258
+  Apple 7b ripe: 196-348 peak 272 → 196-348 peak 251
+  Apple 8a ripe: 189-341 peak 265 → 189-341 peak 244

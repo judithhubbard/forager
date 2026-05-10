@@ -29,11 +29,15 @@ const sql = require('/Users/jk/Dropbox/Claude/forager/node_modules/postgres')(
 
 // First-frost peaks per zone (DOY) — NOAA 1991-2020 climate normals
 // for first 32°F frost. Hardwood mast nuts track first frost for
-// dispersal; this table is the canonical anchor.
+// dispersal; this table is the canonical anchor. Zones 10a+ rarely
+// or never frost (capped at Dec 31 / DOY 365 for math); species
+// outside their natural range in those zones still get a defensible
+// late-fall value rather than being skipped.
 const FROST_PEAKS = {
   '3a': 242, '3b': 248, '4a': 255, '4b': 262,
   '5a': 269, '5b': 276, '6a': 283, '6b': 290,
-  '7a': 297, '7b': 305, '8a': 314, '8b': 324
+  '7a': 297, '7b': 305, '8a': 314, '8b': 324,
+  '9a': 335, '9b': 349, '10a': 365
 };
 
 // Per-species harvest timing relative to first frost. Negative = drops

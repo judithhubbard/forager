@@ -887,6 +887,24 @@
    *  blogs / extension services. */
   const INAT_COLOR = '#1f6f8b';
 
+  /** Species where iNat 'Fruiting' captures the wrong stage for
+   *  foraging — hardwood mast nuts where observers tag developing
+   *  nuts visible on the tree (summer), not the post-frost harvest.
+   *  Mirrors the script's INAT_WRONG_STAGE list. The viewer fades
+   *  iNat lanes for these species so it's visually obvious that
+   *  iNat is not contributing to the synthesized DOY. */
+  const INAT_WRONG_STAGE = new Set([
+    'Fagus grandifolia',
+    'Castanea dentata', 'Castanea mollissima', 'Castanea sativa',
+    'Castanea sp.', 'Castanea pumila',
+    'Quercus alba', 'Quercus macrocarpa',
+    'Carya ovata', 'Carya laciniosa', 'Carya illinoinensis',
+    'Juglans nigra', 'Juglans cinerea', 'Juglans regia',
+    'Corylus americana', 'Corylus cornuta'
+  ]);
+  $: inatWrongStageForCurrent =
+    !!currentSpecies && INAT_WRONG_STAGE.has(currentSpecies.scientific_name);
+
   /** Visual tier for a row's confidence value. Substantial rows render
    *  as solid bars; thin rows render dashed; heuristic rows (no real
    *  source — AI-seeded or frost-offset propagation) render dotted and
@@ -1042,6 +1060,11 @@
           }>
             smoothing: {smoothingAnalysis.status}
           </span>
+          {#if inatWrongStageForCurrent}
+            <span class="inat-ghost-chip" title="iNat 'Fruiting' annotations capture nuts visible on the tree (developing burrs/hulls in summer) — wrong stage for foragers, who collect dropped nuts after first frost. Synthesized DOYs are anchored to NOAA first-frost climatology + cited silviculture sources (USDA Forest Service Silvics, regional foraging guides). iNat lanes are still rendered (ghosted) for spread visibility but excluded from synthesis.">
+              iNat ghosted (wrong stage)
+            </span>
+          {/if}
         {/if}
       </div>
 
@@ -1246,6 +1269,11 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                       {@const y = 6 + STAGE_H + 2 + i * EV_LANE_PITCH}
                       {@const cy = y + EV_LANE_H / 2}
                       {@const stroke = ev.is_inat ? INAT_COLOR : stageColor(ripe.stage)}
+                      <!-- For wrong-stage species (mast nuts), iNat is
+                           shown for spread visibility but excluded from
+                           synthesis. Reduced opacity makes that visually
+                           obvious — the iNat lane is "ghosted". -->
+                      {@const inatFade = ev.is_inat && inatWrongStageForCurrent ? 0.3 : 1}
                       {#if ev.is_inat && ev.min_doy != null && ev.max_doy != null}
                         <!-- Full distribution: min · p10 · ━ p15-p85 ━ · p90 · max
                              with median marked. Outer dots faded (outliers,
@@ -1254,13 +1282,13 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                              p15-p85 inner-70% range. -->
                         {#if ev.min_doy < ev.start_doy}
                           <circle cx={doyX(ev.min_doy)} cy={cy} r="1.6"
-                                  fill={INAT_COLOR} opacity={0.35}>
-                            <title>iNat first observation (DOY {ev.min_doy}) — earliest single Fruiting obs in this zone</title>
+                                  fill={INAT_COLOR} opacity={0.35 * inatFade}>
+                            <title>iNat first observation (DOY {ev.min_doy}) — earliest single Fruiting obs in this zone{inatWrongStageForCurrent ? '\n[GHOSTED — iNat excluded from synthesis: this species\'s iNat Fruiting captures developing nuts on the tree, not harvest]' : ''}</title>
                           </circle>
                         {/if}
                         {#if ev.p10_doy != null && ev.p10_doy < ev.start_doy}
                           <circle cx={doyX(ev.p10_doy)} cy={cy} r="1.6"
-                                  fill={INAT_COLOR} opacity={0.55}>
+                                  fill={INAT_COLOR} opacity={0.55 * inatFade}>
                             <title>iNat p10 (DOY {ev.p10_doy}) — 10th percentile, trimmed from published range</title>
                           </circle>
                         {/if}
@@ -1268,26 +1296,27 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                               y1={cy} y2={cy}
                               stroke={INAT_COLOR}
                               stroke-width={EV_LANE_H}
-                              opacity={cs.opacity}
+                              opacity={cs.opacity * inatFade}
+                              stroke-dasharray={inatWrongStageForCurrent ? '2,3' : ''}
                               stroke-linecap="butt">
-                          <title>iNat published range p15-p85 (DOY {ev.start_doy}-{ev.end_doy}) · N={ev.n_obs ?? '?'} obs{'\n'}{ev.summary}</title>
+                          <title>iNat published range p15-p85 (DOY {ev.start_doy}-{ev.end_doy}) · N={ev.n_obs ?? '?'} obs{inatWrongStageForCurrent ? '\n[GHOSTED — iNat excluded from synthesis for this species (wrong stage: developing nuts, not harvest)]' : ''}{'\n'}{ev.summary}</title>
                         </line>
                         {#if ev.p90_doy != null && ev.p90_doy > ev.end_doy}
                           <circle cx={doyX(ev.p90_doy)} cy={cy} r="1.6"
-                                  fill={INAT_COLOR} opacity={0.55}>
+                                  fill={INAT_COLOR} opacity={0.55 * inatFade}>
                             <title>iNat p90 (DOY {ev.p90_doy}) — 90th percentile, trimmed from published range</title>
                           </circle>
                         {/if}
                         {#if ev.max_doy > ev.end_doy}
                           <circle cx={doyX(ev.max_doy)} cy={cy} r="1.6"
-                                  fill={INAT_COLOR} opacity={0.35}>
+                                  fill={INAT_COLOR} opacity={0.35 * inatFade}>
                             <title>iNat last observation (DOY {ev.max_doy}) — latest single Fruiting obs in this zone</title>
                           </circle>
                         {/if}
                         {#if ev.peak_doy != null}
                           <circle cx={doyX(ev.peak_doy)} cy={cy} r="2.2"
                                   fill="white" stroke={INAT_COLOR}
-                                  stroke-width="1" opacity={cs.opacity}>
+                                  stroke-width="1" opacity={cs.opacity * inatFade}>
                             <title>iNat median (DOY {ev.peak_doy})</title>
                           </circle>
                         {/if}
@@ -1611,7 +1640,7 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
     cursor: help;
   }
 
-  .src-count, .review-chip, .smoothing-chip {
+  .src-count, .review-chip, .smoothing-chip, .inat-ghost-chip {
     font-size: 0.75rem;
     border-radius: 1rem;
     padding: 0.15rem 0.65rem;
@@ -1623,6 +1652,12 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
     color: #4a554a;
     background: #f0f5ef;
     border-color: #c7d0c7;
+  }
+  .inat-ghost-chip {
+    color: #1f6f8b;
+    background: #eaf3f6;
+    border-color: #1f6f8b;
+    font-style: italic;
   }
   .stage-tabs {
     display: inline-flex;
