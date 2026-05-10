@@ -127,22 +127,54 @@ export async function fetchOpenDataApiJson(opts: {
 /** Opendatasoft Explore API v2.1 (used by Vancouver Open Data, many
  *  European city portals, Province of Quebec). Endpoint shape:
  *  https://<host>/api/explore/v2.1/catalog/datasets/<id>/records
- *  Pagination via offset + limit; max page is 100 unless API key. */
+ *
+ *  Anonymous offset is capped at 10000 (hard 400 thereafter), so for
+ *  large datasets we use cursor-style pagination on a sortable field
+ *  via `where=<cursorField> > <last>`. Pass cursorField for datasets
+ *  >10k rows; omit it for small datasets to use simple offset paging. */
 export async function fetchOpendatasoftRecords(opts: {
   url: string;             // .../catalog/datasets/<id>/records
   pageSize?: number;       // up to 100 anonymous
+  cursorField?: string;    // numeric or sortable string field name
 }): Promise<Record<string, unknown>[]> {
   const all: Record<string, unknown>[] = [];
   const limit = opts.pageSize ?? 100;
+
+  if (opts.cursorField) {
+    // Cursor pagination — sort ascending, advance the cursor each
+    // page. Avoids the 10k offset ceiling for unbounded datasets.
+    let lastCursor: number | string | null = null;
+    for (;;) {
+      const params = new URLSearchParams({
+        limit: String(limit),
+        order_by: `${opts.cursorField} ASC`
+      });
+      if (lastCursor != null) {
+        params.set('where', `${opts.cursorField} > ${typeof lastCursor === 'number' ? lastCursor : `"${lastCursor}"`}`);
+      }
+      const url = `${opts.url}?${params.toString()}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Opendatasoft fetch ${res.status} on ${url}`);
+      const body = (await res.json()) as { total_count?: number; results?: Record<string, unknown>[] };
+      const rows = body.results ?? [];
+      all.push(...rows);
+      process.stdout.write(`  fetched cursor ${lastCursor ?? 'start'}: ${rows.length} (total ${all.length} of ${body.total_count ?? '?'})\n`);
+      if (rows.length < limit) break;
+      const last = rows[rows.length - 1] as Record<string, unknown>;
+      const next = last[opts.cursorField] as number | string | undefined;
+      if (next == null || next === lastCursor) break;
+      lastCursor = next;
+    }
+    return all;
+  }
+
+  // Small dataset: simple offset paging (≤10k rows).
   let offset = 0;
   for (;;) {
     const url = `${opts.url}?limit=${limit}&offset=${offset}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Opendatasoft fetch ${res.status} on ${url}`);
-    const body = (await res.json()) as {
-      total_count?: number;
-      results?: Record<string, unknown>[];
-    };
+    const body = (await res.json()) as { total_count?: number; results?: Record<string, unknown>[] };
     const rows = body.results ?? [];
     all.push(...rows);
     process.stdout.write(`  fetched offset ${offset}: ${rows.length} (total ${all.length} of ${body.total_count ?? '?'})\n`);

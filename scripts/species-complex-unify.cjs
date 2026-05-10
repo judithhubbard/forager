@@ -491,22 +491,23 @@ const COMPLEXES = [
     summary: 'Pyrus complex (Asian, European, callery pears): heat-driven late-summer fruit. Anchor 6a peak Aug 28, shift -4 d/half-zone. Window widened (±28d) for cultivar variability.'
   },
 
-  // American plum (Prunus americana) — heat-driven, very mild gradient.
-  // iNat slope -1 (essentially flat). User flagged "do not apply
-  // monotonic behavior" — the curve is genuinely flat across zones.
-  // Anchor 6a peak Aug 11 (DOY 223), shift -1.
+  // American plum (Prunus americana) — heat-driven. Original entry
+  // used a flat -1 slope based on aggregate iNat slope, but warm-zone
+  // (6a-8a) iNat data clearly skews 5-21 days earlier than the synth.
+  // Steepening to -3 with an earlier anchor: 6a peak Aug 3 (DOY 215),
+  // half_window 25 to reflect the genuine within-zone scatter.
   {
     name: 'American plum',
     members: ['Prunus americana'],
     anchor_zone: '6a',
-    anchor_peak: 223,           // Aug 11
-    shift_per_half_zone: -1,    // empirical iNat ~-1; nearly flat
-    half_window: 18,
+    anchor_peak: 215,           // Aug 3 (was Aug 11; pulled earlier per iNat 6a peak 204)
+    shift_per_half_zone: -3,    // was -1; warm-zone iNat clearly earlier
+    half_window: 25,            // was 18; widened to fit iNat scatter
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'ripe',
-    source_name: 'American plum (Minnesota Wildflowers + USDA Silvics)',
+    source_name: 'American plum (Minnesota Wildflowers + USDA Silvics + iNat-empirical)',
     source_url: 'https://www.minnesotawildflowers.info/shrub/wild-plum',
-    summary: 'American plum (Prunus americana): heat-driven late-summer fruit with very mild cross-zone gradient (-1 d/half-zone). Curve is essentially flat — variability is within-zone, not across zones.'
+    summary: 'American plum (Prunus americana): heat-driven late-summer fruit. Anchor 6a peak Aug 3, shift -3 d/half-zone — warm zones (6a-8a) ripen 5-21 days earlier per iNat. ±25d window reflects real within-zone scatter.'
   },
 
   // Dandelion (Taraxacum officinale) leaves — extends to all zones

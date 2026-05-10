@@ -44,7 +44,9 @@ const config: ImportConfig<VanRecord> = {
   regionName: REGION_NAME,
   license: 'Open Government License — Vancouver',
   async fetchAll() {
-    return fetchOpendatasoftRecords({ url: ENDPOINT }) as Promise<VanRecord[]>;
+    // 186k rows; far past the anonymous 10k offset cap. Use cursor
+    // pagination on asset_id (numeric, monotonic).
+    return fetchOpendatasoftRecords({ url: ENDPOINT, cursorField: 'asset_id' }) as Promise<VanRecord[]>;
   },
   mapFeature(r): ImportRecord | null {
     const lng = r.geo_point_2d?.lon ?? r.geom?.geometry?.coordinates?.[0];
