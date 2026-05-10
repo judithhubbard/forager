@@ -139,6 +139,40 @@ const WATCHDOG_SILENT_MS = 30_000;
 let watchdogTimer: ReturnType<typeof setInterval> | null = null;
 let visListener: (() => void) | null = null;
 
+// Screen Wake Lock sentinel. Held for the duration of recording so
+// the screen doesn't auto-sleep mid-walk and silence watchPosition.
+// Browsers auto-release the lock when the tab hides (visibility !=
+// 'visible'), so we re-request on visibility regain alongside the
+// existing watch re-arm. This is a PWA-only workaround — under
+// Capacitor (Phase 4) the @capacitor-community/background-geolocation
+// plugin gets a foreground service / location-mode entitlement and
+// the OS keeps GPS active even with the screen off, making this
+// Wake Lock redundant. Until then, it's the best we can do.
+type WakeLockSentinel = { release: () => Promise<void>; addEventListener: (e: 'release', cb: () => void) => void };
+let wakeLock: WakeLockSentinel | null = null;
+async function requestWakeLock(): Promise<void> {
+  if (typeof navigator === 'undefined') return;
+  // The Wake Lock API isn't typed in lib.dom.d.ts on every TS version
+  // — guard via 'in' rather than direct access.
+  const nav = navigator as unknown as { wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinel> } };
+  if (!nav.wakeLock) return;
+  try {
+    if (wakeLock) return;  // already held
+    wakeLock = await nav.wakeLock.request('screen');
+    wakeLock?.addEventListener('release', () => { wakeLock = null; });
+  } catch (err) {
+    // Common reasons: page not focused, user gesture required (Safari),
+    // permissions policy. Non-fatal — recording still works, just
+    // without screen-keep-awake.
+    console.warn('[recording] wakeLock.request failed:', err);
+  }
+}
+async function releaseWakeLock(): Promise<void> {
+  if (!wakeLock) return;
+  try { await wakeLock.release(); } catch {}
+  wakeLock = null;
+}
+
 function clearWatch() {
   if (watchId != null && typeof navigator !== 'undefined') {
     navigator.geolocation.clearWatch(watchId);
@@ -264,9 +298,15 @@ function startWatch() {
       // Force a re-arm — clearing + re-creating the watchPosition
       // handle is cheap and reliably revives the geolocation pump.
       rearmWatch();
+      // Browsers auto-release the wake lock when the page hides;
+      // re-acquire alongside the watch re-arm.
+      void requestWakeLock();
     };
     document.addEventListener('visibilitychange', visListener);
   }
+  // Acquire wake lock so the screen doesn't auto-sleep mid-walk and
+  // silence watchPosition. Best-effort — see requestWakeLock comments.
+  void requestWakeLock();
 }
 
 
@@ -289,6 +329,7 @@ export function pause(): void {
   const s = get(_store);
   if (s.status !== 'recording') return;
   clearWatch();
+  void releaseWakeLock();
   _store.update((cur) => ({ ...cur, status: 'paused' }));
 }
 
@@ -304,6 +345,7 @@ export function resume(): void {
  *  Returns the snapshot at stop time. */
 export function stop(): RecorderState {
   clearWatch();
+  void releaseWakeLock();
   const s = get(_store);
   _store.update((cur) => ({ ...cur, status: 'idle' }));
   return s;
@@ -311,6 +353,7 @@ export function stop(): RecorderState {
 
 export function discard(): void {
   clearWatch();
+  void releaseWakeLock();
   _store.set(emptyState());
 }
 
