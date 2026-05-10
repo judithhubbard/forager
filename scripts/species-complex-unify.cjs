@@ -937,6 +937,118 @@ const COMPLEXES = [
     summary: 'Pomegranate (Punica granatum): heat-driven late-fall ripe. Best in zones 7b-10b; anchor 9a peak Oct 1.'
   },
 
+  // ── Cultivar citation batch (2026-05-10) ──
+
+  // Citrus complex — sweet orange, lemon, mandarin, grapefruit, sour
+  // orange. All subtropical, winter-ripening. Peak Dec-Mar in zone
+  // 9b-10a (CA Central Valley / FL). Wide window reflects cultivar
+  // spread. Mild heat-shift (warmer slightly later for some, earlier
+  // for others — averages to nearly flat in the cultivar range).
+  {
+    name: 'Sweet orange',
+    members: ['Citrus sinensis'],
+    anchor_zone: '9b', anchor_peak: 30, shift_per_half_zone: -2, half_window: 60,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Sweet orange (UC ANR + Florida Citrus Industry)',
+    source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8197',
+    summary: 'Sweet orange (Citrus sinensis): peak Jan-Feb in CA Central Valley (zone 9b); cultivar spread from navel (Nov-Mar) to Valencia (Mar-Jun).'
+  },
+  {
+    name: 'Lemon',
+    members: ['Citrus limon'],
+    anchor_zone: '9b', anchor_peak: 1, shift_per_half_zone: 0, half_window: 90,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Lemon (UC ANR + CRFG)',
+    source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8204',
+    summary: 'Lemon (Citrus limon): essentially year-round in subtropical zones; peak winter (Oct-Mar). Wide ±90d window covers continuous fruiting.'
+  },
+  {
+    name: 'Mandarin orange',
+    members: ['Citrus reticulata'],
+    anchor_zone: '9b', anchor_peak: 350, shift_per_half_zone: -2, half_window: 45,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Mandarin orange (UC ANR + Florida Citrus)',
+    source_url: 'https://homeorchard.ucanr.edu/Mandarin/',
+    summary: 'Mandarin (Citrus reticulata): peak Nov-Jan; clementine cultivars Oct-Dec, Satsuma Oct-Nov. Window covers cultivar spread.'
+  },
+  {
+    name: 'Grapefruit',
+    members: ['Citrus paradisi'],
+    anchor_zone: '9b', anchor_peak: 50, shift_per_half_zone: -2, half_window: 60,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Grapefruit (UC ANR + Florida Citrus)',
+    source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8201',
+    summary: 'Grapefruit (Citrus paradisi): peak Dec-Apr depending on cultivar (Marsh, Ruby Red, Star Ruby).'
+  },
+
+  // Plums (cultivated)
+  {
+    name: 'European plum',
+    members: ['Prunus domestica'],
+    anchor_zone: '6a', anchor_peak: 240, shift_per_half_zone: -4, half_window: 28,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'ripe',
+    source_name: 'European plum (Cornell CE + UC ANR)',
+    source_url: 'https://gardening.cals.cornell.edu/plants/plum/',
+    summary: 'European plum (Prunus domestica): heat-driven, peak late-Aug to mid-Sep in zone 6a. Cultivar range Aug-Oct.'
+  },
+  {
+    name: 'Japanese plum',
+    members: ['Prunus salicina'],
+    anchor_zone: '7a', anchor_peak: 207, shift_per_half_zone: -5, half_window: 28,
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
+    stage: 'ripe',
+    source_name: 'Japanese plum (UC ANR + Cornell CE)',
+    source_url: 'https://homeorchard.ucanr.edu/General-information/Stone-fruits/',
+    summary: 'Japanese plum (Prunus salicina): heat-driven, ripens Jun-Aug. Earlier than European plum; Santa Rosa peaks late June in CA.'
+  },
+  {
+    name: 'Sour cherry',
+    members: ['Prunus cerasus'],
+    anchor_zone: '6a', anchor_peak: 196, shift_per_half_zone: -4, half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'ripe',
+    source_name: 'Sour cherry (Cornell CE + Michigan State Extension)',
+    source_url: 'https://gardening.cals.cornell.edu/plants/cherry/',
+    summary: 'Sour cherry (Prunus cerasus): heat-driven, peak Jul in zone 6a (Cornell). Earlier than sweet cherry by 1-2 weeks; Montmorency is the dominant cultivar in eastern NA.'
+  },
+
+  // Subtropical / specialty cultivars
+  {
+    name: 'Avocado',
+    members: ['Persea americana'],
+    anchor_zone: '9b', anchor_peak: 91, shift_per_half_zone: -2, half_window: 90,
+    target_zones: ['9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Avocado (UC ANR + California Avocado Commission)',
+    source_url: 'https://homeorchard.ucanr.edu/Avocados/',
+    summary: 'Avocado (Persea americana): cultivar variability spans the calendar — Hass Mar-Sep, Bacon Nov-Mar, Fuerte Nov-Apr. Wide window covers all major cultivars.'
+  },
+  {
+    name: 'Kiwifruit',
+    members: ['Actinidia deliciosa'],
+    anchor_zone: '8a', anchor_peak: 288, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['7a','7b','8a','8b','9a','9b','10a'],
+    stage: 'ripe',
+    source_name: 'Kiwifruit (UC ANR + CRFG)',
+    source_url: 'https://homeorchard.ucanr.edu/Kiwifruit/',
+    summary: 'Kiwifruit (Actinidia deliciosa): heat-driven late-fall ripe (Oct-Nov in CA). Best in zones 7a-10a; needs long growing season.'
+  },
+  {
+    name: 'Wine grape',
+    members: ['Vitis vinifera'],
+    anchor_zone: '7b', anchor_peak: 258, shift_per_half_zone: -5, half_window: 28,
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
+    stage: 'ripe',
+    source_name: 'Wine grape (UC Davis Viticulture + Cornell CE)',
+    source_url: 'https://iv.ucdavis.edu/',
+    summary: 'Wine grape (Vitis vinifera): heat-driven, peak Sep in zone 7b (Sonoma/Napa range). Earlier in warmer zones; cultivar variation 4-6 weeks within a zone.'
+  },
+
   // Black cherry (Prunus serotina) — heat-driven late-summer fruit.
   // Empirical iNat slope -8 d/half-zone (n=11). Anchor zone 7a peak
   // Jul 8 (DOY 189).

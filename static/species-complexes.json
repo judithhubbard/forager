@@ -797,6 +797,114 @@
       "stage": "ripe"
     }
   ],
+  "Malus domestica": [
+    {
+      "name": "Apple",
+      "members": [
+        "Malus domestica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Punica granatum": [
+    {
+      "name": "Pomegranate",
+      "members": [
+        "Punica granatum"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Citrus sinensis": [
+    {
+      "name": "Sweet orange",
+      "members": [
+        "Citrus sinensis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Citrus limon": [
+    {
+      "name": "Lemon",
+      "members": [
+        "Citrus limon"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Citrus reticulata": [
+    {
+      "name": "Mandarin orange",
+      "members": [
+        "Citrus reticulata"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Citrus paradisi": [
+    {
+      "name": "Grapefruit",
+      "members": [
+        "Citrus paradisi"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Prunus domestica": [
+    {
+      "name": "European plum",
+      "members": [
+        "Prunus domestica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Prunus salicina": [
+    {
+      "name": "Japanese plum",
+      "members": [
+        "Prunus salicina"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Prunus cerasus": [
+    {
+      "name": "Sour cherry",
+      "members": [
+        "Prunus cerasus"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Persea americana": [
+    {
+      "name": "Avocado",
+      "members": [
+        "Persea americana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Actinidia deliciosa": [
+    {
+      "name": "Kiwifruit",
+      "members": [
+        "Actinidia deliciosa"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Vitis vinifera": [
+    {
+      "name": "Wine grape",
+      "members": [
+        "Vitis vinifera"
+      ],
+      "stage": "ripe"
+    }
+  ],
   "Prunus serotina": [
     {
       "name": "Black cherry",
