@@ -46,6 +46,15 @@ const DEFAULT_SPECIES = [
   'Castanea pumila'       // recently calibrated, validate vs. iNat
 ];
 
+// Species whose iNat fruiting tails are NOT first-fruit-reporter artifacts —
+// they really do hang on for weeks. For these, publish the inner-80% inset
+// (p10-p90) instead of the default inner-70% (p15-p85). User-requested via
+// the calibration viewer.
+const WIDER_TRIM_SPECIES = new Set([
+  'Rubus phoenicolasius',   // wineberry — hangs on for weeks; warm zones 7b-8a have tight published windows
+  'Rubus parviflorus'       // thimbleberry — uneven canopy ripening across the long PNW season
+]);
+
 /** Pull all forageable species whose primary edible is fruit / nut /
  *  seed — those are the species where iNat's `Fruiting` annotation
  *  yields a meaningful harvest window. Sap-run, leaf, shoot, root, and
@@ -218,6 +227,14 @@ async function processSpecies(scientificName) {
     // supports object so the viewer can plot the full spread as
     // dots-flanking-line. We don't shift any observations — this is
     // a tail-trim, not a bias correction.
+    //
+    // Per-species override: a few species have unusually long fruiting
+    // tails that aren't first-fruit artifacts (e.g. Rubus phoenicolasius
+    // wineberries hang on for weeks; Rubus parviflorus thimbleberries
+    // ripen unevenly through the canopy). For these we publish the
+    // wider p10-p85 / p15-p90 inset that the user has explicitly
+    // requested via the calibration viewer.
+    const useWiderTrim = WIDER_TRIM_SPECIES.has(species.scientific_name);
     const min_doy = doys[0];
     const max_doy = doys[doys.length - 1];
     const p10 = percentile(doys, 0.1);
@@ -225,17 +242,20 @@ async function processSpecies(scientificName) {
     const p50 = percentile(doys, 0.5);
     const p85 = percentile(doys, 0.85);
     const p90 = percentile(doys, 0.9);
+    const pubStart = useWiderTrim ? p10 : p15;
+    const pubEnd = useWiderTrim ? p90 : p85;
     const inatUrl = `https://www.inaturalist.org/observations?taxon_id=${taxonId}&term_id=${PHENOLOGY_TERM_ID}&term_value_id=${PHENOLOGY_FRUITING}&place_id=any`;
+    const trimLabel = useWiderTrim ? 'inner-80% inset (p10-p90)' : 'inner-70% inset (p15-p85)';
     const inatEntry = {
       source: 'iNaturalist (Fruiting annotations)',
       url: inatUrl,
       consulted_at: TIME_CONSULTED,
       summary: `${doys.length} research-grade Fruiting obs in zone ${code}. ` +
                `Distribution: min=${min_doy}, p10=${p10}, p15=${p15}, p50=${p50}, p85=${p85}, p90=${p90}, max=${max_doy}. ` +
-               `Published range is the inner-70% inset (p15-p85) to discount 'first fruit' tail outliers — no data was shifted.`,
+               `Published range is the ${trimLabel} to discount 'first fruit' tail outliers — no data was shifted.`,
       supports: {
-        start_doy: p15,
-        end_doy: p85,
+        start_doy: pubStart,
+        end_doy: pubEnd,
         peak_doy: p50,
         min_doy,
         p10_doy: p10,
@@ -259,11 +279,11 @@ async function processSpecies(scientificName) {
           (species_id, climate_zone_id, stage, start_doy, end_doy, peak_doy, confidence, notes, evidence)
         values
           (${species.id}, ${zoneId}, ${stage}::public.stage,
-           ${p15}, ${p85}, ${p50},
+           ${pubStart}, ${pubEnd}, ${p50},
            'empirical_inat'::public.window_confidence,
-           ${'iNaturalist phenology empirical: N=' + doys.length + ', bias-corrected p15/p50/p85 = ' + p15 + '/' + p50 + '/' + p85 + '. Raw p10=' + p10 + ', p90=' + p90 + '.'},
+           ${'iNaturalist phenology empirical: N=' + doys.length + ', tail-trimmed start/peak/end = ' + pubStart + '/' + p50 + '/' + pubEnd + ' (' + trimLabel + '). Full distribution p10=' + p10 + ', p90=' + p90 + '.'},
            ${sql.json([inatEntry])})`;
-      console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  p15=${String(p15).padStart(3)} p50=${String(p50).padStart(3)} p85=${String(p85).padStart(3)}  → INSERT (empirical_inat)`);
+      console.log(`  ${code.padEnd(4)} N=${String(doys.length).padStart(4)}  start=${String(pubStart).padStart(3)} p50=${String(p50).padStart(3)} end=${String(pubEnd).padStart(3)}  → INSERT (empirical_inat${useWiderTrim ? ', wider trim' : ''})`);
       inserted++;
     } else {
       // APPEND or REPLACE iNat evidence. Idempotent on URL — but if

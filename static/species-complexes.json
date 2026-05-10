@@ -5,6 +5,7 @@
       "members": [
         "Corylus americana",
         "Corylus cornuta",
+        "Corylus avellana",
         "Corylus sp."
       ],
       "stage": "ripe"
@@ -16,6 +17,19 @@
       "members": [
         "Corylus americana",
         "Corylus cornuta",
+        "Corylus avellana",
+        "Corylus sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Corylus avellana": [
+    {
+      "name": "Corylus (hazelnut) complex",
+      "members": [
+        "Corylus americana",
+        "Corylus cornuta",
+        "Corylus avellana",
         "Corylus sp."
       ],
       "stage": "ripe"
@@ -27,6 +41,7 @@
       "members": [
         "Corylus americana",
         "Corylus cornuta",
+        "Corylus avellana",
         "Corylus sp."
       ],
       "stage": "ripe"
@@ -576,6 +591,141 @@
       "stage": "leaf"
     }
   ],
+  "Urtica dioica": [
+    {
+      "name": "Stinging nettle (spring shoots)",
+      "members": [
+        "Urtica dioica"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Stellaria media": [
+    {
+      "name": "Common chickweed",
+      "members": [
+        "Stellaria media"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Galium aparine": [
+    {
+      "name": "Cleavers (spring shoots)",
+      "members": [
+        "Galium aparine"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Alliaria petiolata": [
+    {
+      "name": "Garlic mustard (leaves + flowers)",
+      "members": [
+        "Alliaria petiolata"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Hemerocallis fulva": [
+    {
+      "name": "Common daylily (shoots + flowers)",
+      "members": [
+        "Hemerocallis fulva"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Allium vineale": [
+    {
+      "name": "Field garlic",
+      "members": [
+        "Allium vineale"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Allium tuberosum": [
+    {
+      "name": "Garlic chives (leaves + flowers)",
+      "members": [
+        "Allium tuberosum"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Portulaca oleracea": [
+    {
+      "name": "Common purslane",
+      "members": [
+        "Portulaca oleracea"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Chenopodium album": [
+    {
+      "name": "Lamb's quarters",
+      "members": [
+        "Chenopodium album"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Apios americana": [
+    {
+      "name": "Groundnut (tubers)",
+      "members": [
+        "Apios americana"
+      ],
+      "stage": "root_dig"
+    }
+  ],
+  "Arctium minus": [
+    {
+      "name": "Lesser burdock (first-year root)",
+      "members": [
+        "Arctium minus"
+      ],
+      "stage": "root_dig"
+    }
+  ],
+  "Reynoutria japonica": [
+    {
+      "name": "Japanese knotweed (spring shoots)",
+      "members": [
+        "Reynoutria japonica"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Robinia pseudoacacia": [
+    {
+      "name": "Black locust (flowers)",
+      "members": [
+        "Robinia pseudoacacia"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Cercis canadensis": [
+    {
+      "name": "Eastern redbud (flowers)",
+      "members": [
+        "Cercis canadensis"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Syringa reticulata": [
+    {
+      "name": "Japanese tree lilac (flowers)",
+      "members": [
+        "Syringa reticulata"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
   "Yucca filamentosa": [
     {
       "name": "Adam's needle (flowers)",
@@ -601,6 +751,527 @@
         "Annona cherimola"
       ],
       "stage": "ripe"
+    }
+  ],
+  "Mangifera indica": [
+    {
+      "name": "Mango",
+      "members": [
+        "Mangifera indica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Litchi chinensis": [
+    {
+      "name": "Lychee",
+      "members": [
+        "Litchi chinensis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Psidium guajava": [
+    {
+      "name": "Common guava",
+      "members": [
+        "Psidium guajava"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Acca sellowiana": [
+    {
+      "name": "Pineapple guava",
+      "members": [
+        "Acca sellowiana",
+        "Feijoa sellowiana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Feijoa sellowiana": [
+    {
+      "name": "Pineapple guava",
+      "members": [
+        "Acca sellowiana",
+        "Feijoa sellowiana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Annona squamosa": [
+    {
+      "name": "Sugar apple",
+      "members": [
+        "Annona squamosa"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Phoenix dactylifera": [
+    {
+      "name": "Date palm",
+      "members": [
+        "Phoenix dactylifera"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Ceratonia siliqua": [
+    {
+      "name": "Carob",
+      "members": [
+        "Ceratonia siliqua"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Macadamia integrifolia": [
+    {
+      "name": "Macadamia (smooth-shell)",
+      "members": [
+        "Macadamia integrifolia"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Macadamia tetraphylla": [
+    {
+      "name": "Macadamia (rough-shell)",
+      "members": [
+        "Macadamia tetraphylla"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Citrus medica": [
+    {
+      "name": "Citron",
+      "members": [
+        "Citrus medica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Fortunella japonica": [
+    {
+      "name": "Kumquat",
+      "members": [
+        "Fortunella japonica",
+        "Fortunella margarita",
+        "Citrus japonica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Fortunella margarita": [
+    {
+      "name": "Kumquat",
+      "members": [
+        "Fortunella japonica",
+        "Fortunella margarita",
+        "Citrus japonica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Citrus japonica": [
+    {
+      "name": "Kumquat",
+      "members": [
+        "Fortunella japonica",
+        "Fortunella margarita",
+        "Citrus japonica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Citrus aurantium": [
+    {
+      "name": "Sour orange",
+      "members": [
+        "Citrus aurantium",
+        "Citrus x aurantium"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Citrus x aurantium": [
+    {
+      "name": "Sour orange",
+      "members": [
+        "Citrus aurantium",
+        "Citrus x aurantium"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Pinus edulis": [
+    {
+      "name": "Pinyon pine",
+      "members": [
+        "Pinus edulis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Cornus officinalis": [
+    {
+      "name": "Japanese cornelian cherry",
+      "members": [
+        "Cornus officinalis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Tilia americana": [
+    {
+      "name": "American basswood (spring leaves)",
+      "members": [
+        "Tilia americana"
+      ],
+      "stage": "leaf"
+    },
+    {
+      "name": "American basswood (flowers)",
+      "members": [
+        "Tilia americana"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Picea glauca": [
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus sp.",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Picea pungens": [
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus sp.",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    },
+    {
+      "name": "Conifer tips (multi-species)",
+      "members": [
+        "Picea pungens",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Larix sibirica",
+        "Pinus sp.",
+        "Picea sp."
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Picea sp.": [
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus sp.",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    },
+    {
+      "name": "Conifer tips (multi-species)",
+      "members": [
+        "Picea pungens",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Larix sibirica",
+        "Pinus sp.",
+        "Picea sp."
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Pinus contorta": [
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus sp.",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    },
+    {
+      "name": "Conifer tips (multi-species)",
+      "members": [
+        "Picea pungens",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Larix sibirica",
+        "Pinus sp.",
+        "Picea sp."
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Pinus sylvestris": [
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus sp.",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    },
+    {
+      "name": "Conifer tips (multi-species)",
+      "members": [
+        "Picea pungens",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Larix sibirica",
+        "Pinus sp.",
+        "Picea sp."
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Pinus sp.": [
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus sp.",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    },
+    {
+      "name": "Conifer tips (multi-species)",
+      "members": [
+        "Picea pungens",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Larix sibirica",
+        "Pinus sp.",
+        "Picea sp."
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Larix sibirica": [
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus sp.",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    },
+    {
+      "name": "Conifer tips (multi-species)",
+      "members": [
+        "Picea pungens",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Larix sibirica",
+        "Pinus sp.",
+        "Picea sp."
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Ulmus pumila": [
+    {
+      "name": "Siberian elm samaras",
+      "members": [
+        "Ulmus pumila"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Tilia cordata": [
+    {
+      "name": "Littleleaf linden (flowers)",
+      "members": [
+        "Tilia cordata"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
+  "Juglans ailantifolia": [
+    {
+      "name": "Japanese walnut",
+      "members": [
+        "Juglans ailantifolia"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Pyrus ussuriensis": [
+    {
+      "name": "Ussurian pear",
+      "members": [
+        "Pyrus ussuriensis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Callicarpa americana": [
+    {
+      "name": "American beautyberry",
+      "members": [
+        "Callicarpa americana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Achillea millefolium": [
+    {
+      "name": "Yarrow (leaves + flowers)",
+      "members": [
+        "Achillea millefolium"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Mentha": [
+    {
+      "name": "Wild mint (leaves)",
+      "members": [
+        "Mentha",
+        "Mentha arvensis",
+        "Mentha canadensis"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Mentha arvensis": [
+    {
+      "name": "Wild mint (leaves)",
+      "members": [
+        "Mentha",
+        "Mentha arvensis",
+        "Mentha canadensis"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Mentha canadensis": [
+    {
+      "name": "Wild mint (leaves)",
+      "members": [
+        "Mentha",
+        "Mentha arvensis",
+        "Mentha canadensis"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Nasturtium officinale": [
+    {
+      "name": "Watercress",
+      "members": [
+        "Nasturtium officinale"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Allium canadense": [
+    {
+      "name": "Wild onion (Allium canadense)",
+      "members": [
+        "Allium canadense"
+      ],
+      "stage": "leaf"
+    }
+  ],
+  "Pteridium aquilinum": [
+    {
+      "name": "Bracken fern (fiddleheads)",
+      "members": [
+        "Pteridium aquilinum"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Smilax sp.": [
+    {
+      "name": "Greenbrier (spring shoots)",
+      "members": [
+        "Smilax sp.",
+        "Smilax rotundifolia",
+        "Smilax bona-nox"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Smilax rotundifolia": [
+    {
+      "name": "Greenbrier (spring shoots)",
+      "members": [
+        "Smilax sp.",
+        "Smilax rotundifolia",
+        "Smilax bona-nox"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Smilax bona-nox": [
+    {
+      "name": "Greenbrier (spring shoots)",
+      "members": [
+        "Smilax sp.",
+        "Smilax rotundifolia",
+        "Smilax bona-nox"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Auricularia auricula-judae": [
+    {
+      "name": "Wood ear",
+      "members": [
+        "Auricularia auricula-judae"
+      ],
+      "stage": "mushroom_flush"
     }
   ],
   "Prunus sp.": [
@@ -776,6 +1447,33 @@
       "stage": "ripe"
     }
   ],
+  "Cornus mas": [
+    {
+      "name": "Cornelian cherry",
+      "members": [
+        "Cornus mas"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Rosa rugosa": [
+    {
+      "name": "Rugosa rose hips",
+      "members": [
+        "Rosa rugosa"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Olea europaea": [
+    {
+      "name": "Olive",
+      "members": [
+        "Olea europaea"
+      ],
+      "stage": "ripe"
+    }
+  ],
   "Lycoperdon perlatum": [
     {
       "name": "Common puffball",
@@ -808,6 +1506,60 @@
       "name": "Wood blewit",
       "members": [
         "Lepista nuda"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Cantharellus cibarius": [
+    {
+      "name": "Golden chanterelle",
+      "members": [
+        "Cantharellus cibarius"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Grifola frondosa": [
+    {
+      "name": "Hen of the woods",
+      "members": [
+        "Grifola frondosa"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Pleurotus ostreatus": [
+    {
+      "name": "Oyster mushroom",
+      "members": [
+        "Pleurotus ostreatus"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Hericium erinaceus": [
+    {
+      "name": "Lion's mane",
+      "members": [
+        "Hericium erinaceus"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Boletus edulis": [
+    {
+      "name": "King bolete",
+      "members": [
+        "Boletus edulis"
+      ],
+      "stage": "mushroom_flush"
+    }
+  ],
+  "Coprinus comatus": [
+    {
+      "name": "Shaggy mane",
+      "members": [
+        "Coprinus comatus"
       ],
       "stage": "mushroom_flush"
     }

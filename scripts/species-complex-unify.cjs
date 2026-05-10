@@ -39,23 +39,34 @@ const ZONE_NUM = {
 };
 
 const COMPLEXES = [
-  // Hazelnuts — wild hazelnuts (American + beaked) drop Aug-Sep before
-  // first frost. iNat is wrong-stage (developing nuts on tree, not
-  // drops), so the empirical slope from iNat is unreliable; -7 retained
-  // as a defensible heat-driven default until cited zone-specific
-  // harvest evidence accumulates.
+  // Hazelnuts — three populations with different timing:
+  //   1. Wild American/Beaked (C. americana, C. cornuta) — zones 3-7 NE/midwest,
+  //      drop Aug-Sep before first frost. Heat-driven across that range.
+  //   2. Commercial European hazel (C. avellana) — zones 7a-9b Pacific NW + CA,
+  //      maritime climate → harvest Aug-Oct, peak September. NOT heat-shift
+  //      of American-hazel timing; different cultivars + cooler summers.
+  //   3. Cultivated European hazel in warm zones (9a-10a CA Central Valley
+  //      + So-Cal ornamentals) — similar Aug-Oct timing.
+  // Earlier model heat-extrapolated American hazel into zone 8b-10a and
+  // landed peaks in mid-July (DOY 198), which is ~60 days too early for
+  // the ~1k hazel pins on the West Coast (Oregon is the #1 US producer).
+  // Regional anchors fix the warm-zone window.
   {
     name: 'Corylus (hazelnut) complex',
-    members: ['Corylus americana', 'Corylus cornuta', 'Corylus sp.'],
+    members: ['Corylus americana', 'Corylus cornuta', 'Corylus avellana', 'Corylus sp.'],
     anchor_zone: '6a',
     anchor_peak: 240,           // Aug 27
-    shift_per_half_zone: -7,    // heat-driven; iNat wrong-stage so empirical fit unreliable
+    shift_per_half_zone: -7,    // heat-driven across cold/native range
     half_window: 18,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'ripe',
-    source_name: 'Corylus complex (USDA Silvics + extension services)',
+    source_name: 'Corylus complex (USDA Silvics + Oregon Hazelnut Industry + UC ANR)',
     source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/corylus/americana.htm',
-    summary: 'Corylus complex consensus: wild hazelnuts (C. americana, C. cornuta) drop Aug-Sep before first frost across their range. Heat-driven harvest, anchor zone 6a peak Aug 27 (DOY 240).'
+    summary: 'Hazelnut: wild American/Beaked drop Aug-Sep before frost in zones 3-7 (heat-driven). Commercial European hazel (C. avellana) on the Pacific Coast + CA harvests Aug-Oct (peak Sep) — maritime/cultivated timing, NOT a heat-shift of wild timing.',
+    regional_anchors: [
+      { zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'], source: 'USDA Silvics + Eat The Weeds', url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/corylus/americana.htm', summary: 'Wild American + Beaked hazelnut: Aug-Sep drop before first frost across the native NE/midwest/cold-PNW range. Heat-driven across this band.', peak_doy: 240, half_window: 21 },
+      { zones: ['7b','8a','8b','9a','9b','10a'], source: 'Oregon Hazelnut Industry Office + UC ANR', url: 'https://www.oregonhazelnuts.org/growers/harvest', summary: 'Commercial European hazel (C. avellana): Pacific NW (Willamette Valley) + CA harvest Aug 15 - Oct 15, peak mid-Sep. Cultivars and irrigation, not wild timing.', peak_doy: 258, half_window: 30 }
+    ]
   },
 
   // Serviceberries — Amelanchier complex hybridizes freely; foragers
@@ -528,6 +539,171 @@ const COMPLEXES = [
     summary: 'Dandelion (Taraxacum officinale) leaves: tender spring leaves preferred (mid-Apr in 6a); becomes bitter post-flowering. Wide harvest window. Mild heat-driven gradient.'
   },
 
+  // ── Edible greens batch 2026-05-10 ──
+  //
+  // Tier-1 spring greens: tender shoots/leaves that peak early in
+  // the growing season, get bitter or tough as plants bolt. Heat-driven
+  // (warmer zones earlier). Wide half-windows because these are
+  // edible for several weeks each.
+  {
+    name: 'Stinging nettle (spring shoots)',
+    members: ['Urtica dioica'],
+    anchor_zone: '6a', anchor_peak: 115, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'shoot',
+    source_name: 'Stinging nettle (foraging consensus + NC State Extension)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/urtica-dioica/',
+    summary: 'Stinging nettle (Urtica dioica): tender spring shoots, harvest pre-flowering (Apr-May in 6a). Cook or blanch to deactivate stinging hairs. Wear gloves to harvest.'
+  },
+  {
+    name: 'Common chickweed',
+    members: ['Stellaria media'],
+    anchor_zone: '6a', anchor_peak: 100, shift_per_half_zone: -4, half_window: 45,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'leaf',
+    source_name: 'Common chickweed (Eat The Weeds + foraging consensus)',
+    source_url: 'https://www.eattheweeds.com/stellaria-media-chickweed/',
+    summary: 'Common chickweed (Stellaria media): cool-weather green, prolific spring + fall in NE, winter staple in warm zones (8+). Wilts in summer heat. Mild flavor — eat raw in salads.'
+  },
+  {
+    name: 'Cleavers (spring shoots)',
+    members: ['Galium aparine'],
+    anchor_zone: '6a', anchor_peak: 110, shift_per_half_zone: -3, half_window: 25,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'shoot',
+    source_name: 'Cleavers (Eat The Weeds + foraging consensus)',
+    source_url: 'https://www.eattheweeds.com/cleavers-galium-aparine/',
+    summary: 'Cleavers / goosegrass (Galium aparine): tender spring shoots before stems get sticky-prickly. Apr-May in 6a. Juiced or cooked (raw is unpleasant texture).'
+  },
+  {
+    name: 'Garlic mustard (leaves + flowers)',
+    members: ['Alliaria petiolata'],
+    anchor_zone: '6a', anchor_peak: 115, shift_per_half_zone: -3, half_window: 35,
+    target_zones: ['3b','4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'leaf',
+    source_name: 'Garlic mustard (Eat The Weeds + Forager Chef)',
+    source_url: 'https://www.eattheweeds.com/garlic-mustard-alliaria-petiolata/',
+    summary: 'Garlic mustard (Alliaria petiolata): invasive — encouraged to forage. First-year basal rosette + 2nd-year pre-flowering leaves, late Apr - May in 6a. Tastes like horseradish + garlic; pesto, sautéed.'
+  },
+  {
+    name: 'Common daylily (shoots + flowers)',
+    members: ['Hemerocallis fulva'],
+    anchor_zone: '6a', anchor_peak: 122, shift_per_half_zone: -3, half_window: 40,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'shoot',
+    source_name: 'Common daylily (Eat The Weeds + Wild Food Girl)',
+    source_url: 'https://www.eattheweeds.com/daylily/',
+    summary: 'Common daylily (Hemerocallis fulva): young shoots Apr-May (asparagus-like); flower buds + open flowers Jun-Aug. Avoid in people prone to GI sensitivity — small fraction of harvesters react.'
+  },
+  {
+    name: 'Field garlic',
+    members: ['Allium vineale'],
+    anchor_zone: '6a', anchor_peak: 90, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'leaf',
+    source_name: 'Field garlic (Eat The Weeds + foraging consensus)',
+    source_url: 'https://www.eattheweeds.com/foraging-wild-garlic-allium-vineale/',
+    summary: 'Field garlic (Allium vineale): green leaves overwinter and emerge Feb-Mar (6a); harvest Mar-May before plants bolt. Tiny bulblets summer-fall. Pungent garlic flavor.'
+  },
+  {
+    name: 'Garlic chives (leaves + flowers)',
+    members: ['Allium tuberosum'],
+    anchor_zone: '6a', anchor_peak: 180, shift_per_half_zone: -3, half_window: 70,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'leaf',
+    source_name: 'Garlic chives (NC State Extension + foraging consensus)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/allium-tuberosum/',
+    summary: 'Garlic chives (Allium tuberosum): cultivated perennial naturalized in disturbed areas. Leaves all season May-Oct, flower buds + flowers Aug-Sep — both edible.'
+  },
+
+  // Tier-2 warm-season greens: peak in summer (Jun-Sep in 6a), heat-loving.
+  // Slightly earlier in warm zones but not strongly heat-driven.
+  {
+    name: 'Common purslane',
+    members: ['Portulaca oleracea'],
+    anchor_zone: '6a', anchor_peak: 200, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a','10b'],
+    stage: 'leaf',
+    source_name: 'Common purslane (NC State Extension + Eat The Weeds)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/portulaca-oleracea/',
+    summary: 'Common purslane (Portulaca oleracea): heat-loving succulent, Jun-Sep peak in 6a. Highest plant-source omega-3 of any leafy green. Lemony-tangy; eat raw or stir-fried.'
+  },
+  {
+    name: 'Lamb\'s quarters',
+    members: ['Chenopodium album'],
+    anchor_zone: '6a', anchor_peak: 180, shift_per_half_zone: -3, half_window: 55,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'leaf',
+    source_name: 'Lamb\'s quarters (NC State Extension + Eat The Weeds)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/chenopodium-album/',
+    summary: 'Lamb\'s quarters (Chenopodium album, wild spinach): late spring through summer, May-Sep peak in 6a. Younger leaves milder; cook like spinach. Oxalates — avoid for kidney-stone-prone.'
+  },
+
+  // Tier-3 roots / tubers: dug fall through early spring, frost-driven
+  // (cold concentrates starches). Symmetric window straddling fall/winter.
+  {
+    name: 'Groundnut (tubers)',
+    members: ['Apios americana'],
+    anchor_zone: '6a', anchor_peak: 305, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'root_dig',
+    source_name: 'Groundnut (USDA Silvics + Forager Chef)',
+    source_url: 'https://plants.usda.gov/plant-profile/APAM',
+    summary: 'Groundnut (Apios americana): native nitrogen-fixing vine, tubers along underground rhizome — string of dime-to-egg-sized "potatoes". Dig Sep through Mar, peak after first frost. Cooked, not raw (raw is bitter + may cause GI upset).'
+  },
+  {
+    name: 'Lesser burdock (first-year root)',
+    members: ['Arctium minus'],
+    anchor_zone: '6a', anchor_peak: 290, shift_per_half_zone: -3, half_window: 50,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'root_dig',
+    source_name: 'Lesser burdock (Eat The Weeds + foraging consensus)',
+    source_url: 'https://www.eattheweeds.com/arctium-burdock-the-original-velcro-2/',
+    summary: 'Lesser burdock (Arctium minus, "gobo"): dig first-year (rosette-only, no flower stalk) taproots in fall + spring. 1-3 ft long. Peel, slice, simmer. Heart-shaped basal leaves distinguish from foxglove (poisonous).'
+  },
+  {
+    name: 'Japanese knotweed (spring shoots)',
+    members: ['Reynoutria japonica'],
+    anchor_zone: '6a', anchor_peak: 115, shift_per_half_zone: -3, half_window: 20,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'shoot',
+    source_name: 'Japanese knotweed (Forager Chef + Eat The Weeds)',
+    source_url: 'https://foragerchef.com/japanese-knotweed/',
+    summary: 'Japanese knotweed (Reynoutria japonica): aggressive invasive — heavily encouraged to forage. Tender pink-mottled shoots before 8" tall, late Apr - May in 6a. Tart rhubarb-lemon flavor; pie, compote, syrup. DO NOT compost — drop shoots in trash.'
+  },
+
+  // Tier-4 spring flowers: short-lived bloom windows. Heat-driven.
+  {
+    name: 'Black locust (flowers)',
+    members: ['Robinia pseudoacacia'],
+    anchor_zone: '6a', anchor_peak: 145, shift_per_half_zone: -3, half_window: 14,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'flower_harvest',
+    source_name: 'Black locust (USDA NRCS + foraging consensus)',
+    source_url: 'https://plants.usda.gov/plant-profile/ROPS',
+    summary: 'Black locust (Robinia pseudoacacia): fragrant white pendulous flower clusters, May-Jun in 6a. Brief 2-3 week bloom. Sweet, used in fritters, syrup, gelato. ONLY flowers edible — bark, leaves, seeds toxic.'
+  },
+  {
+    name: 'Eastern redbud (flowers)',
+    members: ['Cercis canadensis'],
+    anchor_zone: '6a', anchor_peak: 110, shift_per_half_zone: -3, half_window: 14,
+    target_zones: ['4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'flower_harvest',
+    source_name: 'Eastern redbud (NC State Extension + foraging consensus)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/cercis-canadensis/',
+    summary: 'Eastern redbud (Cercis canadensis): magenta-pink pea-shaped flowers on bare branches, Mar-May before leaves emerge. Mildly sweet-tart; eaten raw on salads, pickled, or as garnish. Young seed pods also edible.'
+  },
+  {
+    name: 'Japanese tree lilac (flowers)',
+    members: ['Syringa reticulata'],
+    anchor_zone: '6a', anchor_peak: 170, shift_per_half_zone: -3, half_window: 12,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'flower_harvest',
+    source_name: 'Japanese tree lilac (Missouri Botanical Garden + Forager Chef)',
+    source_url: 'https://www.missouribotanicalgarden.org/PlantFinder/PlantFinderDetails.aspx?taxonid=283065',
+    summary: 'Japanese tree lilac (Syringa reticulata): large creamy-white flower panicles in Jun, ~2 weeks later than common lilac. Subtle honey-lilac flavor; for syrups, infusions, sugars.'
+  },
+
   // ── Per-user review-batch 2026-05-10 ──
 
   // Adam's needle (Yucca filamentosa) — edible flowers only. Native
@@ -536,12 +712,17 @@ const COMPLEXES = [
   {
     name: "Adam's needle (flowers)",
     members: ['Yucca filamentosa'],
-    anchor_zone: '6a', anchor_peak: 182, shift_per_half_zone: -3, half_window: 21,
-    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
+    // 90% of pins (Stiles LA-County + FL imports) sit in zone 10b — the
+    // catalog was missing that zone. Extended target_zones to 11a. Native
+    // SE-US range pushes bloom earlier in zones 10-11 (peak May rather
+    // than Jun-Jul). Half-window also slightly widened so the
+    // continuous gradient lands a sensible May date in 10b.
+    anchor_zone: '6a', anchor_peak: 182, shift_per_half_zone: -3, half_window: 25,
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a','10b','11a'],
     stage: 'flower_harvest',
     source_name: "Adam's needle (USDA Plant Profile + foraging guides)",
     source_url: 'https://plants.usda.gov/home/plantProfile?symbol=YUFI',
-    summary: "Adam's needle (Yucca filamentosa): edible flowers Jun-Jul, sweet pea-like flavor. Bloom stalks 4-8 ft; pick individual flowers."
+    summary: "Adam's needle (Yucca filamentosa): edible flowers, peak May in zones 10-11 (Florida/SoCal cultivation) and Jun-Jul in 5-9 (native SE-US wild range). Sweet pea-like flavor; pick individual flowers off the bloom stalk."
   },
 
   // Almond (Prunus dulcis) — commercial nut crop, dominant in CA (zones
@@ -552,12 +733,25 @@ const COMPLEXES = [
   {
     name: 'Almond',
     members: ['Prunus dulcis'],
+    // Two distinct cultivar populations:
+    //   - CA commercial (Nonpareil, Mission etc.) in zones 7b-10b — hull
+    //     split Aug to mid-Sep. Heat-driven across the CA range.
+    //   - Hardy almonds (Hall's Hardy, Javid's Iranian, Seaside Primorskiy)
+    //     in zones 5a-7a — harvest Sep through Oct. These are different
+    //     cultivars with longer maturation, NOT just heat-driven extension
+    //     of CA timing. The regional anchor for colder zones uses the
+    //     hardy-variety timing rather than letting the -7 heat shift run
+    //     unboundedly into the cold direction.
     anchor_zone: '9a', anchor_peak: 237, shift_per_half_zone: -7, half_window: 21,
-    target_zones: ['7b','8a','8b','9a','9b','10a','10b'],
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a','10b'],
     stage: 'ripe',
-    source_name: 'Almond (UC ANR + Almond Board of California)',
+    source_name: 'Almond (UC ANR + Almond Board of California + Philly Orchard Project)',
     source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=3364',
-    summary: 'Almond (Prunus dulcis): commercial harvest hull-split Aug to mid-Sep in CA Central Valley (zone 9). Cultivar variability spans ~3 weeks.'
+    summary: 'Almond (Prunus dulcis): CA commercial harvest Aug to mid-Sep in zone 9 (Nonpareil, Mission). Cold-hardy cultivars (Hall\'s Hardy, Javid\'s Iranian, Seaside Primorskiy) in zones 5-7 harvest Sep-Oct.',
+    regional_anchors: [
+      { zones: ['8a','8b','9a','9b','10a','10b'], source: 'UC ANR + Almond Board of California', url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=3364', summary: 'CA Central Valley: Nonpareil end of Aug, Mission 40-60 d later. Hull split signals harvest.', peak_doy: 237, half_window: 21 },
+      { zones: ['5a','5b','6a','6b','7a','7b'], source: 'Philly Orchard Project + Shelterwood Forest Farm', url: 'https://www.phillyorchards.org/2023/11/17/plant-spotlight-hardy-almonds/', summary: 'Hardy cultivars (Hall\'s Hardy, Javid\'s Iranian, Seaside): Sep-Oct harvest in NE/PA zones 5-7. Slower-maturing varieties — not a heat-shifted CA timeline.', peak_doy: 274, half_window: 28 }
+    ]
   },
 
   // Cherimoya (Annona cherimola) — subtropical / tropical fruit. Peak
@@ -573,6 +767,384 @@ const COMPLEXES = [
     source_name: 'Cherimoya (UC ANR + California Rare Fruit Growers)',
     source_url: 'https://www.crfg.org/pubs/ff/cherimoya.html',
     summary: 'Cherimoya (Annona cherimola): subtropical evergreen, harvest Nov to May in coastal CA; wide window reflects cultivar spread.'
+  },
+
+  // ── Tropical / Subtropical batch 2026-05-10 (zone 8b-11b) ──
+  {
+    name: 'Mango',
+    members: ['Mangifera indica'],
+    anchor_zone: '10b', anchor_peak: 196, shift_per_half_zone: -7, half_window: 60,
+    target_zones: ['9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Mango (UF/IFAS MG216 + UC ANR home orchard)',
+    source_url: 'https://ask.ifas.ufl.edu/publication/MG216',
+    summary: 'Mango: peak Jun-Jul in south FL (10b), full range May-Sep; coastal CA later (Jul-Sep).',
+    regional_anchors: [
+      { zones: ['10b','11a','11b'], source: 'UF/IFAS MG216', url: 'https://ask.ifas.ufl.edu/publication/MG216', summary: 'South FL: May-Sep, peak Jun-Jul.', peak_doy: 196, half_window: 60 },
+      { zones: ['9b','10a'], source: 'CRFG mango', url: 'https://crfg.org/homepage/library/fruitfacts/mango/', summary: 'Coastal S. CA: Jul-Sep, later than FL.', peak_doy: 227, half_window: 45 }
+    ]
+  },
+  {
+    name: 'Lychee',
+    members: ['Litchi chinensis'],
+    anchor_zone: '10b', anchor_peak: 166, shift_per_half_zone: -5, half_window: 28,
+    target_zones: ['10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Lychee (UF/IFAS MG051)',
+    source_url: 'https://ask.ifas.ufl.edu/publication/MG051',
+    summary: 'Lychee: mid-May to early Jul in south FL, peak Jun. Cultivars (Brewster/Mauritius) spread ~4 weeks.',
+    regional_anchors: [
+      { zones: ['10b','11a','11b'], source: 'UF/IFAS MG051', url: 'https://ask.ifas.ufl.edu/publication/MG051', summary: 'South FL: mid-May to early Jul, peak Jun.', peak_doy: 166, half_window: 28 },
+      { zones: ['10a'], source: 'CRFG lychee', url: 'https://crfg.org/homepage/library/fruitfacts/lychee/', summary: 'Coastal S. CA: Jun-Jul, later than FL.', peak_doy: 182, half_window: 28 }
+    ]
+  },
+  {
+    name: 'Common guava',
+    members: ['Psidium guajava'],
+    anchor_zone: '10a', anchor_peak: 258, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Common guava (UF/IFAS + CRFG)',
+    source_url: 'https://gardeningsolutions.ifas.ufl.edu/plants/edibles/fruits/guava/',
+    summary: 'Common guava: main FL crop Aug-Oct, light spring crop Feb-Mar; coastal CA Oct-Jan.',
+    regional_anchors: [
+      { zones: ['10a','10b','11a','11b'], source: 'UF/IFAS Gardening Solutions', url: 'https://gardeningsolutions.ifas.ufl.edu/plants/edibles/fruits/guava/', summary: 'FL: main Aug-Oct, small spring crop Feb-Mar.', peak_doy: 258, half_window: 60 },
+      { zones: ['9b','10a'], source: 'CRFG guava', url: 'https://crfg.org/homepage/library/fruitfacts/guava-tropical/', summary: 'Coastal S. CA: fall/winter Oct-Jan.', peak_doy: 320, half_window: 50 }
+    ]
+  },
+  {
+    name: 'Pineapple guava',
+    members: ['Acca sellowiana', 'Feijoa sellowiana'],
+    // Cool-loving — positive shift (cooler zones LATER), counterintuitive
+    // for a subtropical. Days-from-bloom driven, not heat-budget driven.
+    anchor_zone: '9b', anchor_peak: 305, shift_per_half_zone: 4, half_window: 35,
+    target_zones: ['8a','8b','9a','9b','10a','10b'],
+    stage: 'ripe',
+    source_name: 'Pineapple guava / feijoa (CRFG + NC State)',
+    source_url: 'https://crfg.org/homepage/library/fruitfacts/feijoa/',
+    summary: 'Feijoa: cool-loving, drop-harvest Oct-Dec. S. CA Oct-Nov, SF Bay Nov-Dec; warmer = earlier.',
+    regional_anchors: [
+      { zones: ['9b','10a','10b'], source: 'CRFG feijoa', url: 'https://crfg.org/homepage/library/fruitfacts/feijoa/', summary: 'S. CA: 4.5-6 mo post-bloom = Oct-Nov.', peak_doy: 305, half_window: 30 },
+      { zones: ['8a','8b','9a'], source: 'CRFG feijoa', url: 'https://crfg.org/homepage/library/fruitfacts/feijoa/', summary: 'SF Bay: 5.5-7 mo post-bloom = Nov-Dec.', peak_doy: 335, half_window: 30 }
+    ]
+  },
+  {
+    name: 'Sugar apple',
+    members: ['Annona squamosa'],
+    anchor_zone: '10b', anchor_peak: 258, shift_per_half_zone: -5, half_window: 60,
+    target_zones: ['10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Sugar apple (UF/IFAS MG330)',
+    source_url: 'https://ask.ifas.ufl.edu/publication/MG330',
+    summary: 'Sugar apple: Aug-Dec in south FL, peak Sep. Stragglers into midwinter if frost-free.',
+    regional_anchors: [
+      { zones: ['10b','11a','11b'], source: 'UF/IFAS MG330', url: 'https://ask.ifas.ufl.edu/publication/MG330', summary: 'South FL: mid-summer through fall, stragglers to midwinter.', peak_doy: 258, half_window: 60 }
+    ]
+  },
+  {
+    name: 'Date palm',
+    members: ['Phoenix dactylifera'],
+    anchor_zone: '9b', anchor_peak: 288, shift_per_half_zone: -5, half_window: 60,
+    target_zones: ['9a','9b','10a','10b','11a'],
+    stage: 'ripe',
+    source_name: 'Date palm (USDA crop profile + CA Dates)',
+    source_url: 'https://ipmdata.ipmcenters.org/documents/cropprofiles/CAdates.pdf',
+    summary: 'Date palm: Coachella harvest Sep-Dec; Medjool earlier (Aug-Oct), Deglet Noor later (Oct-Dec).',
+    regional_anchors: [
+      { zones: ['9a','9b','10a'], source: 'USDA CA dates crop profile', url: 'https://ipmdata.ipmcenters.org/documents/cropprofiles/CAdates.pdf', summary: 'Coachella: ripen Aug 20-Dec 15, harvest Sep-Dec.', peak_doy: 288, half_window: 60 }
+    ]
+  },
+  {
+    name: 'Carob',
+    members: ['Ceratonia siliqua'],
+    anchor_zone: '9b', anchor_peak: 288, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['9a','9b','10a','10b'],
+    stage: 'ripe',
+    source_name: 'Carob (Oregon State Landscape Plants + Backyard Forager)',
+    source_url: 'https://landscapeplants.oregonstate.edu/plants/ceratonia-siliqua',
+    summary: 'Carob: leathery pods ripe fall (Sep-Nov) in coastal CA; can persist on tree into winter.',
+    regional_anchors: [
+      { zones: ['9a','9b','10a','10b'], source: 'Oregon State Landscape Plants', url: 'https://landscapeplants.oregonstate.edu/plants/ceratonia-siliqua', summary: 'Pods reddish-brown when ripe in fall; drop Sep-Nov.', peak_doy: 288, half_window: 45 }
+    ]
+  },
+  {
+    name: 'Macadamia (smooth-shell)',
+    members: ['Macadamia integrifolia'],
+    anchor_zone: '10a', anchor_peak: 305, shift_per_half_zone: -3, half_window: 90,
+    target_zones: ['9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Macadamia integrifolia (UH CTAHR + UC ANR Topics in Subtropics)',
+    source_url: 'https://www.ctahr.hawaii.edu/oc/freepubs/pdf/C1-485.pdf',
+    summary: 'Smooth-shell macadamia: nut-drop Jul-Mar in HI, peak Sep-Nov; San Diego CA similar.',
+    regional_anchors: [
+      { zones: ['11a','11b'], source: 'UH CTAHR macadamia', url: 'https://www.ctahr.hawaii.edu/oc/freepubs/pdf/C1-485.pdf', summary: 'Hawaii: nut-fall Jul-Mar, peak Sep-Nov.', peak_doy: 305, half_window: 90 },
+      { zones: ['9b','10a','10b'], source: 'UC ANR Topics in Subtropics', url: 'https://ucanr.edu/blog/topics-subtropics/article/macadamia-production-california-hidden-gem-industry', summary: 'San Diego: fall-spring drop, similar to HI.', peak_doy: 320, half_window: 90 }
+    ]
+  },
+  {
+    name: 'Macadamia (rough-shell)',
+    members: ['Macadamia tetraphylla'],
+    anchor_zone: '10a', anchor_peak: 335, shift_per_half_zone: -3, half_window: 75,
+    target_zones: ['9b','10a','10b'],
+    stage: 'ripe',
+    source_name: 'Macadamia tetraphylla (Growables + CRFG)',
+    source_url: 'https://www.growables.org/information/TropicalFruit/MacadamiaRough.htm',
+    summary: 'Rough-shell macadamia: CA nut-fall Nov-Apr; some cultivars have compact 6-8 wk window.',
+    regional_anchors: [
+      { zones: ['9b','10a','10b'], source: 'Growables M. tetraphylla', url: 'https://www.growables.org/information/TropicalFruit/MacadamiaRough.htm', summary: 'S. CA: nut-fall Nov-Apr, peak Dec-Feb.', peak_doy: 335, half_window: 75 }
+    ]
+  },
+  {
+    name: 'Citron',
+    members: ['Citrus medica'],
+    anchor_zone: '9b', anchor_peak: 349, shift_per_half_zone: -2, half_window: 75,
+    target_zones: ['9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Citron (UC Riverside Citrus Variety Collection + Missouri Botanical)',
+    source_url: 'https://citrusvariety.ucr.edu/crc3768',
+    summary: "Citron incl. Buddha's Hand: main Nov-Jan in CA/FL, scattered fruit year-round if frost-free.",
+    regional_anchors: [
+      { zones: ['9b','10a','10b'], source: 'UC Riverside CRC Buddha\'s Hand', url: 'https://citrusvariety.ucr.edu/crc3768', summary: 'CA: citron + Buddha\'s Hand Nov-Jan main, year-round secondary.', peak_doy: 349, half_window: 75 }
+    ]
+  },
+  {
+    name: 'Kumquat',
+    members: ['Fortunella japonica', 'Fortunella margarita', 'Citrus japonica'],
+    anchor_zone: '9b', anchor_peak: 1, shift_per_half_zone: -3, half_window: 75,
+    target_zones: ['8b','9a','9b','10a','10b','11a'],
+    stage: 'ripe',
+    source_name: 'Kumquat (UF/IFAS FR368)',
+    source_url: 'https://ask.ifas.ufl.edu/publication/FR368',
+    summary: 'Kumquat: FL Oct-Mar, CA Nov-Apr; peak Jan. Cold-hardy citrus relative.',
+    regional_anchors: [
+      { zones: ['8b','9a','9b'], source: 'UF/IFAS FR368', url: 'https://ask.ifas.ufl.edu/publication/FR368', summary: 'FL: Oct maturity through Mar.', peak_doy: 1, half_window: 75 },
+      { zones: ['10a','10b','11a'], source: 'UF/IFAS FR368', url: 'https://ask.ifas.ufl.edu/publication/FR368', summary: 'Warmest zones push later into spring.', peak_doy: 32, half_window: 75 }
+    ]
+  },
+  {
+    name: 'Sour orange',
+    members: ['Citrus aurantium', 'Citrus x aurantium'],
+    anchor_zone: '9b', anchor_peak: 32, shift_per_half_zone: -2, half_window: 60,
+    target_zones: ['8b','9a','9b','10a','10b','11a'],
+    stage: 'ripe',
+    source_name: 'Sour orange (NC State Plant Toolbox + UC Riverside CRC)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/citrus-x-aurantium/',
+    summary: 'Sour / Seville orange: winter-ripening, peak Jan-Mar in CA/FL; long persistence on tree.',
+    regional_anchors: [
+      { zones: ['8b','9a','9b','10a','10b','11a'], source: 'UC Riverside CRC Orlando bittersweet', url: 'https://citrusvariety.ucr.edu/crc1588', summary: 'Riverside CA: ripe Jan-Mar.', peak_doy: 32, half_window: 60 }
+    ]
+  },
+  {
+    name: 'Pinyon pine',
+    members: ['Pinus edulis'],
+    anchor_zone: '6a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'ripe',
+    source_name: 'Pinyon pine (USDA Silvics + Wikipedia + Chaffee Cty Times)',
+    source_url: 'https://en.wikipedia.org/wiki/Pinus_edulis',
+    summary: 'Pinyon pine: cones open Sep-Oct year 2 on CO Plateau; nut-gather late Aug-early Oct, peak Oct 1.',
+    regional_anchors: [
+      { zones: ['5a','5b','6a','6b'], source: 'Chaffee County Times (CO zone 6)', url: 'https://www.chaffeecountytimes.com/free_content/it-s-time-to-harvest-pi-on-pine-nuts/article_ee6e8614-12f3-11e2-bbc2-0019bb30f31a.html', summary: 'CO Rockies: late Aug to early Oct.', peak_doy: 265, half_window: 28 },
+      { zones: ['6b','7a','7b'], source: 'Wikipedia / USDA Silvics', url: 'https://en.wikipedia.org/wiki/Pinus_edulis', summary: 'Lower-elev NM/AZ: cones open Sep-Oct, gather after first frost.', peak_doy: 288, half_window: 28 }
+    ]
+  },
+
+  // ── Misc remaining-gaps batch 2026-05-10 ──
+  {
+    name: 'Japanese cornelian cherry',
+    members: ['Cornus officinalis'],
+    // Sister species to Cornus mas — similar timing, slightly earlier.
+    anchor_zone: '6a', anchor_peak: 240, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'ripe',
+    source_name: 'Japanese cornelian cherry (Missouri Botanical Garden + Cornell)',
+    source_url: 'https://www.missouribotanicalgarden.org/PlantFinder/PlantFinderDetails.aspx?taxonid=287086',
+    summary: 'Japanese cornelian cherry (Cornus officinalis): ornamental ~2 weeks earlier than C. mas. Ripe Aug-Sep in zone 6. Tart cranberry-cherry flavor; used in TCM as well as jam/syrup.'
+  },
+  {
+    name: 'American basswood (spring leaves)',
+    members: ['Tilia americana'],
+    anchor_zone: '6a', anchor_peak: 125, shift_per_half_zone: -3, half_window: 14,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'leaf',
+    source_name: 'American basswood spring leaves (Forager Chef + Eat The Weeds)',
+    source_url: 'https://foragerchef.com/american-basswood/',
+    summary: 'American basswood (Tilia americana) young leaves: very tender for ~3 weeks centered on leaf-out (early May in zone 6, late April in warmer zones). Leaves get mucilaginous + tough quickly. Flowers are the more notable foraged part.'
+  },
+  {
+    name: 'American basswood (flowers)',
+    members: ['Tilia americana'],
+    // Cited sources explicitly say "~2 weeks" of bloom. Earlier supports
+    // had a 30-day window (167-197); audit narrowed to 22 days.
+    anchor_zone: '6a', anchor_peak: 178, shift_per_half_zone: -3, half_window: 11,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'flower_harvest',
+    source_name: 'American basswood flowers (Forager Chef + Practical Self Reliance)',
+    source_url: 'https://foragerchef.com/american-basswood/',
+    summary: 'American basswood (Tilia americana) flowers: ~2-week bloom in late Jun-early Jul (cold zones) shifting earlier in warm zones. Fragrant cymes for tea, infused honey. Pollinator-favored; harvest sparingly.'
+  },
+  {
+    name: 'Spruce tips (multi-species)',
+    members: ['Picea glauca', 'Picea pungens', 'Picea sp.', 'Pinus contorta', 'Pinus sylvestris', 'Pinus sp.', 'Larix sibirica'],
+    // Audit found "early-to-mid May" was interpreted as 31 days for spruce
+    // tips when the cited window is famously 10-14 days. Tightened.
+    // Replaces the earlier "Conifer tips" entry — same target zones,
+    // narrower window.
+    anchor_zone: '6a', anchor_peak: 130, shift_per_half_zone: -3, half_window: 10,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'shoot',
+    source_name: 'Conifer spring tips (Forager Chef + foraging consensus)',
+    source_url: 'https://foragerchef.com/pine-spruce-and-fir-tips/',
+    summary: 'Conifer tips (spruce, pine, fir, larch): pale-green soft new-growth before needles harden. Famously short ~2-week window in early-to-mid May (zone 6). Citrusy resinous flavor; for syrups, salts, beverages. Avoid yew (toxic).'
+  },
+  {
+    name: 'Siberian elm samaras',
+    members: ['Ulmus pumila'],
+    // Audit narrowed from {91, 130} (40d) and {105, 130} (26d) to a
+    // 21-day "tender samaras" window. Heat-driven; warm zones earlier.
+    anchor_zone: '6a', anchor_peak: 110, shift_per_half_zone: -3, half_window: 10,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'ripe',
+    source_name: 'Siberian elm samaras (Forager Chef + Backyard Forager)',
+    source_url: 'https://foragerchef.com/elm-samaras/',
+    summary: 'Siberian elm (Ulmus pumila) samaras: tender, bright-green wings around mid-Apr in 6a — only edible for 1-3 weeks before they harden and turn papery. Eat raw, sautéed, or pickled.'
+  },
+  {
+    name: 'Littleleaf linden (flowers)',
+    members: ['Tilia cordata'],
+    // Same flower-use pattern as American basswood — flowers for tea/sugar.
+    anchor_zone: '6a', anchor_peak: 175, shift_per_half_zone: -3, half_window: 14,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'flower_harvest',
+    source_name: 'Littleleaf linden (NC State Extension + foraging consensus)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/tilia-cordata/',
+    summary: 'Littleleaf linden (Tilia cordata): fragrant pale-yellow flower clusters Jun-Jul (~10 days). Harvest at peak fragrance for tea (calming, mild honey flavor) — pollinator-favored, so leave half on the tree.'
+  },
+  {
+    name: 'Japanese walnut',
+    members: ['Juglans ailantifolia'],
+    // Asian relative of butternut — same Sep-Oct nut drop.
+    anchor_zone: '6a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'ripe',
+    source_name: 'Japanese walnut (USDA Silvics + Forager Chef)',
+    source_url: 'https://plants.usda.gov/plant-profile/JUAI',
+    summary: 'Japanese walnut / heartnut (Juglans ailantifolia): hardier butternut relative. Nuts Sep-Oct in zone 6. Heart-shaped kernel cracks cleanly. Hardy 4-7.'
+  },
+  {
+    name: 'Ussurian pear',
+    members: ['Pyrus ussuriensis'],
+    // Cold-hardy Asian pear, ornamental in US zones 3-7.
+    anchor_zone: '5b', anchor_peak: 244, shift_per_half_zone: -3, half_window: 25,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a'],
+    stage: 'ripe',
+    source_name: 'Ussurian pear (Missouri Botanical Garden + Wikipedia)',
+    source_url: 'https://www.missouribotanicalgarden.org/PlantFinder/PlantFinderDetails.aspx?taxonid=288124',
+    summary: 'Ussurian pear (Pyrus ussuriensis): cold-hardy Asian pear, hardy zone 3. Small russeted fruit Sep-Oct, very astringent fresh — best after frost-blet or cooked.'
+  },
+  {
+    name: 'American beautyberry',
+    members: ['Callicarpa americana'],
+    // Native SE US shrub. Vivid magenta drupe clusters Aug-Nov.
+    anchor_zone: '7b', anchor_peak: 270, shift_per_half_zone: -3, half_window: 35,
+    target_zones: ['6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'ripe',
+    source_name: 'American beautyberry (USDA Silvics + Eat The Weeds)',
+    source_url: 'https://plants.usda.gov/plant-profile/CAAM2',
+    summary: 'American beautyberry (Callicarpa americana): native SE-US understory shrub, vivid magenta drupe clusters Aug-Nov. Mealy-fruity-medicinal flavor — best for jelly. Leaves traditionally rubbed on skin as mosquito repellent.'
+  },
+  {
+    name: 'Yarrow (leaves + flowers)',
+    members: ['Achillea millefolium'],
+    anchor_zone: '6a', anchor_peak: 175, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'leaf',
+    source_name: 'Yarrow (Eat The Weeds + foraging consensus)',
+    source_url: 'https://www.eattheweeds.com/yarrow/',
+    summary: 'Yarrow (Achillea millefolium): leaves all season (May-Oct, 6a); flowers Jun-Aug. Strong sage-savory flavor, traditional bitter. Use sparingly — high doses photosensitize.'
+  },
+  {
+    name: 'Wild mint (leaves)',
+    members: ['Mentha', 'Mentha arvensis', 'Mentha canadensis'],
+    anchor_zone: '6a', anchor_peak: 175, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'leaf',
+    source_name: 'Wild mint (NC State Extension + foraging consensus)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/mentha/',
+    summary: 'Wild mint (Mentha spp.): leaves May-Oct in 6a, peak flavor pre-flowering (Jul). Look for square stems, opposite leaves, true mint smell — distinguish from non-aromatic mint-look-alikes.'
+  },
+  {
+    name: 'Watercress',
+    members: ['Nasturtium officinale'],
+    // Cool-water aquatic. Best harvest spring (Apr-Jun) + fall (Sep-Nov);
+    // summer growth gets bitter, can harbor more parasites in warm water.
+    // ALWAYS cook unless sourced from verified clean water.
+    anchor_zone: '6a', anchor_peak: 130, shift_per_half_zone: -3, half_window: 50,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'leaf',
+    source_name: 'Watercress (NC State Extension + foraging consensus)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/nasturtium-officinale/',
+    summary: 'Watercress (Nasturtium officinale): cool-water aquatic, peak harvest Apr-Jun + Sep-Nov. ALWAYS cook unless source water is verified clean (giardia/liver-fluke risk in livestock-grazed streams).'
+  },
+  {
+    name: 'Wild onion (Allium canadense)',
+    members: ['Allium canadense'],
+    // Native US onion. Leaves spring + early summer, bulbs after leaves
+    // die back in late summer.
+    anchor_zone: '6a', anchor_peak: 110, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'leaf',
+    source_name: 'Wild onion (USDA Silvics + Eat The Weeds)',
+    source_url: 'https://plants.usda.gov/plant-profile/ALCA3',
+    summary: 'Wild onion (Allium canadense, meadow garlic): native onion, leaves Apr-Jun, small bulbs ready Aug-Oct. ALWAYS confirm onion smell — death-camas + false-garlic are toxic lookalikes without the onion smell.'
+  },
+  {
+    name: 'Bracken fern (fiddleheads)',
+    members: ['Pteridium aquilinum'],
+    // Tightly-coiled young fronds, eaten before they unfurl. Heat-driven,
+    // brief 1-2 week window. NOTE: contains ptaquiloside (carcinogenic);
+    // many sources discourage regular consumption — eat sparingly.
+    anchor_zone: '6a', anchor_peak: 130, shift_per_half_zone: -3, half_window: 14,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'shoot',
+    source_name: 'Bracken fern (Forager Chef + USDA Silvics — caution)',
+    source_url: 'https://foragerchef.com/foraging-bracken-fern-fiddleheads-pteridium-aquilinum/',
+    summary: 'Bracken fern (Pteridium aquilinum) fiddleheads: tightly-coiled young fronds before unfurling, brief late-Apr through May. WARNING: ptaquiloside is a known carcinogen — eat sparingly if at all; blanching reduces but does not eliminate it.'
+  },
+  {
+    name: 'Greenbrier (spring shoots)',
+    members: ['Smilax sp.', 'Smilax rotundifolia', 'Smilax bona-nox'],
+    anchor_zone: '6a', anchor_peak: 122, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'shoot',
+    source_name: 'Greenbrier (Eat The Weeds + foraging consensus)',
+    source_url: 'https://www.eattheweeds.com/greenbrier-smilax-2/',
+    summary: 'Greenbrier (Smilax spp.) spring shoots: tender new growth from tips before prickles harden, Apr-May in 6a. Cook like asparagus. The mature vines are thorny — harvest only the soft growing tip.'
+  },
+  // Conifer tips — soft new spring growth, ~2-3 weeks of harvestable
+  // bright-green tips. Use for tea, syrup, garnish. Multiple Pinus +
+  // Picea + Larix species share the same brief window. Heat-driven.
+  {
+    name: 'Conifer tips (multi-species)',
+    members: ['Picea pungens', 'Pinus contorta', 'Pinus sylvestris', 'Larix sibirica', 'Pinus sp.', 'Picea sp.'],
+    anchor_zone: '6a', anchor_peak: 130, shift_per_half_zone: -3, half_window: 14,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'shoot',
+    source_name: 'Conifer spring tips (Forager Chef + foraging consensus)',
+    source_url: 'https://foragerchef.com/pine-spruce-and-fir-tips/',
+    summary: 'Conifer tips (spruce, pine, fir, larch): pale-green soft new-growth shoots before needles harden. ~2-3 week window late Apr - May in 6a. Citrusy resinous flavor; for syrups, salts, beverages. Avoid yew (toxic).'
+  },
+  {
+    name: 'Wood ear',
+    members: ['Auricularia auricula-judae'],
+    // Wood-decay mushroom. Year-round in temperate climates, flushes
+    // after rain. Most active spring + fall.
+    anchor_zone: '6a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 80,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'mushroom_flush',
+    source_name: 'Wood ear (Mushroom Expert + Forager Chef)',
+    source_url: 'https://www.mushroomexpert.com/auricularia_auricula.html',
+    summary: 'Wood ear (Auricularia auricula-judae): gelatinous brown ear-shaped fungus on dead/dying hardwoods (esp. elder, beech). Year-round in mild climates, peak spring + fall flushes after rain. Cook before eating.'
   },
 
   // Cherry/Plum (unspecified) (Prunus sp.) — generic Prunus catch-all.
@@ -658,15 +1230,21 @@ const COMPLEXES = [
   },
 
   // Wild strawberry complex — F. virginiana + F. vesca share timing.
+  // Reduced shift_per_half_zone from -4 to -2 and widened half_window from
+  // 21 to 25 so cold-zone start dates match iNat (p10-p15 sits in mid-Jun
+  // for 3a-4a; -4 shift pushed the anchor start to late Jun/early Jul).
+  // Strawberries aren't strongly heat-driven across latitude: cold zones
+  // ripen alongside snowmelt + ground-warming, often closer to mid-summer
+  // than the heat-budget model predicts.
   {
     name: 'Wild strawberry (Fragaria) complex',
     members: ['Fragaria virginiana', 'Fragaria vesca'],
-    anchor_zone: '6a', anchor_peak: 176, shift_per_half_zone: -4, half_window: 21,
+    anchor_zone: '6a', anchor_peak: 176, shift_per_half_zone: -2, half_window: 25,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'ripe',
     source_name: 'Wild strawberry complex (USDA Silvics + foraging guides)',
     source_url: 'https://plants.usda.gov/home/plantProfile?symbol=FRVI',
-    summary: 'Wild strawberry: Jun-Jul ripe across temperate NA. F. virginiana (meadows) and F. vesca (woodland) share harvest timing.'
+    summary: 'Wild strawberry: mid-Jun through Jul ripe across temperate NA. F. virginiana (meadows) and F. vesca (woodland) share harvest timing. Cold-zone (3a-4b) start can be as early as mid-Jun.'
   },
 
   // Mayapple — fruit only edible (rest toxic).
@@ -749,35 +1327,102 @@ const COMPLEXES = [
     source_url: 'https://www.fs.fed.us/database/feis/plants/shrub/vibtri/all.html',
     summary: 'Highbush cranberry (Viburnum trilobum): bright red drupes Sep-Nov, sweetened by frost. Distinct from European V. opulus (toxic).'
   },
+  {
+    name: 'Cornelian cherry',
+    members: ['Cornus mas'],
+    // Native SE Europe / W Asia, naturalized as ornamental in NE/Mid-Atlantic
+    // US. Ripens mid- to late summer. Cornell-area / Druid's Garden W. PA:
+    // peak early-mid Sep ("near fall equinox"). UW Botanic Garden Seattle:
+    // Aug-Sep. iNat-only synth peaks Aug 8–29 (left-shifted, per memory).
+    // Cited sources push the peak ~1-2 weeks later than iNat — keep both.
+    anchor_zone: '6a', anchor_peak: 248, shift_per_half_zone: -3, half_window: 32,
+    target_zones: ['4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Cornelian cherry (Cornell + UW BG + Druid\'s Garden)',
+    source_url: 'https://botanicgardens.uw.edu/about/blog/2023/08/01/august-2023-plant-profile-cornelian-cherry/',
+    summary: 'Cornelian cherry (Cornus mas): cherry-red drupes Aug-Sep, peak early-mid Sep in zone 6. Tart cranberry-cherry flavor — best for jam, syrup, soda; eaten ripe (just dropped or near-drop).',
+    regional_anchors: [
+      { zones: ['4b','5a','5b','6a','6b'], source: 'Druid\'s Garden + Cornell Cooperative Extension', url: 'https://thedruidsgarden.com/2017/09/14/urban-food-profile-cornelian-cherry-harvest-and-recipe-for-soda-syrup-jam-pickles-and-more/', summary: 'NE / mid-Atlantic: peak early-mid September, fruits drop near fall equinox. Author harvests in rural western PA mid-Sep.', peak_doy: 255, half_window: 28 },
+      { zones: ['6a','6b','7a','7b'], source: 'UW Botanic Garden + Missouri Botanical Garden', url: 'https://botanicgardens.uw.edu/about/blog/2023/08/01/august-2023-plant-profile-cornelian-cherry/', summary: 'Mid-Atlantic / maritime: Aug-Sep ripening, peak late Aug.', peak_doy: 240, half_window: 28 },
+      { zones: ['7b','8a','8b'], source: 'PFAF + nursery references', url: 'https://pfaf.org/user/plant.aspx?latinname=Cornus+mas', summary: 'Warmer ranges (zone 7-8 cultivation): peak mid-Aug, earliest cultivars early Aug.', peak_doy: 225, half_window: 25 }
+    ]
+  },
+  {
+    name: 'Rugosa rose hips',
+    members: ['Rosa rugosa'],
+    // Frost-sweetened — best harvest after first light frost when hips are
+    // fully colored but still firm. iNat fruiting reports skew earlier
+    // (people notice red hips when they first appear, not edible peak).
+    // Cited sources: Vermont (zone 4) late-Aug start, Sep-early Oct peak;
+    // joybilee Farm zone 3 emphasizes post-frost harvest. Window covers
+    // Aug ripening through Oct-Nov frost-sweetened peak.
+    anchor_zone: '5b', anchor_peak: 268, shift_per_half_zone: 2, half_window: 35,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Rugosa rose hips (Practical Self Reliance + Joybilee Farm + NC State)',
+    source_url: 'https://practicalselfreliance.com/rose-hips/',
+    summary: 'Rugosa rose hips: ripen late Aug, peak harvest Sep-Oct after first light frost (sweetens, gains vitamin C). Hips persist into winter; frost-touched are sweetest but soften — harvest firm-ripe for storage.',
+    regional_anchors: [
+      { zones: ['3a','3b','4a','4b'], source: 'Joybilee Farm + Practical Self Reliance (Vermont zone 4)', url: 'https://practicalselfreliance.com/rose-hips/', summary: 'Cold zones (3-4): hips start ripening late Aug, peak harvest Sep through early Oct after first light frost.', peak_doy: 263, half_window: 35 },
+      { zones: ['4b','5a','5b','6a','6b'], source: 'Backyard Forager + Homestead and Chill', url: 'https://backyardforager.com/rose-hips-harvest-process/', summary: 'NE / Mid-Atlantic: Sep-Oct peak, picking continues through Oct-Nov frosts.', peak_doy: 275, half_window: 35 },
+      { zones: ['6b','7a','7b','8a'], source: 'NC State Extension', url: 'https://plants.ces.ncsu.edu/plants/rosa-rugosa/', summary: 'Mid-S / coastal: hips present Aug onward, frost-driven peak Oct-Nov.', peak_doy: 285, half_window: 35 }
+    ]
+  },
+  {
+    name: 'Olive',
+    members: ['Olea europaea'],
+    // Mediterranean / California cultivation, USDA zone 8+. Table olives
+    // start green-harvest Sep (Tulare County), oil olives mid-Oct through
+    // Nov. Sonoma County coastal: Nov through Feb. Mediterranean
+    // (Spain/Italy/Greece): Oct-Dec. Wide window since both green-stage
+    // and black-stage are harvested.
+    anchor_zone: '9b', anchor_peak: 298, shift_per_half_zone: -5, half_window: 50,
+    target_zones: ['8b','9a','9b','10a','10b'],
+    stage: 'ripe',
+    source_name: 'Olive (Big Horn Olive Oil + California Grown + Olive Oil Times)',
+    source_url: 'https://bhooc.com/blogs/articles/olive-harvest-california-timing-trends',
+    summary: 'Olive (Olea europaea): table olives Sep-Nov, oil olives mid-Oct through Nov in Central Valley CA; cooler coastal areas (Sonoma, coastal Spain) Nov through Jan/Feb. Hardy zone 8+; needs hot summer.',
+    regional_anchors: [
+      { zones: ['8b','9a','9b'], source: 'Big Horn Olive Oil + California Grown (Tulare County, Central Valley)', url: 'https://bhooc.com/blogs/articles/olive-harvest-california-timing-trends', summary: 'Central Valley CA: table olives Sep through mid-Nov (~56% of US olive production from Tulare County), oil olives mid-Oct through Nov.', peak_doy: 295, half_window: 45 },
+      { zones: ['9b','10a','10b'], source: 'Olive Oil Times + Oliviers & Co (Mediterranean)', url: 'https://www.oliveoiltimes.com/production/a-hobby-growers-guide-to-the-olive-harvest/125444', summary: 'Mediterranean / coastal CA: Oct-Dec, late cultivars stretch into Feb.', peak_doy: 310, half_window: 50 }
+    ]
+  },
 
   // ── Tier 3: edible mushrooms ──
 
   {
     name: 'Common puffball',
     members: ['Lycoperdon perlatum'],
-    anchor_zone: '6a', anchor_peak: 244, shift_per_half_zone: -3, half_window: 30,
+    // Aug-Oct flush, peak ~early Sep. Widened from half_window 30 → 40 so the
+    // tail actually reaches into Oct (the source says "Aug-Oct" and a Sep-1
+    // ±30 window dies on Oct 1, leaving ~no October). Mushroom flushes
+    // ramp up before peak and persist into killing frost, so the symmetric
+    // half-window is a compromise — leaning toward the long tail.
+    anchor_zone: '6a', anchor_peak: 250, shift_per_half_zone: -3, half_window: 40,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'mushroom_flush',
     source_name: 'Common puffball (Audubon mushroom guide + Mushroom Expert)',
     source_url: 'https://www.mushroomexpert.com/lycoperdon_perlatum.html',
-    summary: 'Common puffball: Aug-Oct. Cut in half — pure white interior confirms (rules out toxic Amanita "egg" stage).',
+    summary: 'Common puffball: Aug through Oct, peak early Sep, persists into first hard frost. Cut in half — pure white interior confirms (rules out toxic Amanita "egg" stage).',
     regional_anchors: [
-      { zones: ['4a','4b','5a','5b','6a','6b','7a'], source: 'Northeast foraging guides (Wild Mushrooms of NE)', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE forager consensus: Aug-Oct flush, peak Sep.', peak_doy: 244, half_window: 28 },
-      { zones: ['7a','7b','8a','8b'], source: 'NC State Extension (Carolinas mushroom timing)', url: 'https://content.ces.ncsu.edu/', summary: 'Southern Appalachians: Jul-Sep flush, peak mid-Aug.', peak_doy: 227, half_window: 30 }
+      { zones: ['4a','4b','5a','5b','6a','6b','7a'], source: 'Northeast foraging guides (Wild Mushrooms of NE)', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE forager consensus: Aug-Oct flush, peak early Sep, hangs on until first hard frost.', peak_doy: 250, half_window: 40 },
+      { zones: ['7a','7b','8a','8b'], source: 'NC State Extension (Carolinas mushroom timing)', url: 'https://content.ces.ncsu.edu/', summary: 'Southern Appalachians: Jul-Oct flush, peak late Aug.', peak_doy: 235, half_window: 40 }
     ]
   },
   {
     name: 'Giant puffball',
     members: ['Calvatia gigantea'],
-    anchor_zone: '6a', anchor_peak: 258, shift_per_half_zone: -3, half_window: 30,
+    // Late-Aug through Oct. Widened half_window so the synth includes
+    // mid-Oct, matching the cited "Aug-Oct flush" descriptions.
+    anchor_zone: '6a', anchor_peak: 260, shift_per_half_zone: -3, half_window: 38,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'mushroom_flush',
     source_name: 'Giant puffball (Mushroom Expert + foraging guides)',
     source_url: 'https://www.mushroomexpert.com/calvatia_gigantea.html',
-    summary: 'Giant puffball: late-Aug to early-Oct. Soccer-ball-sized; one mushroom can feed a family.',
+    summary: 'Giant puffball: late-Aug through Oct, peak mid-Sep. Soccer-ball-sized; one mushroom can feed a family.',
     regional_anchors: [
-      { zones: ['3a','3b','4a','4b','5a','5b','6a'], source: 'Audubon Field Guide (Northeast)', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE Audubon: Aug-Oct flush.', peak_doy: 258, half_window: 30 },
-      { zones: ['6b','7a','7b','8a','8b'], source: 'NC State Extension', url: 'https://content.ces.ncsu.edu/', summary: 'Mid-Atlantic / South: Jul-Sep flush.', peak_doy: 240, half_window: 28 }
+      { zones: ['3a','3b','4a','4b','5a','5b','6a'], source: 'Audubon Field Guide (Northeast)', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE Audubon: Aug-Oct flush, peak mid-Sep, persists until killing frost.', peak_doy: 260, half_window: 38 },
+      { zones: ['6b','7a','7b','8a','8b'], source: 'NC State Extension', url: 'https://content.ces.ncsu.edu/', summary: 'Mid-Atlantic / South: Jul-Oct flush, peak late Aug to early Sep.', peak_doy: 245, half_window: 38 }
     ]
   },
   {
@@ -806,6 +1451,112 @@ const COMPLEXES = [
     regional_anchors: [
       { zones: ['4a','4b','5a','5b','6a','6b','7a'], source: 'Audubon Field Guide (Northeast)', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE: Oct-Dec, often after first frost. Look in leaf litter under hardwoods.', peak_doy: 288, half_window: 35 },
       { zones: ['7a','7b','8a','8b'], source: 'Wild Food Girl + Forager Chef', url: 'https://www.wildfoodgirl.com/', summary: 'Southern range: Nov-Jan flush.', peak_doy: 320, half_window: 35 }
+    ]
+  },
+  {
+    name: 'Golden chanterelle',
+    members: ['Cantharellus cibarius'],
+    // Mycorrhizal with oak/beech (NE) and conifers (PNW). Jul-Sep flush
+    // in NE/Midwest, Jun-Oct in maritime PNW (cooler, wetter), Jul-Nov
+    // in southern Appalachians (long humid season).
+    anchor_zone: '6a', anchor_peak: 213, shift_per_half_zone: -3, half_window: 40,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'mushroom_flush',
+    source_name: 'Golden chanterelle (Mushroom Expert + Audubon)',
+    source_url: 'https://www.mushroomexpert.com/cantharellus_cibarius.html',
+    summary: 'Golden chanterelle: Jul-Sep flush across NE/Midwest hardwoods (esp. oak/beech), Jun-Oct in PNW conifers. Fruity apricot smell + forked false-gills (not true gills) distinguish from toxic Jack-O-Lantern (Omphalotus).',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Northeast Mycological Federation', url: 'https://newenglandmushrooms.com/', summary: 'NE: Jul through Sep, peak early Aug under oak. Triggered by warm humid weeks following rain.', peak_doy: 213, half_window: 35 },
+      { zones: ['6b','7a','7b','8a'], source: 'NC State Extension (Carolinas mushroom timing)', url: 'https://content.ces.ncsu.edu/', summary: 'Southern Appalachians: Jul through Oct, peak mid-Aug, second flush late Sep.', peak_doy: 220, half_window: 45 },
+      { zones: ['7b','8a','8b'], source: 'Mycological Society of San Francisco (PNW + N CA)', url: 'https://www.mssf.org/', summary: 'Maritime PNW / N California: Sep through Dec (winter peak), driven by autumn rains.', peak_doy: 305, half_window: 40 }
+    ]
+  },
+  {
+    name: 'Hen of the woods',
+    members: ['Grifola frondosa'],
+    // Saprotrophic at base of mature oaks (esp. white oak). Sep-Oct
+    // primarily, may persist into Nov. Same individual returns year
+    // after year. Driven by cooling soil + autumn rains.
+    anchor_zone: '6a', anchor_peak: 265, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'mushroom_flush',
+    source_name: 'Hen of the woods (Mushroom Expert + Forager Chef)',
+    source_url: 'https://www.mushroomexpert.com/grifola_frondosa.html',
+    summary: 'Hen of the woods (Grifola frondosa, maitake): large rosette-like cluster at base of oaks. Sep-Oct flush triggered by cooling + rain. Same individuals return annually — note locations.',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Forager Chef + Audubon Field Guide', url: 'https://foragerchef.com/hen-of-the-woods/', summary: 'NE/Midwest: late Sep through Oct, peak early Oct, occasional second flush after warm rains.', peak_doy: 275, half_window: 28 },
+      { zones: ['6b','7a','7b','8a'], source: 'NC State Extension', url: 'https://content.ces.ncsu.edu/', summary: 'Mid-Atlantic / southern range: Sep through Nov, peak mid-Oct.', peak_doy: 282, half_window: 30 }
+    ]
+  },
+  {
+    name: 'Oyster mushroom',
+    members: ['Pleurotus ostreatus'],
+    // Saprotrophic on dead/dying hardwoods (esp. aspen, beech, maple).
+    // Cold-tolerant: NE flushes ~50-65°F daytime temps, so spring (Apr-May)
+    // and fall (Sep-Nov) peaks with a summer lull. Warm-zone winter
+    // flushes too. Year-round in PNW where temps stay mild.
+    anchor_zone: '6a', anchor_peak: 285, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'mushroom_flush',
+    source_name: 'Oyster mushroom (Mushroom Expert + Wild Food Girl)',
+    source_url: 'https://www.mushroomexpert.com/pleurotus_ostreatus.html',
+    summary: 'Oyster mushroom (Pleurotus ostreatus): cold-tolerant, two flushes annually (spring + fall) in NE, plus winter flushes in warm zones. Look on dead/dying hardwoods (aspen, beech, maple).',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a','6b','7a'], source: 'Audubon Field Guide + Wild Food Girl', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE: cold-tolerant species — spring flush late-Apr through May, fall flush Sep through Nov. Bimodal pattern with summer lull.', peak_doy: 285, half_window: 70 },
+      { zones: ['7a','7b','8a','8b'], source: 'Mushroom Mountain (SE US)', url: 'https://mushroommountain.com/', summary: 'Mid-S / SE: year-round on dead hardwoods, with peak flushes after cool rains Oct-Dec.', peak_doy: 320, half_window: 90 }
+    ]
+  },
+  {
+    name: 'Lion\'s mane',
+    members: ['Hericium erinaceus'],
+    // Saprotrophic on dead/wounded hardwoods (esp. beech, oak, maple).
+    // Aug-Nov in NE, single annual flush per fruiting body. Cold-tolerant
+    // — often produced after first cool nights.
+    anchor_zone: '6a', anchor_peak: 275, shift_per_half_zone: -3, half_window: 40,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'mushroom_flush',
+    source_name: 'Lion\'s mane (Mushroom Expert + Forager Chef)',
+    source_url: 'https://www.mushroomexpert.com/hericium_erinaceus.html',
+    summary: 'Lion\'s mane (Hericium erinaceus): white cascading "icicles" on dead/wounded beech, oak, maple. Aug-Nov in NE, single flush per fruiting body. Cool-temperature trigger.',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Forager Chef + Northeast Mycological Federation', url: 'https://foragerchef.com/lions-mane/', summary: 'NE: Aug through Nov, peak Oct, often visible from a distance against bark.', peak_doy: 285, half_window: 40 },
+      { zones: ['6b','7a','7b','8a'], source: 'Mushroom Mountain (SE US)', url: 'https://mushroommountain.com/', summary: 'Mid-Atlantic / SE: Sep through Dec, peak early-Nov.', peak_doy: 305, half_window: 40 }
+    ]
+  },
+  {
+    name: 'King bolete',
+    members: ['Boletus edulis'],
+    // Mycorrhizal with conifers (spruce/fir/pine) + birch. Highly variable
+    // — depends on summer rains + temperature drop. NE: Jul-Sep peak.
+    // Maritime PNW: fall fruiting Oct-Dec. Rocky Mountains: monsoon-driven
+    // late-Jul through early Sep.
+    anchor_zone: '6a', anchor_peak: 230, shift_per_half_zone: -3, half_window: 40,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'mushroom_flush',
+    source_name: 'King bolete / porcini (Mushroom Expert + Audubon)',
+    source_url: 'https://www.mushroomexpert.com/boletus_edulis.html',
+    summary: 'King bolete (Boletus edulis, porcini, cep): mycorrhizal with conifers + birch. Brown cap, white pore surface (not gills), no staining when cut. Jul-Sep in NE/Rockies, Oct-Dec in maritime PNW.',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Northeast Mycological Federation', url: 'https://newenglandmushrooms.com/', summary: 'NE: Jul-Sep flush with conifers (spruce, hemlock) + birch, peak mid-Aug. Highly weather-dependent.', peak_doy: 230, half_window: 40 },
+      { zones: ['6b','7a','7b','8a'], source: 'Mycological Society of San Francisco (PNW)', url: 'https://www.mssf.org/', summary: 'Maritime PNW / N California: fall fruiting Oct through Dec under spruce/pine.', peak_doy: 305, half_window: 40 }
+    ]
+  },
+  {
+    name: 'Shaggy mane',
+    members: ['Coprinus comatus'],
+    // Saprotrophic in disturbed soil — lawns, gravel, hard-packed earth.
+    // Cool-temperature fall flush primarily (Sep-Nov), occasional spring.
+    // Auto-digests into black "ink" within 48hr of opening — must
+    // harvest day-of.
+    anchor_zone: '6a', anchor_peak: 275, shift_per_half_zone: -3, half_window: 35,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'mushroom_flush',
+    source_name: 'Shaggy mane (Mushroom Expert + Audubon)',
+    source_url: 'https://www.mushroomexpert.com/coprinus_comatus.html',
+    summary: 'Shaggy mane (Coprinus comatus, lawyer\'s wig): cylindrical white-shaggy cap on disturbed soil — lawns, gravel paths, roadsides. Fall flush Sep-Nov. Auto-digests to black ink within 48 hr — harvest fresh, eat same day.',
+    regional_anchors: [
+      { zones: ['3a','3b','4a','4b','5a','5b','6a','6b'], source: 'Audubon Field Guide (Northeast) + Wild Food Girl', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE: Sep-Nov fall flush, peak Oct, after cool nights. Occasional spring flush in zones 5-6.', peak_doy: 280, half_window: 35 },
+      { zones: ['6b','7a','7b','8a','8b'], source: 'NC State Extension', url: 'https://content.ces.ncsu.edu/', summary: 'Mid-Atlantic / SE: Oct-Dec primary flush.', peak_doy: 295, half_window: 35 }
     ]
   },
 
@@ -1090,9 +1841,12 @@ const COMPLEXES = [
     summary: 'Wine grape (Vitis vinifera): heat-driven, peak Sep in zone 7b (Sonoma/Napa range). Earlier in warmer zones; cultivar variation 4-6 weeks within a zone.'
   },
 
-  // Black cherry (Prunus serotina) — heat-driven late-summer fruit.
-  // Empirical iNat slope -8 d/half-zone (n=11). Anchor zone 7a peak
-  // Jul 8 (DOY 189).
+  // Black cherry (Prunus serotina) — heat-driven wild forest-edge
+  // cherry. Empirical iNat slope -8 d/half-zone (n=11). Anchor 7a
+  // peak Jul 8. Note: P. serotina is foraged from wild trees, NOT
+  // sold as u-pick (those are P. avium / P. cerasus, separate
+  // entries). Added regional citations across the zone range to
+  // diversify the evidence beyond a single iNat anchor.
   {
     name: 'Black cherry',
     members: ['Prunus serotina'],
@@ -1100,11 +1854,41 @@ const COMPLEXES = [
     anchor_peak: 189,           // Jul 8
     shift_per_half_zone: -8,    // empirical iNat -8.0
     half_window: 21,
-    target_zones: ['4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    target_zones: ['3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
     stage: 'ripe',
     source_name: 'Black cherry (iNat-empirical heat-shift fit)',
     source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/prunus/serotina.htm',
-    summary: 'Black cherry (Prunus serotina): heat-driven late-summer ripe. Empirical iNat slope -8 d/half-zone (n=11). Anchor zone 7a peak Jul 8.'
+    summary: 'Black cherry (Prunus serotina): wild forest-edge cherry, heat-driven late-summer ripe. iNat slope -8 d/half-zone (n=11); anchor 7a peak Jul 8.',
+    regional_anchors: [
+      {
+        zones: ['3b','4a','4b','5a','5b'],
+        source: 'Minnesota Wildflowers + Northern Woodlands (cold-zone wild cherry)',
+        url: 'https://www.minnesotawildflowers.info/tree/black-cherry',
+        summary: 'Cold-zone wild black cherry (MN/VT/NH): peak harvest mid-August in zones 4-5. Common in forest edges and old fields.',
+        peak_doy: 227, half_window: 21
+      },
+      {
+        zones: ['5b','6a','6b','7a'],
+        source: 'Cornell CE + USDA Silvics (mid-Atlantic / Northeast)',
+        url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/prunus/serotina.htm',
+        summary: 'USDA Silvics + Cornell: black cherry ripens late July to early August across the central NA range. Most common foraging zone (NY/PA/OH/MI).',
+        peak_doy: 210, half_window: 21
+      },
+      {
+        zones: ['7a','7b','8a'],
+        source: 'NC State Extension + Eat The Weeds (Carolinas / SE)',
+        url: 'https://content.ces.ncsu.edu/',
+        summary: 'Mid-Atlantic / Carolinas: wild black cherry ripens mid-June to mid-July. Earlier than northern range; commonly bird-stripped quickly so timing window matters.',
+        peak_doy: 175, half_window: 21
+      },
+      {
+        zones: ['8a','8b','9a'],
+        source: 'Foraging Texas + Eat The Weeds Florida',
+        url: 'https://www.foragingtexas.com/black-cherry',
+        summary: 'Deep South / Texas: wild black cherry ripens late May to late June; earliest in the species range. Subtropical population edge.',
+        peak_doy: 158, half_window: 21
+      }
+    ]
   }
 ];
 

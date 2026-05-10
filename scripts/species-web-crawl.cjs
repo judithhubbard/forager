@@ -118,9 +118,8 @@ const WINDOW_DATA = [
       { source: 'Wikipedia', url: WIKI('Morus_rubra'),
         summary: '"The berries are widely sought after by birds in spring and early summer in North America; as many as 31 species of birds have been recorded visiting a fruiting tree in Arkansas." (interpreted: fruit available spring through early summer; in Arkansas/southern US, May-Jun, DOY 121-181.)',
         supports: { start_doy: 121, end_doy: 181 } },
-      { source: 'Wikipedia', url: WIKI('Morus_rubra'),
-        summary: '"To keep the tree in a tidy form, it is suggested to choose a few main branches and cut the laterals to six leaves in July." (interpreted: pruning advice in Jul implies fruit drop has finished by then in the central range; primary fruiting Jun-Jul, DOY 152-212 for 6a.)',
-        supports: { start_doy: 152, end_doy: 212, peak_doy: 182 } }
+      // Removed Wikipedia "pruning advice in Jul" fact — pruning timing
+      // doesn't imply fruit-drop timing. That's inference, not data.
     ]
   },
   // 3. Diospyros virginiana — American persimmon
@@ -157,9 +156,9 @@ const WINDOW_DATA = [
     baseZone: '6a',
     zones: ['5a','5b','6a','6b','7a','7b','8a'],
     facts: [
-      { source: 'Wikipedia', url: WIKI('Lindera_benzoin'),
-        summary: '"In the fall the leaves turn bright yellow." (interpreted: fall is the harvest season for the red drupes; corroborates fall ripening but no precise months from Wikipedia.)',
-        supports: { start_doy: 244, end_doy: 304 } },
+      // Removed the Wikipedia "leaves turn bright yellow" fact — that's
+      // a leaf-color statement, not fruit data. Inferring fruit timing
+      // from autumn leaf color is unsupported.
       { source: 'USDA NRCS Plant Guide (Lindera benzoin)', url: USDA_PG('libe3'),
         summary: '"Flowering: March-April; fruits maturing August-October (-November)." (interpreted: fruit maturity Aug 1 = DOY 213 through Oct 31 = DOY 304, sometimes into Nov.)',
         supports: { start_doy: 213, end_doy: 304, peak_doy: 274 } }
@@ -335,9 +334,11 @@ const WINDOW_DATA = [
     baseZone: '4b',
     zones: ['2b','3a','3b','4a','4b','5a','5b','6a','6b'],
     facts: [
-      { source: 'Wikipedia', url: WIKI('Vaccinium_angustifolium'),
-        summary: '"Some growers use a sickle bar mower in the fall after the crop has been harvested to mow the plants off..." (interpreted: harvest finishes by fall, implies primary harvest mid- to late summer; standard guide windows are Jul-Aug for this species, DOY 182-243.)',
-        supports: { start_doy: 182, end_doy: 243, peak_doy: 213 } }
+      // Removed Wikipedia "sickle bar mower in fall after the crop has
+      // been harvested" fact — that's mowing practice, not a fruiting
+      // calendar. The DOY bracket was guessed from "standard guide
+      // windows", which is the assertion we'd be using this fact to
+      // support — circular. Inference, not data.
     ]
   },
   // 20. Vaccinium macrocarpon — American cranberry
@@ -389,9 +390,9 @@ const WINDOW_DATA = [
     baseZone: '6a',
     zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     facts: [
-      { source: 'Wikipedia', url: WIKI('Rubus_occidentalis'),
-        summary: '"The plants are summer tipped by hand, mechanically pruned in winter and then machine harvested." (interpreted: machine harvest mid-summer; black raspberry is a documented mid-summer crop, peak late Jun through Jul, DOY 172-212.)',
-        supports: { start_doy: 172, end_doy: 212, peak_doy: 192 } }
+      // Removed Wikipedia "summer tipped by hand, mechanically pruned in
+      // winter, machine harvested" fact — that's an agronomy description,
+      // not a calendar of fruit ripeness. Inference, not data.
     ]
   },
   // 24. Rubus allegheniensis — Allegheny blackberry
