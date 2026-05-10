@@ -1651,17 +1651,16 @@
   </div>
 
   {#if hasActiveFilters && trueTotalInView > filteredPins.length}
-    <!-- Compact inline indicator (replaces the verbose
-         "Filtered: …" banner that ate vertical space). Only shows
-         when filters are actually hiding pins, with a one-click
-         reset. The verbose breakdown is still available as a
-         tooltip for the curious. -->
+    <!-- Compact inline indicator. Shows the FIRST active filter
+         inline so mobile users (no hover tooltip) can see *which*
+         filter is hiding pins, not just that something is. Full
+         breakdown remains in the title for desktop hover. -->
     <button
       class="filter-pill"
       on:click={resetAllFilters}
       title={'Clear filters · ' + activeFilterParts.join(' · ')}
     >
-      ⚲ {(trueTotalInView - filteredPins.length).toLocaleString()} hidden · clear
+      ⚲ {(trueTotalInView - filteredPins.length).toLocaleString()} hidden ({activeFilterParts.join(', ')}) · clear
     </button>
   {/if}
 
