@@ -173,6 +173,72 @@
     sourceName: string;
   }
   let harvestPolicyInfo: HarvestPolicyInfo | null = null;
+
+  /** iNaturalist observation attribution — fetched lazily when the
+   *  pin is from import_source='inaturalist-research-grade'. iNat
+   *  pins kept only the observation ID at import time (per the
+   *  license review: per-pin observer/license display required for
+   *  CC-BY compliance, lazy fetch picked over a schema change). */
+  interface InatAttribution {
+    observerLogin: string | null;
+    observerName: string | null;
+    licenseCode: string | null;
+    observedOn: string | null;
+    observationUrl: string;
+  }
+  let inatAttribution: InatAttribution | null = null;
+  /** Process-level cache so re-navigating to the same iNat pin doesn't
+   *  re-hit the iNat API. Cleared on full page reload (sufficient for
+   *  the panel-open use case). */
+  const INAT_ATTRIBUTION_CACHE = new Map<string, InatAttribution>();
+  async function loadInatAttribution(externalId: string): Promise<void> {
+    const cached = INAT_ATTRIBUTION_CACHE.get(externalId);
+    if (cached) {
+      inatAttribution = cached;
+      return;
+    }
+    const res = await fetch(
+      `https://api.inaturalist.org/v1/observations/${encodeURIComponent(externalId)}?per_page=1`
+    );
+    if (!res.ok) return;
+    const body = (await res.json()) as {
+      results?: Array<{
+        id: number;
+        observed_on?: string | null;
+        license_code?: string | null;
+        uri?: string;
+        user?: { login?: string; name?: string };
+      }>;
+    };
+    const obs = body.results?.[0];
+    if (!obs) return;
+    const attr: InatAttribution = {
+      observerLogin: obs.user?.login ?? null,
+      observerName: obs.user?.name ?? null,
+      licenseCode: obs.license_code ?? null,
+      observedOn: obs.observed_on ?? null,
+      observationUrl: obs.uri ?? `https://www.inaturalist.org/observations/${externalId}`
+    };
+    INAT_ATTRIBUTION_CACHE.set(externalId, attr);
+    inatAttribution = attr;
+  }
+  /** Pretty label for an iNat license_code. Falls back to the raw
+   *  code when the value is unrecognized so audit is still possible. */
+  function inatLicenseLabel(code: string | null | undefined): string {
+    if (!code) return 'license unknown';
+    const map: Record<string, string> = {
+      cc0: 'CC0 (public domain)',
+      'cc-by': 'CC BY',
+      'cc-by-4.0': 'CC BY 4.0',
+      'cc-by-nc': 'CC BY-NC',
+      'cc-by-nc-4.0': 'CC BY-NC 4.0',
+      'cc-by-sa': 'CC BY-SA',
+      'cc-by-nd': 'CC BY-ND',
+      'cc-by-nc-sa': 'CC BY-NC-SA',
+      'cc-by-nc-nd': 'CC BY-NC-ND'
+    };
+    return map[code.toLowerCase()] ?? code;
+  }
   /** True iff this species has fruiting windows in some OTHER region —
    *  used to render a "no regional harvest data here yet" hint when
    *  the local timeline is empty. Lets users see that they're missing
@@ -456,6 +522,7 @@
     thumbUrls = new Map();
     fullUrls = new Map();
     harvestPolicyInfo = null;
+    inatAttribution = null;
     const requestedId = pinId;
     try {
       // First-paint critical path: pin metadata, species lookup, this
@@ -492,6 +559,14 @@
       loadPhotos();
       if (pin?.import_source) {
         loadHarvestPolicy(pin.import_source);
+        // iNat pins get a lazy attribution fetch — the observer
+        // username + license live on iNat; we kept only the obs id
+        // in pins.import_external_id to avoid bloating the table.
+        if (pin.import_source === 'inaturalist-research-grade' && pin.import_external_id) {
+          loadInatAttribution(pin.import_external_id).catch((err) => {
+            console.warn('[PinDetail] iNat attribution load failed:', err);
+          });
+        }
       }
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Failed to load pin.';
@@ -1550,6 +1625,27 @@
           {#if accession}
             <li><strong>Accession:</strong> <code>{accession}</code></li>
           {/if}
+          {#if inatAttribution}
+            <li class="inat-attribution">
+              <strong>Attribution:</strong>
+              {#if inatAttribution.observerLogin}
+                Observed by
+                <a
+                  href={`https://www.inaturalist.org/people/${inatAttribution.observerLogin}`}
+                  target="_blank" rel="noopener"
+                >@{inatAttribution.observerLogin}</a>
+                {#if inatAttribution.observerName && inatAttribution.observerName !== inatAttribution.observerLogin}
+                  ({inatAttribution.observerName})
+                {/if}
+              {:else}
+                Observed (contributor unknown)
+              {/if}
+              {#if inatAttribution.observedOn} on {inatAttribution.observedOn}{/if}
+              · License: {inatLicenseLabel(inatAttribution.licenseCode)}
+              ·
+              <a href={inatAttribution.observationUrl} target="_blank" rel="noopener">View on iNaturalist ↗</a>
+            </li>
+          {/if}
         {:else}
           <li class="muted">Manually added</li>
         {/if}
@@ -2291,6 +2387,19 @@
     letter-spacing: 0.06em;
   }
   .source ul.meta { font-size: 0.78rem; }
+  /* iNat attribution row — slightly bigger + indented so the
+     observer credit is easy to read. Required for CC-BY compliance
+     on the iNat-sourced pins. */
+  .inat-attribution {
+    margin-top: 0.4rem !important;
+    padding: 0.3rem 0.5rem;
+    background: #f0f5ef;
+    border-left: 2px solid #6b8a6b;
+    border-radius: 0 0.25rem 0.25rem 0;
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+  .inat-attribution a { color: #2a5e2a; }
 
   button.inline {
     padding: 0.2rem 0.55rem; font-size: 0.78rem;
