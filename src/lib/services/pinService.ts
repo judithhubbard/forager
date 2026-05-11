@@ -151,20 +151,34 @@ export async function listPublicPins(
   // p_include_invasives=true falls back to the runtime path because
   // the precalc filters to is_forageable=true at refresh time.
   if (z === 13 && !includeInvasives) {
-    const { data, error } = await supabase
-      .rpc('public_pins_bbox_z13' as never, {
-        p_min_lng: west,
-        p_min_lat: south,
-        p_max_lng: east,
-        p_max_lat: north,
-        p_max_rows: maxRows
-      } as never)
-      .range(0, maxRows - 1);
-    if (error) {
-      console.error('[pinService] listPublicPins (z13 precalc v2) error:', error);
-      throw error;
+    // Paginate via .range() — PostgREST's db-max-rows cap is 1000
+    // per response regardless of the function's internal LIMIT. The
+    // runtime path does this too; without pagination dense city
+    // viewports silently truncate to 1000 even when maxRows is
+    // higher. Each page is a fresh RPC call with the same args; the
+    // server-side LIMIT inside the RPC bounds the total set.
+    const PAGE = 1000;
+    const all: PinEffective[] = [];
+    for (let offset = 0; offset < maxRows; offset += PAGE) {
+      const upper = Math.min(offset + PAGE - 1, maxRows - 1);
+      const { data, error } = await supabase
+        .rpc('public_pins_bbox_z13' as never, {
+          p_min_lng: west,
+          p_min_lat: south,
+          p_max_lng: east,
+          p_max_lat: north,
+          p_max_rows: maxRows
+        } as never)
+        .range(offset, upper);
+      if (error) {
+        console.error('[pinService] listPublicPins (z13 precalc v2) error:', error);
+        throw error;
+      }
+      const rows = (data ?? []) as unknown as PinEffective[];
+      all.push(...rows);
+      if (rows.length < PAGE) break;
     }
-    return (data ?? []) as unknown as PinEffective[];
+    return all;
   }
   // p_zoom drives the spatial decimation grid in the runtime RPC.
   // PostgREST has a hidden 1000-row response cap on Supabase

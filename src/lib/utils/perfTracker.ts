@@ -21,8 +21,11 @@ export interface PerfSample {
   total_ms: number;
   /** Bbox area in degrees^2 — bigger viewport = bigger payload. */
   bbox_area_deg2: number;
-  /** Mode: 'heatmap' (zoom < 13) or 'individual' (zoom ≥ 13). */
-  mode: 'heatmap' | 'individual';
+  /** Mode: 'heatmap' (zoom < 13), 'individual' (runtime decimation
+   *  RPC), or 'precalc-z13' (the migration-27 fast path). Helps
+   *  distinguish "is the precalc actually firing?" from
+   *  "are queries fast?" at a glance in the HUD. */
+  mode: 'heatmap' | 'individual' | 'precalc-z13';
   /** Wall-clock time when this sample finished. */
   finished_at: number;
 }
@@ -104,12 +107,30 @@ export const pendingFetch: Writable<{
   startedAt: number;
 } | null> = writable(null);
 
-/** True when the URL includes ?perf=1. Read once at module load —
- *  toggling requires a reload, which is fine for a debug HUD. */
+/** True when the perf HUD should render. Reads in this priority:
+ *  1. URL `?perf=1` → enables AND persists to localStorage so it
+ *     stays on across page reloads + same-tab navigation.
+ *  2. URL `?perf=0` → disables AND clears the localStorage flag.
+ *  3. localStorage `forager.perf` === '1' → enabled (set previously).
+ *
+ *  So once you append `?perf=1` once, the HUD stays on for the
+ *  session until you append `?perf=0`. That makes it useful for
+ *  "validate this performance change across several pans/zooms"
+ *  without re-typing the query string each time. */
+const PERF_LS_KEY = 'forager.perf';
 export const perfEnabled: boolean = (() => {
   if (typeof window === 'undefined') return false;
   try {
-    return new URLSearchParams(window.location.search).get('perf') === '1';
+    const url = new URLSearchParams(window.location.search).get('perf');
+    if (url === '1') {
+      try { localStorage.setItem(PERF_LS_KEY, '1'); } catch { /* storage disabled */ }
+      return true;
+    }
+    if (url === '0') {
+      try { localStorage.removeItem(PERF_LS_KEY); } catch { /* storage disabled */ }
+      return false;
+    }
+    try { return localStorage.getItem(PERF_LS_KEY) === '1'; } catch { return false; }
   } catch {
     return false;
   }
