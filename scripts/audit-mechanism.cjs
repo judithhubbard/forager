@@ -75,6 +75,18 @@ const { COMPLEXES } = require(path.join(ROOT, 'scripts', 'species-complex-unify.
 const args = process.argv.slice(2);
 const wantJson = args.includes('--json');
 const apply = args.includes('--apply');
+// --with-inat: for low-confidence proposals, query the empirical_inat
+// rows in species_fruiting_windows and fit a per-zone slope. The
+// empirical slope can falsify a low-confidence rule-based proposal
+// (e.g., chickweed warm-zone winter was proposed as 'photoperiod'
+// based on slope=0 + wide half_window, but iNat data shows peak DOY
+// shifts -4.6 d/half-zone in zones 7a-9a — clearly heat_driven).
+const withInat = args.includes('--with-inat');
+// --pull-missing: for any low-confidence proposal whose member species
+// has no empirical_inat data, call scripts/inat-phenology.cjs to pull
+// observations and re-classify. Slow (5-30s per species); only
+// activates with --with-inat.
+const pullMissing = args.includes('--pull-missing');
 
 const ALL_MECHANISMS = new Set([
   'heat_driven', 'cool_night', 'frost_anchored',
@@ -83,6 +95,25 @@ const ALL_MECHANISMS = new Set([
 
 const TSV_PATH = path.join(ROOT, 'audit-mechanism.tsv');
 const JSON_PATH = path.join(ROOT, 'audit-mechanism.json');
+
+// DB connection — only needed for --with-inat. Lazy so apply / vanilla
+// runs don't open a connection they won't use.
+let sql = null;
+function getSql() {
+  if (sql) return sql;
+  const env = fs.readFileSync(path.join(ROOT, '.env.local'), 'utf8');
+  const SUPABASE_DB_URL = env.match(/SUPABASE_DB_URL=(.+)/)[1].trim();
+  sql = require(path.join(ROOT, 'node_modules', 'postgres'))(
+    SUPABASE_DB_URL, { ssl: 'require', onnotice: () => undefined }
+  );
+  return sql;
+}
+
+const ZONE_NUM = {
+  '3a': 6, '3b': 7, '4a': 8, '4b': 9, '5a': 10, '5b': 11,
+  '6a': 12, '6b': 13, '7a': 14, '7b': 15, '8a': 16, '8b': 17,
+  '9a': 18, '9b': 19, '10a': 20, '10b': 21, '11a': 22, '11b': 23
+};
 
 /** Strong-signal keywords by species scientific name (lowercased).
  *  Maps a substring to the mechanism it implies. */
@@ -173,7 +204,126 @@ function tsv(v) {
   return String(v).replace(/[\t\r\n]+/g, ' ');
 }
 
-function buildAuditRows() {
+/** Fit a simple linear regression slope (least-squares) of peak_doy
+ *  vs zoneNum across the supplied points. Returns null when fewer
+ *  than 2 distinct zones. The slope is reported in DOY-per-HALF-ZONE
+ *  (so −3 means warmer-by-one-half-zone shifts peak 3 days earlier),
+ *  matching the COMPLEX entry's shift_per_half_zone units. */
+function fitSlope(points) {
+  // points: [{ zoneNum, peakDoy }, …]
+  const distinctZones = new Set(points.map((p) => p.zoneNum));
+  if (distinctZones.size < 2) return null;
+  const n = points.length;
+  const meanX = points.reduce((s, p) => s + p.zoneNum, 0) / n;
+  const meanY = points.reduce((s, p) => s + p.peakDoy, 0) / n;
+  let num = 0, den = 0;
+  for (const p of points) {
+    num += (p.zoneNum - meanX) * (p.peakDoy - meanY);
+    den += (p.zoneNum - meanX) ** 2;
+  }
+  if (den === 0) return null;
+  return num / den; // DOY per half-zone (zoneNum increments are half-zone steps)
+}
+
+/** Pull empirical_inat peak DOYs across zones for one species, optional
+ *  stage filter. Returns array of {zone, zoneNum, peakDoy} sorted by
+ *  zoneNum. Includes both stand-alone empirical_inat rows AND iNat
+ *  evidence entries appended to other rows (so we don't miss species
+ *  whose curated rows just have an iNat bracket attached). */
+async function getEmpiricalForSpecies(speciesId, stage) {
+  const s = getSql();
+  // empirical_inat-confidence rows
+  const standalone = await s`
+    select cz.code as zone, w.peak_doy as peak_doy
+      from species_fruiting_windows w
+      join climate_zones cz on cz.id = w.climate_zone_id
+     where w.species_id = ${speciesId}
+       and w.confidence = 'empirical_inat'
+       and (${stage === null} or w.stage = ${stage}::public.stage)`;
+  const points = [];
+  for (const r of standalone) {
+    const zn = ZONE_NUM[r.zone];
+    if (zn != null && r.peak_doy != null) points.push({ zone: r.zone, zoneNum: zn, peakDoy: r.peak_doy });
+  }
+  // iNat evidence entries appended to curated/regional rows. These
+  // carry their own supports.{peak_doy, start_doy, end_doy} but live
+  // on a row whose synthesized peak was from another source.
+  const inatEv = await s`
+    select cz.code as zone, jsonb_path_query(w.evidence, '$[*] ? (@.is_inat == true)') as ev
+      from species_fruiting_windows w
+      join climate_zones cz on cz.id = w.climate_zone_id
+     where w.species_id = ${speciesId}
+       and (${stage === null} or w.stage = ${stage}::public.stage)
+       and w.evidence is not null`;
+  for (const r of inatEv) {
+    const peak = r.ev?.peak_doy ?? r.ev?.supports?.peak_doy;
+    const zn = ZONE_NUM[r.zone];
+    if (zn != null && peak != null) {
+      // Avoid duplicating the standalone empirical_inat row.
+      if (!points.some((p) => p.zoneNum === zn && p.peakDoy === peak)) {
+        points.push({ zone: r.zone, zoneNum: zn, peakDoy: peak });
+      }
+    }
+  }
+  points.sort((a, b) => a.zoneNum - b.zoneNum);
+  return points;
+}
+
+/** Use the empirical slope to suggest a mechanism. Returns the same
+ *  shape as classify(): { proposed_mechanism, confidence, reason }.
+ *  Returns null when there isn't enough empirical data to draw any
+ *  conclusion. */
+function classifyFromEmpiricalSlope(empiricalSlope, points, stage) {
+  if (empiricalSlope == null) return null;
+  const slopeStr = empiricalSlope.toFixed(1);
+  const nz = new Set(points.map((p) => p.zoneNum)).size;
+  // Threshold: |slope| > 1.5 d/half-zone is a meaningful direction.
+  // Under 1.5 means the empirical data is consistent with "flat".
+  if (empiricalSlope <= -1.5) {
+    return {
+      proposed_mechanism: 'heat_driven',
+      confidence: 'high',
+      reason: `iNat empirical slope ${slopeStr} d/half-zone across ${nz} zones — heat_driven`
+    };
+  }
+  if (empiricalSlope >= 1.5) {
+    if (stage === 'mushroom_flush') {
+      return {
+        proposed_mechanism: 'cool_night',
+        confidence: 'high',
+        reason: `iNat empirical slope +${slopeStr} d/half-zone (mushroom) — cool_night`
+      };
+    }
+    return {
+      proposed_mechanism: 'frost_anchored',
+      confidence: 'high',
+      reason: `iNat empirical slope +${slopeStr} d/half-zone — frost_anchored / cool-trigger`
+    };
+  }
+  // |slope| < 1.5 d/half-zone across multiple zones = genuinely flat
+  return {
+    proposed_mechanism: 'photoperiod',
+    confidence: 'high',
+    reason: `iNat empirical slope ${slopeStr} d/half-zone across ${nz} zones — flat → photoperiod`
+  };
+}
+
+/** Run inat-phenology.cjs for one species as a subprocess. Returns
+ *  number of zones with new iNat data (best-effort parse of the
+ *  script's stdout summary line). */
+function pullInatForSpecies(scientificName) {
+  const { spawnSync } = require('node:child_process');
+  const r = spawnSync(
+    'node',
+    [path.join(__dirname, 'inat-phenology.cjs'), scientificName],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+  );
+  const out = (r.stdout || '') + (r.stderr || '');
+  const m = out.match(/(\d+) zones with obs total/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+async function buildAuditRows() {
   const rows = [];
   for (const cx of COMPLEXES) {
     if (cx.mechanism) {
@@ -192,30 +342,108 @@ function buildAuditRows() {
       });
       continue;
     }
-    const { proposed_mechanism, confidence, reason } = classify(cx);
+    const r = classify(cx);
     rows.push({
       name: cx.name,
       stage: cx.stage ?? 'ripe',
       slope: cx.shift_per_half_zone,
       half_window: cx.half_window,
-      proposed_mechanism,
-      confidence,
-      reason,
+      proposed_mechanism: r.proposed_mechanism,
+      confidence: r.confidence,
+      reason: r.reason,
       members: (cx.members || []).join(', '),
       summary_snippet: (cx.summary || '').substring(0, 80),
-      is_annotated: false
+      is_annotated: false,
+      // Slot for the empirical refinement below.
+      empirical_slope: null,
+      empirical_zones: null
     });
   }
+
+  // --with-inat: re-classify low-confidence rows using empirical data.
+  // The data-seeking principle: don't punt on uncertainty, INVESTIGATE.
+  if (withInat) {
+    const lowConfRows = rows.filter((r) => r.confidence === 'low');
+    console.log(`\n--- Empirical refinement pass: ${lowConfRows.length} low-confidence entries ---`);
+    const s = getSql();
+    for (const row of lowConfRows) {
+      const cx = COMPLEXES.find((c) => c.name === row.name);
+      if (!cx) continue;
+      // Use the first member species as the data source. Most COMPLEX
+      // entries have 1 member; for multi-member complexes the timing
+      // should be similar across members by construction.
+      const firstMember = (cx.members || [])[0];
+      if (!firstMember) continue;
+      const stage = cx.stage ?? 'ripe';
+      const sp = await s`select id from species where scientific_name = ${firstMember}`;
+      if (sp.length === 0) {
+        row.reason += ' · iNat: species not in DB';
+        continue;
+      }
+      // Query empirical data WITHOUT stage filter. The COMPLEX entry's
+      // stage may be 'leaf' or 'root_dig' but iNat's Fruiting-annotated
+      // observations are necessarily 'ripe' stage. Mechanism is a
+      // species-level concept, so the species's empirical phenology
+      // pattern is informative regardless of which stage the complex
+      // entry models. (Sweet birch sap is the exception — and it's
+      // already explicitly annotated.)
+      let points = await getEmpiricalForSpecies(sp[0].id, null);
+
+      // If we have no iNat data and --pull-missing is set, fetch it.
+      if (points.length === 0 && pullMissing) {
+        console.log(`  ${row.name}: no empirical data, pulling iNat for ${firstMember}...`);
+        const n = pullInatForSpecies(firstMember);
+        if (n > 0) {
+          // Re-query after the pull
+          points = await getEmpiricalForSpecies(sp[0].id, null);
+        } else {
+          row.reason += ` · iNat: 0 fruiting obs across all zones`;
+          continue;
+        }
+      }
+
+      if (points.length === 0) {
+        row.reason += ' · iNat: no empirical data in DB (try --pull-missing)';
+        continue;
+      }
+
+      const empSlope = fitSlope(points);
+      row.empirical_slope = empSlope;
+      row.empirical_zones = points.length;
+
+      if (empSlope == null) {
+        row.reason += ` · iNat: only ${points.length} zone(s), can't fit slope`;
+        continue;
+      }
+
+      const refined = classifyFromEmpiricalSlope(empSlope, points, stage);
+      if (refined) {
+        const before = row.proposed_mechanism;
+        if (refined.proposed_mechanism !== before) {
+          console.log(`  ${row.name}: ${before} → ${refined.proposed_mechanism} (empirical slope ${empSlope.toFixed(1)} d/half-zone across ${points.length} zones)`);
+        } else {
+          console.log(`  ${row.name}: confirmed ${refined.proposed_mechanism} via empirical slope ${empSlope.toFixed(1)}`);
+        }
+        row.proposed_mechanism = refined.proposed_mechanism;
+        row.confidence = refined.confidence;
+        row.reason = refined.reason;
+      }
+    }
+    console.log();
+  }
+
   return rows;
 }
 
 function writeTsv(rows) {
-  const lines = ['name\tstage\tslope\thalf_window\tproposed_mechanism\tconfidence\treason\tsummary_snippet\tOK?'];
+  const lines = ['name\tstage\tslope\thalf_window\tproposed_mechanism\tconfidence\treason\tempirical_slope\tempirical_zones\tsummary_snippet\tOK?'];
   for (const r of rows) {
     if (r.is_annotated) continue; // only un-annotated rows need review
     lines.push([
       r.name, r.stage, r.slope, r.half_window,
       r.proposed_mechanism, r.confidence, r.reason,
+      r.empirical_slope != null ? r.empirical_slope.toFixed(1) : '',
+      r.empirical_zones != null ? r.empirical_zones : '',
       r.summary_snippet, ''
     ].map(tsv).join('\t'));
   }
@@ -310,10 +538,11 @@ function applyFromTsv() {
 
 // ---- Main ----
 
+(async () => {
 if (apply) {
   applyFromTsv();
 } else {
-  const rows = buildAuditRows();
+  const rows = await buildAuditRows();
   const summary = writeJson(rows);
   writeTsv(rows);
 
@@ -355,3 +584,9 @@ if (apply) {
     }
   }
 }
+  if (sql) await sql.end();
+})().catch((err) => {
+  console.error('audit-mechanism failed:', err);
+  if (sql) sql.end();
+  process.exit(1);
+});
