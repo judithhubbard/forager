@@ -20,7 +20,18 @@ export interface Metro {
 export const METROS: Metro[] = [
   // Northeast / Mid-Atlantic
   { name: 'Boston area',         lat: 42.36, lng: -71.08, radiusKm: 30 },
-  { name: 'NYC area',            lat: 40.71, lng: -74.00, radiusKm: 50 },
+  // NYC split into per-borough entries so the heatmap tooltip
+  // distinguishes Manhattan vs Brooklyn vs Queens vs the Bronx vs
+  // Staten Island. Adjacent NJ/Westchester additions captured too —
+  // they form one contiguous urban density. Radii sized so adjacent
+  // boroughs don't fight over the same cell at the edges.
+  { name: 'Manhattan',           lat: 40.7831, lng: -73.9712, radiusKm: 8 },
+  { name: 'Brooklyn',            lat: 40.6782, lng: -73.9442, radiusKm: 11 },
+  { name: 'Queens',              lat: 40.7282, lng: -73.7949, radiusKm: 14 },
+  { name: 'Bronx',               lat: 40.8448, lng: -73.8648, radiusKm: 8 },
+  { name: 'Staten Island',       lat: 40.5795, lng: -74.1502, radiusKm: 10 },
+  { name: 'Jersey City / Newark', lat: 40.7268, lng: -74.1051, radiusKm: 12 },
+  { name: 'Westchester (south)', lat: 40.96, lng: -73.83, radiusKm: 15 },
   { name: 'Providence',          lat: 41.83, lng: -71.42, radiusKm: 20 },
   { name: 'Buffalo',             lat: 42.91, lng: -78.86, radiusKm: 25 },
   { name: 'Rochester NY',        lat: 43.16, lng: -77.61, radiusKm: 20 },
