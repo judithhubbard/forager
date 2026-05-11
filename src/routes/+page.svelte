@@ -1186,7 +1186,13 @@
     capHit: boolean;
     fetchedAt: number;
   }
-  let pinFetchCache: PinFetchCacheEntry | null = null;
+  // Multi-zoom cache. Zoom z13→z14→z13 would lose z13 data with a
+  // single-entry cache, refetching when the user comes back. Keying
+  // by zoom keeps each zoom's last buffered viewport, so zoom toggles
+  // (peek at a wider context, then back to detail) are instant. Each
+  // zoom level entry has the same TTL; eviction is by TTL only —
+  // ~10 zoom levels × ~10k pins each is a few MB of memory, fine.
+  const pinFetchCache = new Map<number, PinFetchCacheEntry>();
   let pinPrefetchTimer: ReturnType<typeof setTimeout> | null = null;
 
   function bboxFullyInside(inner: Bbox, outer: Bbox): boolean {
@@ -1229,7 +1235,7 @@
         const merged: PinEffective[] = [];
         for (const p of own) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
         for (const p of pub) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
-        pinFetchCache = {
+        pinFetchCache.set(z, {
           zoom: z,
           bufferedBbox: buffered,
           includeInvasives,
@@ -1237,7 +1243,7 @@
           merged,
           capHit: own.length >= ownCap || pub.length >= pubCap,
           fetchedAt: Date.now()
-        };
+        });
       } catch (err) {
         console.warn('[+page] pin prefetch failed (non-fatal):', err);
       }
@@ -1337,13 +1343,13 @@
         const pubCap = z === 13 ? 6000 : 12000;
         const includeInvasives = $settings.showInvasives;
 
-        // Bbox-buffer cache. When the viewport is fully inside the
-        // previously-buffered fetch, reuse those pins without
-        // re-fetching. We DO refetch the summary every time so the
-        // "X of Y" counts stay accurate to the visible area.
-        const cached = pinFetchCache;
+        // Bbox-buffer cache, per-zoom. When the viewport is fully
+        // inside the previously-buffered fetch FOR THIS ZOOM, reuse
+        // those pins without re-fetching. We DO refetch the summary
+        // every time so the "X of Y" counts stay accurate to the
+        // visible area.
+        const cached = pinFetchCache.get(z);
         const cacheHit = !!cached
-          && cached.zoom === z
           && cached.includeInvasives === includeInvasives
           && cached.regionId === (useRegion && region ? region.id : null)
           && Date.now() - cached.fetchedAt < PIN_CACHE_TTL_MS
@@ -1395,7 +1401,7 @@
           // Store the immediate-viewport result so a re-fetch with
           // the SAME viewport (within TTL) gets a quick hit before
           // the deferred prefetch lands.
-          pinFetchCache = {
+          pinFetchCache.set(z, {
             zoom: z,
             bufferedBbox: bbox,
             includeInvasives,
@@ -1403,7 +1409,7 @@
             merged,
             capHit: cappedHit,
             fetchedAt: Date.now()
-          };
+          });
           // After PIN_PREFETCH_DEFER_MS of idle time, fetch a buffered
           // bbox in the background and overwrite the cache. Canceled
           // if the user pans/zooms again before it fires.
