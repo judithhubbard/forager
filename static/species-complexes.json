@@ -2356,5 +2356,64 @@
       ],
       "stage": "ripe"
     }
+  ],
+  "Acer rubrum": [
+    {
+      "name": "Red maple (sap)",
+      "members": [
+        "Acer rubrum"
+      ],
+      "stage": "sap_run"
+    }
+  ],
+  "Acer negundo": [
+    {
+      "name": "Box elder (sap)",
+      "members": [
+        "Acer negundo"
+      ],
+      "stage": "sap_run"
+    }
+  ],
+  "Populus tremuloides": [
+    {
+      "name": "Quaking aspen (cambium / inner bark)",
+      "members": [
+        "Populus tremuloides"
+      ],
+      "stage": "bark_strip"
+    },
+    {
+      "name": "Quaking aspen (catkins)",
+      "members": [
+        "Populus tremuloides"
+      ],
+      "stage": "shoot"
+    },
+    {
+      "name": "Quaking aspen (sap)",
+      "members": [
+        "Populus tremuloides"
+      ],
+      "stage": "sap_run"
+    }
+  ],
+  "Tsuga canadensis": [
+    {
+      "name": "Eastern hemlock (spring tips)",
+      "members": [
+        "Tsuga canadensis"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Vaccinium sp.": [
+    {
+      "name": "Vaccinium sp. (genus placeholder — defaults to highbush)",
+      "members": [
+        "Vaccinium sp."
+      ],
+      "stage": "ripe"
+    }
   ]
 }

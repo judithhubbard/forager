@@ -2635,6 +2635,275 @@ const COMPLEXES = [
         peak_doy: 158, half_window: 21
       }
     ]
+  },
+
+  // ── 2026-05-10 weakest-evidence beef-up batch (cited_thin → regional_guide) ──
+  // Five widely-pinned species whose windows were cited_thin everywhere or
+  // had thin (1-row) zone coverage. Adds regional anchors + multi-zone
+  // target ranges grounded in primary sources (USDA Silvics, USDA NRCS,
+  // Cornell CE, UMaine Extension, MN DNR, USFS FEIS).
+
+  // Red maple (Acer rubrum) sap. Heat-driven late-winter sap run, same
+  // anchor shape as sugar maple (zone 5a peak Mar 1, -7 d per warmer
+  // half-zone). KEY DIFFERENCE from A. saccharum: red maple breaks bud
+  // EARLIER, which historically was thought to shorten the tappable
+  // window — the Cornell Maple Program now reports that red maples can
+  // be tapped right alongside sugar maples with no off-flavor (modern
+  // shift in expert opinion). Sugar content ~1-1.5% (lower than sugar
+  // maple's 2-3%) so sap-to-syrup ratio is roughly 60:1 vs 40:1. Tighter
+  // half_window (18 vs 20) to acknowledge the earlier bud-break trim.
+  {
+    name: 'Red maple (sap)',
+    members: ['Acer rubrum'],
+    anchor_zone: '5a', anchor_peak: 60, shift_per_half_zone: -7, half_window: 18,
+    target_zones: ['3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'sap_run',
+    source_name: 'Red maple sap (USDA Silvics + Cornell Maple Program + UMaine Extension)',
+    source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/acer/rubrum.htm',
+    summary: 'Red maple (Acer rubrum) sap: tappable in the late-winter freeze-thaw window (mid-Feb to early Apr in zone 6a; mid-Mar to late Apr in zone 4 northern Maine). Sugar content ~1.5% (lower than sugar maple\'s 2-3%) — roughly 60:1 sap-to-syrup ratio vs sugar maple\'s 40:1. Red maple breaks dormancy earlier than sugar maple, so the tappable window historically considered shorter; Cornell Maple Program now reports red maples can be tapped right alongside sugar maples with no off-flavor. Identify by the smooth gray bark on young trees becoming furrowed with age; opposite buds + opposite scars distinguish from oaks/birches.',
+    regional_anchors: [
+      {
+        zones: ['3b','4a','4b','5a'],
+        source: 'UMaine Cooperative Extension Bulletin 7036 (red maple in N Maine)',
+        url: 'https://extension.umaine.edu/publications/7036e/',
+        summary: 'Northern Maine / cold zone: maple sap freeze-thaw cycle typically mid-March to late April. Red maple breaks bud earlier than sugar maple so window trends toward the early-Mar part of the band.',
+        peak_doy: 81, half_window: 21
+      },
+      {
+        zones: ['5a','5b','6a','6b'],
+        source: 'Cornell Maple Program Beginner\'s Notebook (NY / NE)',
+        url: 'https://blogs.cornell.edu/cornellmaple/',
+        summary: 'NY / mid-NE: sap-flow window late Jan through late Mar with peak runs in Feb-early Mar. Cornell now reports red maple tappable alongside sugar maple with no off-flavor — earlier-bud concern overstated.',
+        peak_doy: 53, half_window: 21
+      },
+      {
+        zones: ['6b','7a','7b','8a'],
+        source: 'USDA Silvics + Ohio State Maple Program (mid-Atlantic / OH)',
+        url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/acer/rubrum.htm',
+        summary: 'Mid-Atlantic / OH / TN: sap-flow window late Jan to early Mar in southern range; window shifts ~7 days earlier per warmer half-zone.',
+        peak_doy: 32, half_window: 21
+      }
+    ]
+  },
+
+  // Box elder (Acer negundo) sap. Heat-driven late-winter sap, same
+  // shape as sugar/red maple, slightly later peak than sugar maple
+  // because box elder is more cold-hardy and starts running later in
+  // cold zones (MN DNR cites Mar 15-Apr 20 as ideal MN window). Sugar
+  // content ~1% — lowest of the maples, ~100:1 sap-to-syrup ratio.
+  // Syrup described as lighter + tangier than sugar maple syrup; not
+  // commercially significant but useful for problem-tree mitigation in
+  // urban areas + the Plains where sugar maples don't grow. Range is
+  // EXTREMELY wide — most widely distributed maple in N America, found
+  // CA to Maine, Manitoba to S Texas / FL.
+  {
+    name: 'Box elder (sap)',
+    members: ['Acer negundo'],
+    anchor_zone: '5a', anchor_peak: 60, shift_per_half_zone: -7, half_window: 21,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'sap_run',
+    source_name: 'Box elder sap (USFS FEIS + Minnesota DNR State Parks + USDA Silvics)',
+    source_url: 'https://www.fs.usda.gov/database/feis/plants/tree/aceneg/all.html',
+    summary: 'Box elder (Acer negundo) sap: tappable late winter / early spring during freeze-thaw, distinct from but valid substitute for Acer saccharum. Sugar content ~1% (lowest of tappable maples) — ~100:1 sap-to-syrup ratio. Syrup is lighter + tangier than sugar maple, with caramel + butterscotch notes. Most widely distributed maple in N America: native range CA to Maine, Manitoba/Saskatchewan/Alberta to S Texas + central FL. Ideal in MN: Mar 15-Apr 20 (MN DNR); window shifts ~7 days earlier per warmer half-zone. ID: 3-5 (sometimes 7) opposite COMPOUND leaves — looks like poison-ivy or ash, not a typical maple — but the opposite-branching + winged samaras give it away. Often dismissed as a "weed tree" but tappable + a useful Plains/urban sap source.',
+    regional_anchors: [
+      {
+        zones: ['3a','3b','4a','4b'],
+        source: 'Minnesota DNR State Parks maple syrup guide (MN/upper Midwest)',
+        url: 'https://files.dnr.state.mn.us/destinations/state_parks/maplesyrup_how.pdf',
+        summary: 'MN / upper Midwest cold zones: box elder sap window mid-Mar to late Apr (MN DNR cites Mar 15-Apr 20 ideal); flow can run as early as Jan in a warm year. Same trees tappable through bud break.',
+        peak_doy: 95, half_window: 21
+      },
+      {
+        zones: ['5a','5b','6a','6b'],
+        source: 'USFS FEIS Acer negundo + UNL Extension (Nebraska/IA)',
+        url: 'https://www.fs.usda.gov/database/feis/plants/tree/aceneg/all.html',
+        summary: 'Plains / midwestern range core: box elder tappable Feb-Mar in the central Plains. Riparian habitat, fast-growing, abundant.',
+        peak_doy: 60, half_window: 21
+      },
+      {
+        zones: ['7a','7b','8a','8b','9a'],
+        source: 'USFS FEIS (southern range — TX/OK/AR/FL panhandle)',
+        url: 'https://www.fs.usda.gov/database/feis/plants/tree/aceneg/all.html',
+        summary: 'Southern range edge: sap window late Jan to early Mar; box elder native to S TX and central FL. Less freeze-thaw cycling so flow is briefer and less reliable than colder zones.',
+        peak_doy: 32, half_window: 21
+      }
+    ]
+  },
+
+  // Quaking aspen (Populus tremuloides) — THREE stages: cambium bark
+  // strip, catkins (shoot), and sap. Most widely distributed tree in
+  // N America, ranging from AK Brooks Range south to central Mexico
+  // and across the boreal/montane belts. Ethnobotanically a major
+  // food source for Plains tribes (Blackfeet, Cheyenne, Lakota) +
+  // Plateau Indigenous peoples + Apache. Primary forage parts (per
+  // JK update): bark/flower/leaf with cambium framing.
+  {
+    name: 'Quaking aspen (cambium / inner bark)',
+    members: ['Populus tremuloides'],
+    // Cambium harvest is spring when sap flows — late Apr to early Jun
+    // in zone 5a (when bark slips cleanly from the wood). Anchor 5a
+    // peak DOY 130 (May 10), heat-driven, -5 d/half-zone (modest
+    // gradient — boreal/montane species).
+    anchor_zone: '5a', anchor_peak: 130, shift_per_half_zone: -5, half_window: 21,
+    target_zones: ['2a','2b','3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'bark_strip',
+    source_name: 'Quaking aspen cambium (USDA NRCS POTR5 + USFS Aspen ecology + Plateau ethnobotany)',
+    source_url: 'https://plants.usda.gov/plant-profile/POTR5',
+    summary: 'Quaking aspen (Populus tremuloides) inner bark / cambium: harvested in spring when sap flows and bark slips easily (late Apr - early Jun in cold zones). Sweet + slightly mucilaginous; eaten fresh in spring or dried + ground into flour for bread (mixed with cereal flours). Historical Plains-tribe staple (Blackfeet, Cheyenne, Lakota) used as a sweet famine/spring food when other stores depleted. CRITICAL: girdling kills the tree — only strip narrow vertical patches, never a full ring; aspen reproduces clonally so prefer harvest from large clones where individual stems can be sacrificed. ID: smooth pale greenish-white bark with dark "eye" scars from old branches; the trembling round-toothed leaves on flattened petioles are diagnostic.',
+    regional_anchors: [
+      {
+        zones: ['2a','2b','3a','3b','4a'],
+        source: 'USDA NRCS POTR5 Plant Guide + BC Ministry of Forests (boreal range)',
+        url: 'https://plants.sc.egov.usda.gov/DocumentLibrary/plantguide/pdf/cs_potr5.pdf',
+        summary: 'AK / boreal Canada / N Rockies: sap flows and bark slips mid-May to late Jun. Coldest part of range, latest spring.',
+        peak_doy: 155, half_window: 21
+      },
+      {
+        zones: ['4b','5a','5b','6a','6b'],
+        source: 'Edible Wild Food + Wikipedia consensus (mid-latitude range)',
+        url: 'https://www.ediblewildfood.com/quaking-aspen.aspx',
+        summary: 'NE / upper Midwest / central Rockies: cambium harvest late Apr to late May when sap flows and bark slips cleanly. Best within the 2-3 week window after leaf-out begins.',
+        peak_doy: 130, half_window: 21
+      },
+      {
+        zones: ['7a','7b'],
+        source: 'USFS Aspen ecology bulletin (montane SW + S Rockies)',
+        url: 'https://www.fs.usda.gov/wildflowers/beauty/aspen/grow.shtml',
+        summary: 'SW montane range edge (NM/AZ high country, S CO): cambium harvest mid-Apr to mid-May; aspen here is restricted to higher elevation so timing more like cold-zone lowland.',
+        peak_doy: 115, half_window: 21
+      }
+    ]
+  },
+  {
+    name: 'Quaking aspen (catkins)',
+    members: ['Populus tremuloides'],
+    // Catkins appear BEFORE leaves in early spring — Mar-May depending
+    // on zone. Anchor 5a peak DOY 100 (Apr 10), heat-driven, -5 d/half-zone.
+    // Brief 14-day window — catkins fluff and disperse quickly.
+    anchor_zone: '5a', anchor_peak: 100, shift_per_half_zone: -5, half_window: 14,
+    target_zones: ['2a','2b','3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'shoot',
+    source_name: 'Quaking aspen catkins (Edible Wild Food + Wikipedia + USFS Aspen ecology)',
+    source_url: 'https://www.ediblewildfood.com/quaking-aspen.aspx',
+    summary: 'Quaking aspen catkins: 1-2 inch dangling male catkins appear BEFORE leaves in early spring (Mar-May depending on zone, peak Apr in zone 5a). Edible raw or cooked but bitter — historically eaten by Plains tribes as a famine/spring food. Aspen is dioecious — only male trees produce the long pendulous catkins; female catkins are shorter and upright. Window is brief (~2 weeks) before catkins shed pollen and drop. Cook lightly or add sparingly to soups; the bitterness comes from salicin (same family as willow / aspirin).',
+    regional_anchors: [
+      {
+        zones: ['2a','2b','3a','3b','4a'],
+        source: 'USDA NRCS POTR5 + BC Ministry of Forests (boreal phenology)',
+        url: 'https://plants.sc.egov.usda.gov/DocumentLibrary/plantguide/pdf/cs_potr5.pdf',
+        summary: 'AK / boreal Canada / N Rockies: catkins emerge late Apr to mid-May. Coldest part of range.',
+        peak_doy: 125, half_window: 14
+      },
+      {
+        zones: ['4b','5a','5b','6a','6b','7a','7b'],
+        source: 'Wikipedia + Edible Wild Food consensus',
+        url: 'https://en.wikipedia.org/wiki/Populus_tremuloides',
+        summary: 'NE / upper Midwest / mid-latitude range: catkins emerge late Mar to late Apr, BEFORE leaves.',
+        peak_doy: 100, half_window: 14
+      }
+    ]
+  },
+  {
+    name: 'Quaking aspen (sap)',
+    members: ['Populus tremuloides'],
+    // Sap-run is the LEAST commonly cited aspen use but documented —
+    // tappable late winter like maples but with much lower sugar. Same
+    // heat-driven shape as maples but anchored later (DOY 75 / mid-Mar
+    // in 5a) since aspen sap typically runs slightly after maple in the
+    // same region. Mainly an ethnobotanical / curiosity use, not for
+    // commercial syrup.
+    anchor_zone: '5a', anchor_peak: 75, shift_per_half_zone: -7, half_window: 21,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'sap_run',
+    source_name: 'Quaking aspen sap (Edible Wild Food + USDA NRCS POTR5)',
+    source_url: 'https://plants.usda.gov/plant-profile/POTR5',
+    summary: 'Quaking aspen sap: tappable in the late-winter freeze-thaw window (mid-Mar in zone 5a) like maples but with much lower sugar (~0.5-1%). Aspen sap runs typically a couple weeks after maple in the same region. Mostly an ethnobotanical / curiosity-grade use — drink fresh or boil for a faint pale syrup. Not commercial. Documented use by Plateau Indigenous peoples.'
+  },
+
+  // Eastern hemlock (Tsuga canadensis) spring needle tips. Shoot stage,
+  // heat-driven, brief 1-2 week window per Druid's Garden + Four Season
+  // Foraging (sometime in May in zone 6 western PA). High vitamin C
+  // (citrus-resinous), used for tea + as a garnish. CRITICAL: not poison
+  // hemlock (Conium maculatum, Apiaceae herb) and not yew (Taxus, also
+  // toxic conifer-lookalike). Tsuga is in Pinaceae.
+  {
+    name: 'Eastern hemlock (spring tips)',
+    members: ['Tsuga canadensis'],
+    // Window: peak ~ May 15 in zone 6a; brief 14-day window after the
+    // bright-green new growth emerges. Heat-driven, -5 d/half-zone.
+    anchor_zone: '6a', anchor_peak: 135, shift_per_half_zone: -5, half_window: 14,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'shoot',
+    source_name: 'Eastern hemlock tips (Four Season Foraging + Druid\'s Garden + USDA Silvics)',
+    source_url: 'https://www.fourseasonforaging.com/blog/2023/3/6/the-edible-hemlock',
+    summary: 'Eastern hemlock (Tsuga canadensis) spring needle tips: bright-green new growth at branch ends, harvested for ~1-2 weeks once tips have fully emerged from their tan papery casings but before they darken to mature green (peak mid-May in zone 6a). Vitamin-C-rich citrus-resinous flavor — sprinkle over salads or steep for tea (handful per 3-4 cups boiling water, 10-min steep). CRITICAL ID WARNING: Eastern hemlock (Pinaceae, an evergreen conifer tree) is TOTALLY UNRELATED to poison hemlock (Conium maculatum, Apiaceae, a toxic herbaceous biennial in the carrot family) and to water hemlock (Cicuta maculata, also Apiaceae). The shared common name is a historical accident — Tsuga twigs smell faintly like the herb. ALSO distinguish from yew (Taxus canadensis): both have flat needles, but hemlock has two WHITE stripes on the underside of each needle; yew is uniformly green on both sides and IS toxic. In Minnesota, Tsuga canadensis is legally protected as endangered — do not harvest in MN.',
+    regional_anchors: [
+      {
+        zones: ['3a','3b','4a','4b','5a'],
+        source: 'Wild Foods and Medicines (Krohn) + USDA Silvics (boreal/NE hemlock)',
+        url: 'https://wildfoodsandmedicines.com/fir-hemlock-and-spruce-tips/',
+        summary: 'Northern range (ME/NH/VT/Adirondacks/N MI): tips emerge late May to mid-June.',
+        peak_doy: 155, half_window: 14
+      },
+      {
+        zones: ['5b','6a','6b'],
+        source: 'The Druid\'s Garden (zone 6 western PA, primary observation)',
+        url: 'https://thedruidsgarden.com/2020/05/31/wild-food-profile-eastern-hemlock-buds-fresh-eating-tea-and-eastern-hemlock-bud-dressing/',
+        summary: 'Mid-Atlantic / western PA / Cornell area: brief 1-2 week tip window, typically May; tips fully emerged from papery casings but still bright green.',
+        peak_doy: 135, half_window: 14
+      },
+      {
+        zones: ['6b','7a','7b'],
+        source: 'Four Season Foraging + Eat The Planet (SE hemlock range edge)',
+        url: 'https://www.fourseasonforaging.com/blog/2023/3/6/the-edible-hemlock',
+        summary: 'SE Appalachian range edge (W NC / E TN / N GA): tips emerge mid-Apr to early May. Hemlock here under heavy pressure from hemlock woolly adelgid — forage from healthy trees only.',
+        peak_doy: 115, half_window: 14
+      }
+    ]
+  },
+
+  // Vaccinium sp. genus-only placeholder. The most-foraged Vaccinium
+  // is V. corymbosum (highbush blueberry), so placeholder defaults to
+  // highbush timing across the species' range. Anchor 6a peak DOY 210
+  // (Jul 29), heat-driven, -5 d/half-zone. Genus range is huge — also
+  // includes V. angustifolium (lowbush, ME wild blueberry, similar
+  // Aug timing), V. macrocarpon (cranberry, much later Oct), V.
+  // myrtillus (bilberry), V. ovatum (huckleberry). When users pin
+  // "Vaccinium sp." we serve the highbush curve as the maximum-likelihood
+  // forage; species-specific entries (V. corymbosum, V. angustifolium,
+  // V. macrocarpon) supersede this when present.
+  {
+    name: 'Vaccinium sp. (genus placeholder — defaults to highbush)',
+    members: ['Vaccinium sp.'],
+    anchor_zone: '6a', anchor_peak: 210, shift_per_half_zone: -5, half_window: 21,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'ripe',
+    source_name: 'Vaccinium sp. (USDA NRCS VACO + UMaine Wild Blueberry + Cornell CE)',
+    source_url: 'https://plants.usda.gov/plant-profile/VACO',
+    summary: 'Vaccinium sp.: genus-only placeholder pin. Defaults to the most-foraged species — V. corymbosum (highbush blueberry) — which ripens mid-summer (peak late Jul in zone 6a, June in warm zones, August in cold zones). Genus range covers all of N America from boreal to subtropical. When pin is later identified to species, use the species-specific entry: V. corymbosum (highbush, this curve), V. angustifolium (lowbush / wild Maine blueberry, slightly later Aug-Sep peak), V. macrocarpon (cranberry, much later Oct peak), V. myrtillus / V. ovatum (bilberry/huckleberry, regional). All Vaccinium berries are edible raw, no toxic look-alikes in the genus.',
+    regional_anchors: [
+      {
+        zones: ['3a','3b','4a','4b','5a','5b'],
+        source: 'UMaine Cooperative Extension Wild Blueberry Program (Maine V. angustifolium + cold-zone V. corymbosum)',
+        url: 'https://extension.umaine.edu/blueberries/about/',
+        summary: 'Cold zones (ME/upper Midwest/boreal): wild blueberries (mostly V. angustifolium) harvested August; cultivated V. corymbosum slightly earlier mid-Jul to late Aug.',
+        peak_doy: 220, half_window: 25
+      },
+      {
+        zones: ['6a','6b','7a','7b'],
+        source: 'Cornell CE + NC State Extension (mid-latitude V. corymbosum)',
+        url: 'https://plants.ces.ncsu.edu/plants/vaccinium-corymbosum/',
+        summary: 'Mid-Atlantic / NE / piedmont: V. corymbosum ripens late Jun to mid-Aug, peak late Jul. 4-6 week harvest per bush — pick every 5-7 days.',
+        peak_doy: 210, half_window: 21
+      },
+      {
+        zones: ['8a','8b','9a'],
+        source: 'NC State Extension + Rutgers (southern highbush V. corymbosum)',
+        url: 'https://plants.ces.ncsu.edu/plants/vaccinium-corymbosum/',
+        summary: 'Southeast / Gulf range: southern highbush V. corymbosum ripens mid-May to early Jul, peak mid-Jun. Heat-driven — much earlier than northern range.',
+        peak_doy: 170, half_window: 21
+      }
+    ]
   }
 ];
 
