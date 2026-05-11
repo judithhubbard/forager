@@ -666,7 +666,21 @@
   ],
   "Stellaria media": [
     {
-      "name": "Common chickweed",
+      "name": "Common chickweed (spring flush)",
+      "members": [
+        "Stellaria media"
+      ],
+      "stage": "leaf"
+    },
+    {
+      "name": "Common chickweed (fall flush)",
+      "members": [
+        "Stellaria media"
+      ],
+      "stage": "leaf"
+    },
+    {
+      "name": "Common chickweed (warm-zone winter)",
       "members": [
         "Stellaria media"
       ],
@@ -693,11 +707,32 @@
   ],
   "Hemerocallis fulva": [
     {
-      "name": "Common daylily (shoots + flowers)",
+      "name": "Common daylily (shoots)",
       "members": [
         "Hemerocallis fulva"
       ],
       "stage": "shoot"
+    },
+    {
+      "name": "Common daylily (flower buds)",
+      "members": [
+        "Hemerocallis fulva"
+      ],
+      "stage": "flower_harvest"
+    },
+    {
+      "name": "Common daylily (open flowers)",
+      "members": [
+        "Hemerocallis fulva"
+      ],
+      "stage": "flowering"
+    },
+    {
+      "name": "Common daylily (tubers)",
+      "members": [
+        "Hemerocallis fulva"
+      ],
+      "stage": "root_dig"
     }
   ],
   "Allium vineale": [

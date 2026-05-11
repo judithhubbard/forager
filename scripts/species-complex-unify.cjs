@@ -323,7 +323,16 @@ const COMPLEXES = [
     anchor_peak: 268,           // Sep 25
     shift_per_half_zone: -3,
     half_window: 28,            // wide: hybrid timing varies
-    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    // Extended 2026-05-11: included 3a/3b (extreme-cold species like
+    // C. chrysocarpa, C. arnoldiana exist) and 9a/9b (PNW warm-edge
+    // C. monogyna / C. douglasii). Earlier the target excluded these
+    // and stale seed-era rows persisted with wildly wrong start_doy
+    // (Jun 19 in zone 9a) — letting the proper -3 d/half-zone
+    // gradient flow into those zones is more honest than the orphan
+    // data. Zone 10a is left out (no documented North American
+    // hawthorn ripening below ~9b) and any stale row there is
+    // deleted manually before the unify rerun.
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
     stage: 'ripe',
     source_name: 'Crataegus complex (USDA Silvics + cited foraging guides)',
     source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/crataegus/',
@@ -590,15 +599,43 @@ const COMPLEXES = [
     source_url: 'https://plants.ces.ncsu.edu/plants/urtica-dioica/',
     summary: 'Stinging nettle (Urtica dioica): tender spring shoots, harvest pre-flowering (Apr-May in 6a). Cook or blanch to deactivate stinging hairs. Wear gloves to harvest.'
   },
+  // Common chickweed is bimodal in temperate zones — spring + fall
+  // flush with a hot-summer gap when the plant bolts and dies back.
+  // In warm zones (8b+) the pattern inverts: it's a *winter* green,
+  // dormant through hot summers. Same split-row pattern as watercress.
   {
-    name: 'Common chickweed',
+    name: 'Common chickweed (spring flush)',
     members: ['Stellaria media'],
-    anchor_zone: '6a', anchor_peak: 100, shift_per_half_zone: -4, half_window: 45,
-    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    anchor_zone: '6a', anchor_peak: 105, shift_per_half_zone: -4, half_window: 35,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'leaf',
-    source_name: 'Common chickweed (Eat The Weeds + foraging consensus)',
+    source_name: 'Common chickweed spring (Eat The Weeds + Forager Chef + Practical Self Reliance + USDA NRCS + Cornell CE)',
     source_url: 'https://www.eattheweeds.com/stellaria-media-chickweed/',
-    summary: 'Common chickweed (Stellaria media): cool-weather green, prolific spring + fall in NE, winter staple in warm zones (8+). Wilts in summer heat. Mild flavor — eat raw in salads.'
+    summary: 'Common chickweed (Stellaria media) spring flush: cool-season annual that germinates in fall, overwinters as a small rosette, then explodes Mar-May as one of the FIRST foragable greens of the year (often available before dandelion). Bolts and dies back in summer heat. ID: 5 deeply-notched white petals (look like 10), opposite paired oval leaves, low spreading mat-forming habit, and TWO diagnostic features — (1) a single LINE OF HAIRS down the stem that switches sides at each leaf node, and (2) the stem has a stretchy elastic "spinal cord" inside when you slowly pull a piece apart. Lookalike WARNINGS: scarlet pimpernel (Anagallis arvensis) is TOXIC, similar growth habit but has orange-red flowers (not white) — avoid; spurges (Euphorbia spp.) are TOXIC and exude milky sap when broken (chickweed has clear sap). Uses: salads (mild, almost corn-silky flavor, very tender), chickweed pesto (substitute for basil), wilted/cooked greens (cooks like spinach in seconds), smoothies. Traditional medicinal "skin food" — poultice for itches and minor skin irritations.'
+  },
+  {
+    name: 'Common chickweed (fall flush)',
+    members: ['Stellaria media'],
+    anchor_zone: '6a', anchor_peak: 296, shift_per_half_zone: -4, half_window: 35,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'leaf',
+    source_name: 'Common chickweed fall (Eat The Weeds + Forager Chef + Practical Self Reliance)',
+    source_url: 'https://www.eattheweeds.com/stellaria-media-chickweed/',
+    summary: 'Common chickweed fall flush: regrowth from fresh seed once summer heat breaks, Sep-Nov. New tender plants emerge after the first cool rains, often visible right through hard frost (chickweed is freeze-tolerant and stays green under snow). Last reliable wild green of the year in cold zones before the soil freezes. Same ID + safety as spring flush.'
+  },
+  {
+    name: 'Common chickweed (warm-zone winter)',
+    members: ['Stellaria media'],
+    // In zones 8b-9b chickweed inverts — fall through early spring is
+    // the active window because the plant cannot tolerate hot summers.
+    // Single wide window covers Oct-Mar (~150 days) in mild-winter
+    // climates; bolts as soon as overnight temps stay above ~55°F.
+    anchor_zone: '9a', anchor_peak: 30, shift_per_half_zone: 0, half_window: 90,
+    target_zones: ['8b','9a','9b'],
+    stage: 'leaf',
+    source_name: 'Common chickweed warm-zone (UC ANR + UF/IFAS)',
+    source_url: 'https://ipm.ucanr.edu/PMG/WEEDS/common_chickweed.html',
+    summary: 'Common chickweed warm-zone winter green: in mild-winter climates (CA, FL panhandle, Gulf Coast) chickweed runs the OPPOSITE seasonal cycle — actively growing Oct-Mar when nights are cool, dormant or absent through hot summers. Often the most prolific in late winter (Jan-Feb). Same ID + safety as cold-zone populations.'
   },
   {
     name: 'Cleavers (spring shoots)',
@@ -620,15 +657,71 @@ const COMPLEXES = [
     source_url: 'https://www.eattheweeds.com/garlic-mustard-alliaria-petiolata/',
     summary: 'Garlic mustard (Alliaria petiolata): invasive — encouraged to forage. First-year basal rosette overwinters and re-emerges in March; 2nd-year pre-flowering leaves harvestable Apr-May (peak late Apr in zone 6a). Tastes like horseradish + garlic; pesto, sautéed.'
   },
+  // Common daylily has FIVE distinct forage opportunities through the
+  // year — split into separate stage entries so the timeline shows
+  // exactly when each is in season. Hemerocallis (true daylilies)
+  // ONLY — Lilium (true lilies) are TOXIC and look superficially
+  // similar in bud. CRITICAL safety note: a small fraction of people
+  // (genetic predisposition? unclear) get acute GI distress from
+  // daylily; ALWAYS start with a small taste-test portion the first
+  // time, cooked, and wait 24h before eating a meal-sized amount.
   {
-    name: 'Common daylily (shoots + flowers)',
+    name: 'Common daylily (shoots)',
     members: ['Hemerocallis fulva'],
-    anchor_zone: '6a', anchor_peak: 122, shift_per_half_zone: -3, half_window: 40,
-    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    // Young spring spear-like shoots before they leaf out — best
+    // window is when shoots are 4-8 inches tall, late Apr - mid May
+    // in zone 6a. Cook like asparagus.
+    anchor_zone: '6a', anchor_peak: 122, shift_per_half_zone: -3, half_window: 25,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
     stage: 'shoot',
-    source_name: 'Common daylily (Eat The Weeds + Wild Food Girl)',
+    source_name: 'Common daylily shoots (Eat The Weeds + Forager Chef + Sam Thayer)',
     source_url: 'https://www.eattheweeds.com/daylily/',
-    summary: 'Common daylily (Hemerocallis fulva): young shoots Apr-May (asparagus-like); flower buds + open flowers Jun-Aug. Avoid in people prone to GI sensitivity — small fraction of harvesters react.'
+    summary: 'Common daylily (Hemerocallis fulva) young shoots: tender spear-like spring shoots, harvested 4-8 in tall before they leaf out (Apr-May in zone 6a). Cooks like asparagus — sauté, steam, or pickle. Snap off at ground level; the plant regrows readily from rhizomes.'
+  },
+  {
+    name: 'Common daylily (flower buds)',
+    members: ['Hemerocallis fulva'],
+    // Pre-open flower buds Jun-Aug — the most popular daylily forage,
+    // sold dried in Chinese markets as "golden needles" (金針).
+    // Each cluster offers buds at multiple maturities — harvest the
+    // greenest plump unopened buds (next to bloom in 24h).
+    anchor_zone: '6a', anchor_peak: 182, shift_per_half_zone: -3, half_window: 25,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'flower_harvest',
+    source_name: 'Common daylily buds (Eat The Weeds + Practical Self Reliance + Chinese cuisine consensus)',
+    source_url: 'https://www.eattheweeds.com/daylily/',
+    summary: 'Common daylily flower buds: pre-open green plump buds Jun-Aug, classic Chinese cuisine ingredient (dried as "golden needles" / jin zhen). Cook briefly — stir-fry, steam, soup, batter-fry. Best stage: greenest plump unopened buds (~24h before opening). Tastes like green bean × asparagus. Each plant offers multiple harvest passes over weeks as new buds form.'
+  },
+  {
+    name: 'Common daylily (open flowers)',
+    members: ['Hemerocallis fulva'],
+    // Open flowers — petals raw in salads, batter-fried, stuffed
+    // (like squash blossoms). Each flower lasts ONE day (hence
+    // "Hemero-callis" = "day beauty"). Slightly more GI risk than
+    // buds — many foragers eat buds enthusiastically but pass on
+    // raw open petals.
+    anchor_zone: '6a', anchor_peak: 196, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'flowering',
+    source_name: 'Common daylily flowers (Eat The Weeds + Practical Self Reliance)',
+    source_url: 'https://www.eattheweeds.com/daylily/',
+    summary: 'Common daylily open flowers Jun-Aug: each flower lasts a single day (hence the name Hemero-callis = "day beauty"). Petals edible raw in salads (mild lettuce-like) or batter-fried + stuffed (use like squash blossoms). Some foragers find raw petals more likely to cause GI sensitivity than buds — when in doubt cook them.'
+  },
+  {
+    name: 'Common daylily (tubers)',
+    members: ['Hemerocallis fulva'],
+    // Small finger-sized tubers attached to the rhizomes. Dig in
+    // late fall after leaves yellow, or early spring before regrowth.
+    // Two windows — fall (after die-back) and early spring
+    // (pre-shoot) — but the unify pipeline single-window cannot
+    // wrap across the cold winter, so we use a wide fall-anchored
+    // window that extends into the next-year shoulder.
+    anchor_zone: '6a', anchor_peak: 305, shift_per_half_zone: 5, half_window: 60,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    stage: 'root_dig',
+    source_name: 'Common daylily tubers (Sam Thayer Forager’s Harvest + Eat The Weeds)',
+    source_url: 'https://www.eattheweeds.com/daylily/',
+    summary: 'Common daylily tubers: small finger-sized starchy tubers on the rhizomes. Dig late fall after leaves yellow (peak Nov in zone 6a) or early spring before regrowth. Boil to reduce GI risk — eaten cooked, taste like white potato × water chestnut. Raw tubers cause GI upset for some people; ALWAYS cook. CRITICAL ID warning: only Hemerocallis. Lilium tubers (true lilies) are TOXIC.'
   },
   {
     name: 'Field garlic',
@@ -993,13 +1086,17 @@ const COMPLEXES = [
     name: 'Carob',
     members: ['Ceratonia siliqua'],
     anchor_zone: '9b', anchor_peak: 288, shift_per_half_zone: -3, half_window: 45,
-    target_zones: ['9a','9b','10a','10b'],
+    // Extended to 11a 2026-05-11 — carob grows + fruits in the frost-
+    // free tropics (HI, S FL, Caribbean) at the same fall-drop schedule
+    // as Mediterranean range. No different timing in 11a, so the
+    // regional_anchor covers it with the same Sep-Nov anchor.
+    target_zones: ['9a','9b','10a','10b','11a'],
     stage: 'ripe',
-    source_name: 'Carob (Oregon State Landscape Plants + Backyard Forager)',
+    source_name: 'Carob (Oregon State Landscape Plants + Backyard Forager + UH CTAHR)',
     source_url: 'https://landscapeplants.oregonstate.edu/plants/ceratonia-siliqua',
-    summary: 'Carob: leathery pods ripe fall (Sep-Nov) in coastal CA; can persist on tree into winter.',
+    summary: 'Carob (Ceratonia siliqua): leathery brown pods ripen Sep-Nov in Mediterranean climates (coastal CA, FL, HI, Caribbean), can persist on the tree into winter. Pods are sweet-fibrous (carob-flour source); seeds are toxic and very hard, traditionally used as a weight standard ("carat"). Eat the pulp around the seeds, or grind dried pods (seeds removed) into carob powder.',
     regional_anchors: [
-      { zones: ['9a','9b','10a','10b'], source: 'Oregon State Landscape Plants', url: 'https://landscapeplants.oregonstate.edu/plants/ceratonia-siliqua', summary: 'Pods reddish-brown when ripe in fall; drop Sep-Nov.', peak_doy: 288, half_window: 45 }
+      { zones: ['9a','9b','10a','10b','11a'], source: 'Oregon State Landscape Plants', url: 'https://landscapeplants.oregonstate.edu/plants/ceratonia-siliqua', summary: 'Pods reddish-brown when ripe in fall; drop Sep-Nov. Mediterranean + frost-free subtropics behave similarly.', peak_doy: 288, half_window: 45 }
     ]
   },
   {

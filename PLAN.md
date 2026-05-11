@@ -935,6 +935,64 @@ Client UI reads from `v_pin_effective`; raw `pin` rows are for admin/debug surfa
 
 ---
 
+## 11. Data Protection & Anti-Scraping
+
+The public dataset is intentionally open to anonymous browsing — that's the whole funnel. But the *curated* value-add (harvest windows + prose + species-level safety notes + photos + citations) represents months of synthesis, and the user-contributed pin / observation / photo content is the paid tier's reason to exist. This section is the framework for protecting those without breaking the open-browsing model.
+
+### 11.1 What we explicitly do not try to protect
+
+- **Municipal tree-inventory pin locations.** These come from CC0 / public-domain city open-data portals. Anyone can re-scrape Cincinnati / Toronto / NYC / etc. at the source. Don't waste cycles defending against recovery of substrate data.
+- **Wikipedia-sourced species facts.** CC BY-SA 4.0 propagates; we cannot relicense.
+- **iNaturalist phenology data.** Their license terms cover redistribution; our derived percentile bins are minor synthesis.
+
+### 11.2 What we protect
+
+In rough order of value:
+
+1. **The curated species catalog** — `usage_notes`, `harvest_tips`, `toxicity_notes`, `attribution`, plus the editorial decisions about *which* species belong (the marginal-forage flags, the soft-deleted bad-foragers like Cornus florida).
+2. **The calibration data** — `species_fruiting_windows` (regional anchors + percentile bins + evidence trail).
+3. **User-contributed content** — pins, observations, photos with `import_source IS NULL`.
+4. **The aggregation itself** — one interface across 132+ city inventories.
+
+### 11.3 Defense in depth
+
+**Auth-gate the curated content (single biggest lever).** Anonymous tier sees: pin locations on map + species *common name* + one-line `safety_notes`. Signed-in (free or paid) tier sees: full prose, full harvest windows, evidence, photos beyond a thumbnail. Almost free for legitimate users — sign-up is already the watchlist funnel hook from §8.4. Raises the cost of scraping from "curl with no auth" to "headless browser with a real account, rate-limited per account."
+
+**Cloudflare in front of Supabase REST.** Already in §4.3; ship before public launch. Aggressive per-IP rate limits on `public_pins_bbox` and species-detail RPCs. Bot Fight Mode catches most crawlers. Cache anonymous bbox responses 60s at the edge so a scraper hits cached responses anyway.
+
+**Architectural friction.**
+- No bulk endpoints. `public_pins_bbox` is already bbox-scoped — a scraper has to walk an N×M tile grid.
+- Add a max-bbox-area check so a single RPC call can't span a continent.
+- Keep `species_fruiting_windows` server-side only; expose via an RPC that joins with bbox-relevant pins, not directly through PostgREST.
+- Cap species-catalog pagination through an RPC, not raw `select * from species`.
+
+**Canary entries.** Seed 2–3 fake species with unique Latin binomials (e.g. *Pseudocarpus claudii*) and invented prose. If they surface on a competitor's site, in an ML training dataset, or in a data-resale offer, you have unambiguous proof.
+
+**Legal cover.**
+- Terms of Service with explicit anti-scraping + attribution-required clauses.
+- License curated content **CC BY-NC-SA** — compatible with the CC BY-SA Wikipedia source (share-alike propagates), and the NC clause makes commercial-competitor use overtly infringing.
+- Pin substrate stays attributed to its municipal source (matches their licenses).
+
+**Detection.** Log query patterns via the existing `ux_events` table (migration 22). Cloudflare exposes per-IP request volumes, hourly distributions, and path patterns for free. Watch for: high-volume same-IP bbox walks, species_id enumeration, off-hours bursts.
+
+### 11.4 Pre-launch checklist
+
+1. **Auth-gate prose / windows / evidence** behind signed-in (free tier). ~1 dev-day.
+2. **Bbox-area cap + RPC-only access pattern** for `species_fruiting_windows` and species detail. ~½ day.
+3. **2 canary species** seeded into the catalog. ~30 min.
+4. **Terms of Service + license declaration** on the About page. ~1 hour.
+5. **Cloudflare in front of Supabase REST** with rate limits + Bot Fight Mode. Already on the §4.3 roadmap; ship before public launch.
+
+~2 dev-days total. Defer CAPTCHA, proof-of-work, JS-rendering tricks — they punish legitimate users more than they slow scrapers.
+
+### 11.5 What we explicitly do NOT do
+
+- **Obfuscate the API** or use cryptic field names. Makes legitimate debugging harder; barely slows a scraper.
+- **Refuse anonymous data entirely.** Kills the funnel.
+- **Pursue legal action against academic / hobbyist scrapers.** Reserve enforcement for clear commercial reuse where canaries make the case.
+
+---
+
 ## Plan status
 
 This document is the source of truth for Forager's design. It will be edited as decisions firm up or change. When implementation begins, individual phases may move to issue tracking, but architectural and product decisions return here.

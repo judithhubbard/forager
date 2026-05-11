@@ -470,7 +470,7 @@
   function startEdit(zoneId: string) {
     editingZoneId = zoneId;
     saveError = '';
-    const ripe = dbBySpeciesZone.get(zoneId)?.get(primaryStage);
+    const ripe = dbBySpeciesZone.get(zoneId)?.get(primaryStage)?.[0];
     if (ripe) {
       formStartDoy = ripe.start_doy;
       formEndDoy = ripe.end_doy;
@@ -504,7 +504,7 @@
     saving = true;
     saveError = '';
     try {
-      const ripe = dbBySpeciesZone.get(editingZoneId)?.get(primaryStage);
+      const ripe = dbBySpeciesZone.get(editingZoneId)?.get(primaryStage)?.[0];
       const payload = {
         species_id: currentSpeciesId,
         climate_zone_id: editingZoneId,
@@ -538,7 +538,7 @@
 
   async function deleteCell() {
     if (!editingZoneId || saving) return;
-    const ripe = dbBySpeciesZone.get(editingZoneId)?.get(primaryStage);
+    const ripe = dbBySpeciesZone.get(editingZoneId)?.get(primaryStage)?.[0];
     if (!ripe?.id) {
       cancelEdit();
       return;
@@ -740,7 +740,7 @@
       isAnchor: boolean;
     }[] = [];
     for (const z of sortedZones) {
-      const w = dbBySpeciesZone.get(z.id)?.get(primaryStage);
+      const w = dbBySpeciesZone.get(z.id)?.get(primaryStage)?.[0];
       if (!w || w.start_doy == null || w.end_doy == null) continue;
       points.push({
         zone_id: z.id,
@@ -855,13 +855,23 @@
   }
 
   /** For the current species, group DB windows by zone id, by stage. */
+  /** Map<climate_zone_id, Map<stage, DBWindow[]>> — VALUE IS AN ARRAY.
+   *  Bimodal complexes (watercress spring+fall, guava spring+fall,
+   *  papaya year-wrap split, wood ear two flushes) write multiple
+   *  rows for the same (species, zone, stage). Earlier this map used
+   *  `inner.set(w.stage, w)` which silently overwrote — guava in 10b
+   *  showed only fall, in 9b/10a only spring, depending on row-insert
+   *  order. Storing as array lets the timeline render every fragment
+   *  and lets the edit form fall back to the first row deterministically. */
   $: dbBySpeciesZone = (() => {
-    const out = new Map<string, Map<string, DBWindow>>();
+    const out = new Map<string, Map<string, DBWindow[]>>();
     if (!currentSpeciesId) return out;
     for (const w of dbWindows) {
       if (w.species_id !== currentSpeciesId) continue;
-      const inner = out.get(w.climate_zone_id) ?? new Map<string, DBWindow>();
-      inner.set(w.stage, w);
+      const inner = out.get(w.climate_zone_id) ?? new Map<string, DBWindow[]>();
+      const arr = inner.get(w.stage) ?? [];
+      arr.push(w);
+      inner.set(w.stage, arr);
       out.set(w.climate_zone_id, inner);
     }
     return out;
@@ -1565,7 +1575,7 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                      dash conveys confidence tier so thin-citation rows
                      visually stand apart from substantial ones. -->
                 {#if dbStages}
-                  {#each [...dbStages.values()] as w}
+                  {#each [...dbStages.values()].flat() as w}
                     {#if w.start_doy != null && w.end_doy != null}
                       {@const cs = confidenceStyle(w.confidence)}
                       <rect
@@ -1734,8 +1744,8 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                 {/if}
               </div>
             </div>
-            {#if !editMode && expandedZoneId === z.id && dbBySpeciesZone.get(z.id)?.get(primaryStage)}
-              {@const ripe = dbBySpeciesZone.get(z.id)?.get(primaryStage)}
+            {#if !editMode && expandedZoneId === z.id && dbBySpeciesZone.get(z.id)?.get(primaryStage)?.[0]}
+              {@const ripe = dbBySpeciesZone.get(z.id)?.get(primaryStage)?.[0]}
               <div class="row-detail">
                 {#if ripe?.notes}
                   <div class="detail-section">

@@ -105,6 +105,10 @@
     }
     return m;
   })();
+  // KNOWN BUG: bimodal species (watercress, guava, papaya, wood ear,
+  // chickweed) have multiple rows per (species, stage) and this loop
+  // silently overwrites all but the last. Fix requires shape change
+  // to WindowRow[] across the chart code; tracked separately.
 
   // Page-level banner trigger: how many bars are interpolated from
   // frost-date offsets vs hand-curated. Drives a heads-up notice
