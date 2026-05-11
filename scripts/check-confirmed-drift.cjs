@@ -40,6 +40,11 @@ const { COMPLEXES, ZONE_NUM } = require('./species-complex-unify.cjs');
 
 const args = process.argv.slice(2);
 const wantJson = args.includes('--json');
+// By default also write the drift report to static/drift-report.json
+// so the calibration viewer can surface drift badges per species
+// without an extra DB round-trip. Build artifact, regenerated whenever
+// this script runs (which is automatically post-unify).
+const writeStaticReport = !args.includes('--no-static');
 const filterNames = args.filter((a) => !a.startsWith('--'));
 
 /** Compute what the unify pipeline would write for a given complex
@@ -182,6 +187,37 @@ function projectWindow(cx, zoneCode) {
         n_confirmed_rows: liveRows.filter((r) => r.is_confirmed).length,
         drifts
       });
+    }
+  }
+
+  // Always also write a static report keyed by species_id for the
+  // calibration viewer. Unless --no-static is passed.
+  if (writeStaticReport && filterNames.length === 0) {
+    const staticReport = {
+      generated_at: new Date().toISOString(),
+      confirmed_count: species.length,
+      drift_count: allDrift.length,
+      by_species_id: {} // species_id → { n_drifts, kinds: { ... } }
+    };
+    // Map back to species_id since the viewer keys species by uuid.
+    const idByName = new Map(species.map((s) => [s.scientific_name, s.id]));
+    for (const s of allDrift) {
+      const id = idByName.get(s.scientific_name);
+      if (!id) continue;
+      staticReport.by_species_id[id] = {
+        scientific_name: s.scientific_name,
+        common_name: s.common_name,
+        n_drifts: s.drifts.length,
+        kinds: s.drifts.reduce((acc, d) => {
+          acc[d.kind] = (acc[d.kind] || 0) + 1;
+          return acc;
+        }, {})
+      };
+    }
+    const outPath = path.join(ROOT, 'static', 'drift-report.json');
+    fs.writeFileSync(outPath, JSON.stringify(staticReport, null, 2));
+    if (!wantJson) {
+      console.log(`Wrote static drift report: static/drift-report.json (${allDrift.length} drifted species)`);
     }
   }
 

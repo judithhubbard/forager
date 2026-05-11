@@ -3131,4 +3131,20 @@ if (require.main !== module) return;
   console.log(`Wrote complex-membership JSON: ${outPath} (${Object.keys(memberToComplex).length} species)`);
 
   await sql.end();
+
+  // Post-step: refresh the drift report so the calibration viewer's
+  // ⚠ badges reflect the just-committed unify state. Runs as a
+  // subprocess so it gets a clean DB connection + the updated DB.
+  // Skipped if --no-drift-check is passed (e.g. during fast iteration).
+  if (!process.argv.includes('--no-drift-check')) {
+    const { spawnSync } = require('node:child_process');
+    console.log('\nRefreshing drift report (static/drift-report.json)…');
+    const r = spawnSync('node', [path.join(__dirname, 'check-confirmed-drift.cjs')], {
+      stdio: 'inherit'
+    });
+    if (r.status !== 0 && r.status !== 1) {
+      // Exit code 1 just means "drift detected" — not an error.
+      console.warn('  drift check exited with status', r.status);
+    }
+  }
 })();

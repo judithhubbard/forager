@@ -381,6 +381,67 @@
     }
   }
 
+  // Drift report from scripts/check-confirmed-drift.cjs. Refreshed
+  // automatically as a post-step of species-complex-unify.cjs. Maps
+  // species_id → { n_drifts, kinds }. Empty when no drift has been
+  // computed yet OR no confirmed species drift exists.
+  type DriftReport = {
+    generated_at: string;
+    confirmed_count: number;
+    drift_count: number;
+    by_species_id: Record<string, { scientific_name: string; common_name: string; n_drifts: number; kinds: Record<string, number> }>;
+  };
+  let driftReport: DriftReport | null = null;
+  async function loadDriftReport() {
+    try {
+      const res = await fetch(`${base}/drift-report.json`);
+      if (!res.ok) return; // 404 is fine — no confirmed species yet
+      driftReport = await res.json();
+    } catch (err) {
+      console.warn('[calibration] could not load drift-report.json', err);
+    }
+  }
+
+  // ─── Observations groundwork (deferred — not surfaced yet) ───────────
+  // When users start logging observations, we'll want to overlay them
+  // on the per-zone timeline alongside the synthesized window + per-
+  // source evidence bars. The data path is:
+  //
+  //   v_observation_with_pin → filter by species + climate_zone →
+  //     plot DOY-per-observation as a dot, color by quality_rating,
+  //     y-band reserved below the existing evidence row.
+  //
+  // For now this loader is a stub that always returns []. Wire it up
+  // by replacing the body with a real query when observations exist
+  // in volume. The viewer's reactive plumbing is set up to render
+  // whatever this returns; no other code changes required.
+  type ObservationDot = {
+    pin_id: string;
+    zone_code: string;
+    stage: string;
+    doy: number;
+    observed_at: string;
+    quality_rating: number | null;
+  };
+  let observationDots: ObservationDot[] = [];
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  async function loadObservations(_speciesId: string): Promise<ObservationDot[]> {
+    // TODO: when observations become useful, replace with:
+    //   const { data } = await supabase
+    //     .from('v_observation_with_pin')
+    //     .select('pin_id, observed_at, stage, quality_rating, ...')
+    //     .eq('species_id', _speciesId);
+    //   then bucket by zone via pin_id → pins.climate_zone_id
+    //   and compute DOY-of-year client-side
+    return [];
+  }
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+  // Refresh observations whenever the focused species changes. Cheap
+  // when it returns [], real-cost-only once the loader is wired.
+  $: if (currentSpeciesId) void (async () => {
+    observationDots = await loadObservations(currentSpeciesId);
+  })();
+
   /** For the current species, return the complexes it belongs to, with
    *  per-complex member status. */
   $: currentComplexes = (() => {
@@ -454,6 +515,7 @@
       await loadWindows();
       await loadSpeciesSummaries();
       await loadComplexMembership();
+      await loadDriftReport();
 
       const speciesWithData = new Set(dbWindows.map((w) => w.species_id));
       currentSpeciesId =
@@ -1193,6 +1255,11 @@
   <button class="back" on:click={() => goto('/')}>← Map</button>
   <h1>Calibration viewer</h1>
   <span class="hint">{species.length} species · {zones.length} zones · ↔ to step · / to search</span>
+  {#if driftReport && driftReport.drift_count > 0}
+    <span class="drift-banner" title="Confirmed species where the unify pipeline output has changed since the snapshot. Use scripts/check-confirmed-drift.cjs for details.">
+      ⚠ {driftReport.drift_count} of {driftReport.confirmed_count} confirmed species drifted
+    </span>
+  {/if}
 </header>
 
 <main>
@@ -1228,14 +1295,18 @@
                 {label} <span class="sb-count">{list.length}</span>
               </div>
               {#each list as sp (sp.id)}
+                {@const drift = driftReport?.by_species_id[sp.id]}
                 <button
                   class="sb-item"
                   class:active={sp.id === currentSpeciesId}
                   on:click={() => pickSpecies(sp.id)}
-                  title={sp.scientific_name}
+                  title={drift ? `${sp.scientific_name} — ${drift.n_drifts} drift entries (unify changed since confirm)` : sp.scientific_name}
                 >
                   <span class="sb-dot sb-status-{k}"></span>
                   <span class="sb-name">{sp.common_name}</span>
+                  {#if drift}
+                    <span class="sb-drift" aria-label="drift detected">⚠</span>
+                  {/if}
                 </button>
               {/each}
             </div>
@@ -1249,14 +1320,18 @@
             </div>
             {#each g.members as sp (sp.id)}
               {@const status = speciesSummaryById[sp.id]?.review_status ?? 'unreviewed'}
+              {@const drift = driftReport?.by_species_id[sp.id]}
               <button
                 class="sb-item"
                 class:active={sp.id === currentSpeciesId}
                 on:click={() => pickSpecies(sp.id)}
-                title={sp.scientific_name}
+                title={drift ? `${sp.scientific_name} — ${drift.n_drifts} drift entries (unify changed since confirm)` : sp.scientific_name}
               >
                 <span class="sb-dot sb-status-{status}"></span>
                 <span class="sb-name">{sp.common_name}</span>
+                {#if drift}
+                  <span class="sb-drift" aria-label="drift detected">⚠</span>
+                {/if}
               </button>
             {/each}
           </div>
@@ -1268,14 +1343,18 @@
             </div>
             {#each sidebarByComplex.solo as sp (sp.id)}
               {@const status = speciesSummaryById[sp.id]?.review_status ?? 'unreviewed'}
+              {@const drift = driftReport?.by_species_id[sp.id]}
               <button
                 class="sb-item"
                 class:active={sp.id === currentSpeciesId}
                 on:click={() => pickSpecies(sp.id)}
-                title={sp.scientific_name}
+                title={drift ? `${sp.scientific_name} — ${drift.n_drifts} drift entries (unify changed since confirm)` : sp.scientific_name}
               >
                 <span class="sb-dot sb-status-{status}"></span>
                 <span class="sb-name">{sp.common_name}</span>
+                {#if drift}
+                  <span class="sb-drift" aria-label="drift detected">⚠</span>
+                {/if}
               </button>
             {/each}
           </div>
@@ -1908,6 +1987,15 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
     cursor: pointer;
   }
   .hint { font-size: 0.78rem; color: #6b7a6b; margin-left: auto; }
+  .drift-banner {
+    font-size: 0.78rem;
+    color: #8a4500;
+    background: #fdf2dc;
+    border: 1px solid #e7c074;
+    border-radius: 0.4rem;
+    padding: 0.15rem 0.5rem;
+    cursor: help;
+  }
   main {
     max-width: 80rem;
     margin: 0 auto;
@@ -2003,6 +2091,16 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
     color: #6b7a6b; border-left-color: #c7d0c7;
   }
   .sb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sb-drift {
+    flex: 0 0 auto;
+    font-size: 0.85em;
+    color: #b25e00;
+    background: #fdf2dc;
+    border: 1px solid #e7c074;
+    border-radius: 0.5rem;
+    padding: 0 0.35rem;
+    line-height: 1.2;
+  }
   .complex-note {
     margin-top: 0.6rem;
     padding: 0.5rem 0.7rem;
