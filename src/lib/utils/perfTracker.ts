@@ -22,10 +22,11 @@ export interface PerfSample {
   /** Bbox area in degrees^2 — bigger viewport = bigger payload. */
   bbox_area_deg2: number;
   /** Mode: 'heatmap' (zoom < 13), 'individual' (runtime decimation
-   *  RPC), or 'precalc-z13' (the migration-27 fast path). Helps
-   *  distinguish "is the precalc actually firing?" from
-   *  "are queries fast?" at a glance in the HUD. */
-  mode: 'heatmap' | 'individual' | 'precalc-z13';
+   *  RPC for z15+ or when invasives are on), 'precalc-z13' or
+   *  'precalc-z14' (migration-27/28 fast paths). Helps distinguish
+   *  "is the precalc actually firing?" from "are queries fast?"
+   *  at a glance in the HUD. */
+  mode: 'heatmap' | 'individual' | 'precalc-z13' | 'precalc-z14';
   /** Wall-clock time when this sample finished. */
   finished_at: number;
 }

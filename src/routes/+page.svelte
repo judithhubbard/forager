@@ -1290,14 +1290,17 @@
         bboxSummary = probeSum;
       }
     }
-    // Mode tagging for the perf HUD. z13 + no-invasives + not-heatmap
-    // routes through the migration-27 precalc fast path in
-    // pinService.listPublicPins — label it distinctly so the HUD can
-    // confirm the precalc actually fires at a glance.
+    // Mode tagging for the perf HUD. z13 + z14 + no-invasives route
+    // through the migration-27/28 precalc fast paths in
+    // pinService.listPublicPins — labeled distinctly so the HUD can
+    // confirm at a glance which path fired.
     const z = Math.round(zoom);
-    const mode: 'heatmap' | 'individual' | 'precalc-z13' = useHeatmap
+    const noInvasives = !$settings.showInvasives;
+    const mode: 'heatmap' | 'individual' | 'precalc-z13' | 'precalc-z14' = useHeatmap
       ? 'heatmap'
-      : (z === 13 && !$settings.showInvasives ? 'precalc-z13' : 'individual');
+      : (z === 13 && noInvasives ? 'precalc-z13'
+       : z === 14 && noInvasives ? 'precalc-z14'
+       : 'individual');
     try {
       if (useHeatmap) {
         // Heatmap mode (zoom < 13): always use the public density

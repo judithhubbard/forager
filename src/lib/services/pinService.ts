@@ -150,17 +150,24 @@ export async function listPublicPins(
   //
   // p_include_invasives=true falls back to the runtime path because
   // the precalc filters to is_forageable=true at refresh time.
-  if (z === 13 && !includeInvasives) {
+  // z13 + z14 precalc fast paths (migrations 27 + 28). Each is a
+  // dedicated table keyed on (bx, by) at the per-zoom cell size:
+  //   z13 → 84m cells (~6px), public_pins_bbox_z13
+  //   z14 → 56m cells (~6px), public_pins_bbox_z14
+  // Both deliver O(K) primary-key range scans, ~60ms warm queries
+  // on Indianapolis-scale viewports vs ~1.2s for the runtime path.
+  // includeInvasives=true falls back to the runtime path because
+  // the precalc tables filter to is_forageable=true at refresh time.
+  const precalcRpc =
+    !includeInvasives && z === 13 ? 'public_pins_bbox_z13' :
+    !includeInvasives && z === 14 ? 'public_pins_bbox_z14' :
+    null;
+  if (precalcRpc) {
     // PARALLEL pagination. PostgREST has a hidden db-max-rows=1000
-    // cap per response regardless of the function's internal LIMIT,
-    // so we paginate. But — unlike the runtime decimation path —
-    // every page hits the same precalc table via the same RPC args,
-    // so they can fire concurrently rather than sequentially. With
-    // 9-12 pages typically needed for dense city viewports, parallel
-    // dispatch cuts total fetch time from 1.5-2s to ~200-400ms even
-    // on cold queries (each round-trip is ~100-150ms of network +
-    // PostgREST overhead, on top of ~60ms server query). Empty
-    // tail pages just return [].
+    // cap per response; with caps of 6000-12000, that's 6-12 pages.
+    // Unlike the runtime decimation path, every page hits the same
+    // precalc table with the same RPC args (only .range() offset
+    // differs), so they fire concurrently rather than sequentially.
     const PAGE = 1000;
     const totalPages = Math.ceil(maxRows / PAGE);
     const requests: Promise<{ data: unknown; error: unknown }>[] = [];
@@ -169,7 +176,7 @@ export async function listPublicPins(
       const upper = Math.min(offset + PAGE - 1, maxRows - 1);
       requests.push(
         supabase
-          .rpc('public_pins_bbox_z13' as never, {
+          .rpc(precalcRpc as never, {
             p_min_lng: west,
             p_min_lat: south,
             p_max_lng: east,
@@ -183,7 +190,7 @@ export async function listPublicPins(
     const all: PinEffective[] = [];
     for (const r of responses) {
       if (r.error) {
-        console.error('[pinService] listPublicPins (z13 precalc v2) error:', r.error);
+        console.error(`[pinService] listPublicPins (${precalcRpc}) error:`, r.error);
         throw r.error;
       }
       const rows = (r.data ?? []) as unknown as PinEffective[];
