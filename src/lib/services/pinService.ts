@@ -140,19 +140,32 @@ export async function listPublicPins(
 ): Promise<PinEffective[]> {
   const [west, south, east, north] = bbox;
   const z = Math.round(zoom);
-  // NOTE: migration 26 built a `pin_grid_z13` precalc table + a
-  // `public_pins_bbox_z13` RPC intended as a fast path here.
-  // Benchmark on Indianapolis metro (5/11/2026) showed the precalc
-  // is actually SLOWER than the runtime path in every measurement
-  // (12s cold vs 2.5s cold; 1.3s warm vs 1.2s warm). The runtime
-  // path is already O(K) bbox-scoped via the GIST index on
-  // pins.location — the "candidates" CTE only materializes pins
-  // actually inside the bbox, not all 5.5M public pins. The
-  // precalc table is bigger (1.97M rows) + its GIST is on a
-  // function expression which is less efficient than the native
-  // geography column index. Leaving the precalc table in place
-  // for future use cases but NOT routing through it. See
-  // commit-history around 9947e9b for the wire-up that was reverted.
+  // z13 precalc fast path (migration 27 v2). The precalc keys on
+  // (bx, by) — one representative pin per 84m grid cell — so the
+  // runtime query is a primary-key range scan with O(K) cost where
+  // K = rows returned. Benchmark on Indianapolis at z13: ~60ms warm
+  // vs ~1200ms for the runtime path. Migration 26's first attempt
+  // keyed on (bx, by, species_id) and was actually slower; v2
+  // corrects that.
+  //
+  // p_include_invasives=true falls back to the runtime path because
+  // the precalc filters to is_forageable=true at refresh time.
+  if (z === 13 && !includeInvasives) {
+    const { data, error } = await supabase
+      .rpc('public_pins_bbox_z13' as never, {
+        p_min_lng: west,
+        p_min_lat: south,
+        p_max_lng: east,
+        p_max_lat: north,
+        p_max_rows: maxRows
+      } as never)
+      .range(0, maxRows - 1);
+    if (error) {
+      console.error('[pinService] listPublicPins (z13 precalc v2) error:', error);
+      throw error;
+    }
+    return (data ?? []) as unknown as PinEffective[];
+  }
   // p_zoom drives the spatial decimation grid in the runtime RPC.
   // PostgREST has a hidden 1000-row response cap on Supabase
   // (db-max-rows) — .range() doesn't bypass it. Paginate explicitly
