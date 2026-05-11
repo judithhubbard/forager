@@ -22,11 +22,18 @@ export interface GlobalStats {
   fetched_at: string;
 }
 
-// v6 bumped 2026-05-10 after the top-untouched-metros Phase 4 batch
-// (Houston, Charlotte, Atlanta, Salt Lake City — ~151k new pins from
-// city-owned inventories; Phoenix/Dallas/Tucson/Detroit remain Phase 3
-// outreach). Invalidates v5 cached totals.
-const LS_KEY = 'forager.global-stats.v6';
+// v7 bumped 2026-05-10 after the Round C college-town batch finished
+// (Ann Arbor + Berkeley + Boulder + Knoxville-via-Dryad from the
+// earlier sub-run, plus this round's New Haven, Portland-ME,
+// State College, East Lansing, and Eugene — Eugene contributed
+// ~29k pins from City of Eugene's Parks & Open Space inventory).
+// Princeton / Hanover / Northampton / Amherst MA / Chapel Hill /
+// Athens GA / Gainesville FL / Davis CA / Logan UT all checked and
+// either have no public point inventory or are gated (Amherst MA's
+// gis.amherstma.gov is Cloudflare-protected) — Phase 3 outreach.
+// Champaign-Urbana already covered by opentrees, Bloomington IN by
+// the Indiana DNR aggregator. Invalidates v6 cached totals.
+const LS_KEY = 'forager.global-stats.v7';
 const TTL_MS = 24 * 60 * 60 * 1000;
 
 let inMemory: GlobalStats | null = null;
