@@ -839,6 +839,7 @@ const COMPLEXES = [
   {
     name: 'Common daylily (tubers)',
     members: ['Hemerocallis fulva'],
+    mechanism: 'dormancy_break',
     // Small finger-sized tubers attached to the rhizomes. Dig in
     // late fall after leaves yellow, or early spring before regrowth.
     // Two windows — fall (after die-back) and early spring
@@ -1137,6 +1138,7 @@ const COMPLEXES = [
   {
     name: 'Pineapple guava',
     members: ['Acca sellowiana', 'Feijoa sellowiana'],
+    mechanism: 'frost_anchored',
     // Cool-loving — positive shift (cooler zones LATER), counterintuitive
     // for a subtropical. Days-from-bloom driven, not heat-budget driven.
     anchor_zone: '9b', anchor_peak: 305, shift_per_half_zone: 4, half_window: 35,
@@ -2070,6 +2072,7 @@ const COMPLEXES = [
   {
     name: 'Rugosa rose hips',
     members: ['Rosa rugosa'],
+    mechanism: 'frost_anchored',
     // Frost-sweetened — best harvest after first light frost when hips are
     // fully colored but still firm. iNat fruiting reports skew earlier
     // (people notice red hips when they first appear, not edible peak).
@@ -2270,6 +2273,7 @@ const COMPLEXES = [
   {
     name: 'Oyster mushroom (warm-zone year-round)',
     members: ['Pleurotus ostreatus'],
+    mechanism: 'photoperiod',
     // SE US (zones 7b-9b) flushes year-round on dead hardwoods,
     // with peaks after cool rainy spells Oct-Mar.
     anchor_zone: '8a', anchor_peak: 1, shift_per_half_zone: 0, half_window: 180,
@@ -2554,6 +2558,7 @@ const COMPLEXES = [
   {
     name: 'Lemon (early-year)',
     members: ['Citrus limon'],
+    mechanism: 'photoperiod',
     anchor_zone: '9b', anchor_peak: 1, shift_per_half_zone: 0, half_window: 90,
     target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
@@ -2564,6 +2569,7 @@ const COMPLEXES = [
   {
     name: 'Lemon (late-year)',
     members: ['Citrus limon'],
+    mechanism: 'photoperiod',
     anchor_zone: '9b', anchor_peak: 335, shift_per_half_zone: 0, half_window: 60,
     target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
@@ -2688,6 +2694,7 @@ const COMPLEXES = [
   {
     name: 'Hickory (unspecified)',
     members: ['Carya sp.'],
+    mechanism: 'frost_anchored',
     // Genus-only placeholder. Drops nuts at first frost like the named
     // Carya species (offset 0 in nut-frost-fix). Use synthesized
     // shift-per-half-zone +3 for frost-driven (warmer → later).
@@ -2715,6 +2722,7 @@ const COMPLEXES = [
   {
     name: 'Citrus (genus, late-year)',
     members: ['Citrus sp.'],
+    mechanism: 'photoperiod',
     // Genus-only placeholder for unattributed citrus pins. Mirrors the
     // lemon year-wrap split — citrus as a group bears year-round in
     // mild subtropical zones with main fruit-set Nov-Mar. The
@@ -2731,6 +2739,7 @@ const COMPLEXES = [
   {
     name: 'Citrus (genus, early-year)',
     members: ['Citrus sp.'],
+    mechanism: 'photoperiod',
     anchor_zone: '9b', anchor_peak: 60, shift_per_half_zone: 0, half_window: 60,
     target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',

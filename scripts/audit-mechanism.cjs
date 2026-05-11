@@ -139,6 +139,56 @@ const SUMMARY_PATTERNS = {
 /** Stages that go to spring (last-spring-frost anchor) vs fall. */
 const SPRING_STAGES = new Set(['shoot', 'leaf', 'flowering', 'flower_harvest', 'sap_run', 'green']);
 
+/** Apply the slope-direction default for a complex entry. Caller-
+ *  provided reason + confidence let the keyword-conflict branch
+ *  delegate cleanly. */
+function slopeDefault(cx, extraReason = null, conf = null) {
+  const stage = cx.stage ?? 'ripe';
+  const slope = cx.shift_per_half_zone;
+  if (slope < 0) {
+    return {
+      proposed_mechanism: 'heat_driven',
+      confidence: conf ?? 'medium',
+      reason: extraReason ?? `Negative slope (${slope}) → heat_driven default`
+    };
+  }
+  if (slope > 0) {
+    if (stage === 'mushroom_flush') {
+      return {
+        proposed_mechanism: 'cool_night',
+        confidence: conf ?? 'medium',
+        reason: extraReason ?? `Mushroom + positive slope (${slope}) → cool_night`
+      };
+    }
+    if (stage === 'leaf' || stage === 'shoot' || stage === 'root_dig') {
+      return {
+        proposed_mechanism: 'dormancy_break',
+        confidence: conf ?? 'low',
+        reason: extraReason ?? `${stage} with positive slope (${slope}) — likely dormancy-tracked but worth confirming`
+      };
+    }
+    return {
+      proposed_mechanism: 'frost_anchored',
+      confidence: conf ?? 'low',
+      reason: extraReason ?? `Positive slope (${slope}) on ${stage} — likely frost-tracked, please confirm`
+    };
+  }
+  // slope === 0
+  const halfWindow = cx.half_window ?? 0;
+  if (halfWindow >= 30) {
+    return {
+      proposed_mechanism: 'photoperiod',
+      confidence: conf ?? 'low',
+      reason: extraReason ?? `Zero slope + wide half_window (${halfWindow}) — photoperiod-locked candidate`
+    };
+  }
+  return {
+    proposed_mechanism: 'indeterminate',
+    confidence: conf ?? 'low',
+    reason: extraReason ?? `Zero slope + narrow half_window (${halfWindow}) — mechanism unclear`
+  };
+}
+
 /** Apply the classification rules to one complex entry. Returns
  *  { proposed_mechanism, confidence, reason }. */
 function classify(cx) {
@@ -160,13 +210,37 @@ function classify(cx) {
     return { proposed_mechanism: 'cool_night', confidence: 'high', reason: 'Pleurotus with positive slope' };
   }
 
-  // Summary keyword scans, in priority order
+  // Summary keyword scans — but ONLY when consistent with the slope
+  // direction. Frost / cool-night summary mentions in heat-driven
+  // species are usually about FLAVOR (e.g., "sweeten after frost",
+  // "frost-blet", "persists into first hard frost") not RIPENING
+  // TRIGGER. The slope direction is the more reliable signal; the
+  // summary keyword can only ELEVATE a proposal that's already
+  // plausible from the slope.
   for (const [mech, re] of Object.entries(SUMMARY_PATTERNS)) {
-    if (re.test(summary)) {
-      // For mushrooms, the summary keyword carries extra weight
-      const conf = stage === 'mushroom_flush' ? 'high' : 'medium';
-      return { proposed_mechanism: mech, confidence: conf, reason: `Summary keyword for ${mech}` };
+    if (!re.test(summary)) continue;
+    // Compatibility check: does this mechanism agree with the slope
+    // direction?
+    const compatible =
+      (mech === 'heat_driven' && slope < 0) ||
+      (mech === 'cool_night' && slope > 0) ||
+      (mech === 'frost_anchored' && slope >= 0) ||   // frost_anchored ignores slope, but heat-driven slopes are inconsistent
+      (mech === 'photoperiod' && slope === 0) ||
+      (mech === 'rain_flush' && slope === 0) ||
+      (mech === 'dormancy_break' && slope >= 0);
+    if (!compatible) {
+      // Found a keyword but it disagrees with the slope. Don't trust
+      // it as authoritative — record the conflict as a note and fall
+      // through to the slope-direction default below.
+      // (E.g., highbush cranberry summary says "after first frost"
+      // but slope is -3 = heat-driven; the frost mention is about
+      // flavor improvement, not ripening.)
+      // We continue to the slope default; the reason will note this.
+      return slopeDefault(cx, `Summary keyword '${mech}' detected but conflicts with slope ${slope} — using slope direction; manual review recommended if mechanism actually is ${mech}`, 'low');
     }
+    // For mushrooms, the summary keyword carries extra weight
+    const conf = stage === 'mushroom_flush' ? 'high' : 'medium';
+    return { proposed_mechanism: mech, confidence: conf, reason: `Summary keyword for ${mech} (consistent with slope ${slope})` };
   }
 
   // Stage-specific rules
@@ -178,24 +252,7 @@ function classify(cx) {
   }
 
   // (2) SLOPE-DIRECTION DEFAULTS — medium confidence
-  if (slope < 0) {
-    return { proposed_mechanism: 'heat_driven', confidence: 'medium', reason: `Negative slope (${slope}) → heat_driven default` };
-  }
-  if (slope > 0) {
-    if (stage === 'mushroom_flush') {
-      return { proposed_mechanism: 'cool_night', confidence: 'medium', reason: `Mushroom + positive slope (${slope}) → cool_night` };
-    }
-    if (stage === 'leaf' || stage === 'shoot' || stage === 'root_dig') {
-      return { proposed_mechanism: 'dormancy_break', confidence: 'low', reason: `${stage} with positive slope (${slope}) — likely dormancy-tracked but worth confirming` };
-    }
-    return { proposed_mechanism: 'frost_anchored', confidence: 'low', reason: `Positive slope (${slope}) on ${stage} — likely frost-tracked, please confirm` };
-  }
-  // slope === 0
-  const halfWindow = cx.half_window ?? 0;
-  if (halfWindow >= 30) {
-    return { proposed_mechanism: 'photoperiod', confidence: 'low', reason: `Zero slope + wide half_window (${halfWindow}) — photoperiod-locked candidate` };
-  }
-  return { proposed_mechanism: 'indeterminate', confidence: 'low', reason: `Zero slope + narrow half_window (${halfWindow}) — mechanism unclear` };
+  return slopeDefault(cx);
 }
 
 /** TSV-quote a value: replace tab + newline with spaces. */
