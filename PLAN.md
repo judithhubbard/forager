@@ -837,6 +837,15 @@ End of Phase 3: app is robust enough for unsupervised field use by all invitees.
 - Growing-degree-day–based predictions from a weather API.
 - Optional native wrappers if PWA limitations bite (rarely needed for this use case).
 - Image-based species suggestions (could be as simple as deep-linking to iNaturalist's CV API).
+- **Paid-subscriber species creation (deferred to v2.5/v3)**: Let paid users add species the global catalog doesn't have (Phoenix canariensis-style long-tail forageables, regional / obscure / hyperlocal species). Submission flow:
+  1. Paid user fills a "request new species" form (scientific name, common name, parts, brief safety_notes, ideally a photo).
+  2. Entry is created with `is_forageable=true` but scoped to the submitter's personal/group region only (`creator_user_id` set, not globally visible).
+  3. User can drop pins against it immediately; their pins are visible only to their region members.
+  4. Admin moderation queue: light review for taxonomy / duplicates / safety, then promote to the global catalog (clear `creator_user_id`, set `review_status='unreviewed'`).
+  5. Original submitter optionally credited via `created_by` on the species row.
+  - **Why this matters**: top-down catalog curation can't cover every regional forage (palm species in HI/FL, desert succulents in AZ/NM, native PNW berries, etc.). Letting paying users self-serve unblocks them immediately while preserving global-catalog hygiene.
+  - **Schema**: `species.creator_user_id uuid references auth.users(id)` (nullable; NULL = global-catalog species), plus an RLS policy that scopes per-user-created species visibility to their region members until promoted.
+  - **Tradeoff**: more catalog ops work for the admin (it's me) but solves a real long-tail coverage gap.
 
 ### 8.8 Wall-clock vs. engineer-days
 

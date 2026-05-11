@@ -32,7 +32,7 @@
         </div>
         <div class="stat">
           <div class="stat-value">{stats.total_species.toLocaleString()}</div>
-          <div class="stat-label">foragable species</div>
+          <div class="stat-label">forageable species</div>
         </div>
         <div class="stat">
           <div class="stat-value">{stats.total_cities.toLocaleString()}</div>

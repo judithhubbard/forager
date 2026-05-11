@@ -98,7 +98,7 @@
     : 'Forager';
   $: ogDescription = species
     ? `${species.common_name} (${species.scientific_name}) — edible parts, preparation methods, harvest tips, and safety notes for foragers.`
-    : 'A foragable species on Forager.';
+    : 'A forageable species on Forager.';
 
   /** Pretty-print a snake_case forage_part or preparation_method. */
   function pretty(s: string): string {

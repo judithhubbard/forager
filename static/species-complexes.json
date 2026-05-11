@@ -1527,7 +1527,14 @@
   ],
   "Nasturtium officinale": [
     {
-      "name": "Watercress",
+      "name": "Watercress (spring flush)",
+      "members": [
+        "Nasturtium officinale"
+      ],
+      "stage": "leaf"
+    },
+    {
+      "name": "Watercress (fall flush)",
       "members": [
         "Nasturtium officinale"
       ],
@@ -2168,6 +2175,67 @@
       "name": "Sour cherry",
       "members": [
         "Prunus cerasus"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Carissa macrocarpa": [
+    {
+      "name": "Natal plum",
+      "members": [
+        "Carissa macrocarpa"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Carya sp.": [
+    {
+      "name": "Hickory (unspecified)",
+      "members": [
+        "Carya sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Casimiroa edulis": [
+    {
+      "name": "White sapote",
+      "members": [
+        "Casimiroa edulis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Citrus sp.": [
+    {
+      "name": "Citrus (genus, late-year)",
+      "members": [
+        "Citrus sp."
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Citrus (genus, early-year)",
+      "members": [
+        "Citrus sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Cornus sp.": [
+    {
+      "name": "Cornelian cherry (genus placeholder)",
+      "members": [
+        "Cornus sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Phoenix sp.": [
+    {
+      "name": "Date palm (genus placeholder)",
+      "members": [
+        "Phoenix sp."
       ],
       "stage": "ripe"
     }

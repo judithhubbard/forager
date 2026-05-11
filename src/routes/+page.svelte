@@ -300,11 +300,11 @@
     }
     return ids;
   })();
-  /** Species that are flagged invasive AND not foragable (tree of
+  /** Species that are flagged invasive AND not forageable (tree of
    *  heaven, Norway maple, etc). When the "Show invasives" Layers
    *  toggle is off (default), pins of these species are excluded
    *  from the map and the species panel — keeps Forager
-   *  foraging-first. When on, they're added on top of the foragable
+   *  foraging-first. When on, they're added on top of the forageable
    *  layer (rendered with the same warning-red stroke from the
    *  invasive flag, plus a darker fill from buildPinLayerGroup). */
   $: inedibleInvasiveIds = (() => {

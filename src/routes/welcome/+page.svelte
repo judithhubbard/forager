@@ -143,7 +143,7 @@
   {#if stats && stats.total_pins > 0}
     <p class="stats-line">
       Tracking <strong>{formatPinCount(stats.total_pins)}</strong> trees and plants
-      across <strong>{stats.total_species}</strong> foragable species.
+      across <strong>{stats.total_species}</strong> forageable species.
     </p>
   {/if}
   <p class="lead">How would you like to get started?</p>
@@ -242,7 +242,7 @@
         <strong>Also show non-forageable species</strong>
         <span class="invasive-hint">
           Optional. Some non-forageable trees (e.g., Norway maple, tree of
-          heaven) appear in city tree inventories. Edible foragable species
+          heaven) appear in city tree inventories. Edible forageable species
           that happen to be invasive (autumn olive, wineberry, knotweed
           shoots, etc.) are always shown — picking them is foraging, and it
           also helps control their spread.

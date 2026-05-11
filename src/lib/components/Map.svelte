@@ -165,12 +165,12 @@
    *  as undesirable). Pins of these species render with a warning-red
    *  stroke. Empty set = no invasive treatment. */
   export let invasiveSpeciesIds: Set<string> = new Set();
-  /** Set of species_ids that are NOT foragable (inedible invasives —
+  /** Set of species_ids that are NOT forageable (inedible invasives —
    *  tree of heaven, Norway maple, English ivy, etc.). Pins of these
    *  species get an extra-muted fill so they read as "do not eat,
    *  remove" rather than "harvest me." Always a subset of
    *  invasiveSpeciesIds (catalog discipline: only flagged invasives
-   *  get foragable=false). */
+   *  get forageable=false). */
   export let nonForagableSpeciesIds: Set<string> = new Set();
 
   /** Setting this prop animates the map to the given location. Parent

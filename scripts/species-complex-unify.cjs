@@ -963,23 +963,31 @@ const COMPLEXES = [
       { zones: ['11a','11b'], source: 'Eat The Weeds + Caribbean horticulture', url: 'https://www.eattheweeds.com/sea-grape/', summary: 'Frost-free tropics: Jul-Nov with Nov stragglers; year-round in some Caribbean sites.', peak_doy: 244, half_window: 60 }
     ]
   },
-  // Canary Island date palm — fruit is technically edible (small ~2 cm
-  // orange-yellow dates) but flesh is thin, the seed is large, and
-  // extension sources uniformly note "few bother to eat them." Traditional
-  // Canary Islands use is as arrope (date syrup) by boiling down the pulp,
-  // not raw eating. Mass-planted as ornamentals in CA/FL/HI/TX (23k+ pins
-  // from city tree inventories) so the species needs at least a placeholder
-  // window — but framed as a marginal-forage species, not equivalent to
-  // P. dactylifera.
+  // Canary Island date palm — iconic Mediterranean / California / Florida
+  // street and landscape palm. Massive feather-leaf crown atop a thick
+  // trunk; can reach 18 m / 60 ft tall. The fruit is technically edible
+  // — small (~2 cm) orange-yellow drupes hanging in pendulous clusters —
+  // but is dwarfed by P. dactylifera (commercial date) in both flesh
+  // depth and culinary value. Most casual foragers skip the fruit, but
+  // Canary Islanders have an unbroken tradition of using it for arrope
+  // (boiled-down date syrup, similar to molasses) and the unfermented
+  // sap for miel de palma (palm honey, a darker palm syrup tapped from
+  // the crown). Mass-planted as ornamentals in CA/FL/HI/TX (~23k pins
+  // from city tree inventories) so the species deserves a calibration
+  // entry that takes the fruit seriously — not just a marginal note.
   {
     name: 'Canary Island date palm',
     members: ['Phoenix canariensis'],
     anchor_zone: '10a', anchor_peak: 288, shift_per_half_zone: -5, half_window: 60,
     target_zones: ['9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
-    source_name: 'Canary Island date palm (UF/IFAS ST439 + CA-IPC + Wikipedia)',
+    source_name: 'Canary Island date palm (UF/IFAS ST439 + Cabildo de Tenerife Miel de Palma + Slow Food Ark of Taste + UC ANR + CRFG)',
     source_url: 'https://hort.ifas.ufl.edu/database/documents/pdf/tree_fact_sheets/phocana.pdf',
-    summary: 'Canary Island date palm (Phoenix canariensis): small (~2 cm) orange-yellow drupes ripen late summer through fall, mostly Sep-Dec in coastal CA / Mediterranean climates. Thin-fleshed with a large seed — most foragers skip it. Traditional Canary Islands use is arrope (boiled-down date syrup) rather than raw eating. Far less productive than P. dactylifera but the fruit IS edible if you want to experiment.'
+    summary: 'Canary Island date palm (Phoenix canariensis): towering feather-leaf palm with massive pendulous clusters of small (~2 cm) orange-yellow drupes ripening late summer through early winter. ID vs P. dactylifera (commercial date palm): P. canariensis has a much thicker single trunk, wider leaf crown, and SMALLER fruit with thinner flesh + larger relative pit; P. dactylifera has narrower trunk, suckers freely, and larger fleshier dates. ID vs P. roebelenii (pygmy date palm): much smaller dwarf species, distinct landscape use. CULINARY: in the Canary Islands the fruit is the source of arrope — boiled-down date syrup similar to molasses, drizzled on cheese or fresh fruit. The unfermented sap tapped from the cut crown is miel de palma (palm honey), a darker Slow Food Ark of Taste product. Outside the Canary Islands the fruit is mostly left for birds (band-tailed pigeons in CA, mockingbirds in FL) — but home foragers can make arrope or palm wine from the ripe fruit. CONSERVATION: protected on dune systems; harvest from city/park trees only. SAFETY: skin is fine, but the leaves have very sharp spines at the base of each leaflet (sharp enough to cause infection) — wear gloves; the fruit clusters drop to the ground when ripe, so glove-free ground-gathering is the practical method. Tens of thousands of trees in CA/FL/HI city inventories.',
+    regional_anchors: [
+      { zones: ['9a','9b','10a'], source: 'UC ANR + CRFG', url: 'https://crfg.org/homepage/library/fruitfacts/date/', summary: 'Coastal/inland CA: drupes ripen Sep-Nov, peak mid-Oct. Cooler nights = slower ripening than FL.', peak_doy: 288, half_window: 45 },
+      { zones: ['10b','11a','11b'], source: 'UF/IFAS ST439 + UH CTAHR', url: 'https://hort.ifas.ufl.edu/database/documents/pdf/tree_fact_sheets/phocana.pdf', summary: 'South FL / HI: progressive ripening Aug-Jan with sustained drop; year-round in true tropics.', peak_doy: 296, half_window: 75 }
+    ]
   },
   {
     name: 'Carob',
@@ -1165,12 +1173,23 @@ const COMPLEXES = [
   {
     name: 'Black tupelo (fruit)',
     members: ['Nyssa sylvatica'],
-    anchor_zone: '6a', anchor_peak: 244, shift_per_half_zone: -3, half_window: 30,
-    target_zones: ['5b','6a','6b','7a','7b','8a','8b','9a'],
+    // Beefed up 2026-05-11: narrowed half_window 30→25 (cited Aug-Oct
+    // → 60 days fits inside that window without overshoot), added
+    // regional anchors for the cold-edge (5a/5b NE start of range) and
+    // SE coastal-plain (9a/9b later harvest). Also extended cold target
+    // to 5a (eastern PA / southern NY) which was missing the species
+    // entirely despite genuine documented occurrence.
+    anchor_zone: '6a', anchor_peak: 252, shift_per_half_zone: -3, half_window: 25,
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
     stage: 'ripe',
-    source_name: 'Black tupelo (Petrides + Foraging Texas + USDA Silvics)',
-    source_url: 'https://plants.usda.gov/plant-profile/NYSY',
-    summary: 'Black tupelo / sour gum (Nyssa sylvatica) fruit: small blue-black very sour drupes, Aug-Oct in zone 6. Cooked in jellies/preserves (raw too sour). Major honey-source tree (tupelo honey, distinct from blackgum honey). Wide native range — SE through New England.'
+    source_name: 'Black tupelo (USDA Silvics + Eat The Weeds + Foraging Texas + Lady Bird Johnson Wildflower Center)',
+    source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/nyssa/sylvatica.htm',
+    summary: 'Black tupelo / sour gum / blackgum (Nyssa sylvatica): small (~1 cm) blue-black drupes ripen Aug-Oct, peak Sep in temperate zones. Native to eastern North America from southern Ontario / Maine south to FL and west to Texas. Thin layer of intensely sour-acid flesh over a large stone — too tart to eat raw, but excellent for tart jelly (apple/pectin pair-up), wine, and adding tartness to game-meat sauces. Foragers compete with birds — fruit disappears fast once ripe. The tree is even more valuable as a honey source: "tupelo honey" from the related N. ogeche (Ogeechee tupelo, Apalachicola swamps) commands premium prices, but N. sylvatica also produces a fine honey. SE Native American food per Cherokee + Choctaw ethnobotany; mast crop for wildlife (turkey, deer, bear, fox, raccoon). Stunning fall color (deep red-purple) is the most-cited reason it makes the city tree-planting lists.',
+    regional_anchors: [
+      { zones: ['5a','5b','6a'], source: 'Cornell CE + UMass Amherst', url: 'https://gardening.cals.cornell.edu/', summary: 'NE / Cornell area: fruit ripens late Aug - mid Oct, peak early-mid Sep.', peak_doy: 252, half_window: 25 },
+      { zones: ['6b','7a','7b','8a'], source: 'NC State Extension + Eat The Weeds', url: 'https://plants.ces.ncsu.edu/plants/nyssa-sylvatica/', summary: 'Mid-Atlantic / Southeast piedmont: late Aug - Oct, peak mid-Sep.', peak_doy: 252, half_window: 28 },
+      { zones: ['8b','9a','9b'], source: 'UF/IFAS + Foraging Texas', url: 'https://edis.ifas.ufl.edu/publication/ST416', summary: 'Coastal Southeast / Gulf Coast: ripens slightly later in deep South — mid-Sep through Oct.', peak_doy: 265, half_window: 28 }
+    ]
   },
   {
     name: 'Kentucky coffeetree (seeds)',
@@ -1334,18 +1353,32 @@ const COMPLEXES = [
     source_url: 'https://plants.ces.ncsu.edu/plants/mentha/',
     summary: 'Wild mint (Mentha spp.): leaves May-Oct in 6a, peak flavor pre-flowering (Jul). Look for square stems, opposite leaves, true mint smell — distinguish from non-aromatic mint-look-alikes.'
   },
+  // Watercress is bimodal — best spring (Apr-Jun) AND fall (Sep-Nov),
+  // with a hot-summer gap when growth gets bitter and parasites/algae
+  // are more concentrated in warmer water. A single half_window=50
+  // window centered on May 10 smeared this into May-Aug, hiding the
+  // fall flush entirely. Split into two rows (same pattern as
+  // cherimoya / cattail / papaya / wood ear) so both seasons render
+  // distinctly in the calibration viewer.
   {
-    name: 'Watercress',
+    name: 'Watercress (spring flush)',
     members: ['Nasturtium officinale'],
-    // Cool-water aquatic. Best harvest spring (Apr-Jun) + fall (Sep-Nov);
-    // summer growth gets bitter, can harbor more parasites in warm water.
-    // ALWAYS cook unless sourced from verified clean water.
-    anchor_zone: '6a', anchor_peak: 130, shift_per_half_zone: -3, half_window: 50,
+    anchor_zone: '6a', anchor_peak: 130, shift_per_half_zone: -3, half_window: 35,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'leaf',
-    source_name: 'Watercress (NC State Extension + foraging consensus)',
+    source_name: 'Watercress spring (NC State Extension + Eat The Weeds + Practical Self Reliance)',
     source_url: 'https://plants.ces.ncsu.edu/plants/nasturtium-officinale/',
-    summary: 'Watercress (Nasturtium officinale): cool-water aquatic, peak harvest Apr-Jun + Sep-Nov. ALWAYS cook unless source water is verified clean (giardia/liver-fluke risk in livestock-grazed streams).'
+    summary: 'Watercress (Nasturtium officinale) spring flush: cool-water aquatic perennial, best harvest Apr-Jun before flowering. Cold-tolerant — actively grows whenever water is unfrozen. Stops being tender once it flowers and summer heat makes growth bitter. ALWAYS cook unless source water is verified clean (giardia/liver-fluke risk in livestock-grazed streams).'
+  },
+  {
+    name: 'Watercress (fall flush)',
+    members: ['Nasturtium officinale'],
+    anchor_zone: '6a', anchor_peak: 285, shift_per_half_zone: -3, half_window: 35,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'leaf',
+    source_name: 'Watercress fall (NC State Extension + Eat The Weeds + Practical Self Reliance)',
+    source_url: 'https://plants.ces.ncsu.edu/plants/nasturtium-officinale/',
+    summary: 'Watercress (Nasturtium officinale) fall flush: regrowth after summer heat breaks, Sep-Nov. Tender again as water cools. In warm zones (8a-8b) the fall flush extends into Dec; in cold zones (4a-5a) ends earlier when streams begin to ice. ALWAYS cook unless source water is verified clean.'
   },
   {
     name: 'Wild onion (Allium canadense)',
@@ -2195,6 +2228,108 @@ const COMPLEXES = [
     summary: 'Sour cherry (Prunus cerasus): heat-driven, peak Jul in zone 6a (Cornell). Earlier than sweet cherry by 1-2 weeks; Montmorency is the dominant cultivar in eastern NA.'
   },
 
+  // ── 6 species missing windows — fill 2026-05-11 ──
+  // These are pre-existing forageable catalog entries that never got
+  // calibration. The 4 "sp." rows are genus-only placeholders used by
+  // the importer when a tree inventory has "Genus species" or "Genus
+  // sp." with no specific epithet — giving them windows lets the pin
+  // detail / timeline render something useful instead of "(no data)".
+  {
+    name: 'Natal plum',
+    members: ['Carissa macrocarpa'],
+    // South African native, hardy CA street/landscape shrub zones 9b-11.
+    // Bright red plum-like fruits ripen continuously in mild climates,
+    // peak summer-fall. CRITICAL safety note: only the RIPE FRUIT is
+    // edible — unripe fruit, leaves, and the milky white latex sap
+    // contain cardiac glycosides and are toxic.
+    anchor_zone: '10a', anchor_peak: 227, shift_per_half_zone: -5, half_window: 75,
+    target_zones: ['9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Natal plum (UC ANR Master Gardener + UF/IFAS + CRFG)',
+    source_url: 'https://hgic.clemson.edu/factsheet/natal-plum/',
+    summary: 'Natal plum (Carissa macrocarpa): South African evergreen shrub, common in CA/FL landscaping. Bright red 2-4 cm plum-like drupes ripen continuously Jun-Oct in CA (peak Aug); year-round in true tropics. Eat ripe (sweet-tart, strawberry-like) or use for jelly/jam. CRITICAL: only the FULLY RIPE FRUIT is safe — unripe fruit, leaves, and the white milky latex sap all contain cardiac glycosides and are TOXIC. Stems also have stout forked spines — careful harvest.'
+  },
+  {
+    name: 'Hickory (unspecified)',
+    members: ['Carya sp.'],
+    // Genus-only placeholder. Drops nuts at first frost like the named
+    // Carya species (offset 0 in nut-frost-fix). Use synthesized
+    // shift-per-half-zone +3 for frost-driven (warmer → later).
+    // Matches the chestnut-sp pattern that already exists in
+    // nut-frost-fix.cjs but covers the unify-pipeline path.
+    anchor_zone: '6a', anchor_peak: 280, shift_per_half_zone: 3, half_window: 25,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Hickory genus (USDA NRCS + Forager Chef + Eat The Weeds)',
+    source_url: 'https://plants.usda.gov/plant-profile/CARYA',
+    summary: 'Hickory (Carya sp., genus-only placeholder): all native hickories drop nuts at first frost (Sep-Oct in cold zones, Oct-Nov in warm). Identification at harvest: shaggy bark (C. ovata, C. laciniosa — easy sweet nuts) vs smooth bark (C. cordiformis bitter, C. glabra pignut — bitter). Foragers should ID before eating — bitter hickories are technically edible but unpleasant. Only ID-confirmed sweet hickories worth processing.'
+  },
+  {
+    name: 'White sapote',
+    members: ['Casimiroa edulis'],
+    // Mexican subtropical, hardy zones 9b-11. Custard-like cream-fleshed
+    // fruit. Two flush windows in CA (summer + winter), summer is dominant.
+    anchor_zone: '10a', anchor_peak: 258, shift_per_half_zone: -5, half_window: 60,
+    target_zones: ['9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'White sapote (UC ANR + CRFG + UF/IFAS)',
+    source_url: 'https://crfg.org/homepage/library/fruitfacts/white-sapote/',
+    summary: 'White sapote (Casimiroa edulis): Mexican subtropical, custard-textured cream-fleshed fruit eaten ripe (skin off). Coastal CA: main harvest Aug-Nov (peak Sep), with secondary winter flush Feb-Apr in mild winters. Picked firm-but-yielding, finished off-tree. SAFETY: seeds contain alkaloids (casimirine, casimiroin) with sedative effects — discard seeds, do not chew. Skin can also be bitter; eat flesh only.'
+  },
+  {
+    name: 'Citrus (genus, late-year)',
+    members: ['Citrus sp.'],
+    // Genus-only placeholder for unattributed citrus pins. Mirrors the
+    // lemon year-wrap split — citrus as a group bears year-round in
+    // mild subtropical zones with main fruit-set Nov-Mar. The
+    // species-specific entries (Citrus limon, C. sinensis, C. reticulata,
+    // C. paradisi) cover specific cultivars; this row gives the
+    // unidentified-citrus pins something reasonable.
+    anchor_zone: '9b', anchor_peak: 335, shift_per_half_zone: 0, half_window: 60,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Citrus genus (UC ANR + UF/IFAS)',
+    source_url: 'https://homeorchard.ucanr.edu/General-information/Citrus/',
+    summary: 'Citrus (genus-only placeholder): genus bears year-round in subtropical zones with most fruit ripening Nov-Mar. Specific cultivars vary widely (lemons year-round, navel oranges winter, mandarins early-winter, grapefruit Jan-May). This entry gives unidentified citrus pins a reasonable late-year peak; pair with the early-year row.'
+  },
+  {
+    name: 'Citrus (genus, early-year)',
+    members: ['Citrus sp.'],
+    anchor_zone: '9b', anchor_peak: 60, shift_per_half_zone: 0, half_window: 60,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Citrus genus early-year (UC ANR + UF/IFAS)',
+    source_url: 'https://homeorchard.ucanr.edu/General-information/Citrus/',
+    summary: 'Citrus (genus-only placeholder) early-year continuation: most cultivars carry fruit through Jan-Apr; lemons + grapefruit still bearing into late spring. Pair with the late-year row.'
+  },
+  {
+    name: 'Cornelian cherry (genus placeholder)',
+    members: ['Cornus sp.'],
+    // Genus-only placeholder. The forageable Cornus species in our
+    // catalog (C. mas, C. officinalis, C. kousa) share Aug-Oct fruit-drop
+    // pattern. Use the Cornelian cherry timing as the default.
+    // (Non-edible Cornus florida was soft-deleted from catalog.)
+    anchor_zone: '6a', anchor_peak: 244, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Cornus genus (USDA NRCS + Cornell CE + Eat The Weeds)',
+    source_url: 'https://plants.usda.gov/plant-profile/CORNU',
+    summary: 'Cornus sp. (genus-only placeholder): the forageable dogwoods in our catalog (C. mas Cornelian cherry, C. officinalis Japanese cornel, C. kousa kousa dogwood) share Aug-Oct fruit-drop. C. mas earliest (Aug-Sep), C. kousa latest (Sep-Oct). For ID purposes, C. florida (flowering dogwood) is NOT a reliable forage — fruits are upsetting raw and unreliable cooked. ID before eating; the catalog excludes the unreliable species.'
+  },
+  {
+    name: 'Date palm (genus placeholder)',
+    members: ['Phoenix sp.'],
+    // Genus-only placeholder. Mirrors P. dactylifera timing (Sep-Dec
+    // commercial harvest). P. canariensis (Canary Island date palm) has
+    // its own entry with marginal-forage caveat.
+    anchor_zone: '9b', anchor_peak: 288, shift_per_half_zone: -5, half_window: 60,
+    target_zones: ['9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Phoenix genus (USDA CA dates crop profile + UF/IFAS)',
+    source_url: 'https://ipmdata.ipmcenters.org/documents/cropprofiles/CAdates.pdf',
+    summary: 'Phoenix sp. (genus-only placeholder): date palms in our catalog (P. dactylifera commercial date, P. canariensis Canary Island date palm) share Sep-Dec fruit drop pattern. P. dactylifera is the high-yield culinary date; P. canariensis is marginal-forage (thin-fleshed, used historically for arrope syrup only). ID at the species level for foraging decisions.'
+  },
+
   // Subtropical / specialty cultivars
   // Avocado has cultivar windows that genuinely span the whole calendar
   // (Hass Mar-Sep, Bacon Nov-Mar, Fuerte Nov-Apr, Reed Jun-Oct). Two
@@ -2382,14 +2517,22 @@ const COMPLEXES = [
              and complex_name is not distinct from ${cx.name}`;
 
         const ev = existing.length > 0 && Array.isArray(existing[0].evidence) ? existing[0].evidence : [];
-        let newEv = ev.some(e => e?.source === evEntry.source) ? ev : ev.concat([evEntry]);
+        // REPLACE existing entries with the same source (don't just
+        // skip on match) — otherwise edits to anchor_peak / half_window
+        // in this file are never reflected in the evidence supports,
+        // and the calibration viewer shows stale data bars that diverge
+        // from the synthesized window. Pattern: filter out any entry
+        // with this source, then re-append the fresh evEntry.
+        let newEv = ev.filter(e => e?.source !== evEntry.source).concat([evEntry]);
 
         // Per-zone-band regional anchor citations: attach each anchor
         // whose zones include this zone, so the viewer surfaces the
         // actual zone-specific source justifying the projection.
         for (const anchor of (cx.regional_anchors ?? [])) {
           if (!anchor.zones.includes(zoneCode)) continue;
-          if (newEv.some(e => e?.source === anchor.source)) continue;
+          // Replace, don't skip, when source already present (same
+          // staleness bug as the main evidence entry above).
+          newEv = newEv.filter(e => e?.source !== anchor.source);
           const hw = anchor.half_window ?? cx.half_window;
           newEv = newEv.concat([{
             source: anchor.source,

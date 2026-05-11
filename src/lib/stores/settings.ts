@@ -68,7 +68,7 @@ interface Settings {
    *  heaven, Norway maple, English ivy, etc). Defaults off — Forager
    *  is foraging-first, the management-mode layer is opt-in for
    *  users who want a "where to pull invasives" view. Toggling on
-   *  doesn't hide foragable species; it adds the inedible invasives
+   *  doesn't hide forageable species; it adds the inedible invasives
    *  on top. */
   showInvasives: boolean;
   /** Show the past-7-day rainfall chip in the map corner. Defaults

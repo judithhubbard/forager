@@ -407,6 +407,12 @@
     // species_fruiting_windows table has grown past that, so we
     // paginate explicitly via .range() to fetch all rows. Each page
     // is 1000 rows; loop until we get less than a full page.
+    //
+    // CRITICAL: must include .order('id') — without an explicit ORDER BY,
+    // Postgres returns rows in arbitrary heap order, which can drop or
+    // duplicate rows across pagination boundaries. This was missing some
+    // rows for bimodal species (watercress, wood ear, papaya, cherimoya,
+    // etc.) where multiple rows share the same (species, zone, stage).
     const PAGE = 1000;
     let all: DBWindow[] = [];
     let from = 0;
@@ -416,6 +422,7 @@
         .select(
           'id, species_id, climate_zone_id, stage, start_doy, end_doy, peak_doy, confidence, notes, evidence' as never
         )
+        .order('id', { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;
       const page = (data ?? []) as unknown as DBWindow[];

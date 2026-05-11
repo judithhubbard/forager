@@ -279,7 +279,7 @@
         <strong>Also show non-forageable species</strong>
         <span class="invasive-hint">
           Some non-forageable trees (Norway maple, tree of heaven, etc.) show
-          up in city tree inventories. Edible foragable species that happen
+          up in city tree inventories. Edible forageable species that happen
           to be invasive (autumn olive, wineberry, knotweed shoots) are
           always shown — eating them is foraging, and it helps control their
           spread.

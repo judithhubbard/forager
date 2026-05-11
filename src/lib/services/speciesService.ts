@@ -9,7 +9,7 @@ import type { Database } from '$lib/database.types';
  *  - image_url, image_attribution: 20260506000028
  *  - invasive_flag_count: 20260508000068 (denormalized counter)
  *  - identification_notes, management_notes: 20260508000069
- *    (content for both foragable AND inedible-invasive entries)
+ *    (content for both forageable AND inedible-invasive entries)
  *  - is_forageable: existing column we now read explicitly so the
  *    "Show invasives" layer can filter by it.
  */
