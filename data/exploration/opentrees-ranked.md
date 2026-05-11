@@ -1,0 +1,262 @@
+# OpenTrees gap-candidate audit
+
+Generated from `opentrees-gap.json` cross-referenced against
+our existing import_sources, then HEAD-checked + metadata-pulled.
+
+**82 candidates audited** (USA + Canada).
+
+| Tier | Description | Count |
+|---|---|---|
+| A | Alive + permissive license (CC0 / CC-BY) | 0 |
+| B | Alive + license unknown (likely OK; portal check) | 29 |
+| C | Alive + restrictive license (NC/proprietary) | 0 |
+| D | Dead URL or fetch failed | 53 |
+
+
+## Tier B
+
+- **Calgary** _(Canada)_  · 28,947 rows · See Terms of Use · updated 2026-04-29
+  - data: `https://data.calgary.ca/api/views/tfs4-3wwa/rows.csv?accessType=DOWNLOAD`
+- **Edmonton** _(Canada)_  · 27,866 rows · See Terms of Use · updated 2026-05-04
+  - data: `https://data.edmonton.ca/api/views/eecg-fc54/rows.csv?accessType=DOWNLOAD`
+- **Providence** _(USA)_  · 11,696 rows · (unknown) · updated 2016-03-09
+  - data: `https://data.providenceri.gov/api/views/uv9w-h8i4/rows.csv?accessType=DOWNLOAD`
+- **Winnipeg** _(Canada)_  · 1,452 rows · Canada Open Government Licence · updated 2024-09-09
+  - portal: https://data.winnipeg.ca/Parks/Tree-Inventory-Map/xyma-gm38
+  - data: `https://data.winnipeg.ca/api/views/h923-dxid/rows.csv?accessType=DOWNLOAD`
+- **Vancouver** _(Canada)_  · ? · (unknown)
+  - data: `https://opendata.vancouver.ca/explore/dataset/street-trees/download/?format=geojson&lang=en`
+- **Surrey** _(Canada)_  · ? · (unknown)
+  - portal: https://data.surrey.ca/dataset/park-specimen-trees
+  - data: `http://data.surrey.ca/dataset/634d2f06-2214-49b3-9309-4baa51b61ec4/resource/86625e14-8d09-45e8-9b91-…`
+- **Regina** _(Canada)_  · ? · (unknown)
+  - portal: http://open.regina.ca/dataset/city-of-regina-tree-inventory
+  - data: `https://ckanprodstorage.blob.core.windows.net/opendata/Tree/SHP_ZIP/shp.Tree.zip`
+- **Strathcona** _(Canada)_  · ? · (unknown)
+  - portal: https://data.strathcona.ca/Environment/Tree/v78i-7ntw
+  - data: `https://data.strathcona.ca/api/views/v78i-7ntw/rows.csv?accessType=DOWNLOAD`
+- **Ottawa** _(Canada)_  · ? · (unknown)
+  - portal: https://ouverte.ottawa.ca/datasets/inventaire-des-arbres
+  - data: `https://opendata.arcgis.com/datasets/451e904e2753453eb699b2e853ab5857_1.csv`
+- **Moncton** _(Canada)_  · ? · (unknown)
+  - portal: http://ouvert.moncton.ca/datasets/arbres
+  - data: `https://opendata.arcgis.com/datasets/60d5b564e732444b81a650c7c4aa548a_0.csv?outSR=%7B%22latestWkid%2…`
+- **Cupertino** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/Cupertino::trees
+  - data: `https://opendata.arcgis.com/datasets/caa50a924b7d4b5ba8e8a4cbfd0d7f13_29.csv`
+- **Oxnard** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/a5aa2d1dfd344ef79d61507d33cdbc02_1
+  - data: `https://opendata.arcgis.com/datasets/a5aa2d1dfd344ef79d61507d33cdbc02_1.csv`
+- **Three Rivers** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/trpd::managed-trees-open-data?geometry=-96.405%2C44.562%2C-90.563%2C45.243
+  - data: `https://opendata.arcgis.com/datasets/ffbb9401412141a79c7164ade8d2ee2d_0.csv`
+- **Mountain View** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/MountainView::trees
+  - data: `https://opendata.arcgis.com/datasets/72667718eb9b427d95b6eb55e25c36a7_0.csv`
+- **Richardson** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/richardson::trees
+  - data: `https://opendata.arcgis.com/datasets/cd10a9e85354488dbdb697ce97ccb064_0.csv`
+- **Sioux Falls** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/cityofsfgis::trees
+  - data: `https://opendata.arcgis.com/datasets/c880d62ae5fb4652b1f8e6cbca244107_10.csv`
+- **Charlottesville** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/charlottesville::tree-inventory-point
+  - data: `https://opendata.arcgis.com/datasets/e7c856379492408e9543a25d684b8311_79.csv`
+- **Champaign** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/cityofchampaign::city-owned-trees
+  - data: `https://opendata.arcgis.com/datasets/979bbeefffea408e8f1cb7a397196c64_22.csv`
+- **West Chester** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/WCUPAGIS::borotrees-1?geometry=-87.273%2C38.460%2C-63.905%2C41.408
+  - data: `https://opendata.arcgis.com/datasets/7fdf2b5d2b674e99b33e8d77d052e30c_0.csv`
+- **Bozeman** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/bozeman::trees
+  - data: `https://opendata.arcgis.com/datasets/ba0dea7927184014a8b84e64af5c7684_0.csv`
+- **Weston** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/westonfl::trees
+  - data: `https://opendata.arcgis.com/datasets/c95f89a4db39414a89f5c29bcb6fb48d_6.csv`
+- **St Augustine** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/STAUG::trees?geometry=-93.005%2C28.223%2C-69.637%2C31.556
+  - data: `https://opendata.arcgis.com/datasets/8372c7d0f5a24764bd10f62f0b2f1b65_0.csv`
+- **Nichols Arboretum** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/umich::nichols-arboretum-inventory-survey
+  - data: `https://opendata.arcgis.com/datasets/febee55e7dac43298952af77c8f8d809_0.csv`
+- **UNT** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/untgis::tree
+  - data: `https://opendata.arcgis.com/datasets/ee33bf4535cd47bbb1c5661d2333d834_0.csv`
+- **Cape Coral** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/CapeGIS::tree-inventory
+  - data: `https://opendata.arcgis.com/datasets/e988fe06668e44ea996a53c4365531b9_0.csv`
+- **Escondido** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/CityofEscondido::tree-inventory?geometry=-122.895%2C32.313%2C-111.211%2C33.923
+  - data: `https://opendata.arcgis.com/datasets/ac9caf3c7a9847b78100cc8860ddf51a_0.csv`
+- **Auburn** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/AuburnME::treeinventory?geometry=-81.930%2C42.701%2C-58.562%2C45.462
+  - data: `https://opendata.arcgis.com/datasets/91bffc476216422481b511a48796a327_0.csv`
+- **Westerville** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/Westerville::comm-parks-rec-trees/data?geometry=-83.315%2C40.085%2C-82.585%2C40.177
+  - data: `https://opendata.arcgis.com/datasets/137785bc78da47b4a2159f9c76218d55_0.csv`
+- **Naperville** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/naperville::right-of-way-tree-inventory
+  - data: `https://opendata.arcgis.com/datasets/51d4726531cd4ef99bfa24b99ae3ba24_0.csv`
+
+## Tier D
+
+- **Buffalo** _(USA)_  · 11,488 rows · Public Domain U.S. Government · updated 2026-05-07
+  - data: `https://data.buffalony.gov/api/views/n4ni-uuec/rows.csv?accessType=DOWNLOAD`
+- **Quebec City** _(Canada)_  · ? · (unknown)
+  - portal: https://www.donneesquebec.ca/recherche/fr/dataset/vque_26
+  - data: `https://www.donneesquebec.ca/recherche/fr/dataset/34103a43-3712-4a29-92e1-039e9188e915/resource/de03…`
+- **Repentigny** _(Canada)_  · ? · CC-BY-4.0
+  - portal: https://www.donneesquebec.ca/recherche/fr/dataset/vrep-arbres
+  - data: `https://www.donneesquebec.ca/recherche/dataset/d65f10dd-9948-4b52-bc4c-b40261e2c593/resource/850da24…`
+- **Montreal** _(Canada)_  · ? · (unknown)
+  - portal: http://donnees.ville.montreal.qc.ca/dataset/arbres
+  - data: `http://donnees.ville.montreal.qc.ca/dataset/3e3efad6-9f2f-4cc0-8f1b-92de1ccdb282/resource/c6c5afe8-1…`
+- **Waterloo** _(Canada)_  · ? · (unknown)
+  - portal: http://data.waterloo.ca/datasets/2447415303e74bb9acdf0f43c2236b72_0
+  - data: `https://opendata.arcgis.com/datasets/2447415303e74bb9acdf0f43c2236b72_0.zip`
+- **Lisbon** _(Canada)_  · ? · (unknown)
+  - portal: http://geodados.cm-lisboa.pt/datasets/arvoredo?geometry=-9.312%2C38.745%2C-9.148%2C38.768
+  - data: `https://opendata.arcgis.com/datasets/202d0f1a7f234e449761af8af14436d6_0.zip`
+- **Toronto** _(Canada)_  · ? · (unknown)
+  - portal: https://open.toronto.ca/dataset/street-tree-data/
+  - data: `https://ckan0.cf.opendata.inter.prod-toronto.ca/download_resource/c1229af1-8ab6-4c71-b131-8be12da59c…`
+- **White Rock** _(Canada)_  · ? · (unknown)
+  - portal: http://data.whiterockcity.ca/dataset/tree
+  - data: `http://wroms.whiterockcity.ca/opendata/GIS/Data/Spatial/Parks/SHP/Tree.zip`
+  - HEAD error: fetch failed
+- **Welland** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/welland::welland-trees
+  - data: `https://opendata.arcgis.com/datasets/4357fb7835fe49b39197a9440b2e868b_0.zip`
+- **Ajax** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/TownofAjax::town-trees
+  - data: `https://opendata.arcgis.com/datasets/c5d5ff5351a54fdb8d3934abbb5cda9a_8.zip`
+- **Oakville** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/ExploreOakville::trees
+  - data: `https://opendata.arcgis.com/datasets/66e3b95688394391a433fd29873aff20_10.zip`
+- **Prince George** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/CityofPG::trees
+  - data: `https://opendata.arcgis.com/datasets/054e46bee4594eb787d574266c832430_3.zip`
+- **Victoria** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/VicMap::tree-species
+  - data: `https://opendata.arcgis.com/datasets/36e90771770542baaa89afddce69195a_15.zip`
+- **Longueuil** _(Canada)_  · ? · (unknown)
+  - portal: https://www.longueuil.quebec/fr/donnees-ouvertes/arbres
+  - data: `https://www.longueuil.quebec/sites/longueuil/files/donnees_ouvertes/arbres.zip`
+- **Kelowna** _(Canada)_  · ? · (unknown)
+  - portal: http://opendata.kelowna.ca/datasets/39d13a47b8f94cce82a9b4c86efc8ee7/data?geometry=-119.693%2C49.577%2C-119.178%2C49.887
+  - data: `https://opendata.arcgis.com/datasets/39d13a47b8f94cce82a9b4c86efc8ee7_114.zip?outSR=26911`
+- **Kamloops** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/kamloops::trees
+  - data: `https://opendata.arcgis.com/datasets/e14c04be6c6c4692b70147edb937088c_25.zip`
+- **New West** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/newwestcity::trees-west
+  - data: `https://opendata.arcgis.com/datasets/eb043d306e4b4652a10b4b7b51f718ab_102.zip`
+- **Chestermere** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/Chestermere::tree-points
+  - data: `https://opendata.arcgis.com/datasets/72e47f7c7b194047936ebb0ce3c4d32e_0.zip`
+- **New West** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/newwestcity::trees-east
+  - data: `https://opendata.arcgis.com/datasets/341e47f1d4cd4b4aa14a8804b992cc7e_101.zip`
+- **Barrie** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/barrie::tree-location
+  - data: `https://opendata.arcgis.com/datasets/16123463ba3d48859a83f4883a414a45_7.zip`
+- **Victoriaville** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/victoriaville::tree
+  - data: `https://opendata.arcgis.com/datasets/ae1c4b5613334d8a823359565fafb911_12.zip`
+- **Missisauga** _(Canada)_  · ? · (unknown)
+  - portal: http://data.mississauga.ca/datasets/city-owned-tree-inventory
+  - data: `https://opendata.arcgis.com/datasets/b3f7ee3952094b87b4a1d82d5f19dc0e_0.zip?outSR=%7B%22latestWkid%2…`
+- **Maple Ridge** _(Canada)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/mapleridge::street-tree
+  - data: `https://opendata.arcgis.com/datasets/290505c676d64cf09989eca1320aedd3_5.zip`
+- **Kitchener** _(Canada)_  · ? · (unknown)
+  - portal: https://open-kitchenergis.opendata.arcgis.com/datasets/e42a9601b87a4417b3d3d15a0f596f64_0
+  - data: `https://opendata.arcgis.com/datasets/e42a9601b87a4417b3d3d15a0f596f64_0.zip`
+- **York** _(Canada)_  · ? · (unknown)
+  - portal: https://insights-york.opendata.arcgis.com/datasets/street-trees
+  - data: `https://opendata.arcgis.com/datasets/293d80c24bf54a4f8ab66bddaeaab184_0.zip`
+- **Lethbridge** _(Canada)_  · ? · (unknown)
+  - portal: http://opendata.lethbridge.ca/datasets/82841132047d47659508f60c52f6346a_0
+  - data: `https://opendata.arcgis.com/datasets/82841132047d47659508f60c52f6346a_0.zip`
+- **North Vancouver** _(Canada)_  · ? · (unknown)
+  - portal: http://geoweb.dnv.org/data/index.php
+  - data: `http://geoweb.dnv.org/Products/Data/SHP/EnvStreetTree_shp.zip`
+  - HEAD error: fetch failed
+- **St Catharines** _(Canada)_  · ? · (unknown)
+  - portal: https://niagaraopendata.ca/dataset/st-catharines-trees
+  - data: `https://niagaraopendata.ca/dataset/06257b18-da24-424e-a609-48d6f3d4f018/resource/c549fce9-f032-48f9-…`
+- **Cambridge** _(USA)_  · ? · (unknown)
+  - portal: https://data.cambridgema.gov/Public-Works/Street-Trees/ni4i-5bnn
+  - data: `https://data.cambridgema.gov/api/views/q83f-7quz/rows.csv?accessType=DOWNLOAD`
+- **Boulder** _(USA)_  · ? · (unknown)
+  - portal: https://data-boulder.opendata.arcgis.com/datasets/dbbae8bdb0a44d17934243b88e85ef2b_0
+  - data: `https://opendata.arcgis.com/datasets/dbbae8bdb0a44d17934243b88e85ef2b_0.zip`
+- **Berkeley** _(USA)_  · ? · (unknown)
+  - portal: https://data.cityofberkeley.info/Natural-Resources/City-Trees/9t35-jmin
+  - data: `https://data.cityofberkeley.info/api/views/x39z-ushg/rows.csv?accessType=DOWNLOAD`
+- **Cary** _(USA)_  · ? · (unknown)
+  - portal: https://catalog.data.gov/dataset/cary-trees
+  - data: `https://data.townofcary.org/api/v2/catalog/datasets/cary-trees/exports/csv`
+- **Madison** _(USA)_  · ? · (unknown)
+  - data: `https://opendata.arcgis.com/datasets/b700541a20e446839b18d62426c266a3_0.zip`
+- **Colombus** _(USA)_  · ? · (unknown)
+  - portal: http://opendata.columbus.gov/datasets/public-owned-trees
+  - data: `https://opendata.arcgis.com/datasets/674e4a358e8042f69a734f229a93823c_1.zip?outSR=%7B%22wkt%22%3A%22…`
+- **Wake Forest** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/wakeforestnc::trees
+  - data: `https://opendata.arcgis.com/datasets/ba930858554a43cca1be2f06a44d2449_0.csv`
+- **Bakersfield** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/cob::city-trees?geometry=-129.468%2C33.767%2C-108.539%2C36.903
+  - data: `https://opendata.arcgis.com/datasets/b7a17f7ecb564be4b26ced85016ed1da_0.csv`
+- **Rochester** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/RochesterNY::trees-open-data
+  - data: `https://opendata.arcgis.com/datasets/4c209944e2984b4a908a14b0cbe48075_0.zip`
+- **Las Vegas** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/lasvegas::trees
+  - data: `https://opendata.arcgis.com/datasets/23364bb40f2640ff841ba4a8680b6421_0.csv`
+- **Allentown** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/AllentownPA::city-trees
+  - data: `https://opendata.arcgis.com/datasets/4383052db35e4f93bbd83e5bde468a00_0.csv`
+- **Amherst** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/AmherstMA::street-trees
+  - data: `https://opendata.arcgis.com/datasets/b4a74ab24f114f22b438a19e589f6f76_0.zip`
+- **Marysville** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/Marysville::individual-trees-sites
+  - data: `https://opendata.arcgis.com/datasets/44b6c7a1307d48ff99d2034b5695c149_0.csv`
+- **Springfield** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/COSMO::tree-inventory
+  - data: `https://opendata.arcgis.com/datasets/7a890a7b54d6438f80bd60e5e34c8e62_34.csv`
+- **Anaheim** _(USA)_  · ? · (unknown)
+  - portal: https://data-anaheim.opendata.arcgis.com/datasets/city-trees
+  - data: `https://opendata.arcgis.com/datasets/0f96c6cf73904424bc9ce14197990201_41.csv`
+- **Durango** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/CityOfDurango::city-trees
+  - data: `https://opendata.arcgis.com/datasets/3e3e00d6224b43ee9acc514244fffdb9_0.csv`
+- **Colorado Springs** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/coloradosprings::trees/data?geometry=-106.259%2C38.699%2C-103.338%2C39.073
+  - data: `https://opendata.arcgis.com/datasets/91758518026d4b1089f2180602399d73_0.csv`
+- **Pacific Grove** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/CityPacificGrove::trees
+  - data: `https://opendata.arcgis.com/datasets/87bcc6e824214422be859b3251350829_3.csv`
+- **Placentia** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/placentia::city-trees
+  - data: `https://opendata.arcgis.com/datasets/8efcbe9c80ed42a29e6ad5483bd01c32_0.csv`
+- **Sarasota** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/sarasota::tree-inventory
+  - data: `https://opendata.arcgis.com/datasets/4deeb30f44bc4b60847cf43aed1a4670_0.csv`
+- **Hudson River Park** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/SustainableMSU::tree
+  - data: `https://opendata.arcgis.com/datasets/51b5e5da030f4331af48cb052f2d2d5e_1.csv`
+- **San Jose** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/csjdotgis::trees-medians-and-backups
+  - data: `https://opendata.arcgis.com/datasets/0b0ad30145394b1588ff09ef1a7c9225_1.csv`
+- **San Jose** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/csjdotgis::trees-special-districts
+  - data: `https://opendata.arcgis.com/datasets/0b0ad30145394b1588ff09ef1a7c9225_0.csv`
+- **San Jose** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/csjdotgis::trees-general-fund-street
+  - data: `https://opendata.arcgis.com/datasets/0b0ad30145394b1588ff09ef1a7c9225_2.csv`
+- **Wylie** _(USA)_  · ? · (unknown)
+  - portal: http://hub.arcgis.com/datasets/WylieTX::treesurvey
+  - data: `https://opendata.arcgis.com/datasets/82060fffb84045fdafbe2a56c989b353_0.csv`

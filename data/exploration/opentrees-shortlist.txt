@@ -1,0 +1,793 @@
+
+══════════════════════════════════════════════════
+  USA  (46 candidates)
+══════════════════════════════════════════════════
+
+  Madison   [license unknown]
+    data: https://opendata.arcgis.com/datasets/b700541a20e446839b18d62426c266a3_0.zip
+
+  Providence (Providence, Rhode Island)   [license unknown]
+    data: https://data.providenceri.gov/api/views/uv9w-h8i4/rows.csv?accessType=DOWNLOAD
+
+  Buffalo (City of Buffalo, NY)   [license unknown]
+    data: https://data.buffalony.gov/api/views/n4ni-uuec/rows.csv?accessType=DOWNLOAD
+
+  Boulder (City of Boulder, Colorado)   [license unknown]
+    info: https://data-boulder.opendata.arcgis.com/datasets/dbbae8bdb0a44d17934243b88e85ef2b_0
+    data: https://opendata.arcgis.com/datasets/dbbae8bdb0a44d17934243b88e85ef2b_0.zip
+
+  Cambridge   [license unknown]
+    info: https://data.cambridgema.gov/Public-Works/Street-Trees/ni4i-5bnn
+    data: https://data.cambridgema.gov/api/views/q83f-7quz/rows.csv?accessType=DOWNLOAD
+
+  Berkeley   [license unknown]
+    info: https://data.cityofberkeley.info/Natural-Resources/City-Trees/9t35-jmin
+    data: https://data.cityofberkeley.info/api/views/x39z-ushg/rows.csv?accessType=DOWNLOAD
+
+  Colombus   [license unknown]
+    info: http://opendata.columbus.gov/datasets/public-owned-trees
+    data: https://opendata.arcgis.com/datasets/674e4a358e8042f69a734f229a93823c_1.zip?outSR=%7B%22wkt%22%3A%22PROJCS%5B%…
+
+  Cary   [license unknown]
+    info: https://catalog.data.gov/dataset/cary-trees
+    data: https://data.townofcary.org/api/v2/catalog/datasets/cary-trees/exports/csv
+
+  Rochester   [license unknown]
+    info: http://hub.arcgis.com/datasets/RochesterNY::trees-open-data
+    data: https://opendata.arcgis.com/datasets/4c209944e2984b4a908a14b0cbe48075_0.zip
+
+  Cupertino   [license unknown]
+    info: http://hub.arcgis.com/datasets/Cupertino::trees
+    data: https://opendata.arcgis.com/datasets/caa50a924b7d4b5ba8e8a4cbfd0d7f13_29.csv
+
+  Oxnard (City of Oxnard)   [license unknown]
+    info: http://hub.arcgis.com/datasets/a5aa2d1dfd344ef79d61507d33cdbc02_1
+    data: https://opendata.arcgis.com/datasets/a5aa2d1dfd344ef79d61507d33cdbc02_1.csv
+
+  Wake Forest (Town of Wake Forest)   [license unknown]
+    info: http://hub.arcgis.com/datasets/wakeforestnc::trees
+    data: https://opendata.arcgis.com/datasets/ba930858554a43cca1be2f06a44d2449_0.csv
+
+  Bakersfield   [license unknown]
+    info: http://hub.arcgis.com/datasets/cob::city-trees?geometry=-129.468%2C33.767%2C-108.539%2C36.903
+    data: https://opendata.arcgis.com/datasets/b7a17f7ecb564be4b26ced85016ed1da_0.csv
+
+  Las Vegas   [license unknown]
+    info: http://hub.arcgis.com/datasets/lasvegas::trees
+    data: https://opendata.arcgis.com/datasets/23364bb40f2640ff841ba4a8680b6421_0.csv
+
+  Mountain View (City of Mountain View)   [license unknown]
+    info: http://hub.arcgis.com/datasets/MountainView::trees
+    data: https://opendata.arcgis.com/datasets/72667718eb9b427d95b6eb55e25c36a7_0.csv
+
+  Three Rivers (Three Rivers Park District)   [license unknown]
+    info: http://hub.arcgis.com/datasets/trpd::managed-trees-open-data?geometry=-96.405%2C44.562%2C-90.563%2C45.243
+    data: https://opendata.arcgis.com/datasets/ffbb9401412141a79c7164ade8d2ee2d_0.csv
+
+  Richardson   [license unknown]
+    info: http://hub.arcgis.com/datasets/richardson::trees
+    data: https://opendata.arcgis.com/datasets/cd10a9e85354488dbdb697ce97ccb064_0.csv
+
+  Allentown (City of Allentown)   [license unknown]
+    info: http://hub.arcgis.com/datasets/AllentownPA::city-trees
+    data: https://opendata.arcgis.com/datasets/4383052db35e4f93bbd83e5bde468a00_0.csv
+
+  Sioux Falls   [license unknown]
+    info: http://hub.arcgis.com/datasets/cityofsfgis::trees
+    data: https://opendata.arcgis.com/datasets/c880d62ae5fb4652b1f8e6cbca244107_10.csv
+
+  Amherst   [license unknown]
+    info: http://hub.arcgis.com/datasets/AmherstMA::street-trees
+    data: https://opendata.arcgis.com/datasets/b4a74ab24f114f22b438a19e589f6f76_0.zip
+
+  Colorado Springs   [license unknown]
+    info: http://hub.arcgis.com/datasets/coloradosprings::trees/data?geometry=-106.259%2C38.699%2C-103.338%2C39.073
+    data: https://opendata.arcgis.com/datasets/91758518026d4b1089f2180602399d73_0.csv
+
+  Marysville (City of Marysville)   [license unknown]
+    info: http://hub.arcgis.com/datasets/Marysville::individual-trees-sites
+    data: https://opendata.arcgis.com/datasets/44b6c7a1307d48ff99d2034b5695c149_0.csv
+
+  Springfield (City of Springfield)   [license unknown]
+    info: http://hub.arcgis.com/datasets/COSMO::tree-inventory
+    data: https://opendata.arcgis.com/datasets/7a890a7b54d6438f80bd60e5e34c8e62_34.csv
+
+  Anaheim   [license unknown]
+    info: https://data-anaheim.opendata.arcgis.com/datasets/city-trees
+    data: https://opendata.arcgis.com/datasets/0f96c6cf73904424bc9ce14197990201_41.csv
+
+  Charlottesville   [license unknown]
+    info: http://hub.arcgis.com/datasets/charlottesville::tree-inventory-point
+    data: https://opendata.arcgis.com/datasets/e7c856379492408e9543a25d684b8311_79.csv
+
+  West Chester (West Chester Borough)   [license unknown]
+    info: http://hub.arcgis.com/datasets/WCUPAGIS::borotrees-1?geometry=-87.273%2C38.460%2C-63.905%2C41.408
+    data: https://opendata.arcgis.com/datasets/7fdf2b5d2b674e99b33e8d77d052e30c_0.csv
+
+  Durango   [license unknown]
+    info: http://hub.arcgis.com/datasets/CityOfDurango::city-trees
+    data: https://opendata.arcgis.com/datasets/3e3e00d6224b43ee9acc514244fffdb9_0.csv
+
+  Westerville   [license unknown]
+    info: http://hub.arcgis.com/datasets/Westerville::comm-parks-rec-trees/data?geometry=-83.315%2C40.085%2C-82.585%2C40.177
+    data: https://opendata.arcgis.com/datasets/137785bc78da47b4a2159f9c76218d55_0.csv
+
+  St Augustine   [license unknown]
+    info: http://hub.arcgis.com/datasets/STAUG::trees?geometry=-93.005%2C28.223%2C-69.637%2C31.556
+    data: https://opendata.arcgis.com/datasets/8372c7d0f5a24764bd10f62f0b2f1b65_0.csv
+
+  Weston   [license unknown]
+    info: http://hub.arcgis.com/datasets/westonfl::trees
+    data: https://opendata.arcgis.com/datasets/c95f89a4db39414a89f5c29bcb6fb48d_6.csv
+
+  Pacific Grove   [license unknown]
+    info: http://hub.arcgis.com/datasets/CityPacificGrove::trees
+    data: https://opendata.arcgis.com/datasets/87bcc6e824214422be859b3251350829_3.csv
+
+  Bozeman (City of Bozeman)   [license unknown]
+    info: http://hub.arcgis.com/datasets/bozeman::trees
+    data: https://opendata.arcgis.com/datasets/ba0dea7927184014a8b84e64af5c7684_0.csv
+
+  Champaign   [license unknown]
+    info: http://hub.arcgis.com/datasets/cityofchampaign::city-owned-trees
+    data: https://opendata.arcgis.com/datasets/979bbeefffea408e8f1cb7a397196c64_22.csv
+
+  Placentia   [license unknown]
+    info: http://hub.arcgis.com/datasets/placentia::city-trees
+    data: https://opendata.arcgis.com/datasets/8efcbe9c80ed42a29e6ad5483bd01c32_0.csv
+
+  Sarasota   [license unknown]
+    info: http://hub.arcgis.com/datasets/sarasota::tree-inventory
+    data: https://opendata.arcgis.com/datasets/4deeb30f44bc4b60847cf43aed1a4670_0.csv
+
+  Nichols Arboretum   [license unknown]
+    info: http://hub.arcgis.com/datasets/umich::nichols-arboretum-inventory-survey
+    data: https://opendata.arcgis.com/datasets/febee55e7dac43298952af77c8f8d809_0.csv
+
+  UNT (University of North Texas)   [license unknown]
+    info: http://hub.arcgis.com/datasets/untgis::tree
+    data: https://opendata.arcgis.com/datasets/ee33bf4535cd47bbb1c5661d2333d834_0.csv
+
+  Escondido (City of Escondido)   [license unknown]
+    info: http://hub.arcgis.com/datasets/CityofEscondido::tree-inventory?geometry=-122.895%2C32.313%2C-111.211%2C33.923
+    data: https://opendata.arcgis.com/datasets/ac9caf3c7a9847b78100cc8860ddf51a_0.csv
+
+  Wylie (City of Wylie)   [license unknown]
+    info: http://hub.arcgis.com/datasets/WylieTX::treesurvey
+    data: https://opendata.arcgis.com/datasets/82060fffb84045fdafbe2a56c989b353_0.csv
+
+  Auburn   [license unknown]
+    info: http://hub.arcgis.com/datasets/AuburnME::treeinventory?geometry=-81.930%2C42.701%2C-58.562%2C45.462
+    data: https://opendata.arcgis.com/datasets/91bffc476216422481b511a48796a327_0.csv
+
+  Hudson River Park (Hudson River Park Trust)   [license unknown]
+    info: http://hub.arcgis.com/datasets/SustainableMSU::tree
+    data: https://opendata.arcgis.com/datasets/51b5e5da030f4331af48cb052f2d2d5e_1.csv
+
+  Cape Coral   [license unknown]
+    info: http://hub.arcgis.com/datasets/CapeGIS::tree-inventory
+    data: https://opendata.arcgis.com/datasets/e988fe06668e44ea996a53c4365531b9_0.csv
+
+  Naperville   [license unknown]
+    info: http://hub.arcgis.com/datasets/naperville::right-of-way-tree-inventory
+    data: https://opendata.arcgis.com/datasets/51d4726531cd4ef99bfa24b99ae3ba24_0.csv
+
+  San Jose (San Jose Medians and Backups)   [license unknown]
+    info: http://hub.arcgis.com/datasets/csjdotgis::trees-medians-and-backups
+    data: https://opendata.arcgis.com/datasets/0b0ad30145394b1588ff09ef1a7c9225_1.csv
+
+  San Jose (San Jose Special Districts)   [license unknown]
+    info: http://hub.arcgis.com/datasets/csjdotgis::trees-special-districts
+    data: https://opendata.arcgis.com/datasets/0b0ad30145394b1588ff09ef1a7c9225_0.csv
+
+  San Jose (San Jose General Fund)   [license unknown]
+    info: http://hub.arcgis.com/datasets/csjdotgis::trees-general-fund-street
+    data: https://opendata.arcgis.com/datasets/0b0ad30145394b1588ff09ef1a7c9225_2.csv
+
+══════════════════════════════════════════════════
+  Canada  (36 candidates)
+══════════════════════════════════════════════════
+
+  Repentigny   [CC-BY-4.0]
+    info: https://www.donneesquebec.ca/recherche/fr/dataset/vrep-arbres
+    data: https://www.donneesquebec.ca/recherche/dataset/d65f10dd-9948-4b52-bc4c-b40261e2c593/resource/850da247-cf55-45f…
+
+  Montreal   [license unknown]
+    info: http://donnees.ville.montreal.qc.ca/dataset/arbres
+    data: http://donnees.ville.montreal.qc.ca/dataset/3e3efad6-9f2f-4cc0-8f1b-92de1ccdb282/resource/c6c5afe8-10be-4539-8…
+
+  Quebec City   [license unknown]
+    info: https://www.donneesquebec.ca/recherche/fr/dataset/vque_26
+    data: https://www.donneesquebec.ca/recherche/fr/dataset/34103a43-3712-4a29-92e1-039e9188e915/resource/de031174-cbdf-…
+
+  Longueuil (Ville de Longueuil)   [license unknown]
+    info: https://www.longueuil.quebec/fr/donnees-ouvertes/arbres
+    data: https://www.longueuil.quebec/sites/longueuil/files/donnees_ouvertes/arbres.zip
+
+  Calgary (City of Calgary)   [license unknown]
+    data: https://data.calgary.ca/api/views/tfs4-3wwa/rows.csv?accessType=DOWNLOAD
+
+  Edmonton (City of Edmonton)   [license unknown]
+    data: https://data.edmonton.ca/api/views/eecg-fc54/rows.csv?accessType=DOWNLOAD
+
+  Ottawa   [license unknown]
+    info: https://ouverte.ottawa.ca/datasets/inventaire-des-arbres
+    data: https://opendata.arcgis.com/datasets/451e904e2753453eb699b2e853ab5857_1.csv
+
+  Moncton   [license unknown]
+    info: http://ouvert.moncton.ca/datasets/arbres
+    data: https://opendata.arcgis.com/datasets/60d5b564e732444b81a650c7c4aa548a_0.csv?outSR=%7B%22latestWkid%22%3A2953%2…
+
+  Waterloo   [license unknown]
+    info: http://data.waterloo.ca/datasets/2447415303e74bb9acdf0f43c2236b72_0
+    data: https://opendata.arcgis.com/datasets/2447415303e74bb9acdf0f43c2236b72_0.zip
+
+  Winnipeg   [license unknown]
+    info: https://data.winnipeg.ca/Parks/Tree-Inventory-Map/xyma-gm38
+    data: https://data.winnipeg.ca/api/views/h923-dxid/rows.csv?accessType=DOWNLOAD
+
+  Vancouver   [license unknown]
+    data: https://opendata.vancouver.ca/explore/dataset/street-trees/download/?format=geojson&lang=en
+
+  Surrey (City of Surrey)   [license unknown]
+    info: https://data.surrey.ca/dataset/park-specimen-trees
+    data: http://data.surrey.ca/dataset/634d2f06-2214-49b3-9309-4baa51b61ec4/resource/86625e14-8d09-45e8-9b91-9d301d32b1…
+
+  Toronto   [license unknown]
+    info: https://open.toronto.ca/dataset/street-tree-data/
+    data: https://ckan0.cf.opendata.inter.prod-toronto.ca/download_resource/c1229af1-8ab6-4c71-b131-8be12da59c8e
+
+  Lisbon   [license unknown]
+    info: http://geodados.cm-lisboa.pt/datasets/arvoredo?geometry=-9.312%2C38.745%2C-9.148%2C38.768
+    data: https://opendata.arcgis.com/datasets/202d0f1a7f234e449761af8af14436d6_0.zip
+
+  Strathcona   [license unknown]
+    info: https://data.strathcona.ca/Environment/Tree/v78i-7ntw
+    data: https://data.strathcona.ca/api/views/v78i-7ntw/rows.csv?accessType=DOWNLOAD
+
+  Regina   [license unknown]
+    info: http://open.regina.ca/dataset/city-of-regina-tree-inventory
+    data: https://ckanprodstorage.blob.core.windows.net/opendata/Tree/SHP_ZIP/shp.Tree.zip
+
+  North Vancouver   [license unknown]
+    info: http://geoweb.dnv.org/data/index.php
+    data: http://geoweb.dnv.org/Products/Data/SHP/EnvStreetTree_shp.zip
+
+  White Rock (City of White Rock)   [license unknown]
+    info: http://data.whiterockcity.ca/dataset/tree
+    data: http://wroms.whiterockcity.ca/opendata/GIS/Data/Spatial/Parks/SHP/Tree.zip
+
+  Kelowna   [license unknown]
+    info: http://opendata.kelowna.ca/datasets/39d13a47b8f94cce82a9b4c86efc8ee7/data?geometry=-119.693%2C49.577%2C-119.178%2C49.887
+    data: https://opendata.arcgis.com/datasets/39d13a47b8f94cce82a9b4c86efc8ee7_114.zip?outSR=26911
+
+  Welland   [license unknown]
+    info: http://hub.arcgis.com/datasets/welland::welland-trees
+    data: https://opendata.arcgis.com/datasets/4357fb7835fe49b39197a9440b2e868b_0.zip
+
+  Ajax   [license unknown]
+    info: http://hub.arcgis.com/datasets/TownofAjax::town-trees
+    data: https://opendata.arcgis.com/datasets/c5d5ff5351a54fdb8d3934abbb5cda9a_8.zip
+
+  Prince George   [license unknown]
+    info: http://hub.arcgis.com/datasets/CityofPG::trees
+    data: https://opendata.arcgis.com/datasets/054e46bee4594eb787d574266c832430_3.zip
+
+  Oakville   [license unknown]
+    info: http://hub.arcgis.com/datasets/ExploreOakville::trees
+    data: https://opendata.arcgis.com/datasets/66e3b95688394391a433fd29873aff20_10.zip
+
+  Victoria   [license unknown]
+    info: http://hub.arcgis.com/datasets/VicMap::tree-species
+    data: https://opendata.arcgis.com/datasets/36e90771770542baaa89afddce69195a_15.zip
+
+  Kamloops (City of Kamloops)   [license unknown]
+    info: http://hub.arcgis.com/datasets/kamloops::trees
+    data: https://opendata.arcgis.com/datasets/e14c04be6c6c4692b70147edb937088c_25.zip
+
+  Chestermere   [license unknown]
+    info: http://hub.arcgis.com/datasets/Chestermere::tree-points
+    data: https://opendata.arcgis.com/datasets/72e47f7c7b194047936ebb0ce3c4d32e_0.zip
+
+  New West   [license unknown]
+    info: http://hub.arcgis.com/datasets/newwestcity::trees-west
+    data: https://opendata.arcgis.com/datasets/eb043d306e4b4652a10b4b7b51f718ab_102.zip
+
+  New West   [license unknown]
+    info: http://hub.arcgis.com/datasets/newwestcity::trees-east
+    data: https://opendata.arcgis.com/datasets/341e47f1d4cd4b4aa14a8804b992cc7e_101.zip
+
+  Maple Ridge   [license unknown]
+    info: http://hub.arcgis.com/datasets/mapleridge::street-tree
+    data: https://opendata.arcgis.com/datasets/290505c676d64cf09989eca1320aedd3_5.zip
+
+  Barrie   [license unknown]
+    info: http://hub.arcgis.com/datasets/barrie::tree-location
+    data: https://opendata.arcgis.com/datasets/16123463ba3d48859a83f4883a414a45_7.zip
+
+  Victoriaville   [license unknown]
+    info: http://hub.arcgis.com/datasets/victoriaville::tree
+    data: https://opendata.arcgis.com/datasets/ae1c4b5613334d8a823359565fafb911_12.zip
+
+  Lethbridge   [license unknown]
+    info: http://opendata.lethbridge.ca/datasets/82841132047d47659508f60c52f6346a_0
+    data: https://opendata.arcgis.com/datasets/82841132047d47659508f60c52f6346a_0.zip
+
+  Kitchener   [license unknown]
+    info: https://open-kitchenergis.opendata.arcgis.com/datasets/e42a9601b87a4417b3d3d15a0f596f64_0
+    data: https://opendata.arcgis.com/datasets/e42a9601b87a4417b3d3d15a0f596f64_0.zip
+
+  Missisauga   [license unknown]
+    info: http://data.mississauga.ca/datasets/city-owned-tree-inventory
+    data: https://opendata.arcgis.com/datasets/b3f7ee3952094b87b4a1d82d5f19dc0e_0.zip?outSR=%7B%22latestWkid%22%3A3857%2…
+
+  St Catharines   [license unknown]
+    info: https://niagaraopendata.ca/dataset/st-catharines-trees
+    data: https://niagaraopendata.ca/dataset/06257b18-da24-424e-a609-48d6f3d4f018/resource/c549fce9-f032-48f9-9c0a-2adc9…
+
+  York   [license unknown]
+    info: https://insights-york.opendata.arcgis.com/datasets/street-trees
+    data: https://opendata.arcgis.com/datasets/293d80c24bf54a4f8ab66bddaeaab184_0.zip
+
+══════════════════════════════════════════════════
+  Australia  (29 candidates)
+══════════════════════════════════════════════════
+
+  Corangamite (Corangamite Shire)   [license unknown]
+    data: https://data.gov.au/geoserver/corangamite-shire-trees/wfs?request=GetFeature&typeName=ckan_d9677ebb_f3db_45f3_…
+
+  Colac-Otways (Colac-Otways Shire)   [license unknown]
+    data: http://data.gov.au/geoserver/colac-otway-shire-trees/wfs?request=GetFeature&typeName=ckan_3ce1805b_cb81_4683_8…
+
+  Ballarat (City of Ballarat)   [license unknown]
+    data: https://data.gov.au/geoserver/ballarattrees/wfs?request=GetFeature&typeName=ckan_eabaee3f_a563_449b_a04a_1ec84…
+
+  Manningham (City of Manningham)   [license unknown]
+    data: https://data.gov.au/geoserver/manningham-streettrees/wfs?request=GetFeature&typeName=ckan_1aef5123_24ff_4084_a…
+
+  Geelong (City of Greater Geelong)   [license unknown]
+    data: https://data.gov.au/geoserver/geelong-trees/wfs?request=GetFeature&typeName=ckan_13b1196c_7fb7_436a_86bc_ab24c…
+
+  Melbourne (City of Melbourne)   [license unknown]
+    data: https://data.melbourne.vic.gov.au/api/views/fp38-wiyy/rows.csv?accessType=DOWNLOAD
+
+  Adelaide (City of Adelaide)   [license unknown]
+    data: http://opendata.adelaidecitycouncil.com/street_trees/street_trees.csv
+
+  Waite Arboretum (Waite Arboretum (Adelaide))   [license unknown]
+    data: http://data.sa.gov.au/storage/f/2014-06-23T06%3A12%3A22.180Z/waitetreeid-2014-app-joined-19062014.zip
+
+  Burnside (City of Burnside)   [license unknown]
+    data: https://data.sa.gov.au/data/dataset/b7e1c8f6-169c-41bd-b5d7-140395a41c38/resource/6d1912aa-4775-4f5e-b00d-1845…
+
+  Launceston (City of Launceston)   [license unknown]
+    data: http://lcc.launceston.opendata.arcgis.com/datasets/63b09a3688804a17b0edc4b3b072a0d7_1.zip
+
+  Hobson's Bay (City of Hobson's Bay)   [license unknown]
+    data: https://data.gov.au/dataset/80051ffe-04d5-4602-b15b-60e0d0e3d153/resource/ea1ec6fc-02bd-4e36-8e43-c990b6a9268d…
+
+  Glenelg (Glenelg Shire)   [license unknown]
+    data: http://data.gov.au/dataset/3721ad67-7b5b-4815-96b1-9d8b1a89dbd7/resource/b9ff3d44-17b4-4f87-8a28-2d540fa37d8f/…
+
+  Southern Grampians (City of Southern Grampians)   [license unknown]
+    data: http://data.gov.au/geoserver/southern-grampians-street-and-park-trees/wfs?request=GetFeature&typeName=ckan_4a2…
+
+  Prospect (City of Prospect)   [license unknown]
+    data: https://data.sa.gov.au/data/dataset/5d86d41e-b6c6-47d5-9b88-4d95916c5e76/resource/d1e30913-6e91-4a1f-b576-6412…
+
+  Prospect (City of Prospect)   [license unknown]
+    data: https://data.sa.gov.au/data/dataset/7bf2e4a4-40cc-40fd-83a9-fabb6d854039/resource/3f6be219-d66f-4b40-bfc7-1621…
+
+  Perth (City of Perth)   [license unknown]
+    data: https://opendata.arcgis.com/datasets/c5ce51d9789a4e9a8510acb8c8f3ecf4_0.zip
+
+  Brimbank (City of Brimbank)   [license unknown]
+    data: https://data.gov.au/geoserver/brimbank-open-space-trees/wfs?request=GetFeature&typeName=ckan_7a57b5a1_2ca3_417…
+
+  Bendigo (City of Greater Bendigo)   [license unknown]
+    data: https://data.gov.au/geoserver/city-of-greater-bendigo-environment-trees/wfs?request=GetFeature&typeName=ckan_d…
+
+  Shepparton (City of Shepparton)   [license unknown]
+    data: https://data.gov.au/dataset/e794491f-2eb7-4035-8b0c-f7248c28feda/resource/a1148573-68b9-4bd8-bda4-f08030d38c9d…
+
+  Wyndham (City of Wyndham)   [license unknown]
+    data: https://data.gov.au/dataset/0254dee0-5b26-484f-a5ae-5ca3cab46601/resource/fb06e7c8-d037-489b-a963-b747271f2e54…
+
+  Port Phillip (City of Port Phillip)   [license unknown]
+    data: https://data.gov.au/dataset/6b72d22b-d824-4281-bd08-ab62e3c38415/resource/9b0d7d55-5267-464b-85d7-3d141d779bab…
+
+  Boroondara (City of Boroondara)   [license unknown]
+    data: https://data.gov.au/geoserver/significant-tree/wfs?request=GetFeature&typeName=ckan_14e2b87e_c733_4071_b604_c0…
+
+  Yarra (City of Yarra)   [license unknown]
+    data: https://data.gov.au/data/dataset/f3c88ce7-504b-4ef7-907f-686037f7420c/resource/6e4186b0-3e00-48f9-a09c-cb60d1d…
+
+  Glen Eira (City of Glen Eira)   [license unknown]
+    data: https://data.gov.au/geoserver/street-and-park-trees/wfs?request=GetFeature&typeName=ckan_0553b144_9145_4458_92…
+
+  Wodonga (City of Wodonga)   [license unknown]
+    data: https://data.gov.au/data/dataset/e7d6ebd3-04a8-4d73-b8ba-a9b82aa79b16/resource/180ba7ad-7bd7-490b-81f8-79c74ec…
+
+  Hobart (City of Hobart)   [license unknown]
+    data: http://data-1-hobartcc.opendata.arcgis.com/datasets/d50fa3c9875d43fbb7e462248160e1ee_0.geojson
+
+  Sherwood Arboretum (Sherwood Arboretum (Brisbane))   [license unknown]
+    data: http://www.spatial-data.brisbane.qld.gov.au/datasets/613169f42b43494499c83640392c43e5_0.geojson
+
+  Sydney (City of Sydney)   [license unknown]
+    data: https://emscycletours.site44.com/opentrees-data/sydney-tree-data.csv
+
+  Unley   [license unknown]
+    info: http://hub.arcgis.com/datasets/unley::trees/data
+    data: https://opendata.arcgis.com/datasets/910774507d6a42248a50f9922054a0a0_0.zip
+
+══════════════════════════════════════════════════
+  UK  (8 candidates)
+══════════════════════════════════════════════════
+
+  Belfast   [license unknown]
+    info: https://www.belfastcity.gov.uk/council/Openandlinkeddata/opendatasets.aspx
+    data: https://www.belfastcity.gov.uk/nmsruntime/saveasdialog.aspx?lID=14543&sID=2430
+
+  London (Greater London Authority)   [license unknown]
+    data: https://data.london.gov.uk/download/local-authority-maintained-trees/c52e733d-bf7e-44b8-9c97-827cb2bc53be/lond…
+
+  Birmingham   [license unknown]
+    data: https://cc-p-birmingham.ckan.io/dataset/e9c314fc-fb6d-4189-a19c-7eec962733a8/resource/4bfd9191-a520-42fb-9ebf-…
+
+  Bristol   [license unknown]
+    info: https://opendata.bristol.gov.uk/explore/dataset/trees/export/
+    data: https://opendata.bristol.gov.uk/explore/dataset/trees/download/?format=geojson&timezone=Australia/Sydney&lang=…
+
+  Edinburgh   [license unknown]
+    info: https://data.edinburghcouncilmaps.info/datasets/4dfc8f18a40346009b9fc32cbee34039_39
+    data: https://data.edinburghcouncilmaps.info/datasets/4dfc8f18a40346009b9fc32cbee34039_39.zip
+
+  Dundee (Dundee City Council)   [license unknown]
+    info: https://data.dundeecity.gov.uk/dataset/trees
+    data: https://data.dundeecity.gov.uk/datastore/dump/e54ef90a-76e5-415e-a272-5e489d9f5c67
+
+  York (City of York Council)   [license unknown]
+    info: https://data.gov.uk/dataset/12dcc527-a7e2-4b23-a3c5-1501053ff0f5/council-owned-trees
+    data: https://opendata.arcgis.com/datasets/30f38f358843467daa2d93074a03b8d5_3.csv
+
+  York   [license unknown]
+    info: https://data.gov.uk/dataset/c166b067-5a9d-487b-a37d-4d350f8cff51/private-trees
+    data: https://opendata.arcgis.com/datasets/a602aca10afb49659720b435d3f54023_18.csv
+
+══════════════════════════════════════════════════
+  France  (25 candidates)
+══════════════════════════════════════════════════
+
+  Paris   [license unknown]
+    data: https://www.data.gouv.fr/en/datasets/r/c558ddb2-cc46-4e26-b96a-bd2735a8f343
+
+  Lyon   [license unknown]
+    data: https://download.data.grandlyon.com/ws/grandlyon/abr_arbres_alignement.abrarbre.shp?srsname=EPSG:4326
+
+  Bordeaux   [license unknown]
+    info: https://opendata.bordeaux-metropole.fr/explore/dataset/bor_arbres/information/
+    data: https://opendata.bordeaux-metropole.fr/explore/dataset/bor_arbres/download/?format=geojson&lang=en
+
+  Nice   [license unknown]
+    info: https://trouver.datasud.fr/dataset/sync149f50a-cartographie-des-arbres-communaux
+    data: http://opendata.nicecotedazur.org/data/storage/f/2019-07-22T07%3A41%3A29.958Z/ev-arbre-opendata-2019.geojson
+
+  Grenoble   [license unknown]
+    info: http://data.metropolegrenoble.fr/ckan/dataset/les-arbres-de-grenoble
+    data: http://entrepot.metropolegrenoble.fr/opendata/38185-GRE/EspacePublic/json/ARBRES_TERRITOIRE_VDG_EPSG4326.json
+
+  Montpellier   [license unknown]
+    info: https://data.montpellier3m.fr/dataset/arbres-dalignement-de-montpellier
+    data: https://data.montpellier3m.fr/sites/default/files/ressources/MMM_MTP_ArbresAlign.zip
+
+  Grand Paris Seine Ouest   [license unknown]
+    info: https://www.data.gouv.fr/fr/datasets/arbres-2/
+    data: https://www.data.gouv.fr/fr/datasets/r/a10c7776-afa5-4b8a-8050-081788818b55
+
+  Agen   [license unknown]
+    data: https://www.data.gouv.fr/fr/datasets/r/fededc1c-6e42-4a6d-9469-849fd956fbfe
+
+  Saint Quentinois (Agglomération du Saint Quentinois)   [license unknown]
+    data: https://www.data.gouv.fr/fr/datasets/r/c6000378-1f3c-4c0c-8f62-9a5b72dc7a85
+
+  Metz   [license unknown]
+    data: https://www.data.gouv.fr/fr/datasets/r/3aa28eaa-9ee4-49ff-bb73-74c21d14268d
+
+  Seine-Saint-Denis   [license unknown]
+    data: https://www.data.gouv.fr/fr/datasets/r/c631e78d-4d15-44eb-a40d-cd593f0e1bed
+
+  Versailles   [license unknown]
+    data: https://www.data.gouv.fr/fr/datasets/r/4b9d9fe4-f8da-4db1-8057-9e83b2abf5d2
+
+  Nevers (Ville de Nevers)   [license unknown]
+    data: https://www.data.gouv.fr/fr/datasets/r/dbdc2068-ee22-474d-8a42-261554482a4f
+
+  Toulouse (Toulouse Métropole)   [license unknown]
+    info: https://www.data.gouv.fr/fr/datasets/arbres-dalignement-toulouse/
+    data: https://www.data.gouv.fr/fr/datasets/r/b5b275e5-ef20-43c4-ad3f-5604c67a75a3
+
+  Orléans (Ville d'Orléans)   [license unknown]
+    info: https://www.data.gouv.fr/fr/datasets/arbres-ville-dorleans/
+    data: https://www.data.gouv.fr/fr/datasets/r/804b8b61-9f8f-4a0d-8524-35ea5d6e265f
+
+  Saint-Egrève (Ville de Saint-Egrève)   [license unknown]
+    info: https://www.data.gouv.fr/fr/datasets/les-arbres-de-saint-egreve/
+    data: https://www.data.gouv.fr/fr/datasets/r/2bda9508-27e5-4de6-aba3-fdb0d9059a22
+
+  Bayonne (Ville de Bayonne)   [license unknown]
+    info: https://www.data.gouv.fr/fr/datasets/arbres-dalignement-bayonne/
+    data: https://www.data.gouv.fr/fr/datasets/r/e99bddd1-384b-4954-9f4f-483bb0fcaef0
+
+  Issy-les-Moulineaux (Ville d'Issy-les-Moulineaux)   [license unknown]
+    info: https://www.data.gouv.fr/fr/datasets/r/578636b3-e9ca-4aa7-b298-e69fd0f3acc9
+    data: https://www.data.gouv.fr/fr/datasets/r/578636b3-e9ca-4aa7-b298-e69fd0f3acc9
+
+  Rennes (Rennes Métropole)   [license unknown]
+    info: https://www.data.gouv.fr/fr/datasets/arbres-dornement-des-espaces-verts-de-la-ville-de-rennes-1/
+    data: https://www.data.gouv.fr/fr/datasets/r/85d25eb0-b34e-4559-884d-ac052e62c620
+
+  Rennes (Rennes Métropole)   [license unknown]
+    info: https://www.data.gouv.fr/fr/datasets/arbres-dalignement-en-accompagnement-de-voirie-sur-la-ville-de-rennes-1/
+    data: https://www.data.gouv.fr/fr/datasets/r/c9cf6518-267c-4aa4-bdbe-d1602f78b07f
+
+  Mulhouse (Mulhouse Alsace Agglomération)   [license unknown]
+    info: https://www.data.gouv.fr/fr/datasets/caracteristiques-des-arbres-dalignements-geres-par-la-ville-de-mulhouse/
+    data: https://www.data.gouv.fr/fr/datasets/r/3c47ef6b-10ea-4723-81b9-a3c0b99e9550
+
+  Divonne-les-Bains   [license unknown]
+    info: https://www.datara.gouv.fr/geonetwork/srv/fre/catalog.search#/metadata/b18070b7-4349-4fd5-8e56-1dc48c3eb03a
+    data: https://telecarto.datara.gouv.fr/DOWNLOAD/Telechargement_1584570708_1630.zip
+
+  Bretagne (La Région Bretagne)   [license unknown]
+    info: https://data.bretagne.bzh/explore/dataset/patrimoine-arbore-ponctuel-des-voies-navigables-appartenant-a-la-region-bretagne/export/
+    data: https://data.bretagne.bzh/explore/dataset/patrimoine-arbore-ponctuel-des-voies-navigables-appartenant-a-la-reg…
+
+  Guingamp (Ville de Guingamp)   [license unknown]
+    info: https://datarmor.cotesdarmor.fr/data-presentation-ux/#/cg22/datasets/Arbres_Guingamp/views/grid?primary-bg-color=@046D8B&primary-font-color=@fff
+    data: https://datarmor.cotesdarmor.fr:443/dataserver/cg22/data/Arbres_Guingamp?&$format=csv
+
+  Grand Paris Sud   [license unknown]
+    info: https://data.grandparissud.fr/explore/dataset/patrimoine-arbore/export/
+    data: https://data.grandparissud.fr/explore/dataset/patrimoine-arbore/download/?format=shp&timezone=Australia/Sydney…
+
+══════════════════════════════════════════════════
+  Germany  (17 candidates)
+══════════════════════════════════════════════════
+
+  Gelsenkirchen   [https://www.govdata.de/dl-de/by-2-0]
+    info: https://opendata.gelsenkirchen.de/dataset/baumkataster-gelsenkirchen
+    data: https://opendata.gelsenkirchen.de/sites/default/files/baumkataster_ge.csv
+
+  Troisdorf (Stadt Troisdorf)   [https://www.govdata.de/dl-de/by-2-0]
+    info: http://www.stadtplan.troisdorf.de/opengeodata/opendata/open_data_baumkataster.html
+    data: http://www.stadtplan.troisdorf.de/opengeodata/opendata/data/Troisdorf_Baumkataster_180926.zip
+
+  Jena   [https://www.govdata.de/dl-de/by-2-0]
+    info: https://opendata.jena.de/dataset/baumkataster
+    data: https://opendata.jena.de/dataset/acd67e0c-b597-48c7-b251-1b565c49de90/resource/3ff727bb-8db4-4b47-9c53-7084d15…
+
+  Halle (Halle (Saale))   [license unknown]
+    info: https://www.halle.de/de/Verwaltung/Online-Angebote/Offene-Verwaltungsdaten/Mit-Kartenbezug/index.aspx?ID=f2087a53-2c10-f7c5-4dba-9ad5112a90cb
+    data: https://www.halle.de/pushOD.aspx?FileName=f2087a53-2c10-f7c5-4dba-9ad5112a90cb_shp.zip
+
+  Utrecht   [license unknown]
+    info: https://ckan.dataplatform.nl/dataset/bomenkaart/resource/2d6893b4-d56d-4865-b6cc-0bda42e547f5
+    data: https://ckan.dataplatform.nl/datastore/dump/2d6893b4-d56d-4865-b6cc-0bda42e547f5?bom=True
+
+  Leipzig   [license unknown]
+    info: https://hub.arcgis.com/datasets/esri-de-content::stra%C3%9Fenbaumkataster-leipzig
+    data: https://opendata.arcgis.com/datasets/918dfaa87b754c4384ddcf869cfd6dc6_0.zip
+
+  Bonn   [license unknown]
+    info: http://opendata.gis.ms.gov/datasets/esri-de-content::baumkataster-bonn
+    data: https://opendata.arcgis.com/datasets/f8f130c1dd4e4ea9b5fe1f2385673cab_0.zip
+
+  Köln (Stadt Köln)   [license unknown]
+    info: https://offenedaten-koeln.de/dataset/baumkataster-koeln
+    data: https://offenedaten-koeln.de/sites/default/files/Bestand_Einzelbaeume_Koeln_0.csv
+
+  Berlin   [license unknown]
+    data: https://opendata.arcgis.com/datasets/05c3f9d7dea6422b86e30967811bddd7_0.zip
+
+  Frankfurt (Frankfurt am Main)   [license unknown]
+    info: https://hub.arcgis.com/datasets/esri-de-content::baumkataster-frankfurt-am-main
+    data: https://opendata.arcgis.com/datasets/8c50110f190e43599baf50701aaff13a_0.zip
+
+  Hamburg Hafen   [license unknown]
+    info: https://hub.arcgis.com/datasets/esri-de-content::stra%C3%9Fenbaumkataster-hamburg-hafen
+    data: https://opendata.arcgis.com/datasets/35950460a3744fa4b088570b2df55718_0.zip
+
+  Rostock (Hanse- und Universitätsstadt Rostock)   [license unknown]
+    info: https://www.opendata-hro.de/dataset/baeume
+    data: https://geo.sv.rostock.de/download/opendata/baeume/baeume.csv
+
+  Chemnitz   [license unknown]
+    info: http://portal-chemnitz.opendata.arcgis.com/datasets/baeume?geometry=12.910%2C50.819%2C12.914%2C50.822
+    data: https://opendata.arcgis.com/datasets/70330324e2364b209f7511ca20581f83_0.zip?outSR=%7B%22latestWkid%22%3A3857%2…
+
+  Wesel   [license unknown]
+    info: https://open.nrw/dataset/baumkataster-odp
+    data: http://data.geoportal-wesel.de/OPENDATA/Baumkataster/Baumkataster.geojson
+
+  Ulm   [license unknown]
+    info: http://www.daten.ulm.de/datenkatalog/metadaten/baumbestand-stadt-ulm-testdatensatz
+    data: http://daten.ulm.de/sites/default/files/20180921_Baeume_1.xlsx
+
+  Hamburg   [license unknown]
+    data: http://daten-hamburg.de/umwelt_klima/strassenbaumkataster/Strassenbaumkataster_HH_2019-06-19.zip
+
+  Karlsruhe   [license unknown]
+    info: https://transparenz.karlsruhe.de/dataset/fachplane-baumkataster/resource/9cd1989f-9720-4621-b171-3c4e56352598
+    data: https://geoportal.karlsruhe.de/server/rest/services/Fachplaene/Baumkataster/MapServer/1/query?where=ARTDEUT+IS…
+
+══════════════════════════════════════════════════
+  Netherlands  (22 candidates)
+══════════════════════════════════════════════════
+
+  Dordrecht   [CC0-1.0]
+    info: https://data.overheid.nl/dataset/bomen-dordrecht
+    data: https://ckan.dataplatform.nl/dataset/4c1cd59b-1057-4d47-bd84-f67a9cfd0f27/resource/94612e3e-eaac-4ac4-8db1-cdd…
+
+  Sliedrecht   [CC0-1.0]
+    info: https://data.overheid.nl/dataset/bomen-sliedrecht
+    data: https://ckan.dataplatform.nl/dataset/ab8997d4-8c32-4f96-aa3e-d5961baeaf6f/resource/fc898475-4fa6-47f3-9a9a-8e8…
+
+  Delft   [CC0-1.0]
+    info: https://data.overheid.nl/dataset/bomen-in-beheer-door-gemeente-delft
+    data: https://opendata.arcgis.com/datasets/e510d480282944c3a16c8a46d3d99064_0.csv?outSR=%7B%22latestWkid%22%3A3857%2…
+
+  Groningen   [CC0-1.0]
+    info: https://ckan.dataplatform.nl/dataset/9861d295-21cd-4ece-8648-88b141dc3532
+    data: https://ckan.dataplatform.nl/dataset/9861d295-21cd-4ece-8648-88b141dc3532/resource/4a52525e-04ac-4934-8294-a25…
+
+  Alblasserdam   [CC0-1.0]
+    info: https://data.overheid.nl/dataset/bomen-alblasserdam
+    data: https://ckan.dataplatform.nl/dataset/74c93ecc-82cc-46fa-8210-04818ae27279/resource/5bc33717-ff42-4aab-8bed-5ed…
+
+  Barendrecht   [CC0-1.0]
+    info: https://data.overheid.nl/dataset/58765-bomen-barendrecht
+    data: https://maps.bar-organisatie.nl/Online/Open%20Data%20Portaal/Barendrecht/Bomen/Bomen.CSV
+
+  Zaanstad   [CC0-1.0]
+    info: https://data.overheid.nl/dataset/znstdor15o
+    data: https://ckan.dataplatform.nl/dataset/fde68bfe-9e7b-4db6-9924-485166029eaf/resource/96c805d4-fd3c-41ce-8e35-c98…
+
+  Nijmegen   [CC0-1.0]
+    info: https://opendata.nijmegen.nl/dataset/geoserver-bomen-nijmegen
+    data: https://services.nijmegen.nl/geoservices/extern_OpenData/ows?service=WFS&version=1.1.0&request=GetFeature&type…
+
+  Lelystad   [CC-BY-4.0]
+    info: https://data.overheid.nl/dataset/bomen-lelystad
+    data: https://ckan.dataplatform.nl/dataset/a510615b-165d-442a-8956-1df78feb321e/resource/c6950c16-dff5-40b4-b1b5-0b2…
+
+  Assen   [CC-BY-4.0]
+    info: https://data.overheid.nl/dataset/dataset-bomen-assen#panel-4-downloadable-files
+    data: https://opendata.arcgis.com/datasets/3ad3233b9b1c4fb0bffb23b36b0474c9_0.csv
+
+  Arnhem   [CC-BY-4.0]
+    info: https://data.overheid.nl/dataset/bomenkaart-arnhem#panel-4-downloadable-files
+    data: https://opendata.arcgis.com/datasets/4d988cd7848049d3a574fcbd477985be_0.csv
+
+  Zvartewaterland   [CC-BY-4.0]
+    info: https://data.overheid.nl/dataset/bomen-zwartewaterland
+    data: https://opendata.arcgis.com/datasets/70e9a2ad03cf49a5a45b2076091b7ef3_0.csv
+
+  Amsterdam (Gemeente Amsterdam)   [license unknown]
+    info: https://maps.amsterdam.nl/open_geodata/?k=254
+    data: https://maps.amsterdam.nl/open_geodata/excel.php?KAARTLAAG=BOMEN&THEMA=bomen1
+
+  Amsterdam (Gemeente Amsterdam)   [license unknown]
+    info: https://maps.amsterdam.nl/open_geodata/?k=255
+    data: https://maps.amsterdam.nl/open_geodata/excel.php?KAARTLAAG=BOMEN&THEMA=bomen2
+
+  Amsterdam (Gemeente Amsterdam)   [license unknown]
+    info: https://maps.amsterdam.nl/open_geodata/?k=256
+    data: https://maps.amsterdam.nl/open_geodata/excel.php?KAARTLAAG=BOMEN&THEMA=bomen3
+
+  Amsterdam (Gemeente Amsterdam)   [license unknown]
+    info: https://maps.amsterdam.nl/open_geodata/?k=257
+    data: https://maps.amsterdam.nl/open_geodata/excel.php?KAARTLAAG=BOMEN&THEMA=bomen4
+
+  Den Haag   [license unknown]
+    info: https://data.overheid.nl/dataset/bomen-csv
+    data: https://ckan.dataplatform.nl/dataset/dd3873f6-b2d0-42e8-94c7-f7b47dcb71f0/resource/7ac8ba4a-586e-43f2-b12e-014…
+
+  Hilversum   [license unknown]
+    info: https://data.overheid.nl/dataset/bomen-hilversum
+    data: https://ckan.dataplatform.nl/dataset/08fa5613-ec8f-4e43-ba2f-db986615075e/resource/2ae335c9-4228-4d4c-81a1-668…
+
+  Tilburg   [license unknown]
+    info: https://data.overheid.nl/dataset/bomen-tilburg
+    data: https://ckan.dataplatform.nl/dataset/96b46ab5-7638-46bb-b416-c480170b9a84/resource/6f639eb1-7497-4fc7-831b-d24…
+
+  Eindhoven   [license unknown]
+    info: https://data.overheid.nl/dataset/bomen-eindhoven
+    data: https://ckan.dataplatform.nl/dataset/23d824dc-158f-4e23-8bbf-c10c00ce73cf/resource/0c8e87ba-0fde-48e4-a997-7ab…
+
+  Amersfoot   [license unknown]
+    info: https://data.overheid.nl/dataset/amersfoort-gemeentelijke_bomen
+    data: https://ckan.dataplatform.nl/dataset/a6054acf-3e41-4142-9b1a-52d73ff022f3/resource/7794f7e2-8bb9-45ba-9a9f-df9…
+
+  Haarlem   [license unknown]
+    info: https://www.haarlem.nl/opendata/open-data-detail/#/odp/odp_datasets.33
+    data: https://data.haarlem.nl/geoserver/wfs?service=WFS&version=2.0&request=GetFeature&outputFormat=csv&srsName=EPSG…
+
+══════════════════════════════════════════════════
+  Belgium  (4 candidates)
+══════════════════════════════════════════════════
+
+  Gent (Stad Gent)   [https://overheid.vlaanderen.be/sites/default/files/documenten/ict-egov/licenties/hergebruik/modellicentie_gratis_hergebruik_v1_0.html]
+    info: https://datatank.stad.gent/4/milieuennatuur/bomeninventaris
+    data: https://datatank.stad.gent/4/milieuennatuur/bomeninventaris.json
+
+  Antwerp   [license unknown]
+    info: https://portaal-stadantwerpen.opendata.arcgis.com/datasets/boom/data
+    data: https://opendata.arcgis.com/datasets/0293af55ca454b44ba789ee14c82543a_676.zip
+
+  Wallonie-Bruxelles   [license unknown]
+    info: https://www.odwb.be/explore/dataset/arbustum/information/
+    data: https://www.odwb.be/explore/dataset/arbustum/download/?format=shp
+
+  Roosendaal (Gemeente Roosendaal)   [license unknown]
+    info: https://opendata.roosendaal.nl/datasets/gbi-boom-public
+    data: https://opendata.arcgis.com/datasets/f97b4a30ac914a73aa7552a96f0ae82d_0.zip
+
+══════════════════════════════════════════════════
+  Austria  (2 candidates)
+══════════════════════════════════════════════════
+
+  Vienna   [CC-BY-4.0]
+    info: https://www.data.gv.at/katalog/dataset/c91a4635-8b7d-43fe-9b27-d95dec8392a7
+    data: https://data.wien.gv.at/daten/geo?service=WFS&request=GetFeature&version=1.1.0&typeName=ogdwien:BAUMKATOGD&srs…
+
+  Linz (City of Linz)   [CC-BY-4.0]
+    info: https://www.data.gv.at/katalog/dataset/baumkataster
+    data: http://data.linz.gv.at/katalog/umwelt/baumkataster/2020/FME_BaumdatenBearbeitet_OGD_20200225.csv
+
+══════════════════════════════════════════════════
+  Spain  (8 candidates)
+══════════════════════════════════════════════════
+
+  Valencia   [CC-BY-4.0]
+    info: https://github.com/stevage/OpenTrees/issues/29
+    data: http://mapas.valencia.es/lanzadera/opendata/arboles/JSON
+
+  Santiago de Compostela (Concello de Santiago de Compostela)   [license unknown]
+    info: https://datos.santiagodecompostela.gal/catalogo/gl/dataset/arboredo
+    data: https://datos.santiagodecompostela.gal/catalogo/dataset/60b1928e-32a9-442a-8f69-0215ba0862a4/resource/fab2344b…
+
+  Barcelona (City of Barcelona)   [license unknown]
+    data: https://opendata-ajuntament.barcelona.cat/data/dataset/27b3f8a7-e536-4eea-b025-ce094817b2bd/resource/28034af4-…
+
+  Sevilla   [license unknown]
+    info: https://sevilla-idesevilla.opendata.arcgis.com/datasets/f3393590cea54e3da883f30a27e8a1fd_0
+    data: https://sevilla-idesevilla.opendata.arcgis.com/datasets/f3393590cea54e3da883f30a27e8a1fd_0.zip
+
+  Manlleu   [license unknown]
+    info: https://dadesobertes-situam.opendata.arcgis.com/datasets/arbrat-del-nucli-urb%C3%A0
+    data: https://opendata.arcgis.com/datasets/7255e3ea9235496fbd5f6ee244f21015_0.zip?outSR=%7B%22latestWkid%22%3A25831%…
+
+  Torrent   [license unknown]
+    info: https://datos.gob.es/es/catalogo/l01462444-arbres-de-torrent-arboles-de-torrent
+    data: http://datosabiertos.torrent.es/dataset/b372b8dd-07fb-4973-a2af-cb9a7c8de9bb/resource/dbae0e9d-c48b-4185-8a51-…
+
+  Arganda del Rey (Ayuntamiento de Arganda del Rey)   [license unknown]
+    info: https://datos.gob.es/es/catalogo/l01280148-inventario-arboles-casco-urbano-20151
+    data: https://datosabiertos.ayto-arganda.es/dataset/bc20e1e3-0c6c-4f0e-817b-c95f052e3783/resource/f41cfeb0-6d98-48c1…
+
+  Cáceres (Ayuntamiento de Cáceres)   [license unknown]
+    info: https://datos.gob.es/es/catalogo/l01100377-arboles-caceres
+    data: http://opendata.caceres.es/GetData/GetData?dataset=om:Arbol&format=geojson&geojson=Point
+
+══════════════════════════════════════════════════
+  Sweden  (2 candidates)
+══════════════════════════════════════════════════
+
+  Umea   [license unknown]
+    info: https://opendata.umea.se/explore/dataset/trad-som-forvaltas-av-gator-och-parker/export/?disjunctive.tradart_vetenskap_namn_1_1_2&disjunctive.tradart_svenskt_namn_1_1_3
+    data: https://opendata.umea.se/explore/dataset/trad-som-forvaltas-av-gator-och-parker/download/?format=shp&timezone=…
+
+  Trädportalen (Trädportalen)   [license unknown]
+    info: https://www.tradportalen.se/Summary.aspx
+    data: https://tradportalen.s3.eu-north-1.amazonaws.com/tradportalen.zip

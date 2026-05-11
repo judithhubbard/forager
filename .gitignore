@@ -28,6 +28,11 @@ data/wikipedia-extracts.txt
 data/exploration/great-morel-raw/
 data/exploration/layer1-npn-raw.json
 data/exploration/web-crawl-cache/
+# Blog-evidence crawler local HTML cache (~37MB across ~170 pages;
+# regenerable by re-running scripts/blog-evidence-crawl.cjs).
+data/exploration/blog-cache/
+# NPN raw export per species (multi-MB JSON; regenerable).
+data/exploration/npn-validation-NE-raw-prunus-serotina.json
 
 # Local DB backup snapshots (large; not source)
 backups/
