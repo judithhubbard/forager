@@ -1685,7 +1685,7 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                      evidence entries with both start_doy and end_doy in
                      their `supports` block contribute a bar. -->
                 {#if dbStages}
-                  {@const ripe = dbStages.get(primaryStage)}
+                  {@const ripe = dbStages.get(primaryStage)?.[0]}
                   {#if ripe}
                     {@const cs = confidenceStyle(ripe.confidence)}
                     {@const supportingEv = supportingEvidenceFor(ripe, z.code)}
@@ -1775,7 +1775,7 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                      beneath the evidence band to keep both visible. -->
                 {#each jsonRegions as r, idx}
                   {#if r.window.ripe}
-                    {@const evRow = dbStages?.get(primaryStage)}
+                    {@const evRow = dbStages?.get(primaryStage)?.[0]}
                     {@const evCount = evRow ? Math.min(EV_MAX_LANES, supportingEvidenceFor(evRow, z.code).length) : 0}
                     <rect
                       x={doyX(r.window.ripe.start_doy)}
@@ -1799,7 +1799,7 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                   {/each}
                 {/if}
                 {#if dbStages && dbStages.size > 0}
-                  {@const ripe = dbStages.get(primaryStage)}
+                  {@const ripe = dbStages.get(primaryStage)?.[0]}
                   {#if ripe?.confidence}
                     <span class="conf-pill conf-{ripe.confidence}" title={confidenceTitle(ripe.confidence)}>{confidenceLabel(ripe.confidence)}</span>
                   {/if}
