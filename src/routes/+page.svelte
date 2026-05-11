@@ -1158,6 +1158,91 @@
    *  private pins — so adding or removing a pin shows up on the
    *  next viewport fetch automatically, no triggers needed. */
   let pinDensityBuckets: PinDensityBucket[] = [];
+
+  // ── Bbox prefetch + cache (z13+ individual-pin mode) ────────────
+  // Two-phase fetch pattern:
+  //
+  //   1. Foreground fetch: just the visible viewport. Fast initial
+  //      load — never inflated by buffer.
+  //   2. After PIN_PREFETCH_DEFER_MS of user-idle time, background
+  //      fetch a 1.5x-buffered bbox and overwrite the cache. Next
+  //      viewport change that falls inside the buffered area is a
+  //      cache hit and renders instantly without a network round-trip.
+  //
+  // If the user pans again before the bg fetch fires, the pending
+  // timer is canceled — no wasted work. On viewport changes that
+  // hit the cache (within buffered bbox + same zoom + same toggles),
+  // we still refetch the summary RPC (cheap aggregate) so per-species
+  // counts stay accurate to the visible area.
+  const PIN_FETCH_BUFFER_FACTOR = 1.5;
+  const PIN_CACHE_TTL_MS = 5 * 60 * 1000;        // 5 min idle, plenty
+  const PIN_PREFETCH_DEFER_MS = 1500;             // wait for user-idle
+  interface PinFetchCacheEntry {
+    zoom: number;
+    bufferedBbox: Bbox;
+    includeInvasives: boolean;
+    regionId: string | null;
+    merged: PinEffective[];
+    capHit: boolean;
+    fetchedAt: number;
+  }
+  let pinFetchCache: PinFetchCacheEntry | null = null;
+  let pinPrefetchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function bboxFullyInside(inner: Bbox, outer: Bbox): boolean {
+    return inner[0] >= outer[0] && inner[1] >= outer[1]
+        && inner[2] <= outer[2] && inner[3] <= outer[3];
+  }
+  function bufferBbox(b: Bbox, factor: number): Bbox {
+    const [w, s, e, n] = b;
+    const dx = ((e - w) * (factor - 1)) / 2;
+    const dy = ((n - s) * (factor - 1)) / 2;
+    return [w - dx, s - dy, e + dx, n + dy];
+  }
+  function cancelPendingPrefetch(): void {
+    if (pinPrefetchTimer) {
+      clearTimeout(pinPrefetchTimer);
+      pinPrefetchTimer = null;
+    }
+  }
+  /** Fire a deferred prefetch for a buffered bbox around the just-
+   *  rendered viewport. Cancels any previous pending prefetch first
+   *  so fast panning doesn't accumulate work. Catches its own errors
+   *  — a failed prefetch is invisible to the user, they just miss
+   *  the cache on the next pan. */
+  function schedulePrefetch(
+    bbox: Bbox, z: number, includeInvasives: boolean,
+    regionId: string | null, ownCap: number, pubCap: number
+  ): void {
+    cancelPendingPrefetch();
+    pinPrefetchTimer = setTimeout(async () => {
+      pinPrefetchTimer = null;
+      try {
+        const buffered = bufferBbox(bbox, PIN_FETCH_BUFFER_FACTOR);
+        const region = $activeRegion;
+        const useRegion = !!$session && !!region && region.id === regionId;
+        const [own, pub] = await Promise.all([
+          useRegion && region ? listRegionPins(region.id, buffered, ownCap, z) : Promise.resolve([] as PinEffective[]),
+          listPublicPins(buffered, pubCap, z, includeInvasives)
+        ]);
+        const seen = new Set<string>();
+        const merged: PinEffective[] = [];
+        for (const p of own) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
+        for (const p of pub) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
+        pinFetchCache = {
+          zoom: z,
+          bufferedBbox: buffered,
+          includeInvasives,
+          regionId,
+          merged,
+          capHit: own.length >= ownCap || pub.length >= pubCap,
+          fetchedAt: Date.now()
+        };
+      } catch (err) {
+        console.warn('[+page] pin prefetch failed (non-fatal):', err);
+      }
+    }, PIN_PREFETCH_DEFER_MS);
+  }
   async function fetchForViewport(bbox: Bbox, zoom: number): Promise<void> {
     const seq = ++viewportSeq;
     pinsLoading = true;
@@ -1241,43 +1326,98 @@
           });
         }
       } else {
-        // Individual-pin mode (zoom ≥ 13): authed users get their
-        // region pins ∪ the public layer (dedup by id) so panning
-        // outside their region still shows the global public dataset.
-        // The summary RPCs run in parallel for accurate counts even
-        // when the pin lists hit their caps.
-        // Caps scale with zoom — at zoom 16+ (street level) we
-        // allow much more data because the bbox is small (sub-km^2)
-        // so a 2000-row fetch returns dense tree-by-tree coverage
-        // for places like downtown Ithaca + Cornell campus where
-        // there are ~13k pins inside a single zoom-13 bbox. Server
-        // hard-caps still apply (region RPC: 2000, public RPC: 2500
-        // post-migration 46).
-        // Decimation caps the result by visual cell count, so the
-        // request cap can be high without bloating responses. Server
-        // hard-caps at 15000 (migration 54).
+        // Individual-pin mode (zoom ≥ 13). Caps: at z13 we use 6000
+        // public pins (cut from 12000 on 5/11 to halve the page count
+        // and shrink the parallel-RPC long tail — net density is
+        // still ~one pin per 50m of viewport, plenty dense). z14+
+        // keeps the 12000 cap; viewport is small enough that the
+        // decimation grid naturally caps the response.
         const ownCap = 8000;
-        const pubCap = 12000;
+        const z = Math.round(zoom);
+        const pubCap = z === 13 ? 6000 : 12000;
         const includeInvasives = $settings.showInvasives;
-        const [own, pub, ownSum, pubSum] = await Promise.all([
-          useRegion && region ? listRegionPins(region.id, bbox, ownCap, zoom) : Promise.resolve([]),
-          listPublicPins(bbox, pubCap, zoom, includeInvasives),
-          useRegion && region ? listRegionPinSummary(region.id, bbox) : Promise.resolve([] as PinBboxSummaryRow[]),
-          listPublicPinSummary(bbox, includeInvasives)
-        ]);
-        const fetchEnd = performance.now();
+
+        // Bbox-buffer cache. When the viewport is fully inside the
+        // previously-buffered fetch, reuse those pins without
+        // re-fetching. We DO refetch the summary every time so the
+        // "X of Y" counts stay accurate to the visible area.
+        const cached = pinFetchCache;
+        const cacheHit = !!cached
+          && cached.zoom === z
+          && cached.includeInvasives === includeInvasives
+          && cached.regionId === (useRegion && region ? region.id : null)
+          && Date.now() - cached.fetchedAt < PIN_CACHE_TTL_MS
+          && bboxFullyInside(bbox, cached.bufferedBbox);
+
+        let merged: PinEffective[];
+        let fetchEnd: number;
+        let cappedHit: boolean;
+        let pubSum: PinBboxSummaryRow[];
+        let ownSum: PinBboxSummaryRow[];
+
+        if (cacheHit && cached) {
+          // Reuse pin geometry from cache; refresh just the summary.
+          // Cancel any pending bg-prefetch — the cache already covers
+          // a larger area than this viewport, no need to extend.
+          cancelPendingPrefetch();
+          const [ownSummary, pubSummary] = await Promise.all([
+            useRegion && region ? listRegionPinSummary(region.id, bbox) : Promise.resolve([] as PinBboxSummaryRow[]),
+            listPublicPinSummary(bbox, includeInvasives)
+          ]);
+          ownSum = ownSummary;
+          pubSum = pubSummary;
+          merged = cached.merged;
+          cappedHit = cached.capHit;
+          fetchEnd = performance.now();
+        } else {
+          // Cache miss — fetch the VISIBLE viewport only (no buffer)
+          // so initial-load + first-pan-after-zoom is fast. Schedule
+          // a deferred buffered-bbox prefetch below to populate the
+          // cache for subsequent small pans.
+          const [own, pub, ownSummary, pubSummary] = await Promise.all([
+            useRegion && region ? listRegionPins(region.id, bbox, ownCap, zoom) : Promise.resolve([]),
+            listPublicPins(bbox, pubCap, zoom, includeInvasives),
+            useRegion && region ? listRegionPinSummary(region.id, bbox) : Promise.resolve([] as PinBboxSummaryRow[]),
+            listPublicPinSummary(bbox, includeInvasives)
+          ]);
+          fetchEnd = performance.now();
+          if (seq !== viewportSeq) return;
+          // PinEffective.id is typed nullable (view-derived) but is in
+          // practice never null — coalesce to '' for the Set key just to
+          // keep TypeScript happy without a runtime branch.
+          const seen = new Set<string>();
+          merged = [];
+          for (const p of own) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
+          for (const p of pub) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
+          cappedHit = own.length >= ownCap || pub.length >= pubCap;
+          ownSum = ownSummary;
+          pubSum = pubSummary;
+          // Store the immediate-viewport result so a re-fetch with
+          // the SAME viewport (within TTL) gets a quick hit before
+          // the deferred prefetch lands.
+          pinFetchCache = {
+            zoom: z,
+            bufferedBbox: bbox,
+            includeInvasives,
+            regionId: useRegion && region ? region.id : null,
+            merged,
+            capHit: cappedHit,
+            fetchedAt: Date.now()
+          };
+          // After PIN_PREFETCH_DEFER_MS of idle time, fetch a buffered
+          // bbox in the background and overwrite the cache. Canceled
+          // if the user pans/zooms again before it fires.
+          schedulePrefetch(
+            bbox, z, includeInvasives,
+            useRegion && region ? region.id : null,
+            ownCap, pubCap
+          );
+        }
         if (seq !== viewportSeq) return;
-        // PinEffective.id is typed nullable (view-derived) but is in
-        // practice never null — coalesce to '' for the Set key just to
-        // keep TypeScript happy without a runtime branch.
-        const seen = new Set<string>();
-        const merged: PinEffective[] = [];
-        for (const p of own) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
-        for (const p of pub) { const k = p.id ?? ''; if (!seen.has(k)) { merged.push(p); seen.add(k); } }
         pins = merged;
         clusters = [];
         pinDensityBuckets = [];
-        capHit = own.length >= ownCap || pub.length >= pubCap;
+        capHit = cappedHit;
         // Merge per-species summary rows. The same species might
         // appear in both region and public sets (imports live in
         // both); region rows take precedence since they include the
