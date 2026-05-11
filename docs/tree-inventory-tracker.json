@@ -12,7 +12,7 @@
     "endpoint": null,
     "row_estimate": null,
     "last_checked": "2026-05-10",
-    "notes": "AlabamaForestryCommission has no AGOL items. Largest AL tree find is Univ of N Alabama campus inventory (37,025 trees, owner=UNA_Facilities) \u2014 CAMPUS only, not state. No state-level aggregator."
+    "notes": "AlabamaForestryCommission has no AGOL items. Largest AL tree find is Univ of N Alabama campus inventory (37,025 trees, owner=UNA_Facilities) — CAMPUS only, not state. No state-level aggregator."
   },
   {
     "name": "Alaska Division of Forestry & Fire Protection",
@@ -45,7 +45,7 @@
     "notes": "AZ Dept of Forestry & Fire Management does not publish a statewide tree inventory. Major AZ cities (Mesa 33k, Tempe 26k) have their own AGOL feature services."
   },
   {
-    "name": "Arkansas Department of Agriculture \u2014 Forestry Division",
+    "name": "Arkansas Department of Agriculture — Forestry Division",
     "type": "state-forestry",
     "state": "AR",
     "country": "US",
@@ -102,7 +102,7 @@
     "endpoint": null,
     "row_estimate": null,
     "last_checked": "2026-05-10",
-    "notes": "CT DEEP Forestry: only TreeCanopy_V2_0 (CIRCA UConn) found \u2014 canopy POLYGON not tree points. No state inventory."
+    "notes": "CT DEEP Forestry: only TreeCanopy_V2_0 (CIRCA UConn) found — canopy POLYGON not tree points. No state inventory."
   },
   {
     "name": "Delaware Forest Service",
@@ -132,7 +132,7 @@
     "endpoint": "https://pg-cloud.com/Florida/",
     "row_estimate": null,
     "last_checked": "2026-05-10",
-    "notes": "PG-Cloud TreePlotter Florida instance exists but currently shows \"app disabled\" \u2014 login required. Florida Forest Service operates an Urban & Community Forestry Program; no public ArcGIS aggregator found."
+    "notes": "PG-Cloud TreePlotter Florida instance exists but currently shows \"app disabled\" — login required. Florida Forest Service operates an Urban & Community Forestry Program; no public ArcGIS aggregator found."
   },
   {
     "name": "Georgia Forestry Commission",
@@ -162,10 +162,10 @@
     "endpoint": "https://services1.arcgis.com/gGHDlz6USftL5Pau/arcgis/rest/services/Tree_Inventory/FeatureServer/0",
     "row_estimate": 18811,
     "last_checked": "2026-05-10",
-    "notes": "PARTIAL-STATE via USFS Region 5 \"Tree Inventory\" \u2014 Citizen Forester Tree Inventory for parts of Oahu. 18,811 trees. Public. Related to pg-cloud.com/hawaii Tree Plotter. Fields: Common_Nam. Sample in HI bbox. Not run by HI DOFAW directly but covers state."
+    "notes": "PARTIAL-STATE via USFS Region 5 \"Tree Inventory\" — Citizen Forester Tree Inventory for parts of Oahu. 18,811 trees. Public. Related to pg-cloud.com/hawaii Tree Plotter. Fields: Common_Nam. Sample in HI bbox. Not run by HI DOFAW directly but covers state."
   },
   {
-    "name": "Idaho Department of Lands \u2014 Forestry",
+    "name": "Idaho Department of Lands — Forestry",
     "type": "state-forestry",
     "state": "ID",
     "country": "US",
@@ -180,7 +180,7 @@
     "notes": "Idaho Dept of Lands PG-Cloud Tree Plotter at /Idaho (login-gated). No state-level ArcGIS aggregator. Boise has standalone city service."
   },
   {
-    "name": "Illinois Department of Natural Resources \u2014 Forestry",
+    "name": "Illinois Department of Natural Resources — Forestry",
     "type": "state-forestry",
     "state": "IL",
     "country": "US",
@@ -237,7 +237,7 @@
     "endpoint": null,
     "row_estimate": null,
     "last_checked": "2026-05-10",
-    "notes": "KFS_GIS only publishes Kansas Tree Cities (87 city-marker points) + Tree Campuses (8) \u2014 these are community pins, NOT tree inventories. No state-level tree-point aggregator. Largest KS find: Andover city Street Trees (2,844 trees)."
+    "notes": "KFS_GIS only publishes Kansas Tree Cities (87 city-marker points) + Tree Campuses (8) — these are community pins, NOT tree inventories. No state-level tree-point aggregator. Largest KS find: Andover city Street Trees (2,844 trees)."
   },
   {
     "name": "Kentucky Division of Forestry",
@@ -327,7 +327,7 @@
     "endpoint": null,
     "row_estimate": null,
     "last_checked": "2026-05-10",
-    "notes": "Michigan DNR Public Forest Inventory is FOREST-STAND polygons (covertype/treatments) not urban trees. FinalTreePoints (1.39M, owner michael.forlenza@nv5.com NV5) appears to be a private consultant dataset \u2014 verify ownership before treating as state aggregator."
+    "notes": "Michigan DNR Public Forest Inventory is FOREST-STAND polygons (covertype/treatments) not urban trees. FinalTreePoints (1.39M, owner michael.forlenza@nv5.com NV5) appears to be a private consultant dataset — verify ownership before treating as state aggregator."
   },
   {
     "name": "Minnesota DNR Division of Forestry",
@@ -360,7 +360,7 @@
     "notes": "Mississippi Forestry Commission PG-Cloud Tree Plotter instance exists at /Mississippi (login-gated). No public ArcGIS state aggregator."
   },
   {
-    "name": "Missouri Department of Conservation \u2014 Forestry",
+    "name": "Missouri Department of Conservation — Forestry",
     "type": "state-forestry",
     "state": "MO",
     "country": "US",
@@ -387,7 +387,7 @@
     "endpoint": "https://services2.arcgis.com/DRQySz3VhPgOv7Bo/arcgis/rest/services/Urban_Forestry/FeatureServer/0",
     "row_estimate": 62,
     "last_checked": "2026-05-10",
-    "notes": "MT DNRC publishes \"Urban_Forestry MFAP\" but only 62 point features \u2014 these are COMMUNITY-LEVEL summary points (Town_ID, COMMUNITY, ash%/conditions), not individual tree points. No state-level tree-point aggregator found."
+    "notes": "MT DNRC publishes \"Urban_Forestry MFAP\" but only 62 point features — these are COMMUNITY-LEVEL summary points (Town_ID, COMMUNITY, ash%/conditions), not individual tree points. No state-level tree-point aggregator found."
   },
   {
     "name": "Nebraska Forest Service",
@@ -462,7 +462,7 @@
     "endpoint": "https://services.arcgis.com/LGtNQDlIZBdntoA9/arcgis/rest/services/NM_PublicTree_Map/FeatureServer/0",
     "row_estimate": 12431,
     "last_checked": "2026-05-10",
-    "notes": "STATE AGGREGATOR. New Mexico Community Data Collaborative export of Tree Plotter statewide dataset (https://pg-cloud.com/NewMexico/). 12,431 trees. Public AGOL feature service. Fields: CITY, SPECIES_LA, SPECIES_01. May 2019 snapshot \u2014 check for newer."
+    "notes": "STATE AGGREGATOR. New Mexico Community Data Collaborative export of Tree Plotter statewide dataset (https://pg-cloud.com/NewMexico/). 12,431 trees. Public AGOL feature service. Fields: CITY, SPECIES_LA, SPECIES_01. May 2019 snapshot — check for newer."
   },
   {
     "name": "New York DEC Division of Lands and Forests",
@@ -477,7 +477,7 @@
     "endpoint": null,
     "row_estimate": null,
     "last_checked": "2026-05-10",
-    "notes": "NY DEC does not publish a state community-tree aggregator. NYC publishes Street Tree Census individually (~600k+ trees \u2014 separate row). Beacon NY (1,128) is city-level."
+    "notes": "NY DEC does not publish a state community-tree aggregator. NYC publishes Street Tree Census individually (~600k+ trees — separate row). Beacon NY (1,128) is city-level."
   },
   {
     "name": "North Carolina Forest Service",
@@ -507,7 +507,7 @@
     "endpoint": null,
     "row_estimate": null,
     "last_checked": "2026-05-10",
-    "notes": "NDFS (grace.ivesdal_ndfs) publishes \"Tree Equity Grant Map\" (2 polygons) and Community Forestry Grant Management Survey \u2014 NO state-level tree-point inventory. pg-cloud.com/SouthDakota and /NorthDakota exist (Tree Plotter) but login-gated."
+    "notes": "NDFS (grace.ivesdal_ndfs) publishes \"Tree Equity Grant Map\" (2 polygons) and Community Forestry Grant Management Survey — NO state-level tree-point inventory. pg-cloud.com/SouthDakota and /NorthDakota exist (Tree Plotter) but login-gated."
   },
   {
     "name": "Ohio Division of Forestry",
@@ -537,7 +537,7 @@
     "endpoint": null,
     "row_estimate": null,
     "last_checked": "2026-05-10",
-    "notes": "OK Forestry Services (owner=CMask_OKForestry) publishes State Forest Timber Tracts and FIA dashboards only \u2014 no urban tree-point aggregator. Top score was actually Utah dataset matching the \"OK\" search term."
+    "notes": "OK Forestry Services (owner=CMask_OKForestry) publishes State Forest Timber Tracts and FIA dashboards only — no urban tree-point aggregator. Top score was actually Utah dataset matching the \"OK\" search term."
   },
   {
     "name": "Oregon Department of Forestry",
@@ -847,12 +847,12 @@
     "population": 1608139,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only finds: USDA Urban Forestry Planning_WFL1 (ASU, planning polygons + event points, no species-level tree inventory); LiDAR-Derived Tree Locations metro-Phoenix 2014 (mapgeohub) — 2.8M canopy points with HEIGHT_M + TYPE='deciduous/coniferous' only (NO species). City of Phoenix does not publish a per-tree species inventory on AGOL."
   },
   {
     "name": "Philadelphia, PA",
@@ -877,12 +877,12 @@
     "population": 1434625,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
+    "license_status": "gated",
+    "data_status": "present",
+    "endpoint": "https://services9.arcgis.com/9M3qzYEPesEduWkp/arcgis/rest/services/TreesSA/FeatureServer",
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "BLOCKED. TreesSA Feature Service (owner=mikel@urbanecoplan.com / UrbanForestry_CoSAGIS) returns 'Token Required' (HTTP 499). City of San Antonio Urban Forestry uses gated AGOL. Phase 3 outreach: City of SA UrbanForestry program — they publish maps but inventory layer is token-protected."
   },
   {
     "name": "San Diego, CA",
@@ -907,12 +907,12 @@
     "population": 1304379,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only finds: Tree_Survey_Map_Eric_Valeriano (Austin CC student survey, 36 trees in central Dallas) — not a city inventory. City of Dallas does not publish a tree inventory on AGOL."
   },
   {
     "name": "Jacksonville, FL",
@@ -922,12 +922,12 @@
     "population": 949611,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT for Jacksonville, FL. AGOL TreeInventory (owner=sla100) is actually JACKSONVILLE, ILLINOIS (geometry-sampled at 39.74N, -90.22W — IL StarHill Forest Rotary project, 2,626 + 2,530 trees split across 7 layers). City of Jacksonville, FL does not publish a tree inventory on AGOL."
   },
   {
     "name": "Fort Worth, TX",
@@ -937,12 +937,12 @@
     "population": 918915,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. 0 tree-inventory candidates in AGOL searches. owner:FortWorthTX_GIS returns 0 tree items. City of Fort Worth does not publish tree-point data on AGOL."
   },
   {
     "name": "San Jose, CA",
@@ -982,12 +982,12 @@
     "population": 874579,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Charlotte (owner=CharlotteNC) publishes only canopy raster + Land Development/Urban Forestry permit tracking polygons (6 inspector zones) — no street-tree point inventory. Mecklenburg County tree canopy is canopy %, not point data. Phase 3 outreach: Charlotte UDO Tree Coordinator (tree-ordinance enforcement docs reference a TreePlotter database, not public)."
   },
   {
     "name": "Columbus, OH",
@@ -1010,14 +1010,14 @@
     "state": "IN",
     "country": "US",
     "population": 887642,
-    "already_done": false,
-    "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "already_done": true,
+    "already_done_via": "in-iu-eri-aggregator",
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services.arcgis.com/tKsJAIiLjd90D5q2/arcgis/rest/services/Bloomington_and_Indianapolis_Tree_Inventories/FeatureServer/0",
+    "row_estimate": 191371,
+    "last_checked": "2026-05-10",
+    "notes": "ALREADY-DONE via IN state aggregator (IU Environmental Resilience Institute). Indianapolis bbox query returns 191,371 trees within the merged IN feed (Bloomington+Indianapolis+18 more cities). Phase 4 import of IN aggregator covers this city."
   },
   {
     "name": "San Francisco, CA",
@@ -1117,12 +1117,12 @@
     "population": 678815,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. 0 tree-inventory candidates in AGOL searches. owner:ElPasoTX returns 0. No public inventory."
   },
   {
     "name": "Las Vegas, NV",
@@ -1207,12 +1207,12 @@
     "population": 633104,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only finds: Memphis 'Shade from Trees' tile MapService (Kameron_Hall, canopy heat layer) + Collierville 2012 canopy. No tree-point inventory on AGOL."
   },
   {
     "name": "Baltimore, MD",
@@ -1267,12 +1267,12 @@
     "population": 542629,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT (citywide). City of Tucson (owner=tucsondata_cotgis) publishes Tree Equity Scores (block-group polygons) — no per-tree point inventory. TFT Tree Inventory (Tucson Clean & Beautiful) has only 104 trees from a 2020 project. Tucson Birds 270-tree health survey (NPS Saguaro) — not citywide. No citywide street-tree point layer on AGOL."
   },
   {
     "name": "Fresno, CA",
@@ -1282,12 +1282,12 @@
     "population": 542107,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. AGOL finds only canopy polygons (USDA Fresno Tree Canopy, raster-derived) and a CDFW Tree Squirrel hunt zone (unrelated). No tree-point inventory."
   },
   {
     "name": "Sacramento, CA",
@@ -1327,12 +1327,12 @@
     "population": 504258,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services2.arcgis.com/1gVyYKfYgW5Nxb1V/arcgis/rest/services/Mesa_AZ_iTree_Inventory_WFL1/FeatureServer/0",
+    "row_estimate": 33311,
+    "last_checked": "2026-05-10",
+    "notes": "READY. Mesa AZ iTree Inventory (owner=MesaAz). 33,311 trees with Species_Name (Latin), BOTANICAL_NAME, COMMON_NAME, DBH, iTree benefit fields. Point geom inside Mesa bbox."
   },
   {
     "name": "Kansas City, MO",
@@ -1342,12 +1342,12 @@
     "population": 508090,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Top hits: Tree_Viewer1 (owner=gis_lawrenceks — Lawrence KS, 16,720 trees, wrong city, ~70 mi west); Street_Trees Public (owner=rjlanzrath, 2,844 trees but geometry samples in WICHITA KS, not KC). Kansas City, MO does not publish tree inventory on AGOL."
   },
   {
     "name": "Raleigh, NC",
@@ -1357,12 +1357,12 @@
     "population": 467665,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services.arcgis.com/v400IkDOw1ad7Yad/arcgis/rest/services/PRCR_Urban_Forestry_Trees_Open_Data/FeatureServer/0",
+    "row_estimate": 207491,
+    "last_checked": "2026-05-10",
+    "notes": "READY. Raleigh PRCR Urban Forestry Trees Open Data (owner=RaleighPRCR). 207,491 trees. Public-facing open-data layer (companion edit layer PRCR_Urban_Forestry_Trees has 237,130 incl in-flight edits — prefer Open_Data view). Fields: STREET, SPP_CODE, DIAMETER, PARKID. SPP_CODE is short code — Phase 4 will need species code-table lookup."
   },
   {
     "name": "Colorado Springs, CO",
@@ -1387,12 +1387,12 @@
     "population": 486051,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only Corridor_Boundaries_gdb (owner=JEChezem_omaha) — boundary polygons, not trees. No tree-point inventory found."
   },
   {
     "name": "Miami, FL",
@@ -1402,12 +1402,12 @@
     "population": 442241,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Miami-Dade TreeInventory11032018 (owner=e26723@miamidade.gov_MDC) is a TABLE not Feature Layer, only 145 rows. Other hits: Adopt-A-Tree event signups (non-inventory). UM_CoralGables tree canopy raster. No usable street-tree inventory."
   },
   {
     "name": "Virginia Beach, VA",
@@ -1417,12 +1417,12 @@
     "population": 459470,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. AGOL only returns Prince William County iTree analysis (unrelated). No Virginia Beach tree inventory."
   },
   {
     "name": "Long Beach, CA",
@@ -1477,12 +1477,12 @@
     "population": 403455,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only finds: CSUB Geocoding_AC_Locations and Riverwalk_Park (very small student-survey layers). No city inventory."
   },
   {
     "name": "Tulsa, OK",
@@ -1492,12 +1492,12 @@
     "population": 413066,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://utility.arcgis.com/usrsvcs/servers/7ef20f8a5add4adcb61b95fdf630984d/rest/services/FieldMaps/TreesFieldEdits/MapServer/0",
+    "row_estimate": 9627,
+    "last_checked": "2026-05-10",
+    "notes": "READY. City of Tulsa FieldMaps Trees layer. 9,627 trees with Genus/Species/CommonName/DBH/ParkName. Point geometry, geometry-sampled inside Tulsa bbox. Note: served via utility.arcgis.com proxy — Phase 4 should confirm pagination."
   },
   {
     "name": "Tampa, FL",
@@ -1552,12 +1552,12 @@
     "population": 397532,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only finds: WichitaUrbanTreeCanopy2017 tile MapService (raster canopy). No tree-point inventory. Note: rjlanzrath 'Street_Trees Public' (2,844 trees) likely IS in Wichita but is owned by a private user with no metadata; Phase 3 could investigate."
   },
   {
     "name": "Cleveland, OH",
@@ -1567,12 +1567,12 @@
     "population": 372624,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Citywide Property Survey 2022 (owner=opendataCLE) is a vacant-parcel survey, not tree data. No tree-point inventory."
   },
   {
     "name": "New Orleans, LA",
@@ -1582,12 +1582,12 @@
     "population": 383997,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services6.arcgis.com/StPsG80YRtvnlCJ8/arcgis/rest/services/NOLA_TreeInventory/FeatureServer/0",
+    "row_estimate": 106820,
+    "last_checked": "2026-05-10",
+    "notes": "READY. NOLA_TreeInventory (owner=LawrenceGWMKE, Greater Water MKE). 106,820 trees with TREE_ID, COMMON, BOTANICAL, LAT, LONG. Point geometry, public AGOL. Geometry-sampled inside NOLA bbox."
   },
   {
     "name": "Henderson, NV",
@@ -1597,12 +1597,12 @@
     "population": 317610,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT (point inventory). NDF 2022 Henderson Urban Tree Canopy is a canopy raster/polygon, not per-tree. No point inventory. (Henderson has only 1340 Henderson Hwy 83-tree survey — a single street.)"
   },
   {
     "name": "Honolulu, HI",
@@ -1642,12 +1642,12 @@
     "population": 307573,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. 0 tree-inventory candidates."
   },
   {
     "name": "Lexington, KY",
@@ -1657,12 +1657,12 @@
     "population": 322570,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT (citywide). Waverly Park 2022 Tree Inventory (UFI_UKY) covers only 64 park trees. Tree Canopy 1998 (gis_lfucg) is canopy polygons. KY state aggregator Tree_Inventory11 includes ~347 trees within Lexington bbox but is statewide Adopt-A-Tree submissions, not citywide. No comprehensive Lexington street-tree inventory."
   },
   {
     "name": "Stockton, CA",
@@ -1687,12 +1687,12 @@
     "population": 314998,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services.arcgis.com/Fu2oOWg1Aw7azh41/arcgis/rest/services/Street_Trees/FeatureServer/0",
+    "row_estimate": 177456,
+    "last_checked": "2026-05-10",
+    "notes": "READY. Riverside opendata (owner=rivopendata_admin) publishes 3 layers: Street_Trees (127,750) + Trees_Along_Utility_Lines (49,020) + Miscellaneous_Trees (686). All have BotanicalName/CommonName/DBH; point geom; in-bbox. Phase 4 should ingest all 3 (combined 177,456)."
   },
   {
     "name": "Irvine, CA",
@@ -1702,12 +1702,12 @@
     "population": 307670,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only CALFIRE Goldspotted Oak Borer BLITZ results (statewide pest survey). No Irvine inventory."
   },
   {
     "name": "Corpus Christi, TX",
@@ -1717,12 +1717,12 @@
     "population": 317863,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. 0 tree-inventory candidates."
   },
   {
     "name": "Newark, NJ",
@@ -1732,12 +1732,12 @@
     "population": 311549,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT (existing trees). TNC Newark Tree Planting Sites Survey123 (1,159 sites) lists planting SITES not existing trees — Tree_Species field is 'NA' for all sampled rows. Urban Forest Management Plan Survey is community survey, not inventory."
   },
   {
     "name": "Santa Ana, CA",
@@ -1747,12 +1747,12 @@
     "population": 310227,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only SantaAna_2011_trees_clip (owner=ex_files, 14-year-old academic clip with no docs) — appears non-canonical, no contact info."
   },
   {
     "name": "Cincinnati, OH",
@@ -1762,12 +1762,12 @@
     "population": 309317,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services.arcgis.com/JyZag7oO4NteHGiq/arcgis/rest/services/Tree_Inventory_Benefits/FeatureServer/0",
+    "row_estimate": 34296,
+    "last_checked": "2026-05-10",
+    "notes": "READY. Cincinnati Park Board Tree Inventory March 2020 (owner=parks_cbelcher). 34,296 trees with FAMILY/SPECIES/CULTIVAR/COMMON_NAME, DBH, COMMUNITY, STREET, iTree benefits. Point geom inside Cincinnati bbox. Note: streettreecincy_public is an empty editor view, ignore."
   },
   {
     "name": "Pittsburgh, PA",
@@ -1792,12 +1792,12 @@
     "population": 311527,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services.arcgis.com/sLe4VrKqV1JxToKz/arcgis/rest/services/Saint_Paul_Bikeway_Feasibility_Study_Tree_Inventory/FeatureServer/0",
+    "row_estimate": 3788,
+    "last_checked": "2026-05-10",
+    "notes": "PARTIAL READY. Saint Paul Bikeway Feasibility Study Tree Inventory (owner=dtinklenberg, consultant). 3,788 trees with Species (full Latin+common), DBH, address. Only covers bikeway-corridor trees — NOT citywide. Phase 4 import as supplemental; outreach (Phase 3) for full Saint Paul Parks & Rec citywide inventory recommended."
   },
   {
     "name": "Greensboro, NC",
@@ -1822,12 +1822,12 @@
     "population": 292449,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services2.arcgis.com/UXbywc7dSkfgdPp4/arcgis/rest/services/City_of_Jersey_City_Tree_Inventory_Dashboard_2023_WFL1/FeatureServer/0",
+    "row_estimate": 18011,
+    "last_checked": "2026-05-10",
+    "notes": "READY. City of Jersey City Tree Inventory Dashboard 2023 (owner=EGuseman_JC). 18,011 trees with species (Latin), DBH, condition, address, ward. Point geom inside Jersey City bbox."
   },
   {
     "name": "Durham, NC",
@@ -1852,12 +1852,12 @@
     "population": 291082,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://gis.lincoln.ne.gov/public/rest/services/Parks/Trees/MapServer/0",
+    "row_estimate": 144918,
+    "last_checked": "2026-05-10",
+    "notes": "READY. City of Lincoln Parks/Trees MapServer (gis.lincoln.ne.gov). 144,918 trees with ScientificName/CommonName/iTreeCode/DBH. Point geometry, in-bbox. Public ArcGIS Server (no token). Includes street+park trees."
   },
   {
     "name": "North Las Vegas, NV",
@@ -1867,12 +1867,12 @@
     "population": 262527,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT (point inventory). NDF 2022 North Las Vegas Urban Tree Canopy is canopy raster, not per-tree."
   },
   {
     "name": "Plano, TX",
@@ -1882,12 +1882,12 @@
     "population": 285494,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Plano Trees_PublicView FeatureServer/13 has 5,594 rows but only OBJECTID+GlobalID fields (no species), and geometry sits in EPSG:3435 IL state plane (renders ~Naperville IL coords). Layer is unusable."
   },
   {
     "name": "Anchorage, AK",
@@ -1897,12 +1897,12 @@
     "population": 291247,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only Urban_Forest_Park_Map_WFL1 (UAA Geomatics student project, small). No municipal Anchorage inventory."
   },
   {
     "name": "Gilbert, AZ",
@@ -1912,12 +1912,12 @@
     "population": 267918,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Gilbert_Tree_Inventory_WFL1 (owner=mkgilber_LUGDC, Lakehead Univ student project) has 15 trees in Thunder Bay, ON (geom 48.35N, -89.33W) — not Arizona. No Gilbert AZ inventory."
   },
   {
     "name": "Madison, WI",
@@ -1942,12 +1942,12 @@
     "population": 264165,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT (point inventory). NDF 2022 Reno Urban Tree Canopy is canopy raster, not per-tree. No Reno point inventory."
   },
   {
     "name": "Chandler, AZ",
@@ -1957,12 +1957,12 @@
     "population": 275987,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. 0 tree-inventory candidates."
   },
   {
     "name": "St. Louis, MO",
@@ -1987,12 +1987,12 @@
     "population": 275487,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. 0 tree-inventory candidates."
   },
   {
     "name": "Buffalo, NY",
@@ -2015,14 +2015,14 @@
     "state": "IN",
     "country": "US",
     "population": 263886,
-    "already_done": false,
-    "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "already_done": true,
+    "already_done_via": "in-iu-eri-aggregator",
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services.arcgis.com/tKsJAIiLjd90D5q2/arcgis/rest/services/Bloomington_and_Indianapolis_Tree_Inventories/FeatureServer/0",
+    "row_estimate": 48239,
+    "last_checked": "2026-05-10",
+    "notes": "ALREADY-DONE via IN state aggregator. Fort Wayne bbox query returns 48,239 trees within the merged IN feed. Phase 4 import of IN aggregator covers this city."
   },
   {
     "name": "Lubbock, TX",
@@ -2032,12 +2032,12 @@
     "population": 257141,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only TTU_Vegetation_Inventory (owner=lionelplummer, Texas Tech campus, small). No city inventory."
   },
   {
     "name": "St. Petersburg, FL",
@@ -2047,12 +2047,12 @@
     "population": 258308,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Search returns Petersburg ILLINOIS Street Trees 2008 (StarhillForest) — wrong city. No St. Petersburg FL inventory."
   },
   {
     "name": "Toledo, OH",
@@ -2062,12 +2062,12 @@
     "population": 270871,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT (point inventory). Only Toledo Urban Forestry Front Footage Model (owner=dibonamj, parcel-level frontage estimate, not trees) + city's tile Tree_Canopy raster. No per-tree inventory."
   },
   {
     "name": "Laredo, TX",
@@ -2077,12 +2077,12 @@
     "population": 255205,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. 0 tree-inventory candidates."
   },
   {
     "name": "Port St. Lucie, FL",
@@ -2107,12 +2107,12 @@
     "population": 248325,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only ASU USDA Urban Forestry Planning_WFL1 (planning polygons, no per-tree data). No Glendale AZ inventory."
   },
   {
     "name": "Irving, TX",
@@ -2122,12 +2122,12 @@
     "population": 256684,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only Spring 2024 Tree Inventory - Irving Park (40 rows, Kellogg CC student project, refers to a park in Battle Creek MI named 'Irving Park'). Not Irving TX."
   },
   {
     "name": "Winston-Salem, NC",
@@ -2137,12 +2137,12 @@
     "population": 249545,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. Only Wake Forest Univ student survey form (13 + 16 rows of native/invasive plants — not a city inventory)."
   },
   {
     "name": "Chesapeake, VA",
@@ -2152,12 +2152,12 @@
     "population": 249422,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
+    "license_status": "n/a",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "ABSENT. AGOL search returned Salisbury MD canopy layers, Baltimore forest patches, and Hamburg PA (emrubin_COHBG, City of Hamburg, owner appears to be West Chester PA-area planner) Street Trees — all wrong cities. No Chesapeake VA tree inventory."
   },
   {
     "name": "Garland, TX",
@@ -8625,7 +8625,7 @@
     "notes": "No Ontario MNRF community-tree aggregator found. Top results are Lakehead University student-project tree inventories near Thunder Bay (~10 trees each)."
   },
   {
-    "name": "Quebec Minist\u00e8re des For\u00eats, de la Faune et des Parcs",
+    "name": "Quebec Ministère des Forêts, de la Faune et des Parcs",
     "type": "state-forestry",
     "state": "QC",
     "country": "CA",
@@ -8670,7 +8670,7 @@
     "notes": "No Alberta-level community tree aggregator found. Selkirk MB Street Tree Planting Priority and Strathcona County TIMS are top hits, both local and POLYLINE (street segments, not tree points)."
   },
   {
-    "name": "Saskatchewan Ministry of Environment \u2014 Forest Service",
+    "name": "Saskatchewan Ministry of Environment — Forest Service",
     "type": "state-forestry",
     "state": "SK",
     "country": "CA",
@@ -8685,7 +8685,7 @@
     "notes": "No Saskatchewan province aggregator found. Weyburn city (7,969) is largest SK tree-point find."
   },
   {
-    "name": "Manitoba Sustainable Development \u2014 Forestry",
+    "name": "Manitoba Sustainable Development — Forestry",
     "type": "state-forestry",
     "state": "MB",
     "country": "CA",
@@ -8727,7 +8727,7 @@
     "endpoint": "https://services8.arcgis.com/Ekf399qTIN4dSA3Z/arcgis/rest/services/South_Central_Peninsula_Tree_Inventory_2017/FeatureServer/0",
     "row_estimate": 3000,
     "last_checked": "2026-05-10",
-    "notes": "NB has \"South Central Peninsula Tree Inventory 2017\" (2,621 trees) + \"Lower West Side Tree Inventory 2018\" (379) from ACAP Saint John \u2014 city-level inventories, not provincial. No NB DNR state-level aggregator. Village of New Maryland NB also has 574 tree points."
+    "notes": "NB has \"South Central Peninsula Tree Inventory 2017\" (2,621 trees) + \"Lower West Side Tree Inventory 2018\" (379) from ACAP Saint John — city-level inventories, not provincial. No NB DNR state-level aggregator. Village of New Maryland NB also has 574 tree points."
   },
   {
     "name": "Newfoundland and Labrador Department of Fisheries, Forestry and Agriculture",

@@ -628,6 +628,15 @@
       "stage": "ripe"
     }
   ],
+  "Prunus tomentosa": [
+    {
+      "name": "Nanking cherry",
+      "members": [
+        "Prunus tomentosa"
+      ],
+      "stage": "ripe"
+    }
+  ],
   "Prunus americana": [
     {
       "name": "American plum",
@@ -885,7 +894,14 @@
   ],
   "Annona squamosa": [
     {
-      "name": "Sugar apple",
+      "name": "Sugar apple (main season)",
+      "members": [
+        "Annona squamosa"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Sugar apple (straggler tail)",
       "members": [
         "Annona squamosa"
       ],
@@ -897,6 +913,24 @@
       "name": "Date palm",
       "members": [
         "Phoenix dactylifera"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Coccoloba uvifera": [
+    {
+      "name": "Sea grape",
+      "members": [
+        "Coccoloba uvifera"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Phoenix canariensis": [
+    {
+      "name": "Canary Island date palm",
+      "members": [
+        "Phoenix canariensis"
       ],
       "stage": "ripe"
     }
@@ -1436,6 +1470,15 @@
       "name": "American beautyberry",
       "members": [
         "Callicarpa americana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Rhus typhina": [
+    {
+      "name": "Staghorn sumac (ripe bobs)",
+      "members": [
+        "Rhus typhina"
       ],
       "stage": "ripe"
     }
@@ -2141,6 +2184,22 @@
       "name": "Avocado (late-year)",
       "members": [
         "Persea americana"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Carica papaya": [
+    {
+      "name": "Papaya (late-year)",
+      "members": [
+        "Carica papaya"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Papaya (early-year)",
+      "members": [
+        "Carica papaya"
       ],
       "stage": "ripe"
     }

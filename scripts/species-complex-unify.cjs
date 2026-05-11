@@ -530,6 +530,19 @@ const COMPLEXES = [
   // Steepening to -3 with an earlier anchor: 6a peak Aug 3 (DOY 215),
   // half_window 25 to reflect the genuine within-zone scatter.
   {
+    name: 'Nanking cherry',
+    members: ['Prunus tomentosa'],
+    // Cold-hardy NE Asian cherry-cousin shrub, zone 2-7. Sour-sweet
+    // red drupes Jun-Jul, ~2 weeks earlier than other Prunus in same
+    // zone. Heavy bearer; backyard / windbreak / wildlife planting.
+    anchor_zone: '5b', anchor_peak: 182, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['2b','3a','3b','4a','4b','5a','5b','6a','6b','7a'],
+    stage: 'ripe',
+    source_name: 'Nanking cherry (USDA NRCS + Practical Self Reliance + Canadian Prairie Horticulture)',
+    source_url: 'https://plants.usda.gov/plant-profile/PRTO',
+    summary: 'Nanking cherry (Prunus tomentosa): cold-hardy shrub-form cherry (zones 2-7), small bright red sour-sweet drupes Jun-Jul, peak late-Jun in zone 5b/6a. Clustered on 1-year wood. Eat ripe (sweetens on bush) or use for jam/juice. Stones cyanogenic — typical Prunus warning, do not eat in quantity.'
+  },
+  {
     name: 'American plum',
     members: ['Prunus americana'],
     anchor_zone: '6a',
@@ -891,18 +904,28 @@ const COMPLEXES = [
       { zones: ['8a','8b','9a'], source: 'CRFG feijoa', url: 'https://crfg.org/homepage/library/fruitfacts/feijoa/', summary: 'SF Bay: 5.5-7 mo post-bloom = Nov-Dec.', peak_doy: 335, half_window: 30 }
     ]
   },
+  // Sugar apple: peak shifted Sep 15 → Oct 15 + half_window 60 → 60
+  // so the math actually matches the cited Aug-Dec range. Straggler
+  // row covers the frost-free Jan-Feb tail.
   {
-    name: 'Sugar apple',
+    name: 'Sugar apple (main season)',
     members: ['Annona squamosa'],
-    anchor_zone: '10b', anchor_peak: 258, shift_per_half_zone: -5, half_window: 60,
+    anchor_zone: '10b', anchor_peak: 288, shift_per_half_zone: -5, half_window: 60,
     target_zones: ['10a','10b','11a','11b'],
     stage: 'ripe',
-    source_name: 'Sugar apple (UF/IFAS MG330)',
+    source_name: 'Sugar apple main (UF/IFAS MG330)',
     source_url: 'https://ask.ifas.ufl.edu/publication/MG330',
-    summary: 'Sugar apple: Aug-Dec in south FL, peak Sep. Stragglers into midwinter if frost-free.',
-    regional_anchors: [
-      { zones: ['10b','11a','11b'], source: 'UF/IFAS MG330', url: 'https://ask.ifas.ufl.edu/publication/MG330', summary: 'South FL: mid-summer through fall, stragglers to midwinter.', peak_doy: 258, half_window: 60 }
-    ]
+    summary: 'Sugar apple (Annona squamosa) Aug-Dec in south FL, peak mid-Oct. Cited "peak Sep" is the typical-first-ripe; sustained drop continues through Dec.'
+  },
+  {
+    name: 'Sugar apple (straggler tail)',
+    members: ['Annona squamosa'],
+    anchor_zone: '10b', anchor_peak: 30, shift_per_half_zone: -5, half_window: 30,
+    target_zones: ['10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Sugar apple straggler (UF/IFAS MG330)',
+    source_url: 'https://ask.ifas.ufl.edu/publication/MG330',
+    summary: 'Sugar apple (Annona squamosa) Jan-Feb straggler tail in frost-free locations (south FL / Caribbean only). Small late-cropping bonus harvest.'
   },
   {
     name: 'Date palm',
@@ -916,6 +939,47 @@ const COMPLEXES = [
     regional_anchors: [
       { zones: ['9a','9b','10a'], source: 'USDA CA dates crop profile', url: 'https://ipmdata.ipmcenters.org/documents/cropprofiles/CAdates.pdf', summary: 'Coachella: ripen Aug 20-Dec 15, harvest Sep-Dec.', peak_doy: 288, half_window: 60 }
     ]
+  },
+  // Sea grape (Coccoloba uvifera) — iconic SE coastal-FL / Caribbean
+  // beach tree. Pendulous grape-like clusters of purple-red drupes ripen
+  // late summer through fall (Aug-Oct main, with Nov stragglers in
+  // frost-free zones). Large seed, thin pulp — but flavor is genuinely
+  // good (wine-grape × cranberry) and it's classic Florida jelly fruit.
+  // Salt-tolerant pioneer, often the FIRST thing you can forage at the
+  // beach. Dioecious — only female trees fruit. Trees on protected dune
+  // systems must NOT be harvested from (FL state law); city-planted
+  // street trees and private property are the legal sources.
+  {
+    name: 'Sea grape',
+    members: ['Coccoloba uvifera'],
+    anchor_zone: '10b', anchor_peak: 244, shift_per_half_zone: -5, half_window: 45,
+    target_zones: ['10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Sea grape (UF/IFAS HS867 + Eat The Weeds + USDA NRCS COUV)',
+    source_url: 'https://edis.ifas.ufl.edu/publication/HS867',
+    summary: 'Sea grape (Coccoloba uvifera): pendulous grape-like clusters of dark-purple drupes ripen progressively along the cluster Aug-Oct (south FL coastal main season); fruit ripens unevenly so the same cluster has green + purple drupes at once — harvest by picking individual ripe drupes or wait for whole-cluster ripening 2-3 weeks later. Thin pulp wrapped around a large seed; flavor is wine-grape × cranberry. Best uses: jelly (high pectin from the skins), wine, eaten out-of-hand by sucking pulp off the seed. Dioecious — only female trees bear (and only some years heavily). CONSERVATION: protected on FL dune systems by state law; harvest only from inland street trees, parks, or private property where allowed. Salt-tolerant pioneer of subtropical beach edges.',
+    regional_anchors: [
+      { zones: ['10a','10b'], source: 'UF/IFAS HS867', url: 'https://edis.ifas.ufl.edu/publication/HS867', summary: 'Coastal FL: Aug-Oct main season.', peak_doy: 244, half_window: 45 },
+      { zones: ['11a','11b'], source: 'Eat The Weeds + Caribbean horticulture', url: 'https://www.eattheweeds.com/sea-grape/', summary: 'Frost-free tropics: Jul-Nov with Nov stragglers; year-round in some Caribbean sites.', peak_doy: 244, half_window: 60 }
+    ]
+  },
+  // Canary Island date palm — fruit is technically edible (small ~2 cm
+  // orange-yellow dates) but flesh is thin, the seed is large, and
+  // extension sources uniformly note "few bother to eat them." Traditional
+  // Canary Islands use is as arrope (date syrup) by boiling down the pulp,
+  // not raw eating. Mass-planted as ornamentals in CA/FL/HI/TX (23k+ pins
+  // from city tree inventories) so the species needs at least a placeholder
+  // window — but framed as a marginal-forage species, not equivalent to
+  // P. dactylifera.
+  {
+    name: 'Canary Island date palm',
+    members: ['Phoenix canariensis'],
+    anchor_zone: '10a', anchor_peak: 288, shift_per_half_zone: -5, half_window: 60,
+    target_zones: ['9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Canary Island date palm (UF/IFAS ST439 + CA-IPC + Wikipedia)',
+    source_url: 'https://hort.ifas.ufl.edu/database/documents/pdf/tree_fact_sheets/phocana.pdf',
+    summary: 'Canary Island date palm (Phoenix canariensis): small (~2 cm) orange-yellow drupes ripen late summer through fall, mostly Sep-Dec in coastal CA / Mediterranean climates. Thin-fleshed with a large seed — most foragers skip it. Traditional Canary Islands use is arrope (boiled-down date syrup) rather than raw eating. Far less productive than P. dactylifera but the fruit IS edible if you want to experiment.'
   },
   {
     name: 'Carob',
@@ -1225,6 +1289,31 @@ const COMPLEXES = [
     source_url: 'https://plants.usda.gov/plant-profile/CAAM2',
     summary: 'American beautyberry (Callicarpa americana): native SE-US understory shrub, vivid magenta drupe clusters Aug-Nov. Mealy-fruity-medicinal flavor — best for jelly. Leaves traditionally rubbed on skin as mosquito repellent.'
   },
+  // Staghorn sumac — fuzzy red drupe clusters ("bobs") ripen mid-summer
+  // and persist on the plant through winter. Peak harvest is fresh in
+  // late Jul through Aug-Sep (when the malic-acid coating is strongest);
+  // bobs darken and lose tartness through fall + winter as rain leaches
+  // the acid, but remain harvestable for milder sumac-ade well into the
+  // following spring. Heat-driven for ripe-fresh peak. Important look-alike
+  // warning: white-drupe Toxicodendron vernix (poison sumac) — entirely
+  // different habitat (wet swamp; staghorn is dry upland) and color (white
+  // drupes vs red), but the safety_notes should be explicit. Cited
+  // shift_per_half_zone -3 matches iNat empirical for ripe-bob first-appear.
+  {
+    name: 'Staghorn sumac (ripe bobs)',
+    members: ['Rhus typhina'],
+    anchor_zone: '6a', anchor_peak: 213, shift_per_half_zone: -3, half_window: 35,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Staghorn sumac (Eat The Weeds + USDA NRCS + Cornell CE + Lady Bird Johnson Wildflower Center)',
+    source_url: 'https://www.eattheweeds.com/staghorn-sumac/',
+    summary: 'Staghorn sumac (Rhus typhina): dense fuzzy cone-shaped clusters ("bobs") of red drupes coated in malic acid (NOT to be confused with toxic poison sumac — Toxicodendron vernix has WHITE drupes and grows in swamps, while staghorn is upland with RED drupes and velvety twigs). Peak ripe-fresh harvest mid-Jul through Aug-Sep when tartness is strongest. Drupes persist through winter, leaching acid in rain — early-season harvest tastes brightest. Classic uses: (1) sumac-ade by steeping clusters in cold water 10-30 min and straining (do NOT use hot water — releases tannins/bitterness), (2) dried and ground as a major component of the Middle Eastern spice blend zaatar, (3) jelly with apple. Indigenous food across eastern North America (Cherokee, Iroquois, Anishinaabe traditional). The "staghorn" name refers to velvety young branches resembling deer antlers in velvet.',
+    regional_anchors: [
+      { zones: ['4a','4b','5a','5b'], source: 'Eat The Weeds + Cornell CE', url: 'https://www.eattheweeds.com/staghorn-sumac/', summary: 'Cold zones: late Jul start, peak early-mid Aug, harvestable through fall.', peak_doy: 220, half_window: 35 },
+      { zones: ['6a','6b','7a','7b'], source: 'USDA NRCS RHTY', url: 'https://plants.usda.gov/plant-profile/RHTY', summary: 'Mid zones: mid-Jul start, peak late Jul / early Aug, fades by Sep.', peak_doy: 213, half_window: 35 },
+      { zones: ['8a','8b'], source: 'Lady Bird Johnson Wildflower Center', url: 'https://www.wildflower.org/plants/result.php?id_plant=RHTY', summary: 'Warm-edge zones: early-Jul start (heat-stressed bobs ripen quickly), peak mid-Jul.', peak_doy: 196, half_window: 35 }
+    ]
+  },
   {
     name: 'Yarrow (leaves + flowers)',
     members: ['Achillea millefolium'],
@@ -1441,15 +1530,19 @@ const COMPLEXES = [
   },
 
   // Ostrich fern fiddleheads — major NE / Maritime spring forage.
+  // Cited Maine + Vermont extension services agree on the brief 1-2 week
+  // emergence window: in zone 5b/6a, croziers emerge mid-Apr through
+  // early-May, often only 7-10 days of pickable size at any one site
+  // before the fronds unfurl past the safe-harvest stage.
   {
     name: 'Ostrich fern fiddleheads',
     members: ['Matteuccia struthiopteris'],
     anchor_zone: '6a', anchor_peak: 121, shift_per_half_zone: -3, half_window: 14,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a'],
     stage: 'shoot',
-    source_name: 'Ostrich fern (Maine + Vermont extension services)',
+    source_name: 'Ostrich fern (UMaine Extension 2540e + UVM Extension + Forager Chef + Quebec MAPAQ + NB Department of Natural Resources)',
     source_url: 'https://extension.umaine.edu/publications/2540e/',
-    summary: 'Ostrich fern fiddleheads: tightly-coiled croziers, brief 1-2 week window mid-Apr to mid-May. Boil 15 min before eating.'
+    summary: 'Ostrich fern (Matteuccia struthiopteris) fiddleheads: tightly-coiled croziers emerging mid-Apr through early-May in zone 6a (Vermont/NB peak ~May 1, lower-NB/PA earlier). Brief 7-10 day window at any one site before fronds unfurl past safe-harvest size. ID: deep U-shaped groove down the inside of the stem + papery brown scales sheathing the crozier; clustered "crowns" not solitary stalks; grows in floodplain forests and damp lowlands. ALWAYS cook thoroughly — boil 15 min OR steam 12 min — multiple documented outbreaks of toxin-related GI illness from raw or under-cooked fiddleheads (UMaine, FDA records). Bracken fiddleheads are NOT a safe substitute (ptaquiloside carcinogen).'
   },
 
   // Wild strawberry complex — F. virginiana + F. vesca share timing.
@@ -1851,9 +1944,9 @@ const COMPLEXES = [
     anchor_zone: '6a', anchor_peak: 196, shift_per_half_zone: -3, half_window: 30,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'flower_harvest',
-    source_name: 'Wild bergamot (USDA Plant Profile)',
-    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=MOFI',
-    summary: 'Wild bergamot: Jun-Aug bloom. Tea, tincture, thyme-like seasoning.'
+    source_name: 'Wild bergamot (Eat The Weeds + Practical Self Reliance + Lady Bird Johnson Wildflower Center + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/wild-bergamot-and-bee-balm/',
+    summary: 'Wild bergamot (Monarda fistulosa, also called bee balm or wild oregano): pale-lavender shaggy-tufted flower heads atop square stems, Jun-Aug peak Jul. Leaves + flowers both edible — strong oregano-thyme aroma from thymol (active in commercial mouthwash). Classic uses: herbal tea (anti-inflammatory, traditional cold remedy in Lakota / Iroquois ethnobotany), Italian-style oregano substitute in cooking, sage-like meat rub. CAUTION: similar-looking purple bergamot (M. didyma) and spotted bee balm (M. punctata) are also edible but each has a distinct flavor (didyma = lemony-citrus, punctata = stronger oregano). Distinguish from non-Monarda mints by the SHAGGY tubular flower head (not a smooth spike) + square stem + opposite leaves.'
   },
   {
     name: 'Common blue violet (flowers)',
@@ -2127,6 +2220,42 @@ const COMPLEXES = [
     source_url: 'https://homeorchard.ucanr.edu/Avocados/',
     summary: 'Avocado Jul-Dec: Hass tail (Jul-Sep), Reed (Jun-Oct), Bacon/Fuerte start (Nov-Dec). Closes the cultivar-spread gap.'
   },
+  // Papaya (Carica papaya) — fast-growing tropical with continuous fruiting
+  // once a tree starts bearing. Time-from-flower to ripe ~5-6 months. In
+  // true tropics (zone 11+, frost-free) fruits year-round. In south FL
+  // (10a-10b) trees fruit Mar-Dec with a winter dormancy; freezes kill the
+  // tree above ground. In coastal CA (10a sheltered microclimates) fruiting
+  // Aug-Jan is typical (cooler winters slow ripening). Hawaii (10b-11b)
+  // year-round. Cited harvest range straddles year-end — split into main
+  // (late-year) + early-year rows like cherimoya / guava / lemon. iNat
+  // empirical peak in S FL is May, but extension sources uniformly describe
+  // continuous fruiting with the strongest harvest Sep-Dec when summer-set
+  // fruit ripens — the iNat May peak is left-shifted by reporter attention
+  // on the spring crop (same pattern as Fruiting first-fruit bias).
+  {
+    name: 'Papaya (late-year)',
+    members: ['Carica papaya'],
+    anchor_zone: '10b', anchor_peak: 305, shift_per_half_zone: -5, half_window: 75,
+    target_zones: ['10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Papaya late-year (UF/IFAS HS11 + UH CTAHR F_N-3)',
+    source_url: 'https://edis.ifas.ufl.edu/publication/MG054',
+    summary: 'Papaya (Carica papaya) late-year main harvest: S FL Sep-Dec, HI year-round with strong fall flush. 5-6 months from flower to ripe; trees fruit continuously once mature. Pick when 1/4 to 1/2 of skin has turned yellow — ripens off-tree. Unripe green fruit and milky latex contain papain (digestive enzyme) — green papaya used cooked in SE Asian salads, ripe eaten raw.',
+    regional_anchors: [
+      { zones: ['11a','11b'], source: 'UH CTAHR F_N-3', url: 'https://www.ctahr.hawaii.edu/oc/freepubs/pdf/F_N-3.pdf', summary: 'Hawaii: year-round bearing, fall flush prominent.', peak_doy: 305, half_window: 90 },
+      { zones: ['10a','10b'], source: 'UF/IFAS MG054', url: 'https://edis.ifas.ufl.edu/publication/MG054', summary: 'South FL: Sep-Dec main season; winter dormant if cool.', peak_doy: 305, half_window: 60 }
+    ]
+  },
+  {
+    name: 'Papaya (early-year)',
+    members: ['Carica papaya'],
+    anchor_zone: '10b', anchor_peak: 105, shift_per_half_zone: -5, half_window: 75,
+    target_zones: ['10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Papaya early-year (UF/IFAS HS11 + UH CTAHR F_N-3)',
+    source_url: 'https://edis.ifas.ufl.edu/publication/MG054',
+    summary: 'Papaya early-year shoulder: S FL Feb-May spring crop from winter-set fruit; HI continuous, with spring peak from winter-flush ripening. iNat-empirical observations skew toward this spring window — reporter attention on "first papaya of the year" rather than continuous bearing.'
+  },
   {
     name: 'Kiwifruit',
     members: ['Actinidia deliciosa'],
@@ -2239,12 +2368,18 @@ const COMPLEXES = [
         const start = Math.max(1, peak - cx.half_window);
         const end = Math.min(366, peak + cx.half_window);
 
+        // Match by complex_name so multiple complex entries (e.g.
+        // "Cherimoya (late-year)" + "Cherimoya (early-year)") for the
+        // same (species, zone, stage) get separate rows instead of
+        // silently overwriting one another. Backfilled in migration
+        // 24; new inserts include complex_name = cx.name below.
         const existing = await sql`
           select id, coalesce(evidence, '[]'::jsonb) as evidence
             from species_fruiting_windows
            where species_id = ${speciesId}
              and climate_zone_id = ${zone[0].id}
-             and stage = ${stage}::public.stage`;
+             and stage = ${stage}::public.stage
+             and complex_name is not distinct from ${cx.name}`;
 
         const ev = existing.length > 0 && Array.isArray(existing[0].evidence) ? existing[0].evidence : [];
         let newEv = ev.some(e => e?.source === evEntry.source) ? ev : ev.concat([evEntry]);
@@ -2272,13 +2407,14 @@ const COMPLEXES = [
         if (existing.length === 0) {
           await sql`
             insert into species_fruiting_windows
-              (species_id, climate_zone_id, stage, start_doy, end_doy, peak_doy, confidence, notes, evidence)
+              (species_id, climate_zone_id, stage, start_doy, end_doy, peak_doy, confidence, notes, evidence, complex_name)
             values
               (${speciesId}, ${zone[0].id}, ${stage}::public.stage,
                ${start}, ${end}, ${peak},
                'regional_guide'::public.window_confidence,
                ${note},
-               ${sql.json(newEv)})`;
+               ${sql.json(newEv)},
+               ${cx.name})`;
           console.log(`    ${zoneCode}: INSERT ${start}-${end}/peak ${peak}`);
           totalInserted++;
         } else {
