@@ -831,13 +831,13 @@
     "country": "US",
     "population": 2304580,
     "already_done": true,
-    "already_done_via": "dryad-trees-houston",
-    "license_status": "unknown",
+    "already_done_via": "houston-hpard-trees",
+    "license_status": "permissive",
     "data_status": "present",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "endpoint": "https://services.arcgis.com/NummVBqZSIJKUeVR/arcgis/rest/services/COH_UrbanForestry_Trees_VIEW_ONLY/FeatureServer/0",
+    "row_estimate": 275648,
+    "last_checked": "2026-05-10",
+    "notes": "IMPORTED. City of Houston HPARD Urban Forestry inventory (owner=e127618_MyCity, 275,648 trees). SPECIES field uses common,modifier form (\"Raintree, Golden\"); no Latin binomial. Houston open data permits commercial+derivative use with attribution. Augments earlier dryad-trees-houston (14.5k pins) — combined ~57k pins in bbox = 50% coverage."
   },
   {
     "name": "Phoenix, AZ",
@@ -847,12 +847,12 @@
     "population": 1608139,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "n/a",
-    "data_status": "absent",
-    "endpoint": null,
-    "row_estimate": null,
+    "license_status": "unclear",
+    "data_status": "research-only",
+    "endpoint": "https://services3.arcgis.com/0OPQIK59PJJqLK0A/arcgis/rest/services/street_trees_gao_map_by_species__WFL1/FeatureServer/1",
+    "row_estimate": 22507,
     "last_checked": "2026-05-10",
-    "notes": "ABSENT. Only finds: USDA Urban Forestry Planning_WFL1 (ASU, planning polygons + event points, no species-level tree inventory); LiDAR-Derived Tree Locations metro-Phoenix 2014 (mapgeohub) — 2.8M canopy points with HEIGHT_M + TYPE='deciduous/coniferous' only (NO species). City of Phoenix does not publish a per-tree species inventory on AGOL."
+    "notes": "PHASE-3 OUTREACH. City of Phoenix still does not publish its own per-tree species inventory on AGOL. ASU/GAO research dataset (owner=mkwrigh1_asu, Greg Asner group) covers ~22.5k trees with SPP_BOT/SPP_COM/DBH/HEIGHT/COND inside the GAO flight area — looks like a field-inspected inventory used as GAO classification ground-truth (INSPECT_DT 2011-2017). AGOL Public access but item has no licenseInfo/snippet/description; owner is a research account, not the City. Queue: confirm Phoenix Parks consent + ASU permissions before importing."
   },
   {
     "name": "Philadelphia, PA",
@@ -980,14 +980,14 @@
     "state": "NC",
     "country": "US",
     "population": 874579,
-    "already_done": false,
-    "already_done_via": null,
-    "license_status": "n/a",
-    "data_status": "absent",
-    "endpoint": null,
-    "row_estimate": null,
+    "already_done": true,
+    "already_done_via": "charlotte-lsm-trees",
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://gis.charlottenc.gov/arcgis/rest/services/ENG/LSM_Trees/MapServer/0",
+    "row_estimate": 191909,
     "last_checked": "2026-05-10",
-    "notes": "ABSENT. Charlotte (owner=CharlotteNC) publishes only canopy raster + Land Development/Urban Forestry permit tracking polygons (6 inspector zones) — no street-tree point inventory. Mecklenburg County tree canopy is canopy %, not point data. Phase 3 outreach: Charlotte UDO Tree Coordinator (tree-ordinance enforcement docs reference a TreePlotter database, not public)."
+    "notes": "IMPORTED. Charlotte Landscape Management (LSM) Trees on the city's own ArcGIS Server (not AGOL) — owner=CharlotteNC, snippet 'Landscape Management Active trees replicated from AMS.' 191,909 trees with Common, DBH, Active, Location. Common is modifier-first with colon or space separator ('OAK: WILLOW', 'CRAPEMYRTLE SPP'). 'SPP' / slash entries are too vague and are skipped. City of Charlotte Open Data Portal default-permissive."
   },
   {
     "name": "Columbus, OH",
@@ -1163,11 +1163,11 @@
     "already_done": true,
     "already_done_via": "dryad-trees-detroit",
     "license_status": "unknown",
-    "data_status": "present",
+    "data_status": "partial",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "last_checked": "2026-05-10",
+    "notes": "PARTIAL via dryad-trees-detroit (4,051 pins in bbox, 13% of expected). City of Detroit's own AGOL publishes only FinalTreePoints (LiDAR canopy detection by nv5.com contractor — no species, just heights) and Projected_Tree_Removals (planned removals, not standing trees). Phase 3 outreach for a city-managed per-tree species inventory if one exists internally."
   },
   {
     "name": "Louisville, KY",
@@ -1311,13 +1311,13 @@
     "country": "US",
     "population": 498715,
     "already_done": true,
-    "already_done_via": "dryad-trees-atlanta",
-    "license_status": "unknown",
+    "already_done_via": "trees-atlanta-plant-inventory",
+    "license_status": "permissive",
     "data_status": "present",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "endpoint": "https://services6.arcgis.com/BZn8g8tzu5WfMokL/arcgis/rest/services/Trees_Atlanta_Plant_Inventory_Public_View/FeatureServer/0",
+    "row_estimate": 121316,
+    "last_checked": "2026-05-10",
+    "notes": "IMPORTED. Trees Atlanta non-profit public inventory (owner=Data_TA, AGOL Public). 121,316 trees planted since 1985, separate Genus + Species + Cultivar fields. Snippet describes data as 'public-facing data about plants … used in the public tree inventory map viewable on the TA website'. City of Atlanta's own GIS publishes no street-tree-point inventory. Combined with the existing dryad-trees-atlanta partial: ~36k pins in bbox = 146% of expected."
   },
   {
     "name": "Mesa, AZ",
@@ -2436,13 +2436,13 @@
     "country": "US",
     "population": 199723,
     "already_done": true,
-    "already_done_via": "ut-ffsl-urban-tree-inventory",
-    "license_status": "unknown",
+    "already_done_via": "slc-urban-forestry-inventory",
+    "license_status": "permissive",
     "data_status": "present",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": null
+    "endpoint": "https://services.arcgis.com/mMBpeYj0vPFotzbe/arcgis/rest/services/Urban_Forestry_Inventory/FeatureServer/0",
+    "row_estimate": 110292,
+    "last_checked": "2026-05-10",
+    "notes": "IMPORTED. SLC Public Lands Urban Forestry Inventory (owner=brandon.fleming_slcgov, AGOL Public, 110,292 trees) with full Latin binomial in SPP, DBH, address. State-level UT FFSL aggregator had only ~800 SLC pins (8% coverage); city's own feed is 10x more complete and authoritative. Combined ~54k pins in bbox = 541% of expected (street + park trees inflate the per-capita estimate)."
   },
   {
     "name": "Moreno Valley, CA",
