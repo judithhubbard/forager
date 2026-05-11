@@ -36,3 +36,9 @@ data/exploration/npn-validation-NE-raw-prunus-serotina.json
 
 # Local DB backup snapshots (large; not source)
 backups/
+
+# Mechanism-audit output files. Regenerable via
+# `node scripts/audit-mechanism.cjs`. Edit the TSV to override
+# proposals; run with --apply to print patches for manual paste.
+audit-mechanism.tsv
+audit-mechanism.json
