@@ -140,29 +140,19 @@ export async function listPublicPins(
 ): Promise<PinEffective[]> {
   const [west, south, east, north] = bbox;
   const z = Math.round(zoom);
-  // z13-precalc fast path. Migration 26 built pin_grid_z13 — a
-  // pre-decimated 84m grid that lets the z13 query be O(K visible
-  // cells) instead of O(N pins in bbox). For Indianapolis-scale
-  // metros (300k+ pins) this turns a 1-3s server query into ~700ms
-  // warm. p_include_invasives=true still falls back to the runtime
-  // path because the precalc filters to is_forageable=true.
-  if (z === 13 && !includeInvasives) {
-    const { data, error } = await supabase
-      .rpc('public_pins_bbox_z13' as never, {
-        p_min_lng: west,
-        p_min_lat: south,
-        p_max_lng: east,
-        p_max_lat: north,
-        p_max_rows: maxRows,
-        p_include_invasives: false
-      } as never)
-      .range(0, maxRows - 1);
-    if (error) {
-      console.error('[pinService] listPublicPins (z13 precalc) error:', error);
-      throw error;
-    }
-    return (data ?? []) as unknown as PinEffective[];
-  }
+  // NOTE: migration 26 built a `pin_grid_z13` precalc table + a
+  // `public_pins_bbox_z13` RPC intended as a fast path here.
+  // Benchmark on Indianapolis metro (5/11/2026) showed the precalc
+  // is actually SLOWER than the runtime path in every measurement
+  // (12s cold vs 2.5s cold; 1.3s warm vs 1.2s warm). The runtime
+  // path is already O(K) bbox-scoped via the GIST index on
+  // pins.location — the "candidates" CTE only materializes pins
+  // actually inside the bbox, not all 5.5M public pins. The
+  // precalc table is bigger (1.97M rows) + its GIST is on a
+  // function expression which is less efficient than the native
+  // geography column index. Leaving the precalc table in place
+  // for future use cases but NOT routing through it. See
+  // commit-history around 9947e9b for the wire-up that was reverted.
   // p_zoom drives the spatial decimation grid in the runtime RPC.
   // PostgREST has a hidden 1000-row response cap on Supabase
   // (db-max-rows) — .range() doesn't bypass it. Paginate explicitly
