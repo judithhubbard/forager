@@ -2973,6 +2973,14 @@ const COMPLEXES = [
   }
 ];
 
+// Export COMPLEXES + ZONE_NUM so check-confirmed-drift.cjs (and any
+// future read-only consumer) can require this file without running
+// the full main IIFE. The pipeline only executes when invoked as the
+// entry script — never when imported.
+module.exports = { COMPLEXES, ZONE_NUM };
+
+if (require.main !== module) return;
+
 (async () => {
   let totalUpdated = 0, totalInserted = 0, totalSkippedConfirmed = 0;
   for (const cx of COMPLEXES) {
