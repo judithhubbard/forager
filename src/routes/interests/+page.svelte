@@ -298,12 +298,14 @@
         on:change={onInvasiveOptin}
       />
       <div class="invasive-text">
-        <strong>Also show non-forageable species</strong>
+        <strong>Show inedible invasives (for removal)</strong>
         <span class="invasive-hint">
-          Some non-forageable trees (Norway maple, tree of heaven, etc.) show
-          up in city tree inventories. Edible forageable species that happen
-          to be invasive (autumn olive, wineberry, knotweed shoots) are
-          always shown — eating them is foraging, and it helps control their
+          Community-flagged map of inedible invasive species (Tree of
+          Heaven, English ivy, etc.) so you can ID and report them
+          when you're out — useful for management/removal work, not
+          for foraging. Edible invasives (autumn olive, wineberry,
+          knotweed shoots, garlic mustard) are always shown
+          regardless — foraging them is itself a way to control their
           spread.
         </span>
       </div>

@@ -1666,14 +1666,11 @@
             />
             <span class="layer-name">City inventories ({layerCounts.public.toLocaleString()})</span>
           </label>
-          <label class="layer-row">
-            <input
-              type="checkbox"
-              checked={$settings.showInvasives}
-              on:change={onInvasivesToggle}
-            />
-            <span class="layer-name">Non-forageable</span>
-          </label>
+          <!-- The non-forageable toggle moved to the Species panel
+               (where it controls species-level filtering, not a map
+               layer) — JK's feedback that this didn't belong in
+               Layers. The $settings.showInvasives setting is still
+               the binding; only the UI affordance moved. -->
 
           <div class="layer-section-head">Overlays</div>
           <!-- Tracks at top of overlays: it's the most user-personal
@@ -1788,6 +1785,23 @@
               {/if}
             {/each}
           </div>
+          <!-- Non-forageable invasive species opt-in. Lives here (not
+               in Layers) because it's a species-level filter, not a
+               map-layer toggle. The framing matters: the purpose is
+               so the community can map inedible invasives that need
+               REMOVAL/awareness, not to surface ornamentals that
+               happened to be in city inventories (we exclude those
+               at import time). Edible invasives (autumn olive,
+               wineberry, knotweed) are always shown because foraging
+               them is itself a control method. -->
+          <label class="cat-toggle invasives-toggle" title="Show inedible invasive species for community removal/awareness mapping. Edible invasives (autumn olive, wineberry, knotweed shoots) are always shown — foraging them is itself a control method.">
+            <input
+              type="checkbox"
+              checked={$settings.showInvasives}
+              on:change={onInvasivesToggle}
+            />
+            Inedible invasives <span class="muted small">(for removal)</span>
+          </label>
           <ul class="species-list">
             {#each groupedSpecies as [groupName, list]}
               {@const shape = shapeForGroup(groupName)}
@@ -2397,6 +2411,20 @@
     font-size: 0.72rem;
   }
   .cat-toggle input { margin: 0; }
+  /* Inedible-invasives toggle: visually grouped with the category
+     toggles but separated with a thin divider so it's clear this is
+     a different axis (management vs harvest). */
+  .invasives-toggle {
+    margin-top: 0.25rem;
+    padding-top: 0.35rem;
+    border-top: 1px dashed #d4dcd4;
+    width: 100%;
+  }
+  .invasives-toggle .muted {
+    color: #8a948a;
+    font-size: 0.72rem;
+    margin-left: 0.15rem;
+  }
   .species-panel ul {
     list-style: none;
     margin: 0;
