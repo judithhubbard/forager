@@ -76,11 +76,17 @@ const COMPLEXES = [
   {
     name: 'Amelanchier (serviceberry) complex',
     members: ['Amelanchier arborea', 'Amelanchier canadensis', 'Amelanchier laevis', 'Amelanchier sp.'],
+    // Reduced shift -4 → -3 and extended target_zones to 3a-10a so the
+    // gradient stays monotonic across all zones. Previous shift -4 with
+    // target_zones only 4a-8b left zone 3a-3b and 9a-10a populated by
+    // iNat + PAV-smoothing, creating breaks where 4a (anchor-shifted
+    // to 183) was later than 3a (iNat 176), and 8b→9a jumped from 147
+    // up to 163 because PAV pooled the tail.
     anchor_zone: '6a',
     anchor_peak: 167,           // Jun 16
-    shift_per_half_zone: -4,    // empirical iNat -2.8; -4 fits cited 7b evidence
+    shift_per_half_zone: -3,    // empirical iNat -2.8; round to -3 for cleaner gradient
     half_window: 18,
-    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'ripe',
     source_name: 'Amelanchier complex consensus',
     source_url: 'https://backyardforager.com/amelanchier-serviceberry-juneberry/',
@@ -730,28 +736,34 @@ const COMPLEXES = [
   // Anchor 9a peak Aug 25 (DOY 237), shift -7 (heat-driven, earlier in
   // warmest zones); narrow window since commercial harvest is well-
   // defined.
+  // Almond split into two distinct cultivar populations (the single-
+  // complex form with regional_anchors couldn't override the -7
+  // heat-shift PAV smoothing in cold zones — 5a still landed in
+  // mid-Oct rather than Sep-Oct).
+  // 1. CA commercial (Nonpareil/Mission) in 8a-10b: Aug-Sep, mild shift
+  //    since CA cultivars are heat-saturated and don't shift dramatically
+  //    from 9a → 10a/10b (was -7 producing implausible early Aug peaks).
+  // 2. Cold-hardy (Hall's Hardy, Javid's Iranian, Seaside Primorskiy) in
+  //    5a-7b: Sep-Oct, slower-maturing varieties.
   {
-    name: 'Almond',
+    name: 'Almond — CA commercial',
     members: ['Prunus dulcis'],
-    // Two distinct cultivar populations:
-    //   - CA commercial (Nonpareil, Mission etc.) in zones 7b-10b — hull
-    //     split Aug to mid-Sep. Heat-driven across the CA range.
-    //   - Hardy almonds (Hall's Hardy, Javid's Iranian, Seaside Primorskiy)
-    //     in zones 5a-7a — harvest Sep through Oct. These are different
-    //     cultivars with longer maturation, NOT just heat-driven extension
-    //     of CA timing. The regional anchor for colder zones uses the
-    //     hardy-variety timing rather than letting the -7 heat shift run
-    //     unboundedly into the cold direction.
-    anchor_zone: '9a', anchor_peak: 237, shift_per_half_zone: -7, half_window: 21,
-    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a','10b'],
+    anchor_zone: '9b', anchor_peak: 237, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['8a','8b','9a','9b','10a','10b'],
     stage: 'ripe',
-    source_name: 'Almond (UC ANR + Almond Board of California + Philly Orchard Project)',
+    source_name: 'Almond CA commercial (UC ANR + Almond Board of California)',
     source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=3364',
-    summary: 'Almond (Prunus dulcis): CA commercial harvest Aug to mid-Sep in zone 9 (Nonpareil, Mission). Cold-hardy cultivars (Hall\'s Hardy, Javid\'s Iranian, Seaside Primorskiy) in zones 5-7 harvest Sep-Oct.',
-    regional_anchors: [
-      { zones: ['8a','8b','9a','9b','10a','10b'], source: 'UC ANR + Almond Board of California', url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=3364', summary: 'CA Central Valley: Nonpareil end of Aug, Mission 40-60 d later. Hull split signals harvest.', peak_doy: 237, half_window: 21 },
-      { zones: ['5a','5b','6a','6b','7a','7b'], source: 'Philly Orchard Project + Shelterwood Forest Farm', url: 'https://www.phillyorchards.org/2023/11/17/plant-spotlight-hardy-almonds/', summary: 'Hardy cultivars (Hall\'s Hardy, Javid\'s Iranian, Seaside): Sep-Oct harvest in NE/PA zones 5-7. Slower-maturing varieties — not a heat-shifted CA timeline.', peak_doy: 274, half_window: 28 }
-    ]
+    summary: 'Almond (Prunus dulcis) — CA commercial cultivars in Central Valley zone 9a-10a. Hull-split Nonpareil end of Aug, Mission 40-60 d later. Within-CA timing variance is small (cultivars are heat-saturated); shift -3 reflects that.'
+  },
+  {
+    name: 'Almond — cold-hardy',
+    members: ['Prunus dulcis'],
+    anchor_zone: '6a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['5a','5b','6a','6b','7a','7b'],
+    stage: 'ripe',
+    source_name: 'Almond cold-hardy (Philly Orchard Project + Shelterwood Forest Farm)',
+    source_url: 'https://www.phillyorchards.org/2023/11/17/plant-spotlight-hardy-almonds/',
+    summary: 'Almond (Prunus dulcis) — cold-hardy cultivars (Hall\'s Hardy, Javid\'s Iranian, Seaside Primorskiy) in NE/PA/Cornell zones 5-7. Sep-Oct harvest; slower-maturing varieties, NOT a heat-shifted CA timeline.'
   },
 
   // Cherimoya (Annona cherimola) — subtropical / tropical fruit. Peak
@@ -1049,8 +1061,11 @@ const COMPLEXES = [
     name: 'American beautyberry',
     members: ['Callicarpa americana'],
     // Native SE US shrub. Vivid magenta drupe clusters Aug-Nov.
-    anchor_zone: '7b', anchor_peak: 270, shift_per_half_zone: -3, half_window: 35,
-    target_zones: ['6b','7a','7b','8a','8b','9a','9b'],
+    // Widened half_window 35 → 45 so the Aug start matches the cited
+    // "Aug-Nov" range (was starting late-Aug, missing 2-3 weeks).
+    // Extended target to 6a (NC northern range / coastal VA).
+    anchor_zone: '7b', anchor_peak: 270, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['6a','6b','7a','7b','8a','8b','9a','9b'],
     stage: 'ripe',
     source_name: 'American beautyberry (USDA Silvics + Eat The Weeds)',
     source_url: 'https://plants.usda.gov/plant-profile/CAAM2',
