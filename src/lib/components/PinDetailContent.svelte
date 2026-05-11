@@ -837,8 +837,10 @@
     }
     lo = Math.min(lo, todayDoy);
     hi = Math.max(hi, todayDoy);
-    const start = Math.max(1, lo - 14);
-    const end = Math.min(365, hi + 14);
+    // Pad ~1 month on each side so the user sees climbing-up-to-ripe
+    // context before the window starts and post-ripe context after.
+    const start = Math.max(1, lo - 30);
+    const end = Math.min(365, hi + 30);
     return { start, end, span: Math.max(1, end - start) };
   })();
   function miniPct(doy: number): number {
@@ -857,12 +859,54 @@
   $: miniMonthTicks = MINI_MONTH_TICKS.filter(
     (t) => t.doy >= miniRange.start && t.doy <= miniRange.end
   );
+  // Month NAME labels sit at month MIDPOINTS (between the ticks at
+  // month starts) so each label reads as "this is which month you
+  // are in" rather than "this tick is the boundary of which month".
+  $: miniMonthLabels = MINI_MONTH_TICKS
+    .map((t) => ({ label: t.label, doy: t.doy + 15 }))
+    .filter((t) => t.doy >= miniRange.start && t.doy <= miniRange.end);
   /** Today's date formatted as "May 11" for the red today-line label. */
   $: todayLabel = (() => {
     const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const d = new Date();
     return `${m[d.getMonth()]} ${d.getDate()}`;
   })();
+  /** DOY → "Jun 24" string. Used in hover tooltips so the user
+   *  doesn't have to translate from day-of-year. Uses a non-leap year
+   *  for consistent month boundaries; the 1-2 day shift in leap years
+   *  isn't worth a date-math dependency. */
+  function doyLabel(doy: number): string {
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const d = new Date(2025, 0, doy);
+    return `${m[d.getMonth()]} ${d.getDate()}`;
+  }
+  /** Pretty stage label for tooltips. "flower_harvest" → "Flowers". */
+  const STAGE_LABEL: Record<string, string> = {
+    sap_run: 'Sap',
+    shoot: 'Shoots',
+    leaf: 'Leaves',
+    flower_harvest: 'Flowers',
+    flowering: 'In flower',
+    green: 'Green fruit',
+    ripening: 'Ripening',
+    ripe: 'Ripe',
+    past: 'Past prime',
+    mushroom_flush: 'Mushroom flush',
+    root_dig: 'Root harvest',
+    nut_drop: 'Nut drop',
+    bark_strip: 'Bark'
+  };
+  /** Friendly confidence label. Default is the curated calibration tier
+   *  vocabulary from migration 16; converted here to plainspoken text. */
+  const CONFIDENCE_LABEL: Record<string, string> = {
+    curated: 'curated',
+    cited_thin: 'single citation',
+    regional_guide: 'regional guide',
+    empirical_inat: 'iNat observations',
+    empirical_community: 'community observations',
+    frost_offset: 'frost-anchored estimate',
+    expert_verified: 'expert-verified'
+  };
 
   /** Sort windows in canonical stage order so flowering renders first
    *  and past last (matches the /windows page). */
@@ -1046,20 +1090,11 @@
       {#if windows.length > 0}
         <div class="mini-timeline" title="Harvest window for this species. Edit on the Harvest windows page.">
           <div class="mini-months">
-            {#each miniMonthTicks as t}
+            {#each miniMonthLabels as t}
               <span class="mini-month" style={`left: ${miniPct(t.doy)}%`}>{t.label}</span>
             {/each}
           </div>
           <div class="mini-track">
-            <!-- Faint month-boundary ticks behind the bars so the
-                 reader can see month breaks at a glance. Skip
-                 January (left edge of the view often is January
-                 itself; a tick on the edge is noise). -->
-            {#each miniMonthTicks as t}
-              {#if t.doy > miniRange.start + 5}
-                <span class="mini-month-tick" style={`left: ${miniPct(t.doy)}%`}></span>
-              {/if}
-            {/each}
             {#each sortedWindows as w}
               {@const bufStart = Math.max(miniRange.start, w.start_doy - 14)}
               {@const bufEnd = Math.min(miniRange.end, w.end_doy + 14)}
@@ -1068,18 +1103,24 @@
                    solid bar. Hash-mark striped overlay against the
                    stage color so the visual reads "this MIGHT be ripe,
                    but the curated window starts later." -->
+              {@const stageLbl = STAGE_LABEL[w.stage] ?? w.stage}
+              {@const confLbl = w.confidence ? CONFIDENCE_LABEL[w.confidence] ?? w.confidence : null}
+              {@const mainTip = `${stageLbl}: ${doyLabel(w.start_doy)} – ${doyLabel(w.end_doy)}` +
+                (w.peak_doy ? ` (peak ${doyLabel(w.peak_doy)})` : '') +
+                (w.is_confirmed ? '\nConfirmed' : '') +
+                (confLbl ? `\nSource: ${confLbl}` : '')}
               {#if bufStart < w.start_doy}
                 <div
                   class="mini-bar-buffer"
                   style={`left: ${miniPct(bufStart)}%; width: ${miniPct(w.start_doy) - miniPct(bufStart)}%; --bar-color: ${bg};`}
-                  title="{w.stage}: 2-week early-uncertainty buffer before DOY {w.start_doy}"
+                  title={`${stageLbl}: might start as early as ${doyLabel(bufStart)} — ${doyLabel(w.start_doy)} is the published start`}
                 ></div>
               {/if}
               <div
                 class="mini-bar"
                 class:mini-bar-confirmed={w.is_confirmed}
                 style={`left: ${miniPct(w.start_doy)}%; width: ${miniPct(w.end_doy) - miniPct(w.start_doy)}%; background: ${bg};`}
-                title={`${w.stage}: DOY ${w.start_doy}–${w.end_doy}${w.is_confirmed ? ' · confirmed' : ''}${w.confidence ? ` · ${w.confidence}` : ''}`}
+                title={mainTip}
               >{#if w.is_confirmed}<span class="mini-confirmed-mark" title="Confirmed harvest window">✓</span>{/if}</div>
               <!-- 2-week uncertainty buffer after the end of the
                    solid bar — symmetric to the pre-buffer above. -->
@@ -1087,7 +1128,7 @@
                 <div
                   class="mini-bar-buffer"
                   style={`left: ${miniPct(w.end_doy)}%; width: ${miniPct(bufEnd) - miniPct(w.end_doy)}%; --bar-color: ${bg};`}
-                  title="{w.stage}: 2-week late-uncertainty buffer after DOY {w.end_doy}"
+                  title={`${stageLbl}: may extend through ${doyLabel(bufEnd)} — ${doyLabel(w.end_doy)} is the published end`}
                 ></div>
               {/if}
             {/each}
@@ -1112,6 +1153,14 @@
               <div class="mini-today" style={`left: ${miniPct(todayDoy)}%`} title="Today: {todayLabel}"></div>
               <span class="mini-today-label" style={`left: ${miniPct(todayDoy)}%`}>{todayLabel}</span>
             {/if}
+            <!-- Month-boundary ticks rendered LAST so they appear on
+                 top of bars + observation dots. Skip January at the
+                 left edge (tick on the viewport edge is noise). -->
+            {#each miniMonthTicks as t}
+              {#if t.doy > miniRange.start + 5}
+                <span class="mini-month-tick" style={`left: ${miniPct(t.doy)}%`}></span>
+              {/if}
+            {/each}
           </div>
         </div>
       {/if}
