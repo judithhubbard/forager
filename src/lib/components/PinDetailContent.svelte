@@ -72,7 +72,15 @@
   } from '$lib/services/photoService';
   import { supabase } from '$lib/supabase';
 
-  type WindowRow = { stage: string; start_doy: number; end_doy: number };
+  type WindowRow = {
+    stage: string;
+    start_doy: number;
+    end_doy: number;
+    peak_doy?: number | null;
+    is_confirmed?: boolean | null;
+    confidence?: string | null;
+    notes?: string | null;
+  };
 
   /** Earthy palette, must match the /windows page so this mini-timeline
    *  reads consistently. Multi-stage species (elderberry: ripe +
@@ -492,24 +500,33 @@
   }
 
   async function loadTimelineContext(requestedId: string) {
-    if (!pin?.species_id || !pin?.region_id) return;
+    if (!pin?.species_id) return;
+    // Phase 1A cutover (task #36) made species_fruiting_windows
+    // climate-zone-keyed. The legacy region_id filter returned empty
+    // for every pin outside Ithaca; switch to a climate_zones join.
+    // pin's zoneCode comes from v_pin_effective.climate_zone_code.
+    const zoneCode = (pin as unknown as { climate_zone_code: string | null }).climate_zone_code;
+    const winQuery = supabase
+      .from('species_fruiting_windows')
+      .select('stage, start_doy, end_doy, peak_doy, is_confirmed, confidence, notes, climate_zones!inner(code)' as never)
+      .eq('species_id', pin.species_id);
     const [winRes, otherObsRes] = await Promise.all([
-      supabase
-        .from('species_fruiting_windows')
-        .select('stage, start_doy, end_doy')
-        .eq('species_id', pin.species_id)
-        .eq('region_id', pin.region_id),
-      supabase
-        .from('v_observation_with_pin')
-        .select('stage, observed_at, pin_id')
-        .eq('species_id', pin.species_id)
-        .eq('pin_region_id', pin.region_id)
-        .neq('pin_id', pin.id)
-        .order('observed_at', { ascending: false })
-        .limit(500)
+      zoneCode
+        ? winQuery.eq('climate_zones.code' as never, zoneCode)
+        : Promise.resolve({ data: [] as WindowRow[], error: null }),
+      pin.region_id
+        ? supabase
+            .from('v_observation_with_pin')
+            .select('stage, observed_at, pin_id')
+            .eq('species_id', pin.species_id)
+            .eq('pin_region_id', pin.region_id)
+            .neq('pin_id', pin.id)
+            .order('observed_at', { ascending: false })
+            .limit(500)
+        : Promise.resolve({ data: [] as OtherObs[], error: null })
     ]);
     if (requestedId !== pinId) return;
-    windows = winRes.data ?? [];
+    windows = (winRes.data ?? []) as WindowRow[];
     otherSpeciesObs = (otherObsRes.data ?? []) as OtherObs[];
     if (windows.length === 0) {
       const { data } = await supabase
@@ -1031,9 +1048,10 @@
             {#each sortedWindows as w}
               <div
                 class="mini-bar"
+                class:mini-bar-confirmed={w.is_confirmed}
                 style={`left: ${miniPct(w.start_doy)}%; width: ${miniPct(w.end_doy) - miniPct(w.start_doy)}%; background: ${STAGE_COLORS[w.stage] ?? '#888'};`}
-                title="{w.stage}: DOY {w.start_doy}–{w.end_doy}"
-              ></div>
+                title={`${w.stage}: DOY ${w.start_doy}–${w.end_doy}${w.is_confirmed ? ' · confirmed' : ''}${w.confidence ? ` · ${w.confidence}` : ''}`}
+              >{#if w.is_confirmed}<span class="mini-confirmed-mark" title="Confirmed harvest window">✓</span>{/if}</div>
             {/each}
             <!-- Faded ticks for observations on OTHER pins of the same
                  species — gives context without competing visually. -->
@@ -1607,6 +1625,23 @@
     top: 0;
     bottom: 0;
     border-radius: 1px;
+  }
+  /* Confirmed windows (is_confirmed=true; user-verified via
+     confirm-species.cjs). Subtle dark outline + check mark — needs
+     to read as "vetted" without overpowering the stage color. */
+  .mini-bar-confirmed {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+  }
+  .mini-confirmed-mark {
+    position: absolute;
+    right: 1px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 0.6rem;
+    line-height: 1;
+    text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
   }
   /* Other pins' observations — smaller and lower-contrast than this
      pin's ticks. A thin white halo via box-shadow keeps them visible
