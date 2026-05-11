@@ -1252,7 +1252,42 @@ const COMPLEXES = [
     stage: 'ripe',
     source_name: 'Red oak acorns (Sam Thayer Forager Harvest + USDA Silvics)',
     source_url: 'https://plants.usda.gov/plant-profile/QURU',
-    summary: 'Northern red oak (Quercus rubra): acorns drop Sep-Oct. Red-oak-group: high tannin, requires 3-7 days of cold-water leaching (daily changes) before grinding to flour. Q. alba and Q. bicolor are easier — this is the fall-back when those are not available.'
+    summary: 'Northern red oak (Quercus rubra): heat-driven, peak shifts ~3 days earlier per warmer half-zone. Acorns drop Sep-Oct as fruits reach maturity (USDA Silvics: ripen late Aug-late Oct depending on latitude). Red-oak-group: high tannin, requires 3-7 days of cold-water leaching (daily changes) before grinding to flour. Q. alba and Q. bicolor are easier — this is the fall-back when those are not available.'
+  },
+  // White oak (Quercus alba) — added 2026-05-10 (nut audit task #82).
+  // Was previously routed through nut-frost-fix.cjs as frost-driven
+  // offset 0, producing a +8 d/half-zone gradient that matched NOAA
+  // first-frost climatology but NOT the species's actual phenology.
+  // USDA Silvics: acorns mature ~120 days post-pollination, drop ~25
+  // days later — a maturation-driven (heat-driven) schedule that does
+  // not depend on first frost. Drops in Sep-Oct across most of range.
+  {
+    name: 'White oak (acorns)',
+    members: ['Quercus alba'],
+    anchor_zone: '6a', anchor_peak: 265, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'ripe',
+    source_name: 'White oak acorns (USDA Silvics + Sam Thayer Forager Harvest)',
+    source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/quercus/alba.htm',
+    summary: 'White oak (Quercus alba): heat-driven, peak shifts ~3 days earlier per warmer half-zone. Acorns mature ~120 days post-pollination and drop ~25 days later (USDA Silvics) — a maturation-driven schedule, NOT triggered by first frost. Sep-Oct drop window across the range. White-oak group: low tannin, sweet, germinates almost immediately on dropping — collect quickly. One of the best forage oaks; minimal leaching needed.'
+  },
+  // Bur oak (Quercus macrocarpa) — added 2026-05-10 (nut audit task
+  // #82). Was previously routed through nut-frost-fix.cjs as frost-
+  // driven offset 0. USDA Silvics: "acorns ripen within the year and
+  // drop from the tree as early as August or as late as November" —
+  // wide ~3-month drop window indicates maturation-driven (NOT frost-
+  // triggered). Heat-driven with a wider half-window than other oaks
+  // to honor the cited drop range. Northern-range species (cold-
+  // tolerant, target zones extend to 3a).
+  {
+    name: 'Bur oak (acorns)',
+    members: ['Quercus macrocarpa'],
+    anchor_zone: '6a', anchor_peak: 258, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Bur oak acorns (USDA Silvics + Sam Thayer Forager Harvest)',
+    source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/quercus/macrocarpa.htm',
+    summary: 'Bur oak (Quercus macrocarpa): heat-driven, peak shifts ~3 days earlier per warmer half-zone. Acorns "ripen within the year and drop from the tree as early as August or as late as November" (USDA Silvics) — wide maturation-driven drop window, NOT frost-triggered. Half-window 28d to honor the cited Aug-Nov range. White-oak group: low tannin, sweet. Largest acorn of any North American oak.'
   },
   {
     name: 'Swamp white oak (acorns)',
@@ -1318,12 +1353,21 @@ const COMPLEXES = [
   {
     name: 'Kentucky coffeetree (seeds)',
     members: ['Gymnocladus dioicus'],
-    anchor_zone: '6a', anchor_peak: 298, shift_per_half_zone: -3, half_window: 30,
+    // Revised 2026-05-10 nut audit (task #82): indeterminate-drop, NOT
+    // strongly heat-driven. Per Missouri Botanical Garden + Morton
+    // Arboretum + NC State Extension: pods mature in fall but largely
+    // PERSIST on the tree through winter, dropping gradually Oct
+    // through the following spring. Peak anchor pushed slightly later
+    // (Nov 15 / DOY 320) to center on the mid-winter persistence
+    // window; mild slope (-1) honors the indeterminate mechanism
+    // without forcing a strong heat or frost gradient; wide half_window
+    // (45) reflects the cited Oct-Apr persistence range.
+    anchor_zone: '6a', anchor_peak: 320, shift_per_half_zone: -1, half_window: 45,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b'],
     stage: 'ripe',
-    source_name: 'Kentucky coffeetree (USDA Silvics + ethnobotanical refs — TOXIC warning required)',
-    source_url: 'https://plants.usda.gov/plant-profile/GYDI',
-    summary: 'Kentucky coffeetree (Gymnocladus dioicus) seeds: TOXIC RAW. Pods drop Oct-Dec with hard-coated seeds inside. Historical preparation: roast seeds 2-3 hours at 300F until parchment-brown all through (cytisine breaks down) — coffee substitute used by settlers + Native peoples. DO NOT eat raw, under-roasted, or the surrounding pulp. Pods + foliage also toxic to livestock.'
+    source_name: 'Kentucky coffeetree (Missouri Botanical Garden + Morton Arboretum + NC State Extension — TOXIC warning required)',
+    source_url: 'https://www.missouribotanicalgarden.org/PlantFinder/PlantFinderDetails.aspx?kempercode=a872',
+    summary: 'Kentucky coffeetree (Gymnocladus dioicus) seeds: indeterminate drop, mild gradient (~1 day earlier per warmer half-zone). Pods mature in fall but PERSIST on the tree through winter, dropping gradually from Oct through the following spring — not strongly heat-driven and not frost-triggered. Wide half-window (~45 d) reflects this persistence. TOXIC RAW: roast seeds 2-3 hours at 300F until parchment-brown all through (cytisine breaks down) — coffee substitute used by settlers + Native peoples. DO NOT eat raw, under-roasted, or the surrounding pulp. Pods + foliage also toxic to livestock.'
   },
   {
     name: 'American basswood (spring leaves)',
@@ -1389,6 +1433,28 @@ const COMPLEXES = [
     source_url: 'https://plants.ces.ncsu.edu/plants/tilia-cordata/',
     summary: 'Littleleaf linden (Tilia cordata): fragrant pale-yellow flower clusters Jun-Jul (~10 days). Harvest at peak fragrance for tea (calming, mild honey flavor) — pollinator-favored, so leave half on the tree.'
   },
+  // Ginkgo biloba — added 2026-05-10 (nut audit task #82). Previously
+  // had only 4 thin rows in DB (zones 6a-7b, flat peak 301, no
+  // gradient). Sources (Backyard Forager, Suburban Foragers, Gardening
+  // Know How): seeds ripen and fall Oct-Nov in temperate zones, often
+  // "after a few hard frosts" but the trigger is more
+  // ripening-coordinated-with-leaf-drop than frost-strict. Treating as
+  // mildly heat-driven (warmer zones earlier within the species's
+  // urban-planted range, zones 4-9). Hardy as a planted tree well
+  // beyond its now-extinct wild range; foragers find it almost
+  // exclusively as planted-female street trees. SAFETY: handle ripe
+  // sarcotesta with gloves (skin irritant); kernel is the edible part
+  // — cook fully, limit to ~10 nuts/day (4-O-methylpyridoxine).
+  {
+    name: 'Ginkgo',
+    members: ['Ginkgo biloba'],
+    anchor_zone: '6a', anchor_peak: 305, shift_per_half_zone: -2, half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'ripe',
+    source_name: 'Ginkgo (Backyard Forager + Suburban Foragers + Gardening Know How)',
+    source_url: 'https://backyardforager.com/ginkgo-nuts-2/',
+    summary: 'Ginkgo (Ginkgo biloba): mildly heat-driven, peak shifts ~2 days earlier per warmer half-zone. Seeds ripen and fall late Oct-early Nov in zone 6-7 (Ellen Zachos NYC 7a "late Oct to early Nov"; SC 7b "Oct-Nov"). The smelly orange sarcotesta drops with leaves; the white kernel inside is the edible part. SAFETY: gloves to handle fallen fruit (butyric acid skin irritant); cook fully and limit consumption (4-O-methylpyridoxine accumulates).'
+  },
   {
     name: 'Walnut complex (Juglans)',
     members: ['Juglans nigra', 'Juglans regia', 'Juglans cinerea', 'Juglans ailantifolia', 'Juglans sp.'],
@@ -1403,7 +1469,7 @@ const COMPLEXES = [
     stage: 'ripe',
     source_name: 'Walnut complex (USDA Silvics + Forager Chef + UC ANR)',
     source_url: 'https://plants.usda.gov/plant-profile/JUAI',
-    summary: 'Walnut complex (Juglans nigra, regia, cinerea, ailantifolia): all drop Sep-Oct in temperate zones. Wait for husks to drop or split (do not pick green from tree — under-ripe + hull staining). J. nigra: heavy black hulls, intense flavor, long cure. J. regia: easy hulls, mild flavor, commercial walnut. J. cinerea (butternut): smaller, sweet, in catastrophic decline from butternut canker. J. ailantifolia: heart-shaped kernel cracks cleanly.'
+    summary: 'Walnut complex (Juglans nigra, regia, cinerea, ailantifolia): heat-driven, peak shifts ~3 days earlier per warmer half-zone. All four drop Sep-Oct in temperate zones as the fruit ripens and the leaves abscise (USDA Silvics + Wikipedia: J. nigra "ripens in September or October of the same year and drops shortly after the leaves fall"). NOT frost-triggered — earlier nut-frost-fix treatment was reverted in the 2026-05-10 nut audit (task #82). Wait for husks to drop or split (do not pick green from tree — under-ripe + hull staining). J. nigra: heavy black hulls, intense flavor, long cure. J. regia: easy hulls, mild flavor, commercial walnut. J. cinerea (butternut): smaller, sweet, in catastrophic decline from butternut canker. J. ailantifolia: heart-shaped kernel cracks cleanly.'
   },
   {
     name: 'Ussurian pear',

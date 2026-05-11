@@ -1136,6 +1136,24 @@
       "stage": "ripe"
     }
   ],
+  "Quercus alba": [
+    {
+      "name": "White oak (acorns)",
+      "members": [
+        "Quercus alba"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Quercus macrocarpa": [
+    {
+      "name": "Bur oak (acorns)",
+      "members": [
+        "Quercus macrocarpa"
+      ],
+      "stage": "ripe"
+    }
+  ],
   "Quercus bicolor": [
     {
       "name": "Swamp white oak (acorns)",
@@ -1433,6 +1451,15 @@
         "Tilia cordata"
       ],
       "stage": "flower_harvest"
+    }
+  ],
+  "Ginkgo biloba": [
+    {
+      "name": "Ginkgo",
+      "members": [
+        "Ginkgo biloba"
+      ],
+      "stage": "ripe"
     }
   ],
   "Juglans nigra": [

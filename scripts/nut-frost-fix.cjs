@@ -73,18 +73,33 @@ const NUT_SPECIES = {
   // (heat-driven anchor 7a peak Sep 29). Leaving the entry commented
   // here to document the change.
   // 'Castanea pumila':   { offset: -25, half_window: 18, common: 'Allegheny chinkapin' },
-  // Oaks: at or just after first frost (acorn drop)
-  'Quercus alba':         { offset:   0, half_window: 20, common: 'White oak' },
-  'Quercus macrocarpa':   { offset:   0, half_window: 20, common: 'Bur oak' },
+  // Oaks REMOVED from frost-driven treatment 2026-05-10 nut audit
+  // (task #82). USDA Silvics describes both Q. alba and Q. macrocarpa
+  // as MATURATION-driven (acorns ripen ~120 days post-pollination,
+  // drop ~25 days later regardless of frost). Wide Aug-Oct drop window
+  // for Q. macrocarpa, Sep-Oct for Q. alba. Now handled by
+  // species-complex-unify as heat-driven with mild shift (-3 d/half-zone).
+  // The frost-climatology gradient (~+8 d/half-zone observed in the DB)
+  // was a fitting artifact, not the species's actual phenology.
+  // 'Quercus alba':       handled by species-complex-unify
+  // 'Quercus macrocarpa': handled by species-complex-unify
   // Hickories: at first frost (husks split)
   'Carya ovata':          { offset:   0, half_window: 20, common: 'Shagbark hickory' },
   'Carya laciniosa':      { offset:   0, half_window: 20, common: 'Shellbark hickory' },
   // Pecan: just after first frost, commercial harvest
   'Carya illinoinensis':  { offset:  +7, half_window: 22, common: 'Pecan' },
-  // Walnuts: husks blacken before first frost
-  'Juglans nigra':        { offset:  -7, half_window: 20, common: 'Black walnut' },
-  'Juglans cinerea':      { offset:  -7, half_window: 20, common: 'Butternut' },
-  'Juglans regia':        { offset:   0, half_window: 20, common: 'English walnut' },
+  // Walnuts REMOVED from frost-driven treatment 2026-05-10 nut audit
+  // (task #82). USDA Silvics + Wikipedia describe J. nigra as
+  // ripening-driven ("nuts drop in October as fruit ripens, shortly
+  // after leaf fall") — not triggered by first frost. The unify
+  // Walnut-complex entry (Juglans nigra/regia/cinerea/ailantifolia/sp.)
+  // covers all four species as heat-driven (-3 d/half-zone). Leaving
+  // them in frost-fix produces stale rows at zone edges that the unify
+  // run does not overwrite (J. nigra 9b 322-342-362 was a stale carry-
+  // over). Cleaning up here.
+  // 'Juglans nigra':    handled by species-complex-unify Walnut complex
+  // 'Juglans cinerea':  handled by species-complex-unify Walnut complex
+  // 'Juglans regia':    handled by species-complex-unify Walnut complex
   // Hazelnuts removed: heat-driven (drop Aug-Sep before frost),
   // handled by species-complex-unify with anchor 6a peak Aug 27.
   // 'Corylus americana': handled by species-complex-unify
