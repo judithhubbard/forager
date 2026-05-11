@@ -50,10 +50,10 @@
           <p class="price">$0 forever</p>
         </header>
         <ul>
-          <li>Browse <strong>10,000+ forageable trees and plants</strong> across the US (and growing)</li>
+          <li>Browse <strong>millions of forageable trees, plants, and mushrooms</strong> across the US, Canada, and (via iNaturalist) much of the world</li>
           <li>Use GPS to center the map on where you are</li>
           <li>Read full species pages — edible parts, preparation, harvest tips, safety notes</li>
-          <li><strong>Watch species</strong> and get a heads-up when they're ripe near you</li>
+          <li><strong>Watch species</strong> and get a heads-up when they're ripe near you<sup>*</sup></li>
           <li>Track your filter preferences across devices</li>
         </ul>
       </section>
@@ -69,7 +69,7 @@
           <li><strong>Drop your own pins</strong> — private, shared with a group, or both</li>
           <li>Log observations + harvest quality ratings</li>
           <li>Attach photos with GPS-tagged proof of where you found it</li>
-          <li><strong>Tune harvest windows</strong> for your area based on your own ripeness observations</li>
+          <li><strong>Tune harvest windows</strong> for your area based on your own ripeness observations<sup>*</sup></li>
           <li>Year-over-year journal: see when each spot was ripe in 2024 vs 2025 vs 2026</li>
           <li><strong>Map your tracks</strong> from foraging outings (upload GPX or record live) and see a heatmap of where you've been</li>
           <li>Move and edit pins as conditions change</li>
@@ -78,6 +78,24 @@
         <p class="not-yet">Sign up free now — upgrade in one click when Pro launches later this year.</p>
       </section>
     </div>
+
+    <!-- Honest scoping: pins are global (we just ingested ~35k from
+         iNaturalist worldwide), but the calibrated harvest-window
+         model is keyed to USDA + Canadian hardiness zones. Outside
+         the US/Canada the per-zone ripeness predictions won't apply.
+         Users deserve to know this before signing up for Pro. -->
+    <aside class="scope-note">
+      <p>
+        <strong><sup>*</sup> Coverage note</strong> — Forager maps
+        forageable species worldwide via iNaturalist plus municipal
+        tree inventories, but the <strong>harvest-window predictions</strong>
+        (the "edible now" indicator, watchlist notifications, and the
+        Pro-tier window-tuning feature) are calibrated for the
+        <strong>United States and Canada</strong> only at launch. Pins
+        outside North America are visible on the map but per-zone
+        ripeness timing won't apply to them yet.
+      </p>
+    </aside>
 
     <form class="signup" on:submit|preventDefault={handleSubmit}>
       <h2>Create your account</h2>
@@ -249,4 +267,23 @@
   }
   .confirm-card h2 { color: #3a5a3a; margin: 0 0 0.5rem; }
   .confirm-card p { line-height: 1.5; }
+  /* Geographic-scope disclaimer between the tier cards and the
+     signup form. Calibrated harvest-window predictions are
+     US/Canada-only; pins are global. Users need this upfront. */
+  .scope-note {
+    margin: 1.25rem auto 0;
+    max-width: 38rem;
+    padding: 0.8rem 1rem;
+    background: #fdf2dc;
+    border: 1px solid #e7c074;
+    border-radius: 0.45rem;
+    color: #5a3e15;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+  .scope-note p { margin: 0; }
+  .scope-note sup {
+    color: #b86b00;
+    font-weight: 700;
+  }
 </style>

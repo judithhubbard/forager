@@ -256,7 +256,27 @@ const config: ImportConfig<InatObservation> = {
       console.log(`  [${processed}/${speciesList.length}] ${sci}: pulled ${obs.length} CC0/CC-BY research-grade obs`);
       all.push(...obs);
     }
-    return all;
+    // Dedupe by iNat observation id. The same obs can land twice when
+    // two species in our catalog both resolve to the same iNat taxon —
+    // either via the genus-only-placeholder fallback (e.g. our catalog's
+    // "Carya sp." has no exact iNat match and falls through to hits[0]
+    // which is also what "Carya ovata" resolves to), or because iNat
+    // sometimes returns the same observation under both a parent and
+    // child taxon. Without dedup, the bulk upsert fails with
+    // "ON CONFLICT DO UPDATE command cannot affect row a second time"
+    // and we lose entire 500-row batches.
+    const seen = new Set<number>();
+    const deduped: InatObservation[] = [];
+    for (const obs of all) {
+      if (seen.has(obs.id)) continue;
+      seen.add(obs.id);
+      deduped.push(obs);
+    }
+    const dupCount = all.length - deduped.length;
+    if (dupCount > 0) {
+      console.log(`  deduped ${dupCount} cross-species duplicate observations (${all.length} → ${deduped.length})`);
+    }
+    return deduped;
   },
   mapFeature(obs): ImportRecord | null {
     // We don't know which species this obs is for at this layer (the
