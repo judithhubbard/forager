@@ -45,7 +45,19 @@ export interface GlobalStats {
 // gated), CRTI/Morton Arb (canopy polygons only). Texas A&M MyCity-
 // Trees and ArborScope both flagged for Phase 3 outreach. Invalidates
 // v7 cached totals.
-const LS_KEY = 'forager.global-stats.v8';
+//
+// v9 bumped 2026-05-11 after Round E (iNaturalist research-grade
+// observation ingest) completed. +34,687 pins across the forageable
+// catalog filtered to CC0 + CC-BY licensed observations only (paid-
+// tier compatible per the iNat ToS review). Major coverage of
+// non-tree categories municipal pipelines miss: mushrooms (hen of
+// woods, lion's mane, oyster, chicken of woods), wild herbs
+// (chickweed, plantain, dock, cleavers, garlic mustard), brambles
+// (raspberries, blackberries), and roots (groundnut). 227 species
+// processed; 200-obs-per-species cap. Per-pin attribution (observer
+// username + license + obs link) renders lazily on pin-detail open.
+// Total pins now ~5.91M. Invalidates v8 cached totals.
+const LS_KEY = 'forager.global-stats.v9';
 const TTL_MS = 24 * 60 * 60 * 1000;
 
 let inMemory: GlobalStats | null = null;
