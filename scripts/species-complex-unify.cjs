@@ -2908,7 +2908,7 @@ const COMPLEXES = [
 ];
 
 (async () => {
-  let totalUpdated = 0, totalInserted = 0;
+  let totalUpdated = 0, totalInserted = 0, totalSkippedConfirmed = 0;
   for (const cx of COMPLEXES) {
     console.log(`\n=== ${cx.name} ===`);
     const anchorNum = ZONE_NUM[cx.anchor_zone];
@@ -2931,9 +2931,29 @@ const COMPLEXES = [
     const note = `${cx.name} unified harvest curve. ${cx.summary}`;
 
     for (const sci of cx.members) {
-      const sp = await sql`select id, common_name from species where scientific_name = ${sci}`;
+      const sp = await sql`select id, common_name, review_status from species where scientific_name = ${sci}`;
       if (sp.length === 0) continue;
       const speciesId = sp[0].id;
+
+      // Confirmed-species protection (migration 30). Skip species that
+      // JK has explicitly confirmed via scripts/confirm-species.cjs.
+      // The confirm script snapshotted their windows to
+      // confirmed_window_exports and flipped is_confirmed=true on
+      // the live rows. The unify pipeline should leave these alone so
+      // accumulated review work isn't silently overwritten. Override
+      // by passing --force-confirmed on the command line.
+      const forceConfirmed = process.argv.includes('--force-confirmed');
+      if (!forceConfirmed && sp[0].review_status === 'confirmed') {
+        const hasConfirmedRows = await sql`
+          select 1 from species_fruiting_windows
+           where species_id = ${speciesId} and is_confirmed = true
+           limit 1`;
+        if (hasConfirmedRows.length > 0) {
+          console.log(`  ${sp[0].common_name} (${sci}): SKIP — review_status='confirmed' with pinned rows (use --force-confirmed to override)`);
+          totalSkippedConfirmed++;
+          continue;
+        }
+      }
       console.log(`  ${sp[0].common_name} (${sci}):`);
 
       for (const zoneCode of cx.target_zones) {
@@ -3019,7 +3039,7 @@ const COMPLEXES = [
       }
     }
   }
-  console.log(`\nTotal: ${totalInserted} inserted, ${totalUpdated} updated.`);
+  console.log(`\nTotal: ${totalInserted} inserted, ${totalUpdated} updated, ${totalSkippedConfirmed} skipped (confirmed; --force-confirmed to override).`);
 
   // Emit a static JSON with complex-membership info so the calibration
   // viewer can show "this species is part of {complex}; {N}/{M} members
