@@ -1495,6 +1495,14 @@
   }
 
   function handlePinClick(e: CustomEvent<{ pinId: string }>) {
+    // If the user was in the middle of moving another pin and taps
+    // a different pin's marker, treat that as cancelling the move.
+    // Keeping movingPinId alive across pin-panel opens was the
+    // root cause of "system confused between the new pin and the
+    // old pin I was moving" — the next map tap moved the WRONG
+    // pin. Always reset placement state on any pin click.
+    movingPinId = null;
+    placingPin = false;
     selectedPinId = e.detail.pinId;
   }
 
@@ -1889,13 +1897,22 @@
     center={[$mapViewport.lat, $mapViewport.lng]}
     zoom={$mapViewport.zoom}
     placing={placingPin || !!movingPinId}
-    placingHint={movingPinId ? 'Click on the map to set the new location · Esc to cancel' : 'Click on the map to place the pin · Esc to cancel'}
+    placingHint={(() => {
+      if (movingPinId) {
+        const p = pins.find((x) => x.id === movingPinId);
+        const sp = p?.species_id ? speciesById[p.species_id] : null;
+        const name = sp?.common_name ?? 'pin';
+        return `Moving ${name} — tap the map to set new location · tap here to cancel`;
+      }
+      return 'Tap the map to place the pin · tap here to cancel';
+    })()}
     hideLocate={!!selectedPinId}
     flyTo={mapFlyTo}
     on:pinClick={handlePinClick}
     on:mapTap={handleMapTap}
     on:viewportChange={handleViewportChange}
     on:recordSave={handleRecordSave}
+    on:cancelPlacing={() => { placingPin = false; movingPinId = null; }}
   />
 
   {#if !selectedPinId}

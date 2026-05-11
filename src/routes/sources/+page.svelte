@@ -139,24 +139,100 @@
   </ul>
 
   <h2 id="phenology">Phenology</h2>
+  <p class="hint" style="margin: 0 0 0.5rem">
+    Per-species harvest day-of-year ranges keyed to USDA hardiness
+    zones. Curated rows draw from multiple sources, then a regional
+    slope model projects each species across all the zones where
+    it grows. Sources listed alphabetically.
+  </p>
   <ul class="sources">
     <li>
-      <strong>Default harvest windows</strong> — per-species
-      flowering / ripening / fruiting day-of-year ranges keyed to
-      USDA hardiness zones. Curated rows are compiled from USDA,
-      USA-NPN, Cooperative Extension bulletins, and foraging field
-      guides. For zones without curated data, windows are estimated
-      from a curated zone (Ithaca 5b/6a) shifted by NOAA frost-date
-      normals; estimated rows render with a faded bar in the
-      <em>Harvest windows</em> page and a tooltip explaining the
-      source. As users log ripe observations, those rows upgrade
-      from estimated to observation-derived.
+      <strong>Audubon Mushroom Field Guide</strong> — fall-flush
+      timing for choice edible mushrooms (hen of the woods, lion's
+      mane, oyster, etc.). Used as a regional anchor for cool-
+      temperate Northeast.
     </li>
     <li>
-      <strong>Frost-date normals (planned)</strong> —
-      <a href="https://www.ncei.noaa.gov/products/land-based-station/us-climate-normals" target="_blank" rel="noopener">NOAA US Climate Normals 1991–2020</a>
-      (public domain). Drives the per-zone estimate when a curated
-      window doesn't exist for the user's zone.
+      <strong>California Rare Fruit Growers (CRFG)</strong> — fruit
+      ripening windows for warm-zone species (avocado, cherimoya,
+      feijoa, loquat, mango, papaya, sapote). Used as a regional
+      anchor for zones 9a–10b.
+    </li>
+    <li>
+      <strong>Cornell Cooperative Extension</strong> — Northeast
+      tree-fruit, stone-fruit, and small-fruit timing. Used for
+      Cornell's home-zone (Ithaca 5b/6a) curation.
+    </li>
+    <li>
+      <strong>Cornell Maple Program</strong> — sap-run timing for
+      Acer saccharum / A. nigrum / A. rubrum across Northeast
+      latitude band.
+    </li>
+    <li>
+      <strong>Forager Chef + Eat The Weeds</strong> — wild-foraging
+      timing references for spring ephemerals, mushrooms, and
+      late-fall foragable species.
+    </li>
+    <li>
+      <strong><a href="https://www.inaturalist.org/" target="_blank" rel="noopener">iNaturalist</a></strong>
+      (CC BY-NC where individual photos require attribution; observation
+      timestamps are CC0 facts) — Fruiting-stage observation
+      distributions per species per climate zone. Used for the
+      empirical p15-p85 tail-trim windows shown on the calibration
+      viewer next to the curated rows. iNat Fruiting is left-shifted
+      by reporter attention (people post first sightings of ripe
+      fruit), so we publish the inner-70% percentile range, not the
+      raw extremes.
+    </li>
+    <li>
+      <strong>Mushroom Expert</strong> — peak-flush timing for
+      saprotrophic and mycorrhizal mushrooms (chicken-of-woods,
+      morels, chanterelles, black trumpet).
+    </li>
+    <li>
+      <strong><a href="https://www.ncei.noaa.gov/products/land-based-station/us-climate-normals" target="_blank" rel="noopener">NOAA US Climate Normals 1991–2020</a></strong>
+      (public domain) — frost-date normals driving the
+      <code>frost-offset</code> confidence tier for species whose
+      harvest is anchored to first / last frost (hardy nuts, hardy
+      kiwi, persimmon).
+    </li>
+    <li>
+      <strong>NC State Cooperative Extension</strong> — Carolinas /
+      Mid-Atlantic regional anchors for species that fruit on a
+      different timeline than the cool-temperate Northeast (a
+      common cause of regional model divergence).
+    </li>
+    <li>
+      <strong>Northeast Mycological Federation</strong> — peer-
+      reviewed mushroom regional timing for NE/Midwest.
+    </li>
+    <li>
+      <strong>Oregon State / WSU Extension</strong> — PNW maritime-
+      climate windows (hazelnut, walnut, fall-fruiting Pleurotus,
+      maritime mushroom species).
+    </li>
+    <li>
+      <strong>UC ANR (UC Agriculture &amp; Natural Resources)</strong> —
+      California statewide cultivar-mix envelopes (Japanese plum
+      Jun–Sep, citrus, almond, persimmon, fig). Used as a regional
+      anchor for zones 8b–10a, where California's commercial cultivar
+      diversity makes a single linear slope insufficient.
+    </li>
+    <li>
+      <strong>UF/IFAS (University of Florida)</strong> — Florida /
+      Gulf-coast subtropical fruit and warm-zone palm timing. Used
+      as a regional anchor for zones 9a–11a.
+    </li>
+    <li>
+      <strong>USA National Phenology Network (USA-NPN)</strong> —
+      plant-phenology observation network. Reference for species
+      whose published phenology comes from coordinated volunteer
+      observations.
+    </li>
+    <li>
+      <strong>USDA PLANTS Database</strong> (public domain) — native
+      range polygons used to constrain which zones a species can
+      plausibly fruit in.
     </li>
   </ul>
 

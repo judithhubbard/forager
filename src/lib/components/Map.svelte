@@ -195,6 +195,10 @@
      *  parent supplies region context + persists via the same
      *  importParsedTrack pipeline as file uploads. */
     recordSave: { title: string };
+    /** Fired when the user taps the placement-hint banner, asking to
+     *  cancel the current placing/moving flow. Parent handles by
+     *  clearing placingPin + movingPinId. */
+    cancelPlacing: null;
   }>();
 
   let mapEl: HTMLDivElement;
@@ -1337,7 +1341,14 @@
     // mapTap. Marker clicks still don't bubble here. Using contextmenu
     // instead of click avoids accidentally dropping pins on phones
     // where regular taps are too easy to fire.
+    //
+    // SKIP when already in placing/moving mode — a regular click is
+    // the right gesture there, and a parallel contextmenu fire from
+    // an ambiguous touch (briefly long-pressed instead of tapped)
+    // would either move the pin twice or open the drop-pin modal
+    // after a move just completed. Was a documented mobile bug.
     map.on('contextmenu', (e) => {
+      if (placing) return;
       dispatch('mapTap', { lng: e.latlng.lng, lat: e.latlng.lat });
     });
 
@@ -1399,7 +1410,16 @@
     <div class="zoom-chip" title="Current zoom level">z{currentZoom}</div>
   {/if}
   {#if placing}
-    <div class="placing-hint" role="status">{placingHint}</div>
+    <!-- Tappable banner: clicking anywhere on it cancels placement
+         mode. Better UX than the old plain hint, especially on
+         mobile where the user can otherwise forget they're in
+         move-pin mode and accidentally relocate the wrong pin
+         several taps later. -->
+    <button
+      type="button"
+      class="placing-hint"
+      on:click={() => dispatch('cancelPlacing', null)}
+    >{placingHint}</button>
   {/if}
   <!-- Heatmap-mode hint. The map shows pre-aggregated density tiles
        at zoom < 13 instead of individual pins; without this, users
@@ -1517,6 +1537,10 @@
      are armed. Targets the global Leaflet container class because the
      SVG/canvas overlays paint above .map. */
   .map-wrap.placing :global(.leaflet-container) { cursor: crosshair; }
+  /* Placement-mode banner — now a real button so the user can tap
+     it to cancel. Persistent + high-contrast so it's harder to
+     forget you're in move/place mode (was a documented mobile
+     bug). Includes an explicit ✕ affordance. */
   .placing-hint {
     position: absolute;
     top: 0.75rem;
@@ -1525,12 +1549,29 @@
     z-index: 1100;
     background: #3a5a3a;
     color: white;
-    padding: 0.4rem 0.85rem;
-    border-radius: 0.35rem;
-    font-size: 0.85rem;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    pointer-events: none;
+    padding: 0.55rem 1.1rem 0.55rem 0.95rem;
+    border: 0;
+    border-radius: 0.45rem;
+    font-size: 0.88rem;
+    font-family: inherit;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    max-width: calc(100% - 1.5rem);
+    text-align: center;
+    /* Bigger tap target on touch — Apple HIG says 44px. */
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
   }
+  .placing-hint::after {
+    content: '✕';
+    opacity: 0.85;
+    font-weight: 600;
+    margin-left: 0.2rem;
+  }
+  .placing-hint:hover { background: #2f4a2f; }
+  .placing-hint:active { background: #284028; }
   /* Bottom-center hint that surfaces when the map is in heatmap mode
      (zoom < 13). Auto-disappears once the user zooms in far enough
      that individual pins are rendered. Subtle styling so it doesn't
