@@ -22,6 +22,7 @@
     forage_parts: string[];
     interest_tags: string[];
     image_url: string | null;
+    aliases: string[];
   }
 
   interface ZonePresence {
@@ -77,7 +78,7 @@
       const [spRes, zpRes] = await Promise.all([
         supabase
           .from('species')
-          .select('id, common_name, scientific_name, forage_parts, interest_tags, image_url' as never)
+          .select('id, common_name, scientific_name, forage_parts, interest_tags, image_url, aliases' as never)
           .eq('is_forageable', true)
           .order('common_name'),
         supabase.rpc('species_zone_presence_all' as never, {} as never)
@@ -130,11 +131,26 @@
         (s) =>
           s.common_name.toLowerCase().includes(t) ||
           s.scientific_name.toLowerCase().includes(t) ||
-          s.forage_parts.some((p) => p.toLowerCase().includes(t))
+          s.forage_parts.some((p) => p.toLowerCase().includes(t)) ||
+          (s.aliases ?? []).some((a) => a.toLowerCase().includes(t))
       );
     }
     return list;
   })();
+
+  /** When the active search matched an alias rather than the common
+   *  name, surface that match so the user understands why the row
+   *  appears. Returns the first matching alias for the current term,
+   *  or null when the common/scientific name already explains the
+   *  match. */
+  function matchedAlias(s: Row): string | null {
+    const t = searchTerm.trim().toLowerCase();
+    if (!t) return null;
+    if (s.common_name.toLowerCase().includes(t)) return null;
+    if (s.scientific_name.toLowerCase().includes(t)) return null;
+    const hit = (s.aliases ?? []).find((a) => a.toLowerCase().includes(t));
+    return hit ?? null;
+  }
 
   $: speciesById = new Map(species.map((s) => [s.id, s] as const));
 
@@ -261,6 +277,10 @@
               <div class="card-body">
                 <div class="common">{s.common_name}</div>
                 <div class="sci">{s.scientific_name}</div>
+                {#if matchedAlias(s)}
+                  {@const m = matchedAlias(s)}
+                  <div class="alias-hit" title="Matched by alias">also: {m}</div>
+                {/if}
                 <div class="parts">
                   {#each s.forage_parts as p}
                     <span class="part-chip">{p}</span>
@@ -431,6 +451,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .alias-hit {
+    font-size: 0.72rem;
+    color: #8a728a;
+    margin-top: 0.15rem;
+    font-style: normal;
   }
   .parts {
     display: flex;

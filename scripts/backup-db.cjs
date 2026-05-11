@@ -34,7 +34,16 @@ const dbUrl = env.match(/SUPABASE_DB_URL=(.+)/)?.[1]?.trim();
 if (!dbUrl) { console.error('SUPABASE_DB_URL missing'); process.exit(1); }
 
 const sql = require(path.join(ROOT, 'node_modules/postgres'))(
-  dbUrl, { ssl: 'require', onnotice: () => undefined }
+  dbUrl, {
+    ssl: 'require',
+    onnotice: () => undefined,
+    // Override pooler-imposed statement_timeout (60s for Supabase
+    // shared poolers, fires mid-pins-dump on 5M+ rows). Both setting
+    // routes — postgres.js `connection:` and an explicit SET — are
+    // applied because the postgres.js connection option doesn't
+    // always propagate through pgbouncer transaction-mode pools.
+    connection: { statement_timeout: 0, idle_in_transaction_session_timeout: 0 }
+  }
 );
 
 if (!fs.existsSync(BACKUPS_DIR)) fs.mkdirSync(BACKUPS_DIR, { recursive: true });
@@ -49,8 +58,17 @@ async function dumpTable(table) {
   const gz = zlib.createGzip();
   gz.pipe(out);
 
+  // Disable statement_timeout for this session — also via explicit SET
+  // since postgres.js's `connection:` option doesn't always propagate
+  // through Supabase's pgbouncer transaction-mode pool. This is the
+  // route that actually works on the shared pooler.
+  await sql.unsafe(`set statement_timeout = 0`);
+
   let count = 0;
-  const cursor = sql.unsafe(`select * from public.${table}`).cursor(5000);
+  // Cursor in 1000-row batches (was 5000) so each fetch round-trip
+  // is shorter — even on a slow link, no single network round-trip
+  // approaches the pooler's transaction-cleanup limit.
+  const cursor = sql.unsafe(`select * from public.${table}`).cursor(1000);
   for await (const batch of cursor) {
     for (const row of batch) {
       gz.write(JSON.stringify(row) + '\n');

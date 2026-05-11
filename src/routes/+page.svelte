@@ -1171,10 +1171,37 @@
     const fetchStart = performance.now();
     if (perfEnabled) pendingFetch.set({ zoom, startedAt: fetchStart });
     const bboxArea = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]);
-    const mode: 'heatmap' | 'individual' =
-      zoom < CLUSTER_BELOW_ZOOM ? 'heatmap' : 'individual';
+    // Adaptive density fallback: at z13 (the lowest individual-pin
+    // zoom), dense city viewports (Indianapolis 298k, NYC 700k, etc.)
+    // make the bbox RPC do O(N) snap-to-grid + distinct-on work over
+    // hundreds of thousands of candidates before decimating down to
+    // ~500. Cold queries can take 1-3s. We pre-fetch the lightweight
+    // summary RPC, and if the bbox contains more than this many pins,
+    // fall back to the pre-aggregated density grid (heatmap mode) for
+    // that viewport instead. z14+ is also dense but the bbox is small
+    // enough that the candidates set is manageable.
+    const DENSE_DROP_TO_HEATMAP_THRESHOLD = 50000;
+    let useHeatmap = zoom < CLUSTER_BELOW_ZOOM;
+    if (zoom === CLUSTER_BELOW_ZOOM) {
+      // Quick density probe before committing to a pin fetch. Summary
+      // RPCs are cheap (server-side count aggregate, no decimation)
+      // and we'd be calling them in parallel anyway — pulling them
+      // earlier just lets us decide.
+      const includeInvasivesProbe = $settings.showInvasives;
+      const probeSum = await listPublicPinSummary(bbox, includeInvasivesProbe);
+      if (seq !== viewportSeq) return;
+      const probeTotal = probeSum.reduce((sum, r) => sum + r.total_count, 0);
+      if (probeTotal > DENSE_DROP_TO_HEATMAP_THRESHOLD) {
+        useHeatmap = true;
+      } else {
+        // Cache the summary so we don't re-fetch it inside the
+        // individual-pin branch below.
+        bboxSummary = probeSum;
+      }
+    }
+    const mode: 'heatmap' | 'individual' = useHeatmap ? 'heatmap' : 'individual';
     try {
-      if (zoom < CLUSTER_BELOW_ZOOM) {
+      if (useHeatmap) {
         // Heatmap mode (zoom < 13): always use the public density
         // grid. Imported region pins (Ithaca, NYC, Boston…) all carry
         // visibility='public', so they're already in the public grid;
