@@ -187,22 +187,10 @@ const COMPLEXES = [
     summary: 'Allegheny chinkapin (Castanea pumila): heat-driven Aug-Sep harvest across the species range. Anchor 7a peak Sep 15; iNat-empirical shallow gradient (-3 d/half-zone).'
   },
 
-  // Fox grape — Cornell Cooperative Extension + Concord-type harvest
-  // data. Peak 6a is ~Sep 9 (DOY 252). Empirical iNat slope -4.5
-  // d/half-zone (n=3, low); rounded to -5 conservatively.
-  {
-    name: 'Fox grape',
-    members: ['Vitis labrusca'],
-    anchor_zone: '6a',
-    anchor_peak: 252,           // Sep 9
-    shift_per_half_zone: -5,    // empirical iNat -4.5 (low n=3)
-    half_window: 21,
-    target_zones: ['5b','6a','6b','7a','7b'],
-    stage: 'ripe',
-    source_name: 'Fox grape (Cornell Cooperative Extension, Concord-type Vitis labrusca harvest)',
-    source_url: 'https://gardening.cals.cornell.edu/plants/grape/',
-    summary: 'Fox grape (Vitis labrusca, Concord-type): heat-driven, peak 6a ~Sep 9. Cornell CE Northeast harvest data; conservative -5 d/half-zone gradient.'
-  },
+  // Fox grape (Vitis labrusca) merged into the Wild Vitis complex
+  // below — foragers don't distinguish between Concord-parent V. labrusca
+  // and other wild Vitis at the point of harvest. Cornell CE timing
+  // (peak 6a ~Sep 9) is preserved as the complex anchor.
 
   // Peach — heavily zone-driven cultivar range (south GA peaches in
   // May, north MI peaches in August). Empirical iNat slope -23.6
@@ -300,19 +288,23 @@ const COMPLEXES = [
     summary: 'Sambucus elderflower complex: cream-colored flat-topped umbels for cordial / fritters / champagne. PSR (VT zone 4) cites late-June peak; BF (mid-Atlantic) cites mid-June. Anchor 6a peak Jun 14, shift -4 d/half-zone (same gradient as fruit, which follows ~6 weeks later).'
   },
 
-  // Wild Vitis (grape) — riverbank grape (V. riparia), summer grape
-  // (V. aestivalis). Same fall-ripe pattern as fox grape (V. labrusca,
-  // separate entry); foragers don't distinguish. Anchor matches fox
-  // grape (zone 6a peak Sep 9, DOY 252) — these are all wild Northeast
-  // Vitis with similar timing.
+  // Wild Vitis complex — expanded to cover ALL wild Vitis species
+  // including warm-climate ones. Members: riverbank (V. riparia),
+  // summer (V. aestivalis), fox (V. labrusca — moved here from its
+  // separate entry, see below), muscadine (V. rotundifolia, warm-zone
+  // SE), frost grape (V. vulpina), California wild grape
+  // (V. californica). Foragers identify by location + ripeness, not
+  // by species — combining matches actual practice. Regional anchors
+  // handle the warm-zone (muscadine ripens earlier in zone 7-10) +
+  // frost-grape (later, post-frost preferred).
   {
-    name: 'Wild Vitis (grape) complex',
-    members: ['Vitis riparia', 'Vitis aestivalis'],
+    name: 'Wild Vitis complex',
+    members: ['Vitis riparia', 'Vitis aestivalis', 'Vitis labrusca', 'Vitis rotundifolia', 'Vitis vulpina', 'Vitis californica'],
     anchor_zone: '6a',
-    anchor_peak: 252,           // Sep 9 (matches fox grape)
-    shift_per_half_zone: -5,    // matches fox grape's -5
-    half_window: 21,
-    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    anchor_peak: 252,           // Sep 9
+    shift_per_half_zone: -5,
+    half_window: 28,            // wider to cover muscadine wave-ripening
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'ripe',
     source_name: 'Wild Vitis complex (Cornell CE + USDA Silvics, paralleling V. labrusca)',
     source_url: 'https://gardening.cals.cornell.edu/plants/grape/',
@@ -471,12 +463,14 @@ const COMPLEXES = [
     summary: 'Black chokeberry (Aronia melanocarpa): heat-driven late-summer to early-fall fruit. Tight ±21d window centered on Sep 7 in zone 6a; mild -2 d/half-zone gradient.'
   },
 
-  // Ribes (currant + gooseberry) complex — cultivated black/red currant,
-  // gooseberry, and wild NA congeners (prickly gooseberry, smooth
-  // gooseberry, Missouri gooseberry, American black currant, red swamp
-  // currant, skunk currant). All share the same heat-driven early-
-  // summer fruit pattern. Anchor 6a peak Jul 14 (DOY 195), shift -5
-  // (matches mulberry / similar early-summer berries).
+  // Ribes (currant + gooseberry) complex — cultivated black/red/white
+  // currant, gooseberry, and wild NA congeners share the same
+  // heat-driven early-summer fruit pattern. Foragers don't
+  // distinguish at harvest time; the difference is morphology
+  // (currants in clusters, gooseberries spiny single fruit) +
+  // post-harvest use, not timing. Widened half_window 18 → 25 to
+  // capture both shoulders: early gooseberry (Jun-late) + late black
+  // currant (early-Aug). Added regional anchors by climate band.
   {
     name: 'Ribes (currant + gooseberry) complex',
     members: [
@@ -493,12 +487,17 @@ const COMPLEXES = [
     anchor_zone: '6a',
     anchor_peak: 195,           // Jul 14
     shift_per_half_zone: -5,
-    half_window: 18,
+    half_window: 25,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'ripe',
-    source_name: 'Ribes complex (Cornell CE + USDA Silvics + commercial timing)',
+    source_name: 'Ribes complex (Cornell CE + USDA Silvics + UMN Extension + Practical Self Reliance + Philly Orchard Project)',
     source_url: 'https://gardening.cals.cornell.edu/plants/currant-gooseberry/',
-    summary: 'Ribes complex (cultivated currants + gooseberries + wild NA congeners): heat-driven early-summer fruit. Anchor 6a peak Jul 14, shift -5 d/half-zone matching similar early-summer berries.'
+    summary: 'Ribes complex (cultivated currants/gooseberries + 6 wild NA congeners): heat-driven early-summer fruit. Cold zones (3-4): Jul-mid-Aug. Mid (5-6): early-Jul peak. Warm (7-8): mid-Jun to late-Jul. Anchor 6a peak Jul 14, ±25d to capture both early gooseberry and late black currant within a zone.',
+    regional_anchors: [
+      { zones: ['3a','3b','4a','4b','5a'], source: 'Practical Self Reliance (VT zone 4 home garden) + UMN Extension', url: 'https://practicalselfreliance.com/black-currants/', summary: 'Cold zones (VT/MN/upper Midwest): Jul-Aug, peak late-Jul; later than mid-Atlantic.', peak_doy: 210, half_window: 25 },
+      { zones: ['5b','6a','6b','7a'], source: 'Cornell CE + Forager Chef (Cornell CE, MN/Upper Midwest)', url: 'https://gardening.cals.cornell.edu/plants/currant-gooseberry/', summary: 'Mid-Atlantic / Cornell area: Jun-Aug, peak mid-Jul. Black currants slightly later than red.', peak_doy: 195, half_window: 25 },
+      { zones: ['7a','7b','8a','8b'], source: 'Philly Orchard Project + Backyard Forager', url: 'https://www.phillyorchards.org/', summary: 'Mid-S / warm range (PA/MD/NJ): Jun-Jul, peak late-Jun. Gooseberries earliest, black currants tail end.', peak_doy: 180, half_window: 25 }
+    ]
   },
 
   // Pyrus (pear) complex — Asian + European pear, including the
@@ -513,12 +512,16 @@ const COMPLEXES = [
     anchor_zone: '6a',
     anchor_peak: 240,           // Aug 28
     shift_per_half_zone: -4,
-    half_window: 28,            // wide: cultivar variation
+    half_window: 38,            // widened 28 → 38: warm-zone cultivars
+                                // span Jun-Nov (early Asian sand pears
+                                // through late Bartlett/Bosc) — the
+                                // narrower window missed both shoulders
+                                // in zones 8-10.
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'ripe',
-    source_name: 'Pyrus complex (Cornell CE + Toronto NFFTT + Backyard Forager)',
+    source_name: 'Pyrus complex (Cornell CE + Toronto NFFTT + Backyard Forager + UC ANR)',
     source_url: 'https://gardening.cals.cornell.edu/plants/pear/',
-    summary: 'Pyrus complex (Asian, European, callery pears): heat-driven late-summer fruit. Anchor 6a peak Aug 28, shift -4 d/half-zone. Window widened (±28d) for cultivar variability.'
+    summary: 'Pyrus complex (Asian, European, callery pears): heat-driven late-summer fruit. Anchor 6a peak Aug 28, shift -4 d/half-zone, ±38d window for the wide cultivar variability — particularly in warm climates (zones 8-10) where early Asian sand pears + late Bartlett/Bosc overlap from Jun through Nov.'
   },
 
   // American plum (Prunus americana) — heat-driven. Original entry
@@ -602,7 +605,7 @@ const COMPLEXES = [
     stage: 'leaf',
     source_name: 'Garlic mustard (Eat The Weeds + Forager Chef)',
     source_url: 'https://www.eattheweeds.com/garlic-mustard-alliaria-petiolata/',
-    summary: 'Garlic mustard (Alliaria petiolata): invasive — encouraged to forage. First-year basal rosette + 2nd-year pre-flowering leaves, late Apr - May in 6a. Tastes like horseradish + garlic; pesto, sautéed.'
+    summary: 'Garlic mustard (Alliaria petiolata): invasive — encouraged to forage. First-year basal rosette overwinters and re-emerges in March; 2nd-year pre-flowering leaves harvestable Apr-May (peak late Apr in zone 6a). Tastes like horseradish + garlic; pesto, sautéed.'
   },
   {
     name: 'Common daylily (shoots + flowers)',
@@ -661,14 +664,27 @@ const COMPLEXES = [
   // Tier-3 roots / tubers: dug fall through early spring, frost-driven
   // (cold concentrates starches). Symmetric window straddling fall/winter.
   {
-    name: 'Groundnut (tubers)',
+    name: 'Groundnut (fall through year-end)',
     members: ['Apios americana'],
     anchor_zone: '6a', anchor_peak: 305, shift_per_half_zone: -3, half_window: 60,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'root_dig',
-    source_name: 'Groundnut (USDA Silvics + Forager Chef)',
+    source_name: 'Groundnut fall (USDA Silvics + Forager Chef)',
     source_url: 'https://plants.usda.gov/plant-profile/APAM',
-    summary: 'Groundnut (Apios americana): native nitrogen-fixing vine, tubers along underground rhizome — string of dime-to-egg-sized "potatoes". Dig Sep through Mar, peak after first frost. Cooked, not raw (raw is bitter + may cause GI upset).'
+    summary: 'Groundnut (Apios americana) fall harvest Sep-Dec: native nitrogen-fixing vine, tubers along underground rhizome — string of dime-to-egg-sized "potatoes". Peak after first frost. Cooked, not raw (raw is bitter + may cause GI upset). Pair with the winter-through-spring row.'
+  },
+  {
+    // Second row covering Jan-Mar — framework rows do not wrap year-end.
+    // Ground-freeze in cold zones (5a-) makes Feb-Mar harvest impractical,
+    // so target_zones is narrowed to 5b+ where digging stays feasible.
+    name: 'Groundnut (winter through spring)',
+    members: ['Apios americana'],
+    anchor_zone: '6a', anchor_peak: 30, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['5b','6a','6b','7a','7b','8a'],
+    stage: 'root_dig',
+    source_name: 'Groundnut winter (USDA Silvics + Forager Chef)',
+    source_url: 'https://plants.usda.gov/plant-profile/APAM',
+    summary: 'Groundnut (Apios americana) winter-spring harvest Jan-Mar: continuation of the fall dig where ground is not frozen solid. Starch concentration peaks late winter. Same vine, same cooked-only prep.'
   },
   {
     name: 'Lesser burdock (first-year root)',
@@ -1017,16 +1033,90 @@ const COMPLEXES = [
   },
 
   // ── Misc remaining-gaps batch 2026-05-10 ──
+  // Cornus officinalis (Japanese cornelian cherry) merged into the
+  // Cornelian cherry complex below — same use case, same timing within
+  // 1-2 weeks. Foragers don't distinguish.
+
+  // ── Top-unmatched additions 2026-05-10 ──
   {
-    name: 'Japanese cornelian cherry',
-    members: ['Cornus officinalis'],
-    // Sister species to Cornus mas — similar timing, slightly earlier.
-    anchor_zone: '6a', anchor_peak: 240, shift_per_half_zone: -3, half_window: 30,
-    target_zones: ['4b','5a','5b','6a','6b','7a','7b','8a'],
+    name: 'Norway maple (sap)',
+    members: ['Acer platanoides'],
+    anchor_zone: '6a', anchor_peak: 45, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'sap_run',
+    source_name: 'Norway maple sap (UMN Extension + Cornell maple syrup bulletin)',
+    source_url: 'https://extension.umn.edu/syrup/maple-syrup',
+    summary: 'Norway maple (Acer platanoides) sap: tappable Feb-Mar in zone 6a, yield ~half of A. saccharum but useful for problem-tree mitigation. Sap can be slightly milky (latex); discard first few drops or skip — usable boiled.'
+  },
+  {
+    name: 'Northern red oak (acorns)',
+    members: ['Quercus rubra'],
+    anchor_zone: '6a', anchor_peak: 265, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'ripe',
-    source_name: 'Japanese cornelian cherry (Missouri Botanical Garden + Cornell)',
-    source_url: 'https://www.missouribotanicalgarden.org/PlantFinder/PlantFinderDetails.aspx?taxonid=287086',
-    summary: 'Japanese cornelian cherry (Cornus officinalis): ornamental ~2 weeks earlier than C. mas. Ripe Aug-Sep in zone 6. Tart cranberry-cherry flavor; used in TCM as well as jam/syrup.'
+    source_name: 'Red oak acorns (Sam Thayer Forager Harvest + USDA Silvics)',
+    source_url: 'https://plants.usda.gov/plant-profile/QURU',
+    summary: 'Northern red oak (Quercus rubra): acorns drop Sep-Oct. Red-oak-group: high tannin, requires 3-7 days of cold-water leaching (daily changes) before grinding to flour. Q. alba and Q. bicolor are easier — this is the fall-back when those are not available.'
+  },
+  {
+    name: 'Swamp white oak (acorns)',
+    members: ['Quercus bicolor'],
+    anchor_zone: '6a', anchor_peak: 244, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'ripe',
+    source_name: 'Swamp white oak (Sam Thayer + SUNY-ESF acorn studies)',
+    source_url: 'https://plants.usda.gov/plant-profile/QUBI',
+    summary: 'Swamp white oak (Quercus bicolor): acorns Sep, sometimes earlier. White-oak group with low tannin — one of the best forage oaks; minimal leaching needed before grinding to flour. Common Buffalo/Montreal street planting.'
+  },
+  {
+    name: 'Eastern cottonwood (spring buds)',
+    members: ['Populus deltoides'],
+    anchor_zone: '6a', anchor_peak: 81, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['3b','4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'shoot',
+    source_name: 'Cottonwood buds (Forager Chef + ethnobotanical references)',
+    source_url: 'https://foragerchef.com/cottonwood-bud-oil/',
+    summary: 'Eastern cottonwood (Populus deltoides) spring buds: harvested late winter / early spring (Feb-Apr in zone 6a) when buds are swollen + resinous but unopened. Infuse in oil for salicin-rich balm-of-Gilead salve (sore-muscle topical). Catkins also edible raw.'
+  },
+  {
+    name: 'Ponderosa pine (nuts)',
+    members: ['Pinus ponderosa'],
+    anchor_zone: '6a', anchor_peak: 244, shift_per_half_zone: -3, half_window: 28,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'ripe',
+    source_name: 'Ponderosa pine nuts (USDA Forest Service ethnobotany + USDA Silvics)',
+    source_url: 'https://plants.usda.gov/plant-profile/PIPO',
+    summary: 'Ponderosa pine (Pinus ponderosa) nuts: small edible seeds Aug-Oct, harvested from open cones. Smaller yield than P. edulis pinyon, but more abundant in the Rockies + intermountain west. Inner-bark cambium historically a staple food (Plateau Indigenous peoples).'
+  },
+  {
+    name: 'River birch (sap)',
+    members: ['Betula nigra'],
+    anchor_zone: '6a', anchor_peak: 60, shift_per_half_zone: -3, half_window: 21,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'sap_run',
+    source_name: 'River birch sap (Forager Chef + USDA Silvics)',
+    source_url: 'https://plants.usda.gov/plant-profile/BENI',
+    summary: 'River birch (Betula nigra) sap: tappable Feb-Mar in zone 6a, similar to B. papyrifera but flowing later and with slightly lower sugar. Boil for birch syrup (mineral, savory). Twigs steep for wintergreen-note tea.'
+  },
+  {
+    name: 'Black tupelo (fruit)',
+    members: ['Nyssa sylvatica'],
+    anchor_zone: '6a', anchor_peak: 244, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'ripe',
+    source_name: 'Black tupelo (Petrides + Foraging Texas + USDA Silvics)',
+    source_url: 'https://plants.usda.gov/plant-profile/NYSY',
+    summary: 'Black tupelo / sour gum (Nyssa sylvatica) fruit: small blue-black very sour drupes, Aug-Oct in zone 6. Cooked in jellies/preserves (raw too sour). Major honey-source tree (tupelo honey, distinct from blackgum honey). Wide native range — SE through New England.'
+  },
+  {
+    name: 'Kentucky coffeetree (seeds)',
+    members: ['Gymnocladus dioicus'],
+    anchor_zone: '6a', anchor_peak: 298, shift_per_half_zone: -3, half_window: 30,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'ripe',
+    source_name: 'Kentucky coffeetree (USDA Silvics + ethnobotanical refs — TOXIC warning required)',
+    source_url: 'https://plants.usda.gov/plant-profile/GYDI',
+    summary: 'Kentucky coffeetree (Gymnocladus dioicus) seeds: TOXIC RAW. Pods drop Oct-Dec with hard-coated seeds inside. Historical preparation: roast seeds 2-3 hours at 300F until parchment-brown all through (cytisine breaks down) — coffee substitute used by settlers + Native peoples. DO NOT eat raw, under-roasted, or the surrounding pulp. Pods + foliage also toxic to livestock.'
   },
   {
     name: 'American basswood (spring leaves)',
@@ -1053,9 +1143,11 @@ const COMPLEXES = [
   {
     name: 'Spruce tips (multi-species)',
     // Pinus sp. removed 2026-05-10 — too generic, soft-deleted from
-    // catalog. Specific Pinus species (contorta, sylvestris, edulis)
-    // still get tips windows via their own membership.
-    members: ['Picea glauca', 'Picea pungens', 'Picea sp.', 'Pinus contorta', 'Pinus sylvestris', 'Larix sibirica'],
+    // catalog. Specific Pinus species (contorta, sylvestris, edulis,
+    // nigra, ponderosa) still get tips windows via their own membership.
+    // Added Picea abies + Pinus nigra + Pinus ponderosa 2026-05-10 from
+    // top-unmatched audit (Norway spruce, Austrian pine, ponderosa).
+    members: ['Picea glauca', 'Picea pungens', 'Picea sp.', 'Picea abies', 'Pinus contorta', 'Pinus sylvestris', 'Pinus nigra', 'Pinus ponderosa', 'Larix sibirica'],
     // Audit found "early-to-mid May" was interpreted as 31 days for spruce
     // tips when the cited window is famously 10-14 days. Tightened.
     // Replaces the earlier "Conifer tips" entry — same target zones,
@@ -1091,15 +1183,20 @@ const COMPLEXES = [
     summary: 'Littleleaf linden (Tilia cordata): fragrant pale-yellow flower clusters Jun-Jul (~10 days). Harvest at peak fragrance for tea (calming, mild honey flavor) — pollinator-favored, so leave half on the tree.'
   },
   {
-    name: 'Japanese walnut',
-    members: ['Juglans ailantifolia'],
-    // Asian relative of butternut — same Sep-Oct nut drop.
+    name: 'Walnut complex (Juglans)',
+    members: ['Juglans nigra', 'Juglans regia', 'Juglans cinerea', 'Juglans ailantifolia', 'Juglans sp.'],
+    // All four Juglans species drop nuts in Sep-Oct in temperate zones.
+    // Differences (J. nigra heavy-hulling vs J. regia easy, J. cinerea
+    // small-sweet, J. ailantifolia heart-cracking) are downstream of
+    // when-to-harvest. Foragers identify by tree and pick whatever
+    // species they find. Combined complex matches Sambucus/Cornelian
+    // cherry/Wild Vitis pattern.
     anchor_zone: '6a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 28,
-    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b'],
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
     stage: 'ripe',
-    source_name: 'Japanese walnut (USDA Silvics + Forager Chef)',
+    source_name: 'Walnut complex (USDA Silvics + Forager Chef + UC ANR)',
     source_url: 'https://plants.usda.gov/plant-profile/JUAI',
-    summary: 'Japanese walnut / heartnut (Juglans ailantifolia): hardier butternut relative. Nuts Sep-Oct in zone 6. Heart-shaped kernel cracks cleanly. Hardy 4-7.'
+    summary: 'Walnut complex (Juglans nigra, regia, cinerea, ailantifolia): all drop Sep-Oct in temperate zones. Wait for husks to drop or split (do not pick green from tree — under-ripe + hull staining). J. nigra: heavy black hulls, intense flavor, long cure. J. regia: easy hulls, mild flavor, commercial walnut. J. cinerea (butternut): smaller, sweet, in catastrophic decline from butternut canker. J. ailantifolia: heart-shaped kernel cracks cleanly.'
   },
   {
     name: 'Ussurian pear',
@@ -1209,17 +1306,51 @@ const COMPLEXES = [
     source_url: 'https://foragerchef.com/pine-spruce-and-fir-tips/',
     summary: 'Conifer tips (spruce, pine, fir, larch): pale-green soft new-growth shoots before needles harden. ~2-3 week window late Apr - May in 6a. Citrusy resinous flavor; for syrups, salts, beverages. Avoid yew (toxic).'
   },
+  // Wood ear is bimodal: spring + fall flushes in cold/mid zones,
+  // year-round in mild climates. Split into spring + fall rows for
+  // zones 4-8a; warm zones (8b+) get a wide year-end-spanning row.
   {
-    name: 'Wood ear',
+    name: 'Wood ear (spring flush)',
     members: ['Auricularia auricula-judae'],
-    // Wood-decay mushroom. Year-round in temperate climates, flushes
-    // after rain. Most active spring + fall.
-    anchor_zone: '6a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 80,
-    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    anchor_zone: '6a', anchor_peak: 135, shift_per_half_zone: -3, half_window: 35,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'mushroom_flush',
-    source_name: 'Wood ear (Mushroom Expert + Forager Chef)',
+    source_name: 'Wood ear spring (Mushroom Expert + Forager Chef + Northeast Mycological Federation)',
     source_url: 'https://www.mushroomexpert.com/auricularia_auricula.html',
-    summary: 'Wood ear (Auricularia auricula-judae): gelatinous brown ear-shaped fungus on dead/dying hardwoods (esp. elder, beech). Year-round in mild climates, peak spring + fall flushes after rain. Cook before eating.'
+    summary: 'Wood ear (Auricularia auricula-judae) spring flush: gelatinous brown ear-shaped fungus on dead/dying hardwoods (esp. elder, beech). Apr-Jun in cold/mid zones, triggered by warm spring rains. Pair with fall flush. Cook before eating (raw causes mild GI upset).'
+  },
+  {
+    name: 'Wood ear (fall flush)',
+    members: ['Auricularia auricula-judae'],
+    anchor_zone: '6a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 40,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    stage: 'mushroom_flush',
+    source_name: 'Wood ear fall (Mushroom Expert + Forager Chef + Northeast Mycological Federation)',
+    source_url: 'https://www.mushroomexpert.com/auricularia_auricula.html',
+    summary: 'Wood ear (Auricularia auricula-judae) fall flush: same species, second annual peak. Aug-Nov in cold/mid zones, after autumn rains and before killing frost. Pair with spring flush. Cook before eating.'
+  },
+  {
+    name: 'Wood ear (warm-zone late-year)',
+    members: ['Auricularia auricula-judae'],
+    // Warm zones (8b-10a): year-round in mild climates, anchored to
+    // the fall flush peak with a very wide window. Framework rows
+    // can not wrap year-end, so the Jan-Apr tail gets the early-year row.
+    anchor_zone: '9a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 110,
+    target_zones: ['8b','9a','9b','10a'],
+    stage: 'mushroom_flush',
+    source_name: 'Wood ear warm-zone late-year (Mushroom Mountain SE US + Forager Chef)',
+    source_url: 'https://mushroommountain.com/',
+    summary: 'Wood ear (Auricularia auricula-judae) warm-zone Jun-Dec: year-round fruiting in mild SE/CA climates, this row covers the Jun-Dec half. Pair with the Jan-Apr early-year row.'
+  },
+  {
+    name: 'Wood ear (warm-zone early-year)',
+    members: ['Auricularia auricula-judae'],
+    anchor_zone: '9a', anchor_peak: 60, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['8b','9a','9b','10a'],
+    stage: 'mushroom_flush',
+    source_name: 'Wood ear warm-zone early-year (Mushroom Mountain SE US + Forager Chef)',
+    source_url: 'https://mushroommountain.com/',
+    summary: 'Wood ear (Auricularia auricula-judae) warm-zone Jan-Apr: continuation of the year-round fruiting pattern in mild climates. Cook before eating.'
   },
 
   // Cherry/Plum (unspecified) (Prunus sp.) — generic Prunus catch-all.
@@ -1339,16 +1470,23 @@ const COMPLEXES = [
     summary: 'Wild strawberry: mid-Jun through Jul ripe across temperate NA. F. virginiana (meadows) and F. vesca (woodland) share harvest timing. Cold-zone (3a-4b) start can be as early as mid-Jun.'
   },
 
-  // Mayapple — fruit only edible (rest toxic).
+  // Mayapple — fruit only edible (rest toxic). Steepened shift -4 → -7
+  // to match iNat empirical slope (-7 d/half-zone). Warm zones (7-8)
+  // genuinely ripen earlier (Jun-Jul) than the cold-zone "Jul-Aug"
+  // cited generic; iNat confirms this pattern. Target_zones held at
+  // 4a-8a (species' actual native range — eastern North American
+  // deciduous understory). 8b/9a observations on iNat are mostly
+  // misidentified or misannotated (Mayapple flowers Apr-May and gets
+  // tagged "Fruiting" by mistake), so those rows are excluded.
   {
     name: 'Mayapple',
     members: ['Podophyllum peltatum'],
-    anchor_zone: '6a', anchor_peak: 213, shift_per_half_zone: -4, half_window: 21,
+    anchor_zone: '6a', anchor_peak: 213, shift_per_half_zone: -7, half_window: 21,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'ripe',
-    source_name: 'Mayapple (Eat The Weeds + USDA Silvics)',
+    source_name: 'Mayapple (Eat The Weeds + USDA Silvics + iNat empirical slope)',
     source_url: 'https://www.eattheweeds.com/podophyllum-mayapple-mandrake-mountain-apple-2/',
-    summary: 'Mayapple fruit: yellow-translucent ripe in late summer (Jul-Aug). Only ripe yellow fruit edible; all other parts toxic.'
+    summary: 'Mayapple fruit: yellow-translucent ripe Jul-Aug in zone 6a (cold zones late summer; warm zones genuinely earlier — Jun in zone 7, late-May in zone 8). Only ripe yellow fruit edible; all other parts (leaves, stems, unripe fruit, roots) toxic. Range is eastern deciduous forest — no reliable observations south of zone 8a.'
   },
 
   // Sweet birch (Betula lenta) — sap_run + wintergreen-twig forage.
@@ -1424,8 +1562,24 @@ const COMPLEXES = [
     summary: 'Highbush cranberry (Viburnum trilobum): bright red drupes Sep-Nov, sweetened by frost. Distinct from European V. opulus (toxic).'
   },
   {
-    name: 'Cornelian cherry',
-    members: ['Cornus mas'],
+    name: 'Kousa dogwood',
+    members: ['Cornus kousa'],
+    // East Asian ornamental, common in zones 5-8 US urban plantings.
+    // Pink-red compound knobby fruits late Aug through Sep (zone 6).
+    // Sweet tropical-mango-banana flavor when fully ripe; skin and
+    // seeds discarded. NOT to be confused with native Cornus florida
+    // (different fruit shape — florida is smooth red drupe clusters,
+    // kousa is compound knobby pink-red).
+    anchor_zone: '6a', anchor_peak: 245, shift_per_half_zone: -3, half_window: 25,
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'ripe',
+    source_name: 'Kousa dogwood (Eat The Weeds + Missouri Botanical Garden)',
+    source_url: 'https://www.eattheweeds.com/cornus-kousa-the-not-so-secret-edible-2/',
+    summary: 'Kousa dogwood (Cornus kousa): pink-red compound knobby fruits late-Aug through Sep, peak early-Sep in zone 6. Sweet tropical-mango-banana pulp when fully ripe (skin gives to gentle pressure). Discard skin + seeds. Common ornamental in NE / Mid-Atlantic urban plantings, East Asia native.'
+  },
+  {
+    name: 'Cornelian cherry complex',
+    members: ['Cornus mas', 'Cornus officinalis'],
     // Native SE Europe / W Asia, naturalized as ornamental in NE/Mid-Atlantic
     // US. Ripens mid- to late summer. Cornell-area / Druid's Garden W. PA:
     // peak early-mid Sep ("near fall equinox"). UW Botanic Garden Seattle:

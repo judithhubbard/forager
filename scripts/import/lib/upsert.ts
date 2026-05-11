@@ -103,7 +103,17 @@ export async function loadSpecies(sql: Sql): Promise<SpeciesRow[]> {
   return rows;
 }
 
-const norm = (s: string) => s.toLowerCase().trim().replace(/\s+/g, ' ');
+// Normalize hybrid markers ("Acer x freemanii" / "ACER X FREEMANII" / "Acer × freemanii")
+// into a single canonical form so the matcher works regardless of case. Buffalo's
+// inventory uppercases everything including the X separator, which the old
+// /\bx\s+/g regex missed (word-boundary before "x" requires non-word char, but
+// after lowercase-norm "x" was still a standalone token only the trailing
+// space could anchor on).
+const norm = (s: string) => s
+  .toLowerCase()
+  .trim()
+  .replace(/\s+/g, ' ')
+  .replace(/\s+×\s+/g, ' x ');  // unify the × hybrid marker with " x "
 
 const GENUS_ONLY_PLACEHOLDERS = new Set(['species', 'spp', 'spp.', 'sp', 'sp.']);
 

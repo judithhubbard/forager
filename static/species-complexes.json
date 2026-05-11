@@ -146,15 +146,6 @@
       "stage": "ripe"
     }
   ],
-  "Vitis labrusca": [
-    {
-      "name": "Fox grape",
-      "members": [
-        "Vitis labrusca"
-      ],
-      "stage": "ripe"
-    }
-  ],
   "Prunus persica": [
     {
       "name": "Peach",
@@ -255,20 +246,84 @@
   ],
   "Vitis riparia": [
     {
-      "name": "Wild Vitis (grape) complex",
+      "name": "Wild Vitis complex",
       "members": [
         "Vitis riparia",
-        "Vitis aestivalis"
+        "Vitis aestivalis",
+        "Vitis labrusca",
+        "Vitis rotundifolia",
+        "Vitis vulpina",
+        "Vitis californica"
       ],
       "stage": "ripe"
     }
   ],
   "Vitis aestivalis": [
     {
-      "name": "Wild Vitis (grape) complex",
+      "name": "Wild Vitis complex",
       "members": [
         "Vitis riparia",
-        "Vitis aestivalis"
+        "Vitis aestivalis",
+        "Vitis labrusca",
+        "Vitis rotundifolia",
+        "Vitis vulpina",
+        "Vitis californica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Vitis labrusca": [
+    {
+      "name": "Wild Vitis complex",
+      "members": [
+        "Vitis riparia",
+        "Vitis aestivalis",
+        "Vitis labrusca",
+        "Vitis rotundifolia",
+        "Vitis vulpina",
+        "Vitis californica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Vitis rotundifolia": [
+    {
+      "name": "Wild Vitis complex",
+      "members": [
+        "Vitis riparia",
+        "Vitis aestivalis",
+        "Vitis labrusca",
+        "Vitis rotundifolia",
+        "Vitis vulpina",
+        "Vitis californica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Vitis vulpina": [
+    {
+      "name": "Wild Vitis complex",
+      "members": [
+        "Vitis riparia",
+        "Vitis aestivalis",
+        "Vitis labrusca",
+        "Vitis rotundifolia",
+        "Vitis vulpina",
+        "Vitis californica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Vitis californica": [
+    {
+      "name": "Wild Vitis complex",
+      "members": [
+        "Vitis riparia",
+        "Vitis aestivalis",
+        "Vitis labrusca",
+        "Vitis rotundifolia",
+        "Vitis vulpina",
+        "Vitis californica"
       ],
       "stage": "ripe"
     }
@@ -674,7 +729,14 @@
   ],
   "Apios americana": [
     {
-      "name": "Groundnut (tubers)",
+      "name": "Groundnut (fall through year-end)",
+      "members": [
+        "Apios americana"
+      ],
+      "stage": "root_dig"
+    },
+    {
+      "name": "Groundnut (winter through spring)",
       "members": [
         "Apios americana"
       ],
@@ -978,11 +1040,89 @@
       "stage": "ripe"
     }
   ],
-  "Cornus officinalis": [
+  "Acer platanoides": [
     {
-      "name": "Japanese cornelian cherry",
+      "name": "Norway maple (sap)",
       "members": [
-        "Cornus officinalis"
+        "Acer platanoides"
+      ],
+      "stage": "sap_run"
+    }
+  ],
+  "Quercus rubra": [
+    {
+      "name": "Northern red oak (acorns)",
+      "members": [
+        "Quercus rubra"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Quercus bicolor": [
+    {
+      "name": "Swamp white oak (acorns)",
+      "members": [
+        "Quercus bicolor"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Populus deltoides": [
+    {
+      "name": "Eastern cottonwood (spring buds)",
+      "members": [
+        "Populus deltoides"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Pinus ponderosa": [
+    {
+      "name": "Ponderosa pine (nuts)",
+      "members": [
+        "Pinus ponderosa"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Picea abies",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus nigra",
+        "Pinus ponderosa",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Betula nigra": [
+    {
+      "name": "River birch (sap)",
+      "members": [
+        "Betula nigra"
+      ],
+      "stage": "sap_run"
+    }
+  ],
+  "Nyssa sylvatica": [
+    {
+      "name": "Black tupelo (fruit)",
+      "members": [
+        "Nyssa sylvatica"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Gymnocladus dioicus": [
+    {
+      "name": "Kentucky coffeetree (seeds)",
+      "members": [
+        "Gymnocladus dioicus"
       ],
       "stage": "ripe"
     }
@@ -1010,8 +1150,11 @@
         "Picea glauca",
         "Picea pungens",
         "Picea sp.",
+        "Picea abies",
         "Pinus contorta",
         "Pinus sylvestris",
+        "Pinus nigra",
+        "Pinus ponderosa",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1024,8 +1167,11 @@
         "Picea glauca",
         "Picea pungens",
         "Picea sp.",
+        "Picea abies",
         "Pinus contorta",
         "Pinus sylvestris",
+        "Pinus nigra",
+        "Pinus ponderosa",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1050,8 +1196,11 @@
         "Picea glauca",
         "Picea pungens",
         "Picea sp.",
+        "Picea abies",
         "Pinus contorta",
         "Pinus sylvestris",
+        "Pinus nigra",
+        "Pinus ponderosa",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1069,6 +1218,23 @@
       "stage": "shoot"
     }
   ],
+  "Picea abies": [
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Picea abies",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus nigra",
+        "Pinus ponderosa",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    }
+  ],
   "Pinus contorta": [
     {
       "name": "Spruce tips (multi-species)",
@@ -1076,8 +1242,11 @@
         "Picea glauca",
         "Picea pungens",
         "Picea sp.",
+        "Picea abies",
         "Pinus contorta",
         "Pinus sylvestris",
+        "Pinus nigra",
+        "Pinus ponderosa",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1102,8 +1271,11 @@
         "Picea glauca",
         "Picea pungens",
         "Picea sp.",
+        "Picea abies",
         "Pinus contorta",
         "Pinus sylvestris",
+        "Pinus nigra",
+        "Pinus ponderosa",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1121,6 +1293,23 @@
       "stage": "shoot"
     }
   ],
+  "Pinus nigra": [
+    {
+      "name": "Spruce tips (multi-species)",
+      "members": [
+        "Picea glauca",
+        "Picea pungens",
+        "Picea sp.",
+        "Picea abies",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Pinus nigra",
+        "Pinus ponderosa",
+        "Larix sibirica"
+      ],
+      "stage": "shoot"
+    }
+  ],
   "Larix sibirica": [
     {
       "name": "Spruce tips (multi-species)",
@@ -1128,8 +1317,11 @@
         "Picea glauca",
         "Picea pungens",
         "Picea sp.",
+        "Picea abies",
         "Pinus contorta",
         "Pinus sylvestris",
+        "Pinus nigra",
+        "Pinus ponderosa",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1165,11 +1357,67 @@
       "stage": "flower_harvest"
     }
   ],
+  "Juglans nigra": [
+    {
+      "name": "Walnut complex (Juglans)",
+      "members": [
+        "Juglans nigra",
+        "Juglans regia",
+        "Juglans cinerea",
+        "Juglans ailantifolia",
+        "Juglans sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Juglans regia": [
+    {
+      "name": "Walnut complex (Juglans)",
+      "members": [
+        "Juglans nigra",
+        "Juglans regia",
+        "Juglans cinerea",
+        "Juglans ailantifolia",
+        "Juglans sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Juglans cinerea": [
+    {
+      "name": "Walnut complex (Juglans)",
+      "members": [
+        "Juglans nigra",
+        "Juglans regia",
+        "Juglans cinerea",
+        "Juglans ailantifolia",
+        "Juglans sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
   "Juglans ailantifolia": [
     {
-      "name": "Japanese walnut",
+      "name": "Walnut complex (Juglans)",
       "members": [
-        "Juglans ailantifolia"
+        "Juglans nigra",
+        "Juglans regia",
+        "Juglans cinerea",
+        "Juglans ailantifolia",
+        "Juglans sp."
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Juglans sp.": [
+    {
+      "name": "Walnut complex (Juglans)",
+      "members": [
+        "Juglans nigra",
+        "Juglans regia",
+        "Juglans cinerea",
+        "Juglans ailantifolia",
+        "Juglans sp."
       ],
       "stage": "ripe"
     }
@@ -1301,7 +1549,28 @@
   ],
   "Auricularia auricula-judae": [
     {
-      "name": "Wood ear",
+      "name": "Wood ear (spring flush)",
+      "members": [
+        "Auricularia auricula-judae"
+      ],
+      "stage": "mushroom_flush"
+    },
+    {
+      "name": "Wood ear (fall flush)",
+      "members": [
+        "Auricularia auricula-judae"
+      ],
+      "stage": "mushroom_flush"
+    },
+    {
+      "name": "Wood ear (warm-zone late-year)",
+      "members": [
+        "Auricularia auricula-judae"
+      ],
+      "stage": "mushroom_flush"
+    },
+    {
+      "name": "Wood ear (warm-zone early-year)",
       "members": [
         "Auricularia auricula-judae"
       ],
@@ -1497,11 +1766,31 @@
       "stage": "ripe"
     }
   ],
+  "Cornus kousa": [
+    {
+      "name": "Kousa dogwood",
+      "members": [
+        "Cornus kousa"
+      ],
+      "stage": "ripe"
+    }
+  ],
   "Cornus mas": [
     {
-      "name": "Cornelian cherry",
+      "name": "Cornelian cherry complex",
       "members": [
-        "Cornus mas"
+        "Cornus mas",
+        "Cornus officinalis"
+      ],
+      "stage": "ripe"
+    }
+  ],
+  "Cornus officinalis": [
+    {
+      "name": "Cornelian cherry complex",
+      "members": [
+        "Cornus mas",
+        "Cornus officinalis"
       ],
       "stage": "ripe"
     }
