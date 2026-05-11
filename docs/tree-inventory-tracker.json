@@ -8,11 +8,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Alabama"
+    "last_checked": "2026-05-10",
+    "notes": "AlabamaForestryCommission has no AGOL items. Largest AL tree find is Univ of N Alabama campus inventory (37,025 trees, owner=UNA_Facilities) \u2014 CAMPUS only, not state. No state-level aggregator."
   },
   {
     "name": "Alaska Division of Forestry & Fire Protection",
@@ -23,11 +23,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Alaska"
+    "last_checked": "2026-05-10",
+    "notes": "No state-level community-tree inventory found on ArcGIS Online. Top hits were ranged-vegetation Tongass NF Trees-Per-Acre Map Services (not tree-point inventory)."
   },
   {
     "name": "Arizona Department of Forestry and Fire Management",
@@ -38,14 +38,14 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Arizona"
+    "last_checked": "2026-05-10",
+    "notes": "AZ Dept of Forestry & Fire Management does not publish a statewide tree inventory. Major AZ cities (Mesa 33k, Tempe 26k) have their own AGOL feature services."
   },
   {
-    "name": "Arkansas Department of Agriculture — Forestry Division",
+    "name": "Arkansas Department of Agriculture \u2014 Forestry Division",
     "type": "state-forestry",
     "state": "AR",
     "country": "US",
@@ -53,11 +53,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Arkansas"
+    "last_checked": "2026-05-10",
+    "notes": "No state-level community tree inventory found. Arkansas Dept of Agriculture Forestry Division does not publish ArcGIS tree-point aggregator."
   },
   {
     "name": "CAL FIRE / California Urban Forestry Program",
@@ -68,11 +68,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for California"
+    "last_checked": "2026-05-10",
+    "notes": "CAL FIRE does not publish a statewide community-tree-point inventory on ArcGIS. CA Urban Forestry Program is grant-based. Many CA cities (Palm Springs 15k, LA, SF, San Diego) have individual feeds."
   },
   {
     "name": "Colorado State Forest Service",
@@ -83,11 +83,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Colorado"
+    "last_checked": "2026-05-10",
+    "notes": "No state-level aggregator from CSFS found. Major CO cities (Boulder 50k via own portal, Denver, Aurora) publish individually."
   },
   {
     "name": "Connecticut DEEP Forestry Division",
@@ -98,11 +98,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Connecticut"
+    "last_checked": "2026-05-10",
+    "notes": "CT DEEP Forestry: only TreeCanopy_V2_0 (CIRCA UConn) found \u2014 canopy POLYGON not tree points. No state inventory."
   },
   {
     "name": "Delaware Forest Service",
@@ -113,11 +113,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Delaware"
+    "last_checked": "2026-05-10",
+    "notes": "DE Forest Service does not publish a state aggregator. CDBG_2024Sites (Delaware Center for Horticulture) is small and not a tree-point inventory."
   },
   {
     "name": "Florida Forest Service",
@@ -127,12 +127,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
+    "license_status": "gated",
+    "data_status": "present",
+    "endpoint": "https://pg-cloud.com/Florida/",
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Florida"
+    "last_checked": "2026-05-10",
+    "notes": "PG-Cloud TreePlotter Florida instance exists but currently shows \"app disabled\" \u2014 login required. Florida Forest Service operates an Urban & Community Forestry Program; no public ArcGIS aggregator found."
   },
   {
     "name": "Georgia Forestry Commission",
@@ -142,12 +142,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
+    "license_status": "gated",
+    "data_status": "present",
+    "endpoint": "https://pg-cloud.com/Georgia/",
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Georgia"
+    "last_checked": "2026-05-10",
+    "notes": "Georgia Forestry Commission runs PG-Cloud Tree Plotter portal at /Georgia (login-gated). No public ArcGIS state aggregator."
   },
   {
     "name": "Hawaii Division of Forestry and Wildlife",
@@ -157,30 +157,30 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Hawaii"
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services1.arcgis.com/gGHDlz6USftL5Pau/arcgis/rest/services/Tree_Inventory/FeatureServer/0",
+    "row_estimate": 18811,
+    "last_checked": "2026-05-10",
+    "notes": "PARTIAL-STATE via USFS Region 5 \"Tree Inventory\" \u2014 Citizen Forester Tree Inventory for parts of Oahu. 18,811 trees. Public. Related to pg-cloud.com/hawaii Tree Plotter. Fields: Common_Nam. Sample in HI bbox. Not run by HI DOFAW directly but covers state."
   },
   {
-    "name": "Idaho Department of Lands — Forestry",
+    "name": "Idaho Department of Lands \u2014 Forestry",
     "type": "state-forestry",
     "state": "ID",
     "country": "US",
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
+    "license_status": "gated",
+    "data_status": "present",
+    "endpoint": "https://pg-cloud.com/Idaho/",
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Idaho"
+    "last_checked": "2026-05-10",
+    "notes": "Idaho Dept of Lands PG-Cloud Tree Plotter at /Idaho (login-gated). No state-level ArcGIS aggregator. Boise has standalone city service."
   },
   {
-    "name": "Illinois Department of Natural Resources — Forestry",
+    "name": "Illinois Department of Natural Resources \u2014 Forestry",
     "type": "state-forestry",
     "state": "IL",
     "country": "US",
@@ -188,11 +188,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Illinois"
+    "last_checked": "2026-05-10",
+    "notes": "IL DNR Forestry only publishes Volunteer Tree Inventory Naplate (50 trees, single town). No state aggregator."
   },
   {
     "name": "Indiana DNR Division of Forestry",
@@ -202,12 +202,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Indiana"
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services.arcgis.com/tKsJAIiLjd90D5q2/arcgis/rest/services/Bloomington_and_Indianapolis_Tree_Inventories/FeatureServer/0",
+    "row_estimate": 387655,
+    "last_checked": "2026-05-10",
+    "notes": "PARTIAL-STATE AGGREGATOR via IU Environmental Resilience Institute (owner=ugimaps_IU). 387,655 trees across 20 Indiana municipalities incl Bloomington & Indianapolis. Public access. Partner: Davey Resource Group. Fields: SPECIES, GENUS, COMMONNAME. Not run by IN DNR but pools many IN cities."
   },
   {
     "name": "Iowa DNR Forestry Bureau",
@@ -217,12 +217,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Iowa"
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services2.arcgis.com/r6iFVcMJeA4kB4GC/arcgis/rest/services/Iowa_DNR_Urban_Tree_Inventory_Public/FeatureServer/0",
+    "row_estimate": 336085,
+    "last_checked": "2026-05-10",
+    "notes": "STATE AGGREGATOR. Iowa DNR Urban Tree Inventory (Andy.Asell_iowadnr). 336k trees across Iowa municipalities. Public access, fields incl SPECIES/COMMONNAME/TOWN/CITYMANAGE. Sample point in IA bbox. Replaces dozens of city-level scrapes."
   },
   {
     "name": "Kansas Forest Service",
@@ -233,11 +233,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Kansas"
+    "last_checked": "2026-05-10",
+    "notes": "KFS_GIS only publishes Kansas Tree Cities (87 city-marker points) + Tree Campuses (8) \u2014 these are community pins, NOT tree inventories. No state-level tree-point aggregator. Largest KS find: Andover city Street Trees (2,844 trees)."
   },
   {
     "name": "Kentucky Division of Forestry",
@@ -247,12 +247,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Kentucky"
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services.arcgis.com/TosFUe3nXUAksqSj/arcgis/rest/services/Tree_Inventory11/FeatureServer/0",
+    "row_estimate": 9945,
+    "last_checked": "2026-05-10",
+    "notes": "STATE AGGREGATOR. KY Statewide Tree Inventory 1.1 (owner=abe.nielsen_kygis, KY Division of Forestry). 9,945 trees. licenseInfo=\"Public Access, data sharing encouraged\". Fields: Species etc. Sample in KY bbox."
   },
   {
     "name": "Louisiana Department of Agriculture & Forestry",
@@ -263,11 +263,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Louisiana"
+    "last_checked": "2026-05-10",
+    "notes": "No state-level community-tree inventory found for Louisiana Dept of Ag & Forestry on ArcGIS Online."
   },
   {
     "name": "Maine Forest Service",
@@ -278,11 +278,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Maine"
+    "last_checked": "2026-05-10",
+    "notes": "Maine Forest Service Project Canopy provides grants only; no state ArcGIS aggregator. Ellsworth/Beacon (NY false hit) appear at top but are city-level / out-of-state."
   },
   {
     "name": "Maryland Forest Service",
@@ -293,11 +293,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Maryland"
+    "last_checked": "2026-05-10",
+    "notes": "No MD state forestry aggregator. Top scoring \"New Maryland...\" results are from the village of New Maryland, NEW BRUNSWICK Canada (verified via sample lat=45.9, lng=-66.7). Gaithersburg MD (11.5k) is the largest MD city-level find."
   },
   {
     "name": "Massachusetts DCR Bureau of Forestry",
@@ -308,11 +308,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Massachusetts"
+    "last_checked": "2026-05-10",
+    "notes": "MA DCR Bureau of Forestry: only Legacy Tree Nomination Form found, no state inventory. Cambridge & other cities publish individually."
   },
   {
     "name": "Michigan DNR Forest Resources Division",
@@ -323,11 +323,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Michigan"
+    "last_checked": "2026-05-10",
+    "notes": "Michigan DNR Public Forest Inventory is FOREST-STAND polygons (covertype/treatments) not urban trees. FinalTreePoints (1.39M, owner michael.forlenza@nv5.com NV5) appears to be a private consultant dataset \u2014 verify ownership before treating as state aggregator."
   },
   {
     "name": "Minnesota DNR Division of Forestry",
@@ -338,11 +338,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Minnesota"
+    "last_checked": "2026-05-10",
+    "notes": "No MN state aggregator. MnDOT Community Tree Submittal Survey exists. MPRB (Minneapolis Parks) publishes individually."
   },
   {
     "name": "Mississippi Forestry Commission",
@@ -352,15 +352,15 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
+    "license_status": "gated",
+    "data_status": "present",
+    "endpoint": "https://pg-cloud.com/Mississippi/",
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Mississippi"
+    "last_checked": "2026-05-10",
+    "notes": "Mississippi Forestry Commission PG-Cloud Tree Plotter instance exists at /Mississippi (login-gated). No public ArcGIS state aggregator."
   },
   {
-    "name": "Missouri Department of Conservation — Forestry",
+    "name": "Missouri Department of Conservation \u2014 Forestry",
     "type": "state-forestry",
     "state": "MO",
     "country": "US",
@@ -368,11 +368,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Missouri"
+    "last_checked": "2026-05-10",
+    "notes": "MO Dept of Conservation publishes Forestry Management Areas (polygons) only. Heritage Trees (Independence, MO survey) is 17 points. No state aggregator."
   },
   {
     "name": "Montana DNRC Forestry Division",
@@ -382,12 +382,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Montana"
+    "license_status": "unclear",
+    "data_status": "present",
+    "endpoint": "https://services2.arcgis.com/DRQySz3VhPgOv7Bo/arcgis/rest/services/Urban_Forestry/FeatureServer/0",
+    "row_estimate": 62,
+    "last_checked": "2026-05-10",
+    "notes": "MT DNRC publishes \"Urban_Forestry MFAP\" but only 62 point features \u2014 these are COMMUNITY-LEVEL summary points (Town_ID, COMMUNITY, ash%/conditions), not individual tree points. No state-level tree-point aggregator found."
   },
   {
     "name": "Nebraska Forest Service",
@@ -397,12 +397,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
+    "license_status": "gated",
+    "data_status": "present",
+    "endpoint": "https://pg-cloud.com/Nebraska/",
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Nebraska"
+    "last_checked": "2026-05-10",
+    "notes": "Nebraska Forest Service PG-Cloud Tree Plotter at /Nebraska (login-gated). No public ArcGIS aggregator."
   },
   {
     "name": "Nevada Division of Forestry",
@@ -412,12 +412,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Nevada"
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services2.arcgis.com/bDmJlFHtkbwdyhN7/arcgis/rest/services/Clark_County_Schools_Tree_Inventory/FeatureServer/0",
+    "row_estimate": 34165,
+    "last_checked": "2026-05-10",
+    "notes": "NDF (Nevada Division of Forestry) owns three project inventories on AGOL (owner=ndfadmin): UNLV Tree Inventory (3,227) + Clark County Schools Tree Inventory (30,938) + NDF Big Tree Nomination. NOT a true statewide aggregator but only large NDF public tree-point datasets. Also publishes urban-canopy POLYGON layers (Reno/LV/Henderson/Sparks/Carson/N.LV/Pahrump/Lemmon Valley) which are not tree points."
   },
   {
     "name": "New Hampshire Division of Forests and Lands",
@@ -428,11 +428,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for New Hampshire"
+    "last_checked": "2026-05-10",
+    "notes": "NH Division of Forests and Lands does not publish a state tree-point aggregator on ArcGIS."
   },
   {
     "name": "New Jersey Forest Service",
@@ -443,11 +443,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for New Jersey"
+    "last_checked": "2026-05-10",
+    "notes": "NJ Forest Service does not publish a state aggregator. Hudson County TreePlantings_Reporter_2015 (small) and city-level only."
   },
   {
     "name": "New Mexico Forestry Division",
@@ -457,12 +457,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for New Mexico"
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services.arcgis.com/LGtNQDlIZBdntoA9/arcgis/rest/services/NM_PublicTree_Map/FeatureServer/0",
+    "row_estimate": 12431,
+    "last_checked": "2026-05-10",
+    "notes": "STATE AGGREGATOR. New Mexico Community Data Collaborative export of Tree Plotter statewide dataset (https://pg-cloud.com/NewMexico/). 12,431 trees. Public AGOL feature service. Fields: CITY, SPECIES_LA, SPECIES_01. May 2019 snapshot \u2014 check for newer."
   },
   {
     "name": "New York DEC Division of Lands and Forests",
@@ -473,11 +473,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for New York"
+    "last_checked": "2026-05-10",
+    "notes": "NY DEC does not publish a state community-tree aggregator. NYC publishes Street Tree Census individually (~600k+ trees \u2014 separate row). Beacon NY (1,128) is city-level."
   },
   {
     "name": "North Carolina Forest Service",
@@ -488,11 +488,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for North Carolina"
+    "last_checked": "2026-05-10",
+    "notes": "NC Forest Service: only Tree City USA Cities map (city markers) found. No state tree-point aggregator."
   },
   {
     "name": "North Dakota Forest Service",
@@ -503,11 +503,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for North Dakota"
+    "last_checked": "2026-05-10",
+    "notes": "NDFS (grace.ivesdal_ndfs) publishes \"Tree Equity Grant Map\" (2 polygons) and Community Forestry Grant Management Survey \u2014 NO state-level tree-point inventory. pg-cloud.com/SouthDakota and /NorthDakota exist (Tree Plotter) but login-gated."
   },
   {
     "name": "Ohio Division of Forestry",
@@ -518,11 +518,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Ohio"
+    "last_checked": "2026-05-10",
+    "notes": "Ohio Division of Forestry does not publish a state aggregator. AudubonInterviewRF \"Tree Inventory Public\" (5k) appears to be Green Lawn Cemetery in Columbus."
   },
   {
     "name": "Oklahoma Forestry Services",
@@ -533,11 +533,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Oklahoma"
+    "last_checked": "2026-05-10",
+    "notes": "OK Forestry Services (owner=CMask_OKForestry) publishes State Forest Timber Tracts and FIA dashboards only \u2014 no urban tree-point aggregator. Top score was actually Utah dataset matching the \"OK\" search term."
   },
   {
     "name": "Oregon Department of Forestry",
@@ -547,12 +547,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
+    "license_status": "gated",
+    "data_status": "present",
+    "endpoint": "https://pg-cloud.com/Oregon/",
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Oregon"
+    "last_checked": "2026-05-10",
+    "notes": "Oregon Dept of Forestry PG-Cloud Tree Plotter instance at /Oregon (login-gated). No public ArcGIS state aggregator. Many OR cities (Tualatin 11k, Portland) on AGOL individually."
   },
   {
     "name": "Pennsylvania DCNR Bureau of Forestry",
@@ -563,11 +563,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Pennsylvania"
+    "last_checked": "2026-05-10",
+    "notes": "PA DCNR TreeVitalize is grant program; no state tree-point aggregator on ArcGIS. Harrisburg (8.6k via emrubin_COHBG) and DVRPC screening tool are top finds."
   },
   {
     "name": "Rhode Island DEM Division of Forest Environment",
@@ -578,11 +578,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Rhode Island"
+    "last_checked": "2026-05-10",
+    "notes": "RI DEM does not publish a state aggregator on ArcGIS. TreeEquityScore (DOA) is a polygon overlay."
   },
   {
     "name": "South Carolina Forestry Commission",
@@ -593,11 +593,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for South Carolina"
+    "last_checked": "2026-05-10",
+    "notes": "SC Forestry Commission does not publish a state tree-point aggregator on ArcGIS Online."
   },
   {
     "name": "South Dakota Resource Conservation & Forestry",
@@ -607,12 +607,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
+    "license_status": "gated",
+    "data_status": "present",
+    "endpoint": "https://pg-cloud.com/SouthDakota/",
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for South Dakota"
+    "last_checked": "2026-05-10",
+    "notes": "South Dakota Resource Conservation & Forestry PG-Cloud Tree Plotter at /SouthDakota (login-gated). No public ArcGIS state aggregator."
   },
   {
     "name": "Tennessee Division of Forestry",
@@ -623,11 +623,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Tennessee"
+    "last_checked": "2026-05-10",
+    "notes": "TN Division of Forestry does not publish a state aggregator. Chattanooga TreeCanopy is polygons only."
   },
   {
     "name": "Texas A&M Forest Service",
@@ -638,11 +638,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Texas"
+    "last_checked": "2026-05-10",
+    "notes": "Texas A&M Forest Service does not publish a statewide community-tree-point aggregator on ArcGIS. Austin Downtown Tree Inventory (7.3k), Allen city Trees (10.8k) are city-level."
   },
   {
     "name": "Utah FFSL (Forestry, Fire and State Lands)",
@@ -667,12 +667,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Vermont"
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://anrmaps.vermont.gov/arcgis/rest/services/Open_Data/OPENDATA_ANR_ECOLOGIC_SP_NOCACHE_v1/MapServer/40",
+    "row_estimate": 31904,
+    "last_checked": "2026-05-10",
+    "notes": "STATE AGGREGATOR. Vermont ANR/VT Urban & Community Forestry Program \"Municipal Tree Inventory\" (owner=vtanrgis). 31,904 trees. Hosted on anrmaps.vermont.gov Open_Data service. Fields: TOWN, SPECIES, GreenspaceName, ATTNAME. Sample in VT bbox."
   },
   {
     "name": "Virginia Department of Forestry",
@@ -683,11 +683,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Virginia"
+    "last_checked": "2026-05-10",
+    "notes": "VA Dept of Forestry does not publish a state aggregator. Richmond DPW (brad.duplantis@rva.gov_cor) publishes 121k trees but it is city-level Richmond only."
   },
   {
     "name": "Washington DNR Forest Resources",
@@ -698,11 +698,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Washington"
+    "last_checked": "2026-05-10",
+    "notes": "WA DNR does not publish a state community-tree aggregator. Tacoma Community Trees (201) is small/polygon. Top finds spill to DC + Tacoma."
   },
   {
     "name": "West Virginia Division of Forestry",
@@ -713,11 +713,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for West Virginia"
+    "last_checked": "2026-05-10",
+    "notes": "WV Division of Forestry does not publish a state tree-point aggregator on ArcGIS Online."
   },
   {
     "name": "Wisconsin DNR Division of Forestry",
@@ -742,12 +742,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Wyoming"
+    "license_status": "permissive",
+    "data_status": "present",
+    "endpoint": "https://services1.arcgis.com/i5xRZLABP6oUOcld/arcgis/rest/services/CommunityTreeInventoryDataCollection/FeatureServer/0",
+    "row_estimate": 1324,
+    "last_checked": "2026-05-10",
+    "notes": "STATE AGGREGATOR. Wyoming State Forestry Division (owner=jacob.mares_WSFD) \"Community Tree Inventory Data Collection\" + Laramie_StreetTrees + Laramie_ParkTrees + Laramie_OtherTrees layers. Public access. Combined ~6k trees. Fields: ProjectName_LocationDescription, CommonName_SciName_SpCode."
   },
   {
     "name": "DC DDOT Urban Forestry Division",
@@ -773,11 +773,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Statewide forestry agency for Puerto Rico"
+    "last_checked": "2026-05-10",
+    "notes": "No PR DRNA tree-point aggregator found on ArcGIS Online. Only generic Natural Features Inventory Map (TC_Intern) appears."
   },
   {
     "name": "New York, NY",
@@ -8618,14 +8618,14 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "last_checked": "2026-05-10",
+    "notes": "No Ontario MNRF community-tree aggregator found. Top results are Lakehead University student-project tree inventories near Thunder Bay (~10 trees each)."
   },
   {
-    "name": "Quebec Ministère des Forêts, de la Faune et des Parcs",
+    "name": "Quebec Minist\u00e8re des For\u00eats, de la Faune et des Parcs",
     "type": "state-forestry",
     "state": "QC",
     "country": "CA",
@@ -8633,11 +8633,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "last_checked": "2026-05-10",
+    "notes": "No Quebec province-level tree aggregator found on ArcGIS Online."
   },
   {
     "name": "British Columbia Ministry of Forests",
@@ -8648,11 +8648,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "last_checked": "2026-05-10",
+    "notes": "No BC Ministry of Forests urban-tree aggregator found. District of North Vancouver StreetTrees (192) was top hit, city-level."
   },
   {
     "name": "Alberta Forestry and Parks",
@@ -8663,14 +8663,14 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "last_checked": "2026-05-10",
+    "notes": "No Alberta-level community tree aggregator found. Selkirk MB Street Tree Planting Priority and Strathcona County TIMS are top hits, both local and POLYLINE (street segments, not tree points)."
   },
   {
-    "name": "Saskatchewan Ministry of Environment — Forest Service",
+    "name": "Saskatchewan Ministry of Environment \u2014 Forest Service",
     "type": "state-forestry",
     "state": "SK",
     "country": "CA",
@@ -8678,14 +8678,14 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "last_checked": "2026-05-10",
+    "notes": "No Saskatchewan province aggregator found. Weyburn city (7,969) is largest SK tree-point find."
   },
   {
-    "name": "Manitoba Sustainable Development — Forestry",
+    "name": "Manitoba Sustainable Development \u2014 Forestry",
     "type": "state-forestry",
     "state": "MB",
     "country": "CA",
@@ -8693,11 +8693,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "last_checked": "2026-05-10",
+    "notes": "No Manitoba province aggregator found on ArcGIS Online."
   },
   {
     "name": "Nova Scotia Department of Natural Resources and Renewables",
@@ -8708,11 +8708,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "last_checked": "2026-05-10",
+    "notes": "No Nova Scotia province aggregator found."
   },
   {
     "name": "New Brunswick Department of Natural Resources and Energy Development",
@@ -8722,12 +8722,12 @@
     "population": null,
     "already_done": false,
     "already_done_via": null,
-    "license_status": "unknown",
-    "data_status": "unknown",
-    "endpoint": null,
-    "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "license_status": "unclear",
+    "data_status": "present",
+    "endpoint": "https://services8.arcgis.com/Ekf399qTIN4dSA3Z/arcgis/rest/services/South_Central_Peninsula_Tree_Inventory_2017/FeatureServer/0",
+    "row_estimate": 3000,
+    "last_checked": "2026-05-10",
+    "notes": "NB has \"South Central Peninsula Tree Inventory 2017\" (2,621 trees) + \"Lower West Side Tree Inventory 2018\" (379) from ACAP Saint John \u2014 city-level inventories, not provincial. No NB DNR state-level aggregator. Village of New Maryland NB also has 574 tree points."
   },
   {
     "name": "Newfoundland and Labrador Department of Fisheries, Forestry and Agriculture",
@@ -8738,11 +8738,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "last_checked": "2026-05-10",
+    "notes": "No Newfoundland/Labrador province aggregator found."
   },
   {
     "name": "Prince Edward Island Forests, Fish and Wildlife Division",
@@ -8753,11 +8753,11 @@
     "already_done": false,
     "already_done_via": null,
     "license_status": "unknown",
-    "data_status": "unknown",
+    "data_status": "absent",
     "endpoint": null,
     "row_estimate": null,
-    "last_checked": null,
-    "notes": "Provincial forestry agency"
+    "last_checked": "2026-05-10",
+    "notes": "No PEI province community-tree aggregator found."
   },
   {
     "name": "Arnold Arboretum (Harvard University)",

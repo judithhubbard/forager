@@ -737,7 +737,14 @@
   ],
   "Prunus dulcis": [
     {
-      "name": "Almond",
+      "name": "Almond — CA commercial",
+      "members": [
+        "Prunus dulcis"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Almond — cold-hardy",
       "members": [
         "Prunus dulcis"
       ],
@@ -746,7 +753,14 @@
   ],
   "Annona cherimola": [
     {
-      "name": "Cherimoya",
+      "name": "Cherimoya (late-year)",
+      "members": [
+        "Annona cherimola"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Cherimoya (early-year)",
       "members": [
         "Annona cherimola"
       ],
@@ -773,7 +787,14 @@
   ],
   "Psidium guajava": [
     {
-      "name": "Common guava",
+      "name": "Common guava (fall/winter)",
+      "members": [
+        "Psidium guajava"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Common guava (early-year)",
       "members": [
         "Psidium guajava"
       ],
@@ -838,7 +859,14 @@
   ],
   "Macadamia tetraphylla": [
     {
-      "name": "Macadamia (rough-shell)",
+      "name": "Macadamia (rough-shell) late-year",
+      "members": [
+        "Macadamia tetraphylla"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Macadamia (rough-shell) early-year",
       "members": [
         "Macadamia tetraphylla"
       ],
@@ -847,7 +875,14 @@
   ],
   "Citrus medica": [
     {
-      "name": "Citron",
+      "name": "Citron (late-year)",
+      "members": [
+        "Citrus medica"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Citron (early-year)",
       "members": [
         "Citrus medica"
       ],
@@ -856,7 +891,16 @@
   ],
   "Fortunella japonica": [
     {
-      "name": "Kumquat",
+      "name": "Kumquat (early-year)",
+      "members": [
+        "Fortunella japonica",
+        "Fortunella margarita",
+        "Citrus japonica"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Kumquat (late-year)",
       "members": [
         "Fortunella japonica",
         "Fortunella margarita",
@@ -867,7 +911,16 @@
   ],
   "Fortunella margarita": [
     {
-      "name": "Kumquat",
+      "name": "Kumquat (early-year)",
+      "members": [
+        "Fortunella japonica",
+        "Fortunella margarita",
+        "Citrus japonica"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Kumquat (late-year)",
       "members": [
         "Fortunella japonica",
         "Fortunella margarita",
@@ -878,7 +931,16 @@
   ],
   "Citrus japonica": [
     {
-      "name": "Kumquat",
+      "name": "Kumquat (early-year)",
+      "members": [
+        "Fortunella japonica",
+        "Fortunella margarita",
+        "Citrus japonica"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Kumquat (late-year)",
       "members": [
         "Fortunella japonica",
         "Fortunella margarita",
@@ -1190,15 +1252,6 @@
       "stage": "leaf"
     }
   ],
-  "Pteridium aquilinum": [
-    {
-      "name": "Bracken fern (fiddleheads)",
-      "members": [
-        "Pteridium aquilinum"
-      ],
-      "stage": "shoot"
-    }
-  ],
   "Smilax sp.": [
     {
       "name": "Greenbrier (spring shoots)",
@@ -1297,6 +1350,14 @@
         "Typha angustifolia"
       ],
       "stage": "root_dig"
+    },
+    {
+      "name": "Cattail (winter rhizome)",
+      "members": [
+        "Typha latifolia",
+        "Typha angustifolia"
+      ],
+      "stage": "root_dig"
     }
   ],
   "Typha angustifolia": [
@@ -1318,6 +1379,14 @@
     },
     {
       "name": "Cattail (fall rhizome)",
+      "members": [
+        "Typha latifolia",
+        "Typha angustifolia"
+      ],
+      "stage": "root_dig"
+    },
+    {
+      "name": "Cattail (winter rhizome)",
       "members": [
         "Typha latifolia",
         "Typha angustifolia"
@@ -1682,7 +1751,14 @@
   ],
   "Citrus sinensis": [
     {
-      "name": "Sweet orange",
+      "name": "Sweet orange (early-year)",
+      "members": [
+        "Citrus sinensis"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Sweet orange (late-year)",
       "members": [
         "Citrus sinensis"
       ],
@@ -1691,7 +1767,14 @@
   ],
   "Citrus limon": [
     {
-      "name": "Lemon",
+      "name": "Lemon (early-year)",
+      "members": [
+        "Citrus limon"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Lemon (late-year)",
       "members": [
         "Citrus limon"
       ],
@@ -1700,7 +1783,14 @@
   ],
   "Citrus reticulata": [
     {
-      "name": "Mandarin orange",
+      "name": "Mandarin orange (late-year)",
+      "members": [
+        "Citrus reticulata"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Mandarin orange (early-year)",
       "members": [
         "Citrus reticulata"
       ],
@@ -1709,7 +1799,14 @@
   ],
   "Citrus paradisi": [
     {
-      "name": "Grapefruit",
+      "name": "Grapefruit (early-year)",
+      "members": [
+        "Citrus paradisi"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Grapefruit (late-year)",
       "members": [
         "Citrus paradisi"
       ],
@@ -1745,7 +1842,14 @@
   ],
   "Persea americana": [
     {
-      "name": "Avocado",
+      "name": "Avocado (early-year)",
+      "members": [
+        "Persea americana"
+      ],
+      "stage": "ripe"
+    },
+    {
+      "name": "Avocado (late-year)",
       "members": [
         "Persea americana"
       ],

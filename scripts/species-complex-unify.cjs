@@ -54,9 +54,16 @@ const COMPLEXES = [
   {
     name: 'Corylus (hazelnut) complex',
     members: ['Corylus americana', 'Corylus cornuta', 'Corylus avellana', 'Corylus sp.'],
+    // Reduced shift_per_half_zone -7 → -3. The earlier -7 enforced a
+    // 98-day cold-to-warm spread (Oct 9 in 3a → Jul 3 in 10a) which
+    // doesn't match the iNat empirical (peaks 197-220 across zones
+    // 3a-8a, ~20 days of zonal spread) nor any cited source. Wild
+    // American/Beaked hazelnut ripens Aug-Sep across its entire native
+    // range — gradient is mild, not strongly heat-driven. PNW
+    // commercial timing handled by the regional anchor below.
     anchor_zone: '6a',
     anchor_peak: 240,           // Aug 27
-    shift_per_half_zone: -7,    // heat-driven across cold/native range
+    shift_per_half_zone: -3,
     half_window: 18,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'ripe',
@@ -138,40 +145,46 @@ const COMPLEXES = [
   },
 
   // Pawpaw — anchored to KSU Pawpaw Program + Ohio State Extension:
-  // peak in zone 6a is mid-September (~Sep 15 / DOY 258). Empirical
-  // iNat slope -10.9 d/half-zone (n=8) — pawpaw has a *steeper*
-  // gradient than typical heat-driven defaults (late-season fruit
-  // ripening gated on cumulative summer GDD).
+  // peak in zone 6a is mid-September (~Sep 15 / DOY 258). Earlier
+  // -10 shift was based on a stale iNat slope claim; per-zone iNat
+  // peaks across 5b-8b cluster at 185-230 (Jul 4 - Aug 18) — a
+  // gradient of ~5-6 d/half-zone, not 10. Reduced shift -10 → -5.
+  // Target zones narrowed to 5a-8b — pawpaw's real native + cultivated
+  // range; iNat 9a "May" peaks were almost certainly flowering, not
+  // ripe fruit.
   {
     name: 'Pawpaw',
     members: ['Asimina triloba'],
     anchor_zone: '6a',
     anchor_peak: 258,           // Sep 15
-    shift_per_half_zone: -10,   // empirical iNat -10.9 (steep)
+    shift_per_half_zone: -5,
     half_window: 21,
-    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a'],
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'ripe',
     source_name: 'Pawpaw (KSU Pawpaw Program + Ohio State Extension)',
     source_url: 'https://www.kysu.edu/academics/college-acs/school-of-aens/pawpaw/',
-    summary: 'Pawpaw (Asimina triloba): heat-driven harvest, peak in zone 6a mid-September. iNat-empirical gradient is steep (-10 d/half-zone) reflecting GDD-gated late-season fruit.'
+    summary: 'Pawpaw (Asimina triloba): heat-driven harvest, peak in zone 6a mid-September. Mild gradient (~5 d/half-zone) across native range zones 5a-8b. Fruits poorly outside this band — exclude 9a+ from the synth.'
   },
 
   // Allegheny chinkapin — heat-driven (NOT frost-driven; cited sources
   // describe Aug-Sep harvest with no requirement for first frost).
-  // Empirical iNat slope -2.6 d/half-zone (n=6); chinkapin is fairly
-  // latitude-tolerant within its range. Anchored at zone 7a peak Sep 29.
+  // Re-anchored 2026-05-10: peak shifted Sep 29 → Sep 15 in zone 7a so
+  // the cited Aug-Sep window actually matches the math (was extending
+  // to Oct 20 — three weeks past the cited season). Empirical iNat
+  // slope -2.6 d/half-zone; chinkapin is fairly latitude-tolerant
+  // within its range. Half_window 21 → 24 to allow early-August onset.
   {
     name: 'Allegheny chinkapin',
     members: ['Castanea pumila'],
     anchor_zone: '7a',
-    anchor_peak: 272,           // Sep 29
+    anchor_peak: 258,           // Sep 15
     shift_per_half_zone: -3,    // empirical iNat -2.6
-    half_window: 21,
+    half_window: 24,
     target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a'],
     stage: 'ripe',
     source_name: 'Allegheny chinkapin (Eat The Weeds + USDA Silvics + NC State Extension)',
     source_url: 'https://www.eattheweeds.com/chinkapin-edible-and-easy-to-find-2/',
-    summary: 'Allegheny chinkapin (Castanea pumila): heat-driven Aug-Sep harvest across the species range. Anchor 7a peak Sep 29; iNat-empirical shallow gradient (-3 d/half-zone).'
+    summary: 'Allegheny chinkapin (Castanea pumila): heat-driven Aug-Sep harvest across the species range. Anchor 7a peak Sep 15; iNat-empirical shallow gradient (-3 d/half-zone).'
   },
 
   // Fox grape — Cornell Cooperative Extension + Concord-type harvest
@@ -367,9 +380,9 @@ const COMPLEXES = [
     half_window: 30,            // wide: leaves harvestable for weeks
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'leaf',
-    source_name: 'Common plantain leaves (foraging consensus)',
-    source_url: 'https://practicalselfreliance.com/foraging-plantain/',
-    summary: 'Common plantain (Plantago major) leaves: young tender leaves preferred (mid-Apr to early-Jun in 6a); becomes tougher / stringier through summer but still edible cooked. The seed-head stage is a separate ripe-stage row (peak Sep).'
+    source_name: 'Common plantain (Eat The Weeds + Practical Self Reliance + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/white-mans-little-foot-dwarf-plantain-2/',
+    summary: 'Common plantain (Plantago major): broad oval rosette leaves with prominent parallel veins and elastic "strings" inside the leafstalk when torn — the field-ID giveaway. Harvest young tender leaves mid-Apr through early-Jun in 6a; older leaves get fibrous and stringy but stay edible cooked (chop fine, sauté or braise like collards). Native peoples called the European P. major "white man\'s footprint" — it followed colonial trails. Traditional uses: poultice for insect bites/stings/scrapes (crushed leaf draws and soothes), antimicrobial tea, and the famous bushcraft band-aid. Seeds (separate ripe-stage row) yield psyllium-style mucilage. No serious toxicity; avoid roadside plants (heavy metals).'
   },
 
   // American persimmon (Diospyros virginiana) — heat-driven late-summer
@@ -540,9 +553,9 @@ const COMPLEXES = [
     half_window: 30,            // wide: leaves harvestable for weeks
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'leaf',
-    source_name: 'Dandelion leaves (foraging consensus)',
-    source_url: 'https://practicalselfreliance.com/foraging-dandelion/',
-    summary: 'Dandelion (Taraxacum officinale) leaves: tender spring leaves preferred (mid-Apr in 6a); becomes bitter post-flowering. Wide harvest window. Mild heat-driven gradient.'
+    source_name: 'Dandelion (Eat The Weeds + Forager Chef + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/dandelions-hear-them-roar/',
+    summary: 'Dandelion (Taraxacum officinale) leaves: deeply-toothed rosette ("dent-de-lion" = lion\'s tooth), single hollow flower stalk with white latex when broken — distinguishes from look-alike cat\'s ear and hawkweed which have branched, hairy stalks. Harvest pre-bud rosette leaves mid-Apr in 6a; intensely bitter after flowering (still usable, blanch and refresh in cold water to mellow). Traditional uses span the Old World: Italian/Mediterranean wild-greens sauté with garlic and oil, French pissenlit salad with bacon, German Löwenzahnsalat, dandelion wine from the petals (yellow only — green calyx is bitter), roasted-root coffee substitute, spring blood-cleanser tonic. High in vitamins A, C, K, calcium, potassium. Diuretic (French nickname pissenlit = "wet the bed"); generally safe but avoid heavy use if on lithium or potassium-sparing diuretics.'
   },
 
   // ── Edible greens batch 2026-05-10 ──
@@ -766,19 +779,30 @@ const COMPLEXES = [
     summary: 'Almond (Prunus dulcis) — cold-hardy cultivars (Hall\'s Hardy, Javid\'s Iranian, Seaside Primorskiy) in NE/PA/Cornell zones 5-7. Sep-Oct harvest; slower-maturing varieties, NOT a heat-shifted CA timeline.'
   },
 
-  // Cherimoya (Annona cherimola) — subtropical / tropical fruit. Peak
-  // harvest Nov-May depending on cultivar; wide window. Anchor 10a peak
-  // Jan 30 (DOY 30); use small mild shift since equatorial gradient is
-  // microclimate-driven.
+  // Cherimoya (Annona cherimola) — subtropical, cited Nov-May. The
+  // framework rows do not wrap year-end, so the window is split into
+  // two rows: late-year (Nov-Dec) and early-year (Jan-May). The Math.max
+  // clamp on start_doy was previously losing the entire Nov-Dec half
+  // of the cited window.
   {
-    name: 'Cherimoya',
+    name: 'Cherimoya (late-year)',
     members: ['Annona cherimola'],
-    anchor_zone: '10a', anchor_peak: 30, shift_per_half_zone: -2, half_window: 90,
+    anchor_zone: '10a', anchor_peak: 335, shift_per_half_zone: -2, half_window: 30,
     target_zones: ['9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
-    source_name: 'Cherimoya (UC ANR + California Rare Fruit Growers)',
+    source_name: 'Cherimoya late-year (UC ANR + California Rare Fruit Growers)',
     source_url: 'https://www.crfg.org/pubs/ff/cherimoya.html',
-    summary: 'Cherimoya (Annona cherimola): subtropical evergreen, harvest Nov to May in coastal CA; wide window reflects cultivar spread.'
+    summary: 'Cherimoya (Annona cherimola) Nov-Dec — first half of the cited Nov-May harvest window. Subtropical evergreen, coastal CA cultivation.'
+  },
+  {
+    name: 'Cherimoya (early-year)',
+    members: ['Annona cherimola'],
+    anchor_zone: '10a', anchor_peak: 60, shift_per_half_zone: -2, half_window: 75,
+    target_zones: ['9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Cherimoya early-year (UC ANR + California Rare Fruit Growers)',
+    source_url: 'https://www.crfg.org/pubs/ff/cherimoya.html',
+    summary: 'Cherimoya (Annona cherimola) Jan-May — second half of the cited Nov-May harvest window. Peaks late Feb / early Mar in coastal CA.'
   },
 
   // ── Tropical / Subtropical batch 2026-05-10 (zone 8b-11b) ──
@@ -810,19 +834,30 @@ const COMPLEXES = [
       { zones: ['10a'], source: 'CRFG lychee', url: 'https://crfg.org/homepage/library/fruitfacts/lychee/', summary: 'Coastal S. CA: Jun-Jul, later than FL.', peak_doy: 182, half_window: 28 }
     ]
   },
+  // Common guava: bimodal in FL (main Aug-Oct + light spring Feb-Mar)
+  // and coastal CA crosses year-end (Oct-Jan). Same split pattern as
+  // cherimoya and cattail-rhizome: framework rows can't wrap year-end,
+  // so two rows cover the main/late-year season and the early-year
+  // shoulder season respectively.
   {
-    name: 'Common guava',
+    name: 'Common guava (fall/winter)',
     members: ['Psidium guajava'],
-    anchor_zone: '10a', anchor_peak: 258, shift_per_half_zone: -3, half_window: 60,
+    anchor_zone: '10a', anchor_peak: 290, shift_per_half_zone: -3, half_window: 75,
     target_zones: ['9b','10a','10b','11a','11b'],
     stage: 'ripe',
-    source_name: 'Common guava (UF/IFAS + CRFG)',
+    source_name: 'Common guava fall/winter (UF/IFAS + CRFG)',
     source_url: 'https://gardeningsolutions.ifas.ufl.edu/plants/edibles/fruits/guava/',
-    summary: 'Common guava: main FL crop Aug-Oct, light spring crop Feb-Mar; coastal CA Oct-Jan.',
-    regional_anchors: [
-      { zones: ['10a','10b','11a','11b'], source: 'UF/IFAS Gardening Solutions', url: 'https://gardeningsolutions.ifas.ufl.edu/plants/edibles/fruits/guava/', summary: 'FL: main Aug-Oct, small spring crop Feb-Mar.', peak_doy: 258, half_window: 60 },
-      { zones: ['9b','10a'], source: 'CRFG guava', url: 'https://crfg.org/homepage/library/fruitfacts/guava-tropical/', summary: 'Coastal S. CA: fall/winter Oct-Jan.', peak_doy: 320, half_window: 50 }
-    ]
+    summary: 'Common guava (Psidium guajava) main season: FL Aug-Oct, coastal CA Oct-Dec. Drops fruit progressively from late summer through year-end.'
+  },
+  {
+    name: 'Common guava (early-year)',
+    members: ['Psidium guajava'],
+    anchor_zone: '10a', anchor_peak: 45, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Common guava early-year (UF/IFAS + CRFG)',
+    source_url: 'https://crfg.org/homepage/library/fruitfacts/guava-tropical/',
+    summary: 'Common guava (Psidium guajava) early-year shoulder: FL light spring crop Feb-Mar, coastal CA late-season fruit drop into Jan-Feb. Smaller than the fall main crop.'
   },
   {
     name: 'Pineapple guava',
@@ -894,44 +929,64 @@ const COMPLEXES = [
     ]
   },
   {
-    name: 'Macadamia (rough-shell)',
+    name: 'Macadamia (rough-shell) late-year',
     members: ['Macadamia tetraphylla'],
-    anchor_zone: '10a', anchor_peak: 335, shift_per_half_zone: -3, half_window: 75,
+    anchor_zone: '10a', anchor_peak: 335, shift_per_half_zone: -3, half_window: 45,
     target_zones: ['9b','10a','10b'],
     stage: 'ripe',
-    source_name: 'Macadamia tetraphylla (Growables + CRFG)',
+    source_name: 'Macadamia tetraphylla late-year (Growables + CRFG)',
     source_url: 'https://www.growables.org/information/TropicalFruit/MacadamiaRough.htm',
-    summary: 'Rough-shell macadamia: CA nut-fall Nov-Apr; some cultivars have compact 6-8 wk window.',
-    regional_anchors: [
-      { zones: ['9b','10a','10b'], source: 'Growables M. tetraphylla', url: 'https://www.growables.org/information/TropicalFruit/MacadamiaRough.htm', summary: 'S. CA: nut-fall Nov-Apr, peak Dec-Feb.', peak_doy: 335, half_window: 75 }
-    ]
+    summary: 'Rough-shell macadamia Nov-Dec: opening half of the cited Nov-Apr CA nut-fall window. Pair with the Jan-Apr early-year row.'
   },
   {
-    name: 'Citron',
+    name: 'Macadamia (rough-shell) early-year',
+    members: ['Macadamia tetraphylla'],
+    anchor_zone: '10a', anchor_peak: 50, shift_per_half_zone: -3, half_window: 60,
+    target_zones: ['9b','10a','10b'],
+    stage: 'ripe',
+    source_name: 'Macadamia tetraphylla early-year (Growables + CRFG)',
+    source_url: 'https://www.growables.org/information/TropicalFruit/MacadamiaRough.htm',
+    summary: 'Rough-shell macadamia Jan-Apr: closing half of the cited Nov-Apr CA nut-fall window.'
+  },
+  {
+    name: 'Citron (late-year)',
     members: ['Citrus medica'],
-    anchor_zone: '9b', anchor_peak: 349, shift_per_half_zone: -2, half_window: 75,
+    anchor_zone: '9b', anchor_peak: 335, shift_per_half_zone: -2, half_window: 45,
     target_zones: ['9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
-    source_name: 'Citron (UC Riverside Citrus Variety Collection + Missouri Botanical)',
+    source_name: 'Citron late-year (UC Riverside Citrus Variety Collection)',
     source_url: 'https://citrusvariety.ucr.edu/crc3768',
-    summary: "Citron incl. Buddha's Hand: main Nov-Jan in CA/FL, scattered fruit year-round if frost-free.",
-    regional_anchors: [
-      { zones: ['9b','10a','10b'], source: 'UC Riverside CRC Buddha\'s Hand', url: 'https://citrusvariety.ucr.edu/crc3768', summary: 'CA: citron + Buddha\'s Hand Nov-Jan main, year-round secondary.', peak_doy: 349, half_window: 75 }
-    ]
+    summary: "Citron incl. Buddha's Hand Nov-Dec: opening half of the cited Nov-Mar window in CA/FL."
   },
   {
-    name: 'Kumquat',
+    name: 'Citron (early-year)',
+    members: ['Citrus medica'],
+    anchor_zone: '9b', anchor_peak: 45, shift_per_half_zone: -2, half_window: 45,
+    target_zones: ['9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Citron early-year (UC Riverside Citrus Variety Collection)',
+    source_url: 'https://citrusvariety.ucr.edu/crc3768',
+    summary: "Citron Jan-Mar: closing half of the cited Nov-Mar window. Scattered year-round fruiting in frost-free locations."
+  },
+  {
+    name: 'Kumquat (early-year)',
     members: ['Fortunella japonica', 'Fortunella margarita', 'Citrus japonica'],
-    anchor_zone: '9b', anchor_peak: 1, shift_per_half_zone: -3, half_window: 75,
+    anchor_zone: '9b', anchor_peak: 32, shift_per_half_zone: -3, half_window: 60,
     target_zones: ['8b','9a','9b','10a','10b','11a'],
     stage: 'ripe',
-    source_name: 'Kumquat (UF/IFAS FR368)',
+    source_name: 'Kumquat early-year (UF/IFAS FR368)',
     source_url: 'https://ask.ifas.ufl.edu/publication/FR368',
-    summary: 'Kumquat: FL Oct-Mar, CA Nov-Apr; peak Jan. Cold-hardy citrus relative.',
-    regional_anchors: [
-      { zones: ['8b','9a','9b'], source: 'UF/IFAS FR368', url: 'https://ask.ifas.ufl.edu/publication/FR368', summary: 'FL: Oct maturity through Mar.', peak_doy: 1, half_window: 75 },
-      { zones: ['10a','10b','11a'], source: 'UF/IFAS FR368', url: 'https://ask.ifas.ufl.edu/publication/FR368', summary: 'Warmest zones push later into spring.', peak_doy: 32, half_window: 75 }
-    ]
+    summary: 'Kumquat Jan-Mar (FL) through Apr (CA): closing half of the Oct-Apr cropping window. Cold-hardy citrus relative; peak Jan.'
+  },
+  {
+    name: 'Kumquat (late-year)',
+    members: ['Fortunella japonica', 'Fortunella margarita', 'Citrus japonica'],
+    anchor_zone: '9b', anchor_peak: 320, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['8b','9a','9b','10a','10b','11a'],
+    stage: 'ripe',
+    source_name: 'Kumquat late-year (UF/IFAS FR368)',
+    source_url: 'https://ask.ifas.ufl.edu/publication/FR368',
+    summary: 'Kumquat Oct-Dec: opening half of the FL Oct-Mar cropping window. Cold-hardy citrus.'
   },
   {
     name: 'Sour orange',
@@ -1050,7 +1105,9 @@ const COMPLEXES = [
     name: 'Ussurian pear',
     members: ['Pyrus ussuriensis'],
     // Cold-hardy Asian pear, ornamental in US zones 3-7.
-    anchor_zone: '5b', anchor_peak: 244, shift_per_half_zone: -3, half_window: 25,
+    // Shifted peak Sep 1 → Sep 15 + narrowed half_window 25 → 21 so the
+    // window stays within the cited Sep-Oct range (was starting Aug 7).
+    anchor_zone: '5b', anchor_peak: 258, shift_per_half_zone: -3, half_window: 21,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a'],
     stage: 'ripe',
     source_name: 'Ussurian pear (Missouri Botanical Garden + Wikipedia)',
@@ -1109,7 +1166,10 @@ const COMPLEXES = [
     members: ['Allium canadense'],
     // Native US onion. Leaves spring + early summer, bulbs after leaves
     // die back in late summer.
-    anchor_zone: '6a', anchor_peak: 110, shift_per_half_zone: -3, half_window: 45,
+    // Shifted peak Apr 20 → May 1 + narrowed half_window 45 → 35 so the
+    // window aligns with the cited Apr-Jun leaf-harvest range (was
+    // starting Mar 6 — too early for most zones).
+    anchor_zone: '6a', anchor_peak: 121, shift_per_half_zone: -3, half_window: 35,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'leaf',
     source_name: 'Wild onion (USDA Silvics + Eat The Weeds)',
@@ -1217,19 +1277,36 @@ const COMPLEXES = [
     anchor_zone: '6a', anchor_peak: 176, shift_per_half_zone: -3, half_window: 14,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
     stage: 'flower_harvest',
-    source_name: 'Cattail pollen (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Typha',
-    summary: 'Cattail pollen: tap mature spike into a bag, shake out. Brief 1-2 week window in late June (zone 6a).'
+    source_name: 'Cattail pollen (Eat The Weeds + Forager Chef + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/cattails-a-survival-dinner/',
+    summary: 'Cattail pollen (Typha latifolia / angustifolia): the upper male spike turns mustard-yellow and dusty in late June (zone 6a) — bend the head into a paper bag and shake/tap to collect a fine bright-yellow flour. Brief 1-2 week window. Use 50/50 with wheat flour in pancakes, cornbread, or biscuits for a nutty, slightly sweet, vitamin-rich (carotenoids, protein) bake. Euell Gibbons called cattails the "supermarket of the swamp." T. latifolia has the male and female spikes touching; T. angustifolia has a visible gap between them — either species\' pollen is usable. IDENTIFICATION CRITICAL: do not confuse young vegetative cattails with iris (Iris pseudacorus / I. versicolor) — iris leaves are flat-faced and arise from a fan-shaped base; cattail leaves are round-backed and arise rounded. Iris is toxic.'
   },
   {
     name: 'Cattail (fall rhizome)',
     members: ['Typha latifolia', 'Typha angustifolia'],
-    anchor_zone: '6a', anchor_peak: 285, shift_per_half_zone: -2, half_window: 35,
+    // Peak shifted Oct 12 → Nov 1 + half_window 35 → 55 so the fall
+    // window extends into Dec (was dying mid-Nov despite cited "fall
+    // through early-spring"). Cant cleanly represent Jan-Mar in one
+    // row without DOY year-wrap support; a Winter rhizome entry below
+    // covers that range as a second row.
+    anchor_zone: '6a', anchor_peak: 305, shift_per_half_zone: -2, half_window: 55,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
     stage: 'root_dig',
-    source_name: 'Cattail rhizome harvest (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Typha',
-    summary: 'Cattail rhizome: starchy fall through early-spring food. Best after first frost when starch is concentrated.'
+    source_name: 'Cattail rhizome (Eat The Weeds + Forager Chef + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/cattails-a-survival-dinner/',
+    summary: 'Cattail rhizome (Typha latifolia / angustifolia): fat horizontal underground stems running between plants in shallow water mud. Best after first frost (Oct-Nov in 6a) when the plant has translated sugars and starch downward — peels white, snaps crisp, tastes like raw sweet corn. Two methods: pound and rinse to wash starch out into water (settle, decant, dry → flour), or peel and grill/roast whole sections. Crushed cooked yield is roughly 6,500 lb starch per cultivated acre — a major historical wild staple from First Nations through Russian wartime famine ration. NOT for industrial/contaminated wetlands — rhizomes concentrate heavy metals and agricultural runoff. Confirm clean water source before harvest. ID warning: avoid confusion with iris (toxic) — see pollen entry.'
+  },
+  {
+    // Second row covering Jan-Mar — DOY 1-90 — separate from the fall
+    // row because the framework rows do not wrap year-end.
+    name: 'Cattail (winter rhizome)',
+    members: ['Typha latifolia', 'Typha angustifolia'],
+    anchor_zone: '6a', anchor_peak: 35, shift_per_half_zone: -2, half_window: 50,
+    target_zones: ['5b','6a','6b','7a','7b','8a','8b','9a'],
+    stage: 'root_dig',
+    source_name: 'Cattail winter rhizome (Eat The Weeds + Forager Chef + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/cattails-a-survival-dinner/',
+    summary: 'Cattail winter rhizome (Typha latifolia / angustifolia): continuation of the fall harvest into Jan-Mar, separate row because the DOY framework does not wrap year-end. Where standing water stays unfrozen (zones 5b+) you can wade in or break thin surface ice and pull rhizomes from the mud all winter — starch stays concentrated until the plant breaks dormancy and re-mobilizes it upward in early spring. The very last good harvest window in Mar before new shoots draw the starch back up. Confirm clean water source (rhizomes concentrate heavy metals); avoid iris confusion (see pollen entry).'
   },
 
   // Ostrich fern fiddleheads — major NE / Maritime spring forage.
@@ -1295,12 +1372,16 @@ const COMPLEXES = [
   {
     name: 'Wood sorrel (leaves)',
     members: ['Oxalis stricta'],
-    anchor_zone: '6a', anchor_peak: 152, shift_per_half_zone: -2, half_window: 60,
+    // Shifted peak Jun 1 → Jul 15 + widened half_window 60 → 110 so
+    // the window actually covers "all growing season" as the summary
+    // claims (zone 6a Apr - early Nov). Earlier centering at Jun cut
+    // the window off mid-summer, leaving Aug-Oct empty.
+    anchor_zone: '6a', anchor_peak: 196, shift_per_half_zone: -2, half_window: 110,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'leaf',
-    source_name: 'Wood sorrel (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Oxalis_stricta',
-    summary: 'Wood sorrel leaves: tart-citrusy three-leaflet weed. Edible all growing season; small amounts due to oxalic acid.'
+    source_name: 'Wood sorrel (Eat The Weeds + Forager Chef + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/oxalis-how-to-drown-your-sorrels/',
+    summary: 'Common yellow wood sorrel (Oxalis stricta): three heart-shaped (notched) leaflets that fold down at night and in heavy sun, small five-petaled yellow flowers, slender okra-shaped seed pods that pop when ripe. Distinct from clover (Trifolium) which has rounded oval leaflets and a chevron mark — wood sorrel leaflets are clearly heart-shaped with a sour lemony taste. Edible leaves, flowers, and green seed-pods all growing season (Apr-Nov in 6a). Uses: tart trailside nibble, lemony garnish for salads/fish, Mexican xocoyolli wild-greens dish, herbal cold tea (cold infusion, not hot — heat dulls the flavor). OXALIC ACID CAUTION: small amounts only; daily large servings can interfere with calcium absorption and aggravate kidney stones/gout. Cooking with a calcium source (milk, cheese) reportedly neutralizes the oxalate.'
   },
   {
     name: 'Curly dock (leaves)',
@@ -1318,9 +1399,9 @@ const COMPLEXES = [
     anchor_zone: '6a', anchor_peak: 121, shift_per_half_zone: -3, half_window: 45,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'leaf',
-    source_name: 'Sheep sorrel (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Rumex_acetosella',
-    summary: 'Sheep sorrel leaves: tart, lemony, distinctive arrow-shaped leaves. Best young; oxalic-acid caveat.'
+    source_name: 'Sheep sorrel (Eat The Weeds + Forager Chef + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/sorrel-not-a-sheepish-rumex/',
+    summary: 'Sheep sorrel (Rumex acetosella): lime-green arrow/halberd-shaped leaves with two backward-pointing basal lobes — instantly identifiable from a distance by color, no taproot, mat-forming, rarely above 18 inches. Tart lemony bite from oxalic acid. Best harvested young in late Apr through mid-Jun in 6a; older leaves get tougher and the reddish flower stalks signal a flavor decline. Uses: classic French sorrel soup (soupe à l\'oseille), green sauce for poached salmon, lemony salad accent, blended into chimichurri or pesto for a tart edge, an ingredient in Essiac herbal tea. OXALIC ACID CAUTION: avoid if you have kidney stones, gout, or rheumatoid arthritis; can interfere with calcium and iron absorption — don\'t take alongside mineral supplements.'
   },
   {
     name: 'Mugwort (leaves)',
@@ -1328,9 +1409,9 @@ const COMPLEXES = [
     anchor_zone: '6a', anchor_peak: 152, shift_per_half_zone: -3, half_window: 45,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'leaf',
-    source_name: 'Mugwort (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Artemisia_vulgaris',
-    summary: 'Mugwort: bitter herb, harvest before flowering. Pregnancy contraindication (thujone).'
+    source_name: 'Mugwort (Eat The Weeds + Forager Chef + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/artemisia-vulgaris-mugwort/',
+    summary: 'Mugwort (Artemisia vulgaris): bitter aromatic herb, harvest young leaves + flowering tops in late May - mid Jul before plant fully blooms. Long traditional use: Korean ssuk rice cake, Japanese mochi, Old-World goose-stuffing bitter, pre-hops beer flavoring, moxibustion (burned on acupressure points in TCM), smudge incense. Lucid-dreaming folk-aid (compounds in essential oil). PREGNANCY CONTRAINDICATION: thujone is uterine-stimulant — avoid entirely during pregnancy. Not for daily consumption in any context; bitter principle (santonin) is a stomach irritant in quantity.'
   },
   {
     name: 'Highbush cranberry',
@@ -1583,9 +1664,9 @@ const COMPLEXES = [
     anchor_zone: '6a', anchor_peak: 115, shift_per_half_zone: -3, half_window: 21,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'leaf',
-    source_name: 'Trout lily (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Erythronium_americanum',
-    summary: 'Trout lily: spring ephemeral, Apr-May only. Forage sparingly; populations are slow-growing.'
+    source_name: 'Trout lily (Forager Chef + Eat The Weeds + USDA Plant Profile)',
+    source_url: 'https://foragerchef.com/trout-lily/',
+    summary: 'Yellow trout lily (Erythronium americanum): two mottled brown-on-green basal leaves (resembling brook-trout markings) with a single nodding yellow lily flower, Apr through mid-May only in zone 6a. CONSERVATION CAUTION — STRONGLY DISCOURAGE HARVEST: spring ephemeral that takes ~7 years from seed to flowering, propagates mostly by underground stolons, and populations collapse irreversibly when over-foraged. Removing a leaf can kill the plant (only two leaves total, plant relies on them for the entire year\'s photosynthesis). Bulbs are emetic in any quantity and have a documented anti-fertility / contraceptive effect — both Sam Thayer and Alan Bergo (Forager Chef) explicitly advise against serving to guests or harvesting commercially. Best treated as a wildflower to enjoy, photograph, and leave alone. If you must, restrict to a single leaf from a flowering (not single-leaf juvenile) plant in a verified abundant colony.'
   },
   {
     name: 'Spring beauty',
@@ -1593,9 +1674,9 @@ const COMPLEXES = [
     anchor_zone: '6a', anchor_peak: 91, shift_per_half_zone: -3, half_window: 30,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'leaf',
-    source_name: 'Spring beauty (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Claytonia_virginica',
-    summary: 'Spring beauty: Mar-May. Tubers ("fairy spuds") are sweet starchy potato-substitute; flowers and leaves edible too.'
+    source_name: 'Spring beauty (Eat The Weeds + Forager Chef + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/spring-beauty/',
+    summary: 'Spring beauty (Claytonia virginica): paired narrow basal leaves and a low spray of white-to-pink 5-petaled flowers with darker pink stripes (nectar guides), Mar through early May in zone 6a. The marble-sized corms ("fairy spuds") taste like sweet chestnut/potato when boiled — leaves and flowers also edible raw. CONSERVATION CAUTION: takes 7-10 years from seed to flower and harvesting the corm or pulling leaves kills the plant. Restrict harvest to truly abundant disturbed sites (e.g. lawn colonies, logging-track edges) where you can confirm a dense thousand-plant stand and remove well under 1% — never touch a woodland population unless you have explicit landowner consent and verified extreme abundance. Default: enjoy in place. Easy to confuse with the equally edible Carolina spring beauty (C. caroliniana, wider leaves); look-alike confusion risk low.'
   },
   {
     name: 'Cut-leaf toothwort',
@@ -1603,9 +1684,9 @@ const COMPLEXES = [
     anchor_zone: '6a', anchor_peak: 110, shift_per_half_zone: -3, half_window: 21,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'leaf',
-    source_name: 'Cut-leaf toothwort (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Cardamine_concatenata',
-    summary: 'Cut-leaf toothwort: spring ephemeral. Root tastes like horseradish (use fresh, flavor fades quickly).'
+    source_name: 'Cut-leaf toothwort (Eat The Weeds + Forager Chef + USDA Plant Profile)',
+    source_url: 'https://www.eattheweeds.com/bittercress-and-kissing-crucifer-cousins/',
+    summary: 'Cut-leaf toothwort (Cardamine concatenata): spring ephemeral with a whorl of 3 deeply-cut, sharply-toothed palmate leaves below a cluster of 4-petaled white-to-pinkish mustard-family flowers, Apr through early May in zone 6a. Segmented (toothed) underground rhizome — the "tooth" of toothwort — peels to a crisp peppery flesh tasting strongly of horseradish or wasabi. Best use: grate fresh into vinegar or sour cream as a horseradish substitute; flavor fades within hours (allyl-isothiocyanate is volatile, exactly like commercial horseradish). Whole plant is edible mustard-family greens. Iroquois ate it raw with salt and used the mashed root medicinally. CONSERVATION: woodland spring ephemeral — harvest only from abundant colonies (>100 plants) and take a small segment of the rhizome chain so the plant regrows; never pull the entire rootstock.'
   },
 
   // ── Tier 5: herbal / minor ──
@@ -1626,19 +1707,22 @@ const COMPLEXES = [
     anchor_zone: '6a', anchor_peak: 115, shift_per_half_zone: -3, half_window: 30,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'flower_harvest',
-    source_name: 'Common blue violet (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Viola_sororia',
-    summary: 'Common blue violet: Apr-May peak bloom. Flowers candied, syrup-ed; leaves salad-edible.'
+    source_name: 'Common blue violet (Forager Chef + Eat The Weeds + USDA Plant Profile)',
+    source_url: 'https://foragerchef.com/violets/',
+    summary: 'Common blue violet (Viola sororia): heart-shaped basal leaves and five-petal violet/purple flowers on separate leafless stalks (no aerial stem) — distinguishes from look-alike yellow-flowered Lesser Celandine (Ficaria verna, toxic raw) which has a similar leaf shape but yellow buttercup flowers and tuberous roots. Late-Mar through May bloom; peak late Apr in zone 6a. Flowers: candied violets (egg-white + sugar) for cake decoration, lavender-blue violet syrup that turns pink with lemon juice (acid-base color shift), wine, vinegar. Leaves: cook like spinach or use raw in salads — high in vitamin C and natural mucilage that thickens soups. Roots are NOT edible (emetic, mild saponins). Avoid yellow-flowered violets if uncertain — some contain higher saponin loads.'
   },
   {
     name: 'Catnip (leaves)',
     members: ['Nepeta cataria'],
-    anchor_zone: '6a', anchor_peak: 182, shift_per_half_zone: -3, half_window: 45,
+    // Anchor shifted Jul 1 → Jul 16 (peak 182 → 197) so the Jun-Aug
+    // window cited in the summary actually matches — was starting
+    // mid-May with the prior peak.
+    anchor_zone: '6a', anchor_peak: 197, shift_per_half_zone: -3, half_window: 45,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'leaf',
-    source_name: 'Catnip (foraging consensus)',
-    source_url: 'https://en.wikipedia.org/wiki/Catnip',
-    summary: 'Catnip: tea / sleep aid. Pick flowering tops Jun-Aug.'
+    source_name: 'Catnip (Eat The Weeds + Wisconsin Hort Extension + NC State Extension)',
+    source_url: 'https://www.eattheweeds.com/tag/catnip/',
+    summary: 'Catnip (Nepeta cataria): mint-family herb with square stem, grey-green triangular toothed leaves with downy white underside, and small white flowers spotted purple in terminal whorls. Strong minty-musky smell when crushed; field-ID by the square stem + scent + downy leaf. Harvest flowering tops Jun through Aug in 6a — nepetalactone (the active compound) peaks at full bloom; leaves alone (before bloom) usable but weaker. Uses: mild sedative tea for sleep, anxiety, indigestion, infant colic (low-dose). Candied flowers, salad herb in Europe, mosquito-repellent rub (nepetalactone is ~10x stronger than DEET as a mosquito deterrent, briefly). Famously psychoactive to ~2/3 of cats (genetic). PREGNANCY CAUTION: traditionally used as an emmenagogue (period-bringer) — avoid in pregnancy. Large amounts are emetic in humans.'
   },
   {
     name: 'Canada goldenrod (flowers)',
@@ -1752,44 +1836,84 @@ const COMPLEXES = [
   // spread. Mild heat-shift (warmer slightly later for some, earlier
   // for others — averages to nearly flat in the cultivar range).
   {
-    name: 'Sweet orange',
+    name: 'Sweet orange (early-year)',
     members: ['Citrus sinensis'],
     anchor_zone: '9b', anchor_peak: 30, shift_per_half_zone: -2, half_window: 60,
     target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
     source_name: 'Sweet orange (UC ANR + Florida Citrus Industry)',
     source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8197',
-    summary: 'Sweet orange (Citrus sinensis): peak Jan-Feb in CA Central Valley (zone 9b); cultivar spread from navel (Nov-Mar) to Valencia (Mar-Jun).'
+    summary: 'Sweet orange (Citrus sinensis) Jan-Mar: peak Jan-Feb in CA Central Valley (zone 9b). Pair with the Nov-Dec late-year row for full navel cultivar coverage.'
   },
   {
-    name: 'Lemon',
+    name: 'Sweet orange (late-year)',
+    members: ['Citrus sinensis'],
+    anchor_zone: '9b', anchor_peak: 335, shift_per_half_zone: -2, half_window: 30,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Sweet orange late-year (UC ANR + Florida Citrus Industry)',
+    source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8197',
+    summary: 'Sweet orange Nov-Dec: navel cultivars start in November in CA/FL. Pair with the Jan-Mar early-year row.'
+  },
+  {
+    name: 'Lemon (early-year)',
     members: ['Citrus limon'],
     anchor_zone: '9b', anchor_peak: 1, shift_per_half_zone: 0, half_window: 90,
     target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
     source_name: 'Lemon (UC ANR + CRFG)',
     source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8204',
-    summary: 'Lemon (Citrus limon): essentially year-round in subtropical zones; peak winter (Oct-Mar). Wide ±90d window covers continuous fruiting.'
+    summary: 'Lemon (Citrus limon) Jan-Mar: essentially year-round in subtropical zones, peak winter. Pair with Oct-Dec late-year row.'
   },
   {
-    name: 'Mandarin orange',
+    name: 'Lemon (late-year)',
+    members: ['Citrus limon'],
+    anchor_zone: '9b', anchor_peak: 335, shift_per_half_zone: 0, half_window: 60,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Lemon late-year (UC ANR + CRFG)',
+    source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8204',
+    summary: 'Lemon Oct-Dec: continuation of the year-round cropping cycle in CA/FL.'
+  },
+  {
+    name: 'Mandarin orange (late-year)',
     members: ['Citrus reticulata'],
     anchor_zone: '9b', anchor_peak: 350, shift_per_half_zone: -2, half_window: 45,
     target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
     source_name: 'Mandarin orange (UC ANR + Florida Citrus)',
     source_url: 'https://homeorchard.ucanr.edu/Mandarin/',
-    summary: 'Mandarin (Citrus reticulata): peak Nov-Jan; clementine cultivars Oct-Dec, Satsuma Oct-Nov. Window covers cultivar spread.'
+    summary: 'Mandarin (Citrus reticulata) Nov-Dec: Satsuma + clementine cultivars start in late Oct. Pair with Jan-Mar early-year row.'
   },
   {
-    name: 'Grapefruit',
+    name: 'Mandarin orange (early-year)',
+    members: ['Citrus reticulata'],
+    anchor_zone: '9b', anchor_peak: 30, shift_per_half_zone: -2, half_window: 45,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Mandarin orange early-year (UC ANR + Florida Citrus)',
+    source_url: 'https://homeorchard.ucanr.edu/Mandarin/',
+    summary: 'Mandarin Jan-Mar: tail end of the Nov-Mar cropping season.'
+  },
+  {
+    name: 'Grapefruit (early-year)',
     members: ['Citrus paradisi'],
-    anchor_zone: '9b', anchor_peak: 50, shift_per_half_zone: -2, half_window: 60,
+    anchor_zone: '9b', anchor_peak: 50, shift_per_half_zone: -2, half_window: 90,
     target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
     source_name: 'Grapefruit (UC ANR + Florida Citrus)',
     source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8201',
-    summary: 'Grapefruit (Citrus paradisi): peak Dec-Apr depending on cultivar (Marsh, Ruby Red, Star Ruby).'
+    summary: 'Grapefruit (Citrus paradisi) Jan-May: peak Feb-Mar. Widened half_window to 90 covers Marsh / Ruby Red / Star Ruby cultivar spread. Pair with Oct-Dec late-year row.'
+  },
+  {
+    name: 'Grapefruit (late-year)',
+    members: ['Citrus paradisi'],
+    anchor_zone: '9b', anchor_peak: 319, shift_per_half_zone: -2, half_window: 30,
+    target_zones: ['8b','9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Grapefruit late-year (UC ANR + Florida Citrus)',
+    source_url: 'https://anrcatalog.ucanr.edu/Details.aspx?itemNo=8201',
+    summary: 'Grapefruit Oct-Dec: early cultivar harvest begins mid-October in CA/FL.'
   },
 
   // Plums (cultivated)
@@ -1825,15 +1949,29 @@ const COMPLEXES = [
   },
 
   // Subtropical / specialty cultivars
+  // Avocado has cultivar windows that genuinely span the whole calendar
+  // (Hass Mar-Sep, Bacon Nov-Mar, Fuerte Nov-Apr, Reed Jun-Oct). Two
+  // rows: early-year + late-year so the published windows cover the
+  // full Hass+Bacon+Fuerte+Reed cultivar spread instead of just Jan-Jun.
   {
-    name: 'Avocado',
+    name: 'Avocado (early-year)',
     members: ['Persea americana'],
     anchor_zone: '9b', anchor_peak: 91, shift_per_half_zone: -2, half_window: 90,
     target_zones: ['9a','9b','10a','10b','11a','11b'],
     stage: 'ripe',
     source_name: 'Avocado (UC ANR + California Avocado Commission)',
     source_url: 'https://homeorchard.ucanr.edu/Avocados/',
-    summary: 'Avocado (Persea americana): cultivar variability spans the calendar — Hass Mar-Sep, Bacon Nov-Mar, Fuerte Nov-Apr. Wide window covers all major cultivars.'
+    summary: 'Avocado (Persea americana) Jan-Jun: Hass peak Mar-May, Bacon/Fuerte Jan-Mar. Pair with late-year row.'
+  },
+  {
+    name: 'Avocado (late-year)',
+    members: ['Persea americana'],
+    anchor_zone: '9b', anchor_peak: 244, shift_per_half_zone: -2, half_window: 90,
+    target_zones: ['9a','9b','10a','10b','11a','11b'],
+    stage: 'ripe',
+    source_name: 'Avocado late-year (UC ANR + California Avocado Commission)',
+    source_url: 'https://homeorchard.ucanr.edu/Avocados/',
+    summary: 'Avocado Jul-Dec: Hass tail (Jul-Sep), Reed (Jun-Oct), Bacon/Fuerte start (Nov-Dec). Closes the cultivar-spread gap.'
   },
   {
     name: 'Kiwifruit',
