@@ -17,6 +17,13 @@
 //   - target_zones: zones to populate (each species's plausible range)
 //   - stage: stage to write (default 'ripe')
 //   - source_name, source_url, summary: citation for the evidence entry
+//   - mechanism (optional, defaults to 'heat_driven'): biological driver
+//     of timing. See MECHANISMS below. The pipeline picks projection
+//     math based on mechanism: heat_driven/cool_night use the linear
+//     slope; frost_anchored uses the per-zone last/first-frost DOY +
+//     a derived offset; photoperiod/rain_flush keep peak constant
+//     across zones. Validation warns if shift_per_half_zone disagrees
+//     with the expected sign for the declared mechanism.
 //
 // Adding a new species or complex is a config edit, not a new script.
 //
@@ -37,6 +44,109 @@ const ZONE_NUM = {
   '6a': 12, '6b': 13, '7a': 14, '7b': 15, '8a': 16, '8b': 17,
   '9a': 18, '9b': 19, '10a': 20, '10b': 21, '11a': 22, '11b': 23
 };
+
+// Mechanism vocabulary. Each value describes the biological driver of
+// timing and implies which projection math the pipeline uses:
+//
+//   heat_driven      — warmer = earlier. Linear slope; expected sign
+//                      is negative. The default for most fruit and
+//                      heat-summed stages.
+//   cool_night       — fruiting triggered by autumn cool-night arrival;
+//                      warmer zones lag. Linear slope; expected sign
+//                      is positive. Late-fall mushrooms (hen of woods,
+//                      lion's mane, wood blewit, shaggy mane) are the
+//                      canonical examples.
+//   frost_anchored   — timing locked to last-spring-frost or first-fall-
+//                      frost in each zone. Pipeline computes peak from
+//                      zone_frost_dates.{lsf,fff} + a derived offset.
+//                      shift_per_half_zone is IGNORED. Spring sap and
+//                      cold-trigger fruit drop go here.
+//   photoperiod      — day-length-locked; peak DOY constant across
+//                      zones. shift_per_half_zone IGNORED; half_window
+//                      widens slightly in zones away from the anchor.
+//   rain_flush       — fruiting triggered by rain regardless of season;
+//                      v1 same flat math as photoperiod, later upgrade
+//                      to N discrete flush windows per year.
+//   dormancy_break   — driven by chill-hour completion + spring warm-up.
+//                      Linear fallback with capped slope. Use for
+//                      idiosyncratic spring-trigger species when
+//                      neither pure heat nor pure frost fits.
+//   indeterminate    — catch-all so the field always has a value.
+//                      Linear math, no validation. Use only when the
+//                      mechanism is genuinely unknown.
+const MECHANISMS = {
+  HEAT_DRIVEN: 'heat_driven',
+  COOL_NIGHT: 'cool_night',
+  FROST_ANCHORED: 'frost_anchored',
+  PHOTOPERIOD: 'photoperiod',
+  RAIN_FLUSH: 'rain_flush',
+  DORMANCY_BREAK: 'dormancy_break',
+  INDETERMINATE: 'indeterminate'
+};
+const ALL_MECHANISMS = new Set(Object.values(MECHANISMS));
+
+/** Expected sign of shift_per_half_zone for each mechanism that uses
+ *  the linear slope. null means slope is ignored entirely. */
+const MECHANISM_EXPECTED_SLOPE_SIGN = {
+  heat_driven: -1,
+  cool_night: +1,
+  dormancy_break: -1, // dormancy_break uses linear slope but tends to be mild-negative
+  frost_anchored: null,
+  photoperiod: null,
+  rain_flush: null,
+  indeterminate: null
+};
+
+/** Pick the spring vs fall frost anchor for a stage. Stages keyed off
+ *  spring growth (shoot, leaf, flowering, flower_harvest, sap_run)
+ *  anchor to last-spring-frost; late-summer / fall stages (ripe,
+ *  ripening, mushroom_flush, bark_strip, root_dig) anchor to first-
+ *  fall-frost. Matches the heuristic in generate-frost-offset-windows. */
+function frostAnchorKindForStage(stage) {
+  const SPRING_STAGES = new Set(['shoot', 'leaf', 'flowering', 'flower_harvest', 'sap_run', 'green']);
+  return SPRING_STAGES.has(stage) ? 'lsf' : 'fff';
+}
+
+/** Compute the projected peak DOY + half-window + projection metadata
+ *  for a single (complex entry, zone) pair. Used inside the per-zone
+ *  loop in the main IIFE. Returns null when projection isn't possible
+ *  (e.g., frost_anchored but the zone has no frost data). */
+function projectPeak(cx, zoneCode, zoneNum, anchorNum, frostByZone) {
+  const mechanism = cx.mechanism ?? MECHANISMS.HEAT_DRIVEN;
+  const baseHalfWindow = cx.half_window;
+  const linearPeak = cx.anchor_peak + (zoneNum - anchorNum) * cx.shift_per_half_zone;
+
+  if (mechanism === MECHANISMS.FROST_ANCHORED) {
+    const anchorKind = frostAnchorKindForStage(cx.stage ?? 'ripe');
+    const anchorFrost = frostByZone[cx.anchor_zone];
+    const zoneFrost = frostByZone[zoneCode];
+    if (!anchorFrost || !zoneFrost) {
+      // Fall back to linear if we can't read the frost table for either
+      // the anchor zone or this zone. Surface as info, not a crash.
+      console.warn(`    ${zoneCode}: mechanism=frost_anchored but no frost data — falling back to linear projection`);
+      return { peak: linearPeak, halfWindow: baseHalfWindow, projMeta: { kind: 'linear', shift: cx.shift_per_half_zone, fallback: 'no_frost_data' } };
+    }
+    const offsetDays = cx.anchor_peak - anchorFrost[anchorKind];
+    const peak = zoneFrost[anchorKind] + offsetDays;
+    return { peak, halfWindow: baseHalfWindow, projMeta: { kind: 'frost', anchor: anchorKind, offset_days: offsetDays } };
+  }
+
+  if (mechanism === MECHANISMS.PHOTOPERIOD || mechanism === MECHANISMS.RAIN_FLUSH) {
+    // Flat: same DOY across zones. Widen the window slightly in zones
+    // farther from the anchor to express uncertainty about where the
+    // species's response curve sits at the range edge.
+    const widening = Math.min(14, Math.abs(zoneNum - anchorNum) * 2);
+    return {
+      peak: cx.anchor_peak,
+      halfWindow: baseHalfWindow + widening,
+      projMeta: { kind: 'flat' }
+    };
+  }
+
+  // heat_driven / cool_night / dormancy_break / indeterminate all use
+  // the linear slope from anchor.
+  return { peak: linearPeak, halfWindow: baseHalfWindow, projMeta: { kind: 'linear', shift: cx.shift_per_half_zone } };
+}
 
 const COMPLEXES = [
   // Hazelnuts — three populations with different timing:
@@ -404,6 +514,13 @@ const COMPLEXES = [
   {
     name: 'American persimmon',
     members: ['Diospyros virginiana'],
+    // Mechanism: heat_driven despite the folkloric "after first frost"
+    // tradition. iNat empirical fit (slope −4, N≈5000) shows ripening
+    // accumulates GDD; the drop is the harvest cue, not the frost.
+    // Explicit annotation matters here because the species would
+    // otherwise be auto-classified as frost_anchored by the audit
+    // keyword rules.
+    mechanism: 'heat_driven',
     anchor_zone: '6a',
     anchor_peak: 275,           // Oct 2
     shift_per_half_zone: -4,    // empirical iNat -4 (n=9 zones, total N≈5000)
@@ -1643,6 +1760,7 @@ const COMPLEXES = [
   {
     name: 'Wood ear (fall flush)',
     members: ['Auricularia auricula-judae'],
+    mechanism: 'cool_night',
     // MECHANISM CORRECTION 2026-05-11: cool-rain trigger ("after
     // autumn rains and before killing frost"). Flipped slope -3
     // → +2 to match the cool-night mechanism — warmer zones get
@@ -1825,6 +1943,14 @@ const COMPLEXES = [
   {
     name: 'Sweet birch (sap)',
     members: ['Betula lenta', 'Betula alleghaniensis'],
+    // Mechanism: spring sap flow tracks last-spring-frost. Sap rises
+    // before LSF when freeze-thaw cycles end. shift_per_half_zone is
+    // kept here for backward compatibility but is ignored by the
+    // frost_anchored projection — the pipeline reads zone_frost_dates
+    // and computes peak = lsf(zone) + offset_days, where offset is
+    // derived from the anchor zone's (peak − lsf). Validation will
+    // warn that this slope is ignored; expected.
+    mechanism: 'frost_anchored',
     anchor_zone: '6a', anchor_peak: 65, shift_per_half_zone: 3, half_window: 28,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a'],
     stage: 'sap_run',
@@ -2036,6 +2162,7 @@ const COMPLEXES = [
   {
     name: 'Wood blewit',
     members: ['Lepista nuda'],
+    mechanism: 'cool_night',
     // MECHANISM CORRECTION 2026-05-11: Wood blewit is strongly
     // frost-triggered — "often after first frosts" per the cited
     // refs. Regional anchors show NE peak 288 (Oct 15), southern
@@ -2077,6 +2204,7 @@ const COMPLEXES = [
   {
     name: 'Hen of the woods',
     members: ['Grifola frondosa'],
+    mechanism: 'cool_night',
     // Saprotrophic at base of mature oaks (esp. white oak). Late
     // Sep-Oct primary flush + occasional Nov second flush after warm
     // rains.
@@ -2121,6 +2249,7 @@ const COMPLEXES = [
   {
     name: 'Oyster mushroom (fall flush)',
     members: ['Pleurotus ostreatus'],
+    mechanism: 'cool_night',
     // MECHANISM CORRECTION 2026-05-11: Cool-rain triggered (same
     // family of mechanism as hen of the woods / lion's mane / wood
     // blewit / shaggy mane). No regional anchor split in this entry
@@ -2153,6 +2282,7 @@ const COMPLEXES = [
   {
     name: 'Lion\'s mane',
     members: ['Hericium erinaceus'],
+    mechanism: 'cool_night',
     // Saprotrophic on dead/wounded hardwoods (esp. beech, oak, maple).
     // Aug-Nov in NE, single annual flush per fruiting body. Cold-tolerant
     // — often produced after first cool nights.
@@ -2193,6 +2323,7 @@ const COMPLEXES = [
   {
     name: 'Shaggy mane',
     members: ['Coprinus comatus'],
+    mechanism: 'cool_night',
     // Saprotrophic in disturbed soil — lawns, gravel, hard-packed earth.
     // Cool-temperature fall flush primarily (Sep-Nov), occasional spring.
     // Auto-digests into black "ink" within 48hr of opening — must
@@ -3046,6 +3177,46 @@ module.exports = { COMPLEXES, ZONE_NUM };
 if (require.main !== module) return;
 
 (async () => {
+  // Preload zone_frost_dates once. Used by mechanism=frost_anchored
+  // projections so we don't hit the DB N×Z times in the per-zone loop.
+  // Pattern matches scripts/generate-frost-offset-windows.cjs:24.
+  const frostByZone = {};
+  for (const r of await sql`select zone_code, last_spring_frost_doy, first_fall_frost_doy from public.zone_frost_dates`) {
+    frostByZone[r.zone_code] = {
+      lsf: r.last_spring_frost_doy,
+      fff: r.first_fall_frost_doy
+    };
+  }
+
+  // Pre-loop validation: warn on any entry whose declared mechanism
+  // disagrees with its shift_per_half_zone, OR whose mechanism value
+  // isn't in the recognized set. Surface ALL warnings before the
+  // pipeline does any DB work so JK sees them in one block.
+  let validationWarnings = 0;
+  for (const cx of COMPLEXES) {
+    const mechanism = cx.mechanism ?? MECHANISMS.HEAT_DRIVEN;
+    if (cx.mechanism != null && !ALL_MECHANISMS.has(cx.mechanism)) {
+      console.warn(`⚠ ${cx.name}: unknown mechanism '${cx.mechanism}' (expected one of: ${[...ALL_MECHANISMS].join(', ')})`);
+      validationWarnings++;
+      continue;
+    }
+    const expectedSign = MECHANISM_EXPECTED_SLOPE_SIGN[mechanism];
+    if (expectedSign != null && cx.shift_per_half_zone !== 0
+        && Math.sign(cx.shift_per_half_zone) !== expectedSign) {
+      const want = expectedSign < 0 ? 'negative' : 'positive';
+      console.warn(`⚠ ${cx.name}: mechanism=${mechanism} expects ${want} slope, got ${cx.shift_per_half_zone}`);
+      validationWarnings++;
+    }
+    if ((mechanism === MECHANISMS.PHOTOPERIOD || mechanism === MECHANISMS.RAIN_FLUSH || mechanism === MECHANISMS.FROST_ANCHORED)
+        && cx.shift_per_half_zone !== 0) {
+      console.warn(`⚠ ${cx.name}: mechanism=${mechanism} ignores slope but shift_per_half_zone=${cx.shift_per_half_zone} — set to 0 to silence`);
+      validationWarnings++;
+    }
+  }
+  if (validationWarnings > 0) {
+    console.warn(`\n${validationWarnings} mechanism/slope validation warning(s). Pipeline continues; fix in source when convenient.\n`);
+  }
+
   let totalUpdated = 0, totalInserted = 0, totalSkippedConfirmed = 0;
   for (const cx of COMPLEXES) {
     console.log(`\n=== ${cx.name} ===`);
@@ -3055,11 +3226,13 @@ if (require.main !== module) return;
       continue;
     }
     const stage = cx.stage ?? 'ripe';
+    const mechanism = cx.mechanism ?? MECHANISMS.HEAT_DRIVEN;
     const evEntry = {
       source: cx.source_name,
       url: cx.source_url,
       consulted_at: '2026-05-10T00:00:00Z',
       summary: cx.summary,
+      mechanism,
       supports: {
         start_doy: Math.max(1, cx.anchor_peak - cx.half_window),
         end_doy: Math.min(366, cx.anchor_peak + cx.half_window),
@@ -3100,25 +3273,31 @@ if (require.main !== module) return;
         const zoneNum = ZONE_NUM[zoneCode];
         if (zoneNum == null) continue;
 
-        // Regional anchors override the linear slope projection when
-        // their `zones` array covers this zone. Lets us encode
-        // cultivar/microclimate divergence at the warm tail without
-        // contorting the global slope. Example: Japanese plum's
-        // California UCANR window (Jun-Sep envelope of multiple
-        // cultivars) doesn't match the -5 slope from anchor 7a; a
-        // regional_anchor for zones 8b-10a with peak_doy=213,
-        // half_window=60 pins those zones to the UCANR window
-        // independently of the global slope.
-        const linearPeak = cx.anchor_peak + (zoneNum - anchorNum) * cx.shift_per_half_zone;
+        // Two-stage projection:
+        //
+        // 1. Mechanism-based math via projectPeak(): heat_driven /
+        //    cool_night / dormancy_break / indeterminate use the
+        //    linear slope; frost_anchored uses zone_frost_dates;
+        //    photoperiod / rain_flush keep peak constant across zones.
+        //
+        // 2. Regional anchors override per zone-band. Lets us encode
+        //    cultivar/microclimate divergence at the warm tail without
+        //    contorting the global slope. Example: Japanese plum's
+        //    California UCANR window (Jun-Sep envelope of multiple
+        //    cultivars) doesn't match the -5 slope from anchor 7a; a
+        //    regional_anchor for zones 8b-10a with peak_doy=213,
+        //    half_window=60 pins those zones to the UCANR window
+        //    regardless of mechanism.
+        const proj = projectPeak(cx, zoneCode, zoneNum, anchorNum, frostByZone);
         const matchingAnchor = (cx.regional_anchors ?? []).find((a) => a.zones.includes(zoneCode));
-        const peakRaw = matchingAnchor ? matchingAnchor.peak_doy : linearPeak;
-        const halfWindow = matchingAnchor?.half_window ?? cx.half_window;
+        const peakRaw = matchingAnchor ? matchingAnchor.peak_doy : proj.peak;
+        const halfWindow = matchingAnchor?.half_window ?? proj.halfWindow;
         const peak = Math.max(1, Math.min(366, peakRaw));
         const start = Math.max(1, peak - halfWindow);
         const end = Math.min(366, peak + halfWindow);
 
-        if (matchingAnchor && Math.abs(linearPeak - matchingAnchor.peak_doy) > 15) {
-          console.log(`    ${zoneCode}: anchor override (${matchingAnchor.source}) shifts peak ${linearPeak}→${peak} (Δ${peak - Math.round(linearPeak)}d)`);
+        if (matchingAnchor && Math.abs(proj.peak - matchingAnchor.peak_doy) > 15) {
+          console.log(`    ${zoneCode}: anchor override (${matchingAnchor.source}) shifts peak ${Math.round(proj.peak)}→${peak} (Δ${peak - Math.round(proj.peak)}d)`);
         }
 
         // Per-zone evEntry: supports DOYs reflect THIS zone's
@@ -3128,7 +3307,8 @@ if (require.main !== module) return;
         // its main evidence entry said Jun-Sep.
         const zoneEvEntry = {
           ...evEntry,
-          supports: { start_doy: start, end_doy: end, peak_doy: peak }
+          supports: { start_doy: start, end_doy: end, peak_doy: peak },
+          mechanism_meta: matchingAnchor ? { kind: 'regional_anchor', source: matchingAnchor.source } : proj.projMeta
         };
 
         // Match by complex_name so multiple complex entries (e.g.
@@ -3213,7 +3393,13 @@ if (require.main !== module) return;
   for (const cx of COMPLEXES) {
     for (const sci of cx.members) {
       if (!memberToComplex[sci]) memberToComplex[sci] = [];
-      memberToComplex[sci].push({ name: cx.name, members: cx.members, stage: cx.stage ?? 'ripe' });
+      memberToComplex[sci].push({
+        name: cx.name,
+        members: cx.members,
+        stage: cx.stage ?? 'ripe',
+        mechanism: cx.mechanism ?? MECHANISMS.HEAT_DRIVEN,
+        shift_per_half_zone: cx.shift_per_half_zone
+      });
     }
   }
   const outPath = path.join('/Users/jk/Dropbox/Claude/forager/static/species-complexes.json');

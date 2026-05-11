@@ -8,7 +8,9 @@
         "Corylus avellana",
         "Corylus sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Corylus cornuta": [
@@ -20,7 +22,9 @@
         "Corylus avellana",
         "Corylus sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Corylus avellana": [
@@ -32,7 +36,9 @@
         "Corylus avellana",
         "Corylus sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Corylus sp.": [
@@ -44,7 +50,9 @@
         "Corylus avellana",
         "Corylus sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Amelanchier arborea": [
@@ -56,7 +64,9 @@
         "Amelanchier laevis",
         "Amelanchier sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Amelanchier canadensis": [
@@ -68,7 +78,9 @@
         "Amelanchier laevis",
         "Amelanchier sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Amelanchier laevis": [
@@ -80,7 +92,9 @@
         "Amelanchier laevis",
         "Amelanchier sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Amelanchier sp.": [
@@ -92,7 +106,9 @@
         "Amelanchier laevis",
         "Amelanchier sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Morus rubra": [
@@ -103,7 +119,9 @@
         "Morus alba",
         "Morus nigra"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -7
     }
   ],
   "Morus alba": [
@@ -114,7 +132,9 @@
         "Morus alba",
         "Morus nigra"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -7
     }
   ],
   "Morus nigra": [
@@ -125,7 +145,9 @@
         "Morus alba",
         "Morus nigra"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -7
     }
   ],
   "Asimina triloba": [
@@ -134,7 +156,9 @@
       "members": [
         "Asimina triloba"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Castanea pumila": [
@@ -143,7 +167,9 @@
       "members": [
         "Castanea pumila"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Prunus persica": [
@@ -152,7 +178,9 @@
       "members": [
         "Prunus persica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -10
     }
   ],
   "Gaultheria procumbens": [
@@ -161,7 +189,9 @@
       "members": [
         "Gaultheria procumbens"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -10
     }
   ],
   "Mahonia aquifolium": [
@@ -171,7 +201,9 @@
         "Mahonia aquifolium",
         "Mahonia repens"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Mahonia repens": [
@@ -181,7 +213,9 @@
         "Mahonia aquifolium",
         "Mahonia repens"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Sambucus canadensis": [
@@ -192,7 +226,9 @@
         "Sambucus nigra",
         "Sambucus cerulea"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     },
     {
       "name": "Sambucus (elderflower) complex",
@@ -201,7 +237,9 @@
         "Sambucus nigra",
         "Sambucus cerulea"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Sambucus nigra": [
@@ -212,7 +250,9 @@
         "Sambucus nigra",
         "Sambucus cerulea"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     },
     {
       "name": "Sambucus (elderflower) complex",
@@ -221,7 +261,9 @@
         "Sambucus nigra",
         "Sambucus cerulea"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Sambucus cerulea": [
@@ -232,7 +274,9 @@
         "Sambucus nigra",
         "Sambucus cerulea"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     },
     {
       "name": "Sambucus (elderflower) complex",
@@ -241,7 +285,9 @@
         "Sambucus nigra",
         "Sambucus cerulea"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Vitis riparia": [
@@ -255,7 +301,9 @@
         "Vitis vulpina",
         "Vitis californica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Vitis aestivalis": [
@@ -269,7 +317,9 @@
         "Vitis vulpina",
         "Vitis californica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Vitis labrusca": [
@@ -283,7 +333,9 @@
         "Vitis vulpina",
         "Vitis californica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Vitis rotundifolia": [
@@ -297,7 +349,9 @@
         "Vitis vulpina",
         "Vitis californica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Vitis vulpina": [
@@ -311,7 +365,9 @@
         "Vitis vulpina",
         "Vitis californica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Vitis californica": [
@@ -325,7 +381,9 @@
         "Vitis vulpina",
         "Vitis californica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Crataegus sp.": [
@@ -334,7 +392,9 @@
       "members": [
         "Crataegus sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Fraxinus pennsylvanica": [
@@ -345,7 +405,9 @@
         "Fraxinus americana",
         "Fraxinus nigra"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Fraxinus americana": [
@@ -356,7 +418,9 @@
         "Fraxinus americana",
         "Fraxinus nigra"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Fraxinus nigra": [
@@ -367,7 +431,9 @@
         "Fraxinus americana",
         "Fraxinus nigra"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Plantago major": [
@@ -376,7 +442,9 @@
       "members": [
         "Plantago major"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Diospyros virginiana": [
@@ -385,7 +453,9 @@
       "members": [
         "Diospyros virginiana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Vaccinium macrocarpon": [
@@ -394,7 +464,9 @@
       "members": [
         "Vaccinium macrocarpon"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Prunus virginiana": [
@@ -403,7 +475,9 @@
       "members": [
         "Prunus virginiana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Aronia melanocarpa": [
@@ -412,7 +486,9 @@
       "members": [
         "Aronia melanocarpa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Ribes nigrum": [
@@ -430,7 +506,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ribes rubrum": [
@@ -448,7 +526,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ribes uva-crispa": [
@@ -466,7 +546,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ribes sp.": [
@@ -484,7 +566,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ribes cynosbati": [
@@ -502,7 +586,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ribes hirtellum": [
@@ -520,7 +606,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ribes missouriense": [
@@ -538,7 +626,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ribes americanum": [
@@ -556,7 +646,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ribes triste": [
@@ -574,7 +666,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ribes glandulosum": [
@@ -592,7 +686,9 @@
         "Ribes triste",
         "Ribes glandulosum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Pyrus communis": [
@@ -603,7 +699,9 @@
         "Pyrus pyrifolia",
         "Pyrus calleryana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Pyrus pyrifolia": [
@@ -614,7 +712,9 @@
         "Pyrus pyrifolia",
         "Pyrus calleryana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Pyrus calleryana": [
@@ -625,7 +725,9 @@
         "Pyrus pyrifolia",
         "Pyrus calleryana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Prunus tomentosa": [
@@ -634,7 +736,9 @@
       "members": [
         "Prunus tomentosa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Prunus americana": [
@@ -643,7 +747,9 @@
       "members": [
         "Prunus americana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Taraxacum officinale": [
@@ -652,7 +758,9 @@
       "members": [
         "Taraxacum officinale"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Urtica dioica": [
@@ -661,7 +769,9 @@
       "members": [
         "Urtica dioica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Stellaria media": [
@@ -670,21 +780,27 @@
       "members": [
         "Stellaria media"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     },
     {
       "name": "Common chickweed (fall flush)",
       "members": [
         "Stellaria media"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     },
     {
       "name": "Common chickweed (warm-zone winter)",
       "members": [
         "Stellaria media"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 0
     }
   ],
   "Galium aparine": [
@@ -693,7 +809,9 @@
       "members": [
         "Galium aparine"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Alliaria petiolata": [
@@ -702,7 +820,9 @@
       "members": [
         "Alliaria petiolata"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Hemerocallis fulva": [
@@ -711,28 +831,36 @@
       "members": [
         "Hemerocallis fulva"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Common daylily (flower buds)",
       "members": [
         "Hemerocallis fulva"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Common daylily (open flowers)",
       "members": [
         "Hemerocallis fulva"
       ],
-      "stage": "flowering"
+      "stage": "flowering",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Common daylily (tubers)",
       "members": [
         "Hemerocallis fulva"
       ],
-      "stage": "root_dig"
+      "stage": "root_dig",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 5
     }
   ],
   "Allium vineale": [
@@ -741,7 +869,9 @@
       "members": [
         "Allium vineale"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Allium tuberosum": [
@@ -750,7 +880,9 @@
       "members": [
         "Allium tuberosum"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Portulaca oleracea": [
@@ -759,7 +891,9 @@
       "members": [
         "Portulaca oleracea"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Chenopodium album": [
@@ -768,7 +902,9 @@
       "members": [
         "Chenopodium album"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Apios americana": [
@@ -777,14 +913,18 @@
       "members": [
         "Apios americana"
       ],
-      "stage": "root_dig"
+      "stage": "root_dig",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Groundnut (winter through spring)",
       "members": [
         "Apios americana"
       ],
-      "stage": "root_dig"
+      "stage": "root_dig",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Arctium minus": [
@@ -793,7 +933,9 @@
       "members": [
         "Arctium minus"
       ],
-      "stage": "root_dig"
+      "stage": "root_dig",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Reynoutria japonica": [
@@ -802,7 +944,9 @@
       "members": [
         "Reynoutria japonica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Robinia pseudoacacia": [
@@ -811,7 +955,9 @@
       "members": [
         "Robinia pseudoacacia"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Cercis canadensis": [
@@ -820,7 +966,9 @@
       "members": [
         "Cercis canadensis"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Syringa reticulata": [
@@ -829,7 +977,9 @@
       "members": [
         "Syringa reticulata"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Syringa vulgaris": [
@@ -838,7 +988,9 @@
       "members": [
         "Syringa vulgaris"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Yucca filamentosa": [
@@ -847,7 +999,9 @@
       "members": [
         "Yucca filamentosa"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Prunus dulcis": [
@@ -856,14 +1010,18 @@
       "members": [
         "Prunus dulcis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Almond — cold-hardy",
       "members": [
         "Prunus dulcis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Annona cherimola": [
@@ -872,14 +1030,18 @@
       "members": [
         "Annona cherimola"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     },
     {
       "name": "Cherimoya (early-year)",
       "members": [
         "Annona cherimola"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Mangifera indica": [
@@ -888,7 +1050,9 @@
       "members": [
         "Mangifera indica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -7
     }
   ],
   "Litchi chinensis": [
@@ -897,7 +1061,9 @@
       "members": [
         "Litchi chinensis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Psidium guajava": [
@@ -906,14 +1072,18 @@
       "members": [
         "Psidium guajava"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Common guava (early-year)",
       "members": [
         "Psidium guajava"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Acca sellowiana": [
@@ -923,7 +1093,9 @@
         "Acca sellowiana",
         "Feijoa sellowiana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 4
     }
   ],
   "Feijoa sellowiana": [
@@ -933,7 +1105,9 @@
         "Acca sellowiana",
         "Feijoa sellowiana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 4
     }
   ],
   "Annona squamosa": [
@@ -942,14 +1116,18 @@
       "members": [
         "Annona squamosa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     },
     {
       "name": "Sugar apple (straggler tail)",
       "members": [
         "Annona squamosa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Phoenix dactylifera": [
@@ -958,7 +1136,9 @@
       "members": [
         "Phoenix dactylifera"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Coccoloba uvifera": [
@@ -967,7 +1147,9 @@
       "members": [
         "Coccoloba uvifera"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Phoenix canariensis": [
@@ -976,7 +1158,9 @@
       "members": [
         "Phoenix canariensis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Ceratonia siliqua": [
@@ -985,7 +1169,9 @@
       "members": [
         "Ceratonia siliqua"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Macadamia integrifolia": [
@@ -994,7 +1180,9 @@
       "members": [
         "Macadamia integrifolia"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Macadamia tetraphylla": [
@@ -1003,14 +1191,18 @@
       "members": [
         "Macadamia tetraphylla"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Macadamia (rough-shell) early-year",
       "members": [
         "Macadamia tetraphylla"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Citrus medica": [
@@ -1019,14 +1211,18 @@
       "members": [
         "Citrus medica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     },
     {
       "name": "Citron (early-year)",
       "members": [
         "Citrus medica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Fortunella japonica": [
@@ -1037,7 +1233,9 @@
         "Fortunella margarita",
         "Citrus japonica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Kumquat (late-year)",
@@ -1046,7 +1244,9 @@
         "Fortunella margarita",
         "Citrus japonica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Fortunella margarita": [
@@ -1057,7 +1257,9 @@
         "Fortunella margarita",
         "Citrus japonica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Kumquat (late-year)",
@@ -1066,7 +1268,9 @@
         "Fortunella margarita",
         "Citrus japonica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Citrus japonica": [
@@ -1077,7 +1281,9 @@
         "Fortunella margarita",
         "Citrus japonica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Kumquat (late-year)",
@@ -1086,7 +1292,9 @@
         "Fortunella margarita",
         "Citrus japonica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Citrus aurantium": [
@@ -1096,7 +1304,9 @@
         "Citrus aurantium",
         "Citrus x aurantium"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Citrus x aurantium": [
@@ -1106,7 +1316,9 @@
         "Citrus aurantium",
         "Citrus x aurantium"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Pinus edulis": [
@@ -1115,7 +1327,9 @@
       "members": [
         "Pinus edulis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Acer platanoides": [
@@ -1124,7 +1338,9 @@
       "members": [
         "Acer platanoides"
       ],
-      "stage": "sap_run"
+      "stage": "sap_run",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Quercus rubra": [
@@ -1133,7 +1349,9 @@
       "members": [
         "Quercus rubra"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Quercus alba": [
@@ -1142,7 +1360,9 @@
       "members": [
         "Quercus alba"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Quercus macrocarpa": [
@@ -1151,7 +1371,9 @@
       "members": [
         "Quercus macrocarpa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Quercus bicolor": [
@@ -1160,7 +1382,9 @@
       "members": [
         "Quercus bicolor"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Populus deltoides": [
@@ -1169,7 +1393,9 @@
       "members": [
         "Populus deltoides"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Pinus ponderosa": [
@@ -1178,7 +1404,9 @@
       "members": [
         "Pinus ponderosa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Spruce tips (multi-species)",
@@ -1193,7 +1421,9 @@
         "Pinus ponderosa",
         "Larix sibirica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Betula nigra": [
@@ -1202,7 +1432,9 @@
       "members": [
         "Betula nigra"
       ],
-      "stage": "sap_run"
+      "stage": "sap_run",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Nyssa sylvatica": [
@@ -1211,7 +1443,9 @@
       "members": [
         "Nyssa sylvatica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Gymnocladus dioicus": [
@@ -1220,7 +1454,9 @@
       "members": [
         "Gymnocladus dioicus"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -1
     }
   ],
   "Tilia americana": [
@@ -1229,14 +1465,18 @@
       "members": [
         "Tilia americana"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "American basswood (flowers)",
       "members": [
         "Tilia americana"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Picea glauca": [
@@ -1253,7 +1493,9 @@
         "Pinus ponderosa",
         "Larix sibirica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Picea pungens": [
@@ -1270,7 +1512,9 @@
         "Pinus ponderosa",
         "Larix sibirica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Conifer tips (multi-species)",
@@ -1282,7 +1526,9 @@
         "Pinus sp.",
         "Picea sp."
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Picea sp.": [
@@ -1299,7 +1545,9 @@
         "Pinus ponderosa",
         "Larix sibirica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Conifer tips (multi-species)",
@@ -1311,7 +1559,9 @@
         "Pinus sp.",
         "Picea sp."
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Picea abies": [
@@ -1328,7 +1578,9 @@
         "Pinus ponderosa",
         "Larix sibirica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Pinus contorta": [
@@ -1345,7 +1597,9 @@
         "Pinus ponderosa",
         "Larix sibirica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Conifer tips (multi-species)",
@@ -1357,7 +1611,9 @@
         "Pinus sp.",
         "Picea sp."
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Pinus sylvestris": [
@@ -1374,7 +1630,9 @@
         "Pinus ponderosa",
         "Larix sibirica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Conifer tips (multi-species)",
@@ -1386,7 +1644,9 @@
         "Pinus sp.",
         "Picea sp."
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Pinus nigra": [
@@ -1403,7 +1663,9 @@
         "Pinus ponderosa",
         "Larix sibirica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Larix sibirica": [
@@ -1420,7 +1682,9 @@
         "Pinus ponderosa",
         "Larix sibirica"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Conifer tips (multi-species)",
@@ -1432,7 +1696,9 @@
         "Pinus sp.",
         "Picea sp."
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Ulmus pumila": [
@@ -1441,7 +1707,9 @@
       "members": [
         "Ulmus pumila"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Tilia cordata": [
@@ -1450,7 +1718,9 @@
       "members": [
         "Tilia cordata"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Ginkgo biloba": [
@@ -1459,7 +1729,9 @@
       "members": [
         "Ginkgo biloba"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Juglans nigra": [
@@ -1472,7 +1744,9 @@
         "Juglans ailantifolia",
         "Juglans sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Juglans regia": [
@@ -1485,7 +1759,9 @@
         "Juglans ailantifolia",
         "Juglans sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Juglans cinerea": [
@@ -1498,7 +1774,9 @@
         "Juglans ailantifolia",
         "Juglans sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Juglans ailantifolia": [
@@ -1511,7 +1789,9 @@
         "Juglans ailantifolia",
         "Juglans sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Juglans sp.": [
@@ -1524,7 +1804,9 @@
         "Juglans ailantifolia",
         "Juglans sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Pyrus ussuriensis": [
@@ -1533,7 +1815,9 @@
       "members": [
         "Pyrus ussuriensis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Callicarpa americana": [
@@ -1542,7 +1826,9 @@
       "members": [
         "Callicarpa americana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Rhus typhina": [
@@ -1551,7 +1837,9 @@
       "members": [
         "Rhus typhina"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Achillea millefolium": [
@@ -1560,7 +1848,9 @@
       "members": [
         "Achillea millefolium"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Mentha": [
@@ -1571,7 +1861,9 @@
         "Mentha arvensis",
         "Mentha canadensis"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Mentha arvensis": [
@@ -1582,7 +1874,9 @@
         "Mentha arvensis",
         "Mentha canadensis"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Mentha canadensis": [
@@ -1593,7 +1887,9 @@
         "Mentha arvensis",
         "Mentha canadensis"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Nasturtium officinale": [
@@ -1602,14 +1898,18 @@
       "members": [
         "Nasturtium officinale"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Watercress (fall flush)",
       "members": [
         "Nasturtium officinale"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Allium canadense": [
@@ -1618,7 +1918,9 @@
       "members": [
         "Allium canadense"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Smilax sp.": [
@@ -1629,7 +1931,9 @@
         "Smilax rotundifolia",
         "Smilax bona-nox"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Smilax rotundifolia": [
@@ -1640,7 +1944,9 @@
         "Smilax rotundifolia",
         "Smilax bona-nox"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Smilax bona-nox": [
@@ -1651,7 +1957,9 @@
         "Smilax rotundifolia",
         "Smilax bona-nox"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Pinus sp.": [
@@ -1665,7 +1973,9 @@
         "Pinus sp.",
         "Picea sp."
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Auricularia auricula-judae": [
@@ -1674,28 +1984,36 @@
       "members": [
         "Auricularia auricula-judae"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Wood ear (fall flush)",
       "members": [
         "Auricularia auricula-judae"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "cool_night",
+      "shift_per_half_zone": 2
     },
     {
       "name": "Wood ear (warm-zone late-year)",
       "members": [
         "Auricularia auricula-judae"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Wood ear (warm-zone early-year)",
       "members": [
         "Auricularia auricula-judae"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Prunus sp.": [
@@ -1704,7 +2022,9 @@
       "members": [
         "Prunus sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Laetiporus sulphureus": [
@@ -1713,7 +2033,9 @@
       "members": [
         "Laetiporus sulphureus"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Typha latifolia": [
@@ -1723,7 +2045,9 @@
         "Typha latifolia",
         "Typha angustifolia"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Cattail (pollen / flower)",
@@ -1731,7 +2055,9 @@
         "Typha latifolia",
         "Typha angustifolia"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Cattail (fall rhizome)",
@@ -1739,7 +2065,9 @@
         "Typha latifolia",
         "Typha angustifolia"
       ],
-      "stage": "root_dig"
+      "stage": "root_dig",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     },
     {
       "name": "Cattail (winter rhizome)",
@@ -1747,7 +2075,9 @@
         "Typha latifolia",
         "Typha angustifolia"
       ],
-      "stage": "root_dig"
+      "stage": "root_dig",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Typha angustifolia": [
@@ -1757,7 +2087,9 @@
         "Typha latifolia",
         "Typha angustifolia"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Cattail (pollen / flower)",
@@ -1765,7 +2097,9 @@
         "Typha latifolia",
         "Typha angustifolia"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Cattail (fall rhizome)",
@@ -1773,7 +2107,9 @@
         "Typha latifolia",
         "Typha angustifolia"
       ],
-      "stage": "root_dig"
+      "stage": "root_dig",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     },
     {
       "name": "Cattail (winter rhizome)",
@@ -1781,7 +2117,9 @@
         "Typha latifolia",
         "Typha angustifolia"
       ],
-      "stage": "root_dig"
+      "stage": "root_dig",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Matteuccia struthiopteris": [
@@ -1790,7 +2128,9 @@
       "members": [
         "Matteuccia struthiopteris"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Fragaria virginiana": [
@@ -1800,7 +2140,9 @@
         "Fragaria virginiana",
         "Fragaria vesca"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Fragaria vesca": [
@@ -1810,7 +2152,9 @@
         "Fragaria virginiana",
         "Fragaria vesca"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Podophyllum peltatum": [
@@ -1819,7 +2163,9 @@
       "members": [
         "Podophyllum peltatum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -7
     }
   ],
   "Betula lenta": [
@@ -1829,7 +2175,9 @@
         "Betula lenta",
         "Betula alleghaniensis"
       ],
-      "stage": "sap_run"
+      "stage": "sap_run",
+      "mechanism": "frost_anchored",
+      "shift_per_half_zone": 3
     }
   ],
   "Betula alleghaniensis": [
@@ -1839,7 +2187,9 @@
         "Betula lenta",
         "Betula alleghaniensis"
       ],
-      "stage": "sap_run"
+      "stage": "sap_run",
+      "mechanism": "frost_anchored",
+      "shift_per_half_zone": 3
     }
   ],
   "Oxalis stricta": [
@@ -1848,7 +2198,9 @@
       "members": [
         "Oxalis stricta"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Rumex crispus": [
@@ -1857,7 +2209,9 @@
       "members": [
         "Rumex crispus"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Rumex acetosella": [
@@ -1866,7 +2220,9 @@
       "members": [
         "Rumex acetosella"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Artemisia vulgaris": [
@@ -1875,7 +2231,9 @@
       "members": [
         "Artemisia vulgaris"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Viburnum trilobum": [
@@ -1884,7 +2242,9 @@
       "members": [
         "Viburnum trilobum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Cornus kousa": [
@@ -1893,7 +2253,9 @@
       "members": [
         "Cornus kousa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Cornus mas": [
@@ -1903,7 +2265,9 @@
         "Cornus mas",
         "Cornus officinalis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Cornus officinalis": [
@@ -1913,7 +2277,9 @@
         "Cornus mas",
         "Cornus officinalis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Rosa rugosa": [
@@ -1922,7 +2288,9 @@
       "members": [
         "Rosa rugosa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 2
     }
   ],
   "Olea europaea": [
@@ -1931,7 +2299,9 @@
       "members": [
         "Olea europaea"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Lycoperdon perlatum": [
@@ -1940,7 +2310,9 @@
       "members": [
         "Lycoperdon perlatum"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Calvatia gigantea": [
@@ -1949,7 +2321,9 @@
       "members": [
         "Calvatia gigantea"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Craterellus cornucopioides": [
@@ -1958,7 +2332,9 @@
       "members": [
         "Craterellus cornucopioides"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Lepista nuda": [
@@ -1967,7 +2343,9 @@
       "members": [
         "Lepista nuda"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "cool_night",
+      "shift_per_half_zone": 8
     }
   ],
   "Cantharellus cibarius": [
@@ -1976,7 +2354,9 @@
       "members": [
         "Cantharellus cibarius"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Grifola frondosa": [
@@ -1985,7 +2365,9 @@
       "members": [
         "Grifola frondosa"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "cool_night",
+      "shift_per_half_zone": 2
     }
   ],
   "Pleurotus ostreatus": [
@@ -1994,21 +2376,27 @@
       "members": [
         "Pleurotus ostreatus"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     },
     {
       "name": "Oyster mushroom (fall flush)",
       "members": [
         "Pleurotus ostreatus"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "cool_night",
+      "shift_per_half_zone": 2
     },
     {
       "name": "Oyster mushroom (warm-zone year-round)",
       "members": [
         "Pleurotus ostreatus"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 0
     }
   ],
   "Hericium erinaceus": [
@@ -2017,7 +2405,9 @@
       "members": [
         "Hericium erinaceus"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "cool_night",
+      "shift_per_half_zone": 5
     }
   ],
   "Boletus edulis": [
@@ -2026,7 +2416,9 @@
       "members": [
         "Boletus edulis"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Coprinus comatus": [
@@ -2035,7 +2427,9 @@
       "members": [
         "Coprinus comatus"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "cool_night",
+      "shift_per_half_zone": 4
     }
   ],
   "Erythronium americanum": [
@@ -2044,7 +2438,9 @@
       "members": [
         "Erythronium americanum"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Claytonia virginica": [
@@ -2053,7 +2449,9 @@
       "members": [
         "Claytonia virginica"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Cardamine concatenata": [
@@ -2062,7 +2460,9 @@
       "members": [
         "Cardamine concatenata"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Monarda fistulosa": [
@@ -2071,7 +2471,9 @@
       "members": [
         "Monarda fistulosa"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Viola sororia": [
@@ -2080,7 +2482,9 @@
       "members": [
         "Viola sororia"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Nepeta cataria": [
@@ -2089,7 +2493,9 @@
       "members": [
         "Nepeta cataria"
       ],
-      "stage": "leaf"
+      "stage": "leaf",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Solidago canadensis": [
@@ -2098,7 +2504,9 @@
       "members": [
         "Solidago canadensis"
       ],
-      "stage": "flower_harvest"
+      "stage": "flower_harvest",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Prunus pensylvanica": [
@@ -2107,7 +2515,9 @@
       "members": [
         "Prunus pensylvanica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Hypomyces lactifluorum": [
@@ -2116,7 +2526,9 @@
       "members": [
         "Hypomyces lactifluorum"
       ],
-      "stage": "mushroom_flush"
+      "stage": "mushroom_flush",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Sagittaria latifolia": [
@@ -2125,7 +2537,9 @@
       "members": [
         "Sagittaria latifolia"
       ],
-      "stage": "root_dig"
+      "stage": "root_dig",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Cornus canadensis": [
@@ -2134,7 +2548,9 @@
       "members": [
         "Cornus canadensis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Mitchella repens": [
@@ -2143,7 +2559,9 @@
       "members": [
         "Mitchella repens"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Cornus florida": [
@@ -2152,7 +2570,9 @@
       "members": [
         "Cornus florida"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Malus domestica": [
@@ -2161,7 +2581,9 @@
       "members": [
         "Malus domestica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Punica granatum": [
@@ -2170,7 +2592,9 @@
       "members": [
         "Punica granatum"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Citrus sinensis": [
@@ -2179,14 +2603,18 @@
       "members": [
         "Citrus sinensis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     },
     {
       "name": "Sweet orange (late-year)",
       "members": [
         "Citrus sinensis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Citrus limon": [
@@ -2195,14 +2623,18 @@
       "members": [
         "Citrus limon"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 0
     },
     {
       "name": "Lemon (late-year)",
       "members": [
         "Citrus limon"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 0
     }
   ],
   "Citrus reticulata": [
@@ -2211,14 +2643,18 @@
       "members": [
         "Citrus reticulata"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     },
     {
       "name": "Mandarin orange (early-year)",
       "members": [
         "Citrus reticulata"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Citrus paradisi": [
@@ -2227,14 +2663,18 @@
       "members": [
         "Citrus paradisi"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     },
     {
       "name": "Grapefruit (late-year)",
       "members": [
         "Citrus paradisi"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Prunus domestica": [
@@ -2243,7 +2683,9 @@
       "members": [
         "Prunus domestica"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Prunus salicina": [
@@ -2252,7 +2694,9 @@
       "members": [
         "Prunus salicina"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Prunus cerasus": [
@@ -2261,7 +2705,9 @@
       "members": [
         "Prunus cerasus"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -4
     }
   ],
   "Carissa macrocarpa": [
@@ -2270,7 +2716,9 @@
       "members": [
         "Carissa macrocarpa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Carya sp.": [
@@ -2279,7 +2727,9 @@
       "members": [
         "Carya sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 3
     }
   ],
   "Casimiroa edulis": [
@@ -2288,7 +2738,9 @@
       "members": [
         "Casimiroa edulis"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Citrus sp.": [
@@ -2297,14 +2749,18 @@
       "members": [
         "Citrus sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 0
     },
     {
       "name": "Citrus (genus, early-year)",
       "members": [
         "Citrus sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": 0
     }
   ],
   "Cornus sp.": [
@@ -2313,7 +2769,9 @@
       "members": [
         "Cornus sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Phoenix sp.": [
@@ -2322,7 +2780,9 @@
       "members": [
         "Phoenix sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Persea americana": [
@@ -2331,14 +2791,18 @@
       "members": [
         "Persea americana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     },
     {
       "name": "Avocado (late-year)",
       "members": [
         "Persea americana"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -2
     }
   ],
   "Carica papaya": [
@@ -2347,14 +2811,18 @@
       "members": [
         "Carica papaya"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     },
     {
       "name": "Papaya (early-year)",
       "members": [
         "Carica papaya"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Actinidia deliciosa": [
@@ -2363,7 +2831,9 @@
       "members": [
         "Actinidia deliciosa"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -3
     }
   ],
   "Vitis vinifera": [
@@ -2372,7 +2842,9 @@
       "members": [
         "Vitis vinifera"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Prunus serotina": [
@@ -2381,7 +2853,9 @@
       "members": [
         "Prunus serotina"
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -8
     }
   ],
   "Acer rubrum": [
@@ -2390,7 +2864,9 @@
       "members": [
         "Acer rubrum"
       ],
-      "stage": "sap_run"
+      "stage": "sap_run",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -7
     }
   ],
   "Acer negundo": [
@@ -2399,7 +2875,9 @@
       "members": [
         "Acer negundo"
       ],
-      "stage": "sap_run"
+      "stage": "sap_run",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -7
     }
   ],
   "Populus tremuloides": [
@@ -2408,21 +2886,27 @@
       "members": [
         "Populus tremuloides"
       ],
-      "stage": "bark_strip"
+      "stage": "bark_strip",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     },
     {
       "name": "Quaking aspen (catkins)",
       "members": [
         "Populus tremuloides"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     },
     {
       "name": "Quaking aspen (sap)",
       "members": [
         "Populus tremuloides"
       ],
-      "stage": "sap_run"
+      "stage": "sap_run",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -7
     }
   ],
   "Tsuga canadensis": [
@@ -2431,7 +2915,9 @@
       "members": [
         "Tsuga canadensis"
       ],
-      "stage": "shoot"
+      "stage": "shoot",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ],
   "Vaccinium sp.": [
@@ -2440,7 +2926,9 @@
       "members": [
         "Vaccinium sp."
       ],
-      "stage": "ripe"
+      "stage": "ripe",
+      "mechanism": "heat_driven",
+      "shift_per_half_zone": -5
     }
   ]
 }
