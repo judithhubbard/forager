@@ -153,6 +153,18 @@
   let observations: ObservationWithUser[] = [];
   let allSpecies: Species[] = [];
   let windows: WindowRow[] = [];
+
+  // Per-source harvest policy (migration 29). When the source city has
+  // told us how they want foragers to treat their trees, we display it
+  // prominently. Loaded lazily after the main pin paint so the critical
+  // path isn't blocked.
+  type HarvestPolicy = 'not_addressed' | 'personal_use_ok' | 'encouraged' | 'discouraged' | 'prohibited';
+  interface HarvestPolicyInfo {
+    policy: HarvestPolicy;
+    note: string | null;
+    sourceName: string;
+  }
+  let harvestPolicyInfo: HarvestPolicyInfo | null = null;
   /** True iff this species has fruiting windows in some OTHER region —
    *  used to render a "no regional harvest data here yet" hint when
    *  the local timeline is empty. Lets users see that they're missing
@@ -394,6 +406,34 @@
     refreshWatching(pinId);
   }
 
+  async function loadHarvestPolicy(sourceId: string): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('import_sources')
+        .select('name, harvest_policy, harvest_policy_note' as never)
+        .eq('id', sourceId)
+        .single();
+      if (error || !data) return;
+      const row = data as unknown as {
+        name: string;
+        harvest_policy: HarvestPolicy | null;
+        harvest_policy_note: string | null;
+      };
+      // Only surface when the city actively set a policy. Default
+      // 'not_addressed' means we render no banner — silence rather
+      // than a wishy-washy "no policy" hint.
+      if (row.harvest_policy && row.harvest_policy !== 'not_addressed') {
+        harvestPolicyInfo = {
+          policy: row.harvest_policy,
+          note: row.harvest_policy_note,
+          sourceName: row.name
+        };
+      }
+    } catch (err) {
+      console.warn('[PinDetail] harvest_policy load failed:', err);
+    }
+  }
+
   async function load() {
     loading = true;
     errorMessage = '';
@@ -407,6 +447,7 @@
     speciesHasWindowsElsewhere = false;
     thumbUrls = new Map();
     fullUrls = new Map();
+    harvestPolicyInfo = null;
     const requestedId = pinId;
     try {
       // First-paint critical path: pin metadata, species lookup, this
@@ -433,13 +474,17 @@
       loading = false;
 
       // Background fills: timeline context (species windows + other-pin
-      // observations) and photos. These update reactive state as they
-      // arrive; the panel re-renders in place. No await on the outer
-      // load() — let the panel be interactive immediately.
+      // observations), photos, harvest policy banner. These update
+      // reactive state as they arrive; the panel re-renders in place.
+      // No await on the outer load() — let the panel be interactive
+      // immediately.
       loadTimelineContext(requestedId).catch((err) => {
         console.warn('[PinDetail] timeline-context load failed:', err);
       });
       loadPhotos();
+      if (pin?.import_source) {
+        loadHarvestPolicy(pin.import_source);
+      }
     } catch (err) {
       errorMessage = err instanceof Error ? err.message : 'Failed to load pin.';
       loading = false;
@@ -876,6 +921,33 @@
           >shared</button>
         {/if}
       </div>
+      {#if harvestPolicyInfo}
+        <!-- City-set harvest policy banner. Only renders when the
+             source has actively set a non-default policy via the
+             Phase 3 outreach process. Color + icon convey the
+             expectation at a glance; the optional note adds context. -->
+        <div class="harvest-policy harvest-policy-{harvestPolicyInfo.policy}">
+          <div class="hp-head">
+            <span class="hp-icon" aria-hidden="true">
+              {#if harvestPolicyInfo.policy === 'encouraged'}✓
+              {:else if harvestPolicyInfo.policy === 'personal_use_ok'}◐
+              {:else if harvestPolicyInfo.policy === 'discouraged'}⚠
+              {:else if harvestPolicyInfo.policy === 'prohibited'}⛔
+              {/if}
+            </span>
+            <span class="hp-label">
+              {#if harvestPolicyInfo.policy === 'encouraged'}Foraging encouraged by {harvestPolicyInfo.sourceName}
+              {:else if harvestPolicyInfo.policy === 'personal_use_ok'}Personal-use harvest permitted by {harvestPolicyInfo.sourceName}
+              {:else if harvestPolicyInfo.policy === 'discouraged'}{harvestPolicyInfo.sourceName} asks foragers not to harvest these trees
+              {:else if harvestPolicyInfo.policy === 'prohibited'}Harvest prohibited at this source
+              {/if}
+            </span>
+          </div>
+          {#if harvestPolicyInfo.note}
+            <p class="hp-note">{harvestPolicyInfo.note}</p>
+          {/if}
+        </div>
+      {/if}
       {#if species}
         <p class="sub">
           <em>{species.scientific_name}</em>
@@ -1629,6 +1701,41 @@
   .vis-chip.vis-public  { background: #e3eff5; color: #1a4a66; border-color: #a8cde0; }
   button.vis-chip { cursor: pointer; }
   button.vis-chip:focus-visible { outline: 2px solid #3a5a3a; outline-offset: 1px; }
+
+  /* City-set harvest policy banner (migration 29). One per pin when
+     the source city has actively set a non-default policy. */
+  .harvest-policy {
+    margin: 0.5rem 0 0.75rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.4rem;
+    border: 1px solid;
+    font-size: 0.85rem;
+  }
+  .harvest-policy .hp-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+  .harvest-policy .hp-icon { font-size: 1rem; line-height: 1; }
+  .harvest-policy .hp-note {
+    margin: 0.35rem 0 0;
+    font-weight: 400;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+  .harvest-policy-encouraged {
+    background: #e6f3e0; border-color: #8cc26a; color: #2d4d20;
+  }
+  .harvest-policy-personal_use_ok {
+    background: #e3eff5; border-color: #a8cde0; color: #1a4a66;
+  }
+  .harvest-policy-discouraged {
+    background: #fcf3df; border-color: #d6b95c; color: #6a4f15;
+  }
+  .harvest-policy-prohibited {
+    background: #f8e0e0; border-color: #c46060; color: #6a1f1f;
+  }
 
   /* 🔒 inline tag on private observation rows */
   .vis-tag {
