@@ -35,7 +35,7 @@ const sql = require('/Users/jk/Dropbox/Claude/forager/node_modules/postgres')(
 const ZONE_NUM = {
   '3a': 6, '3b': 7, '4a': 8, '4b': 9, '5a': 10, '5b': 11,
   '6a': 12, '6b': 13, '7a': 14, '7b': 15, '8a': 16, '8b': 17,
-  '9a': 18, '9b': 19, '10a': 20, '10b': 21
+  '9a': 18, '9b': 19, '10a': 20, '10b': 21, '11a': 22, '11b': 23
 };
 
 const COMPLEXES = [
@@ -885,12 +885,21 @@ const COMPLEXES = [
     // SE-US range pushes bloom earlier in zones 10-11 (peak May rather
     // than Jun-Jul). Half-window also slightly widened so the
     // continuous gradient lands a sensible May date in 10b.
+    //
+    // CALIBRATION FIX 2026-05-11: The linear -3 slope from 6a only
+    // got zones 10-11 to peak Jun 1-7, but the summary cites "peak
+    // May in zones 10-11". Added a regional_anchor for zones 10a-11a
+    // with peak DOY 130 (May 10) and half_window 30, so the warm-
+    // zone peak actually lands in May as the cited sources describe.
     anchor_zone: '6a', anchor_peak: 182, shift_per_half_zone: -3, half_window: 25,
     target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a','10b','11a'],
     stage: 'flower_harvest',
     source_name: "Adam's needle (USDA Plant Profile + foraging guides)",
     source_url: 'https://plants.usda.gov/home/plantProfile?symbol=YUFI',
-    summary: "Adam's needle (Yucca filamentosa): edible flowers, peak May in zones 10-11 (Florida/SoCal cultivation) and Jun-Jul in 5-9 (native SE-US wild range). Sweet pea-like flavor; pick individual flowers off the bloom stalk."
+    summary: "Adam's needle (Yucca filamentosa): edible flowers, peak May in zones 10-11 (Florida/SoCal cultivation) and Jun-Jul in 5-9 (native SE-US wild range). Sweet pea-like flavor; pick individual flowers off the bloom stalk.",
+    regional_anchors: [
+      { zones: ['10a','10b','11a'], source: "Adam's needle warm-zone (FL/SoCal cultivation reports + USDA)", url: 'https://plants.usda.gov/home/plantProfile?symbol=YUFI', summary: "Florida/SoCal cultivation: bloom peak early-to-mid May, Apr-Jun envelope. Earlier than the SE-US native wild range (Jun-Jul) due to milder winters + earlier spring warm-up.", peak_doy: 130, half_window: 30 }
+    ]
   },
 
   // Almond (Prunus dulcis) — commercial nut crop, dominant in CA (zones
@@ -2492,12 +2501,26 @@ const COMPLEXES = [
     // Beauty, Ozark Premier) spanning 6+ weeks of harvest;
     // 28-day window was just the peak-cultivar slice. 42-day
     // window envelopes the cultivar spread.
+    //
+    // CALIBRATION FIX 2026-05-11: With slope -5 only, warm zones
+    // (8b-10a) projected as May-Aug, conflicting with the cited
+    // UCANR statewide guide which says Jun-Sep. The discrepancy is
+    // real: CA's commercial cultivar mix (Burbank-late, Casselman,
+    // Friar, Black Amber, Angeleno) extends harvest into Sep, while
+    // the linear -5 slope from 7a peak Jul 26 marches earlier into
+    // late spring as zones warm. Added a regional_anchor for the CA
+    // cluster (8b-10a) with peak DOY 213 (Aug 1) and half_window 60
+    // (Jun 2 - Sep 30) to override the linear projection and match
+    // UCANR's published envelope.
     anchor_zone: '7a', anchor_peak: 207, shift_per_half_zone: -5, half_window: 42,
     target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'ripe',
     source_name: 'Japanese plum (UC ANR + Cornell CE + UC Davis Fruit & Nut Research)',
     source_url: 'https://homeorchard.ucanr.edu/General-information/Stone-fruits/',
-    summary: 'Japanese plum (Prunus salicina): heat-driven, ripens Jun-Aug across temperate North America with substantial cultivar spread (Santa Rosa late Jun, Methley early Jul, Shiro mid Jul, Beauty late Jul, Burbank early Aug — 6+ weeks of harvest in any given zone). Earlier than European plum (P. domestica) by 3-4 weeks; Santa Rosa peaks late June in coastal CA, mid-Jul in Cornell zone 6.'
+    summary: 'Japanese plum (Prunus salicina): heat-driven, ripens Jun-Sep across temperate North America with substantial cultivar spread (Santa Rosa late Jun, Methley early Jul, Shiro mid Jul, Beauty late Jul, Burbank early Aug, Casselman/Friar late Aug, Angeleno Sep — 12+ weeks of harvest in warm zones, 6+ weeks in cooler zones). Earlier than European plum (P. domestica) by 3-4 weeks; Santa Rosa peaks late June in coastal CA, mid-Jul in Cornell zone 6.',
+    regional_anchors: [
+      { zones: ['8b','9a','9b','10a'], source: 'Japanese plum CA cultivar mix (UCANR Backyard Orchard + UC Davis Fruit & Nut Research)', url: 'https://homeorchard.ucanr.edu/General-information/Stone-fruits/', summary: 'California (UCANR statewide) Japanese plum harvest: Jun-Sep envelope across the cultivar mix (Santa Rosa Jun-Jul, Methley/Beauty/Shiro Jul, Burbank Jul-Aug, Casselman/Friar/Black Amber late Aug, Angeleno Sep). Single trees fruit for ~6 weeks; the published 4-month statewide envelope reflects the planted cultivar range.', peak_doy: 213, half_window: 60 }
+    ]
   },
   {
     name: 'Sour cherry',
@@ -3076,11 +3099,37 @@ if (require.main !== module) return;
         if (zone.length === 0) continue;
         const zoneNum = ZONE_NUM[zoneCode];
         if (zoneNum == null) continue;
-        const peak = Math.max(1, Math.min(366,
-          cx.anchor_peak + (zoneNum - anchorNum) * cx.shift_per_half_zone
-        ));
-        const start = Math.max(1, peak - cx.half_window);
-        const end = Math.min(366, peak + cx.half_window);
+
+        // Regional anchors override the linear slope projection when
+        // their `zones` array covers this zone. Lets us encode
+        // cultivar/microclimate divergence at the warm tail without
+        // contorting the global slope. Example: Japanese plum's
+        // California UCANR window (Jun-Sep envelope of multiple
+        // cultivars) doesn't match the -5 slope from anchor 7a; a
+        // regional_anchor for zones 8b-10a with peak_doy=213,
+        // half_window=60 pins those zones to the UCANR window
+        // independently of the global slope.
+        const linearPeak = cx.anchor_peak + (zoneNum - anchorNum) * cx.shift_per_half_zone;
+        const matchingAnchor = (cx.regional_anchors ?? []).find((a) => a.zones.includes(zoneCode));
+        const peakRaw = matchingAnchor ? matchingAnchor.peak_doy : linearPeak;
+        const halfWindow = matchingAnchor?.half_window ?? cx.half_window;
+        const peak = Math.max(1, Math.min(366, peakRaw));
+        const start = Math.max(1, peak - halfWindow);
+        const end = Math.min(366, peak + halfWindow);
+
+        if (matchingAnchor && Math.abs(linearPeak - matchingAnchor.peak_doy) > 15) {
+          console.log(`    ${zoneCode}: anchor override (${matchingAnchor.source}) shifts peak ${linearPeak}→${peak} (Δ${peak - Math.round(linearPeak)}d)`);
+        }
+
+        // Per-zone evEntry: supports DOYs reflect THIS zone's
+        // projection (after any regional_anchor override) rather than
+        // the global anchor zone's DOYs. Fixes the calibration-viewer
+        // mismatch where a row in zone 10a synthesized to May-Aug but
+        // its main evidence entry said Jun-Sep.
+        const zoneEvEntry = {
+          ...evEntry,
+          supports: { start_doy: start, end_doy: end, peak_doy: peak }
+        };
 
         // Match by complex_name so multiple complex entries (e.g.
         // "Cherimoya (late-year)" + "Cherimoya (early-year)") for the
@@ -3101,8 +3150,8 @@ if (require.main !== module) return;
         // in this file are never reflected in the evidence supports,
         // and the calibration viewer shows stale data bars that diverge
         // from the synthesized window. Pattern: filter out any entry
-        // with this source, then re-append the fresh evEntry.
-        let newEv = ev.filter(e => e?.source !== evEntry.source).concat([evEntry]);
+        // with this source, then re-append the fresh zoneEvEntry.
+        let newEv = ev.filter(e => e?.source !== zoneEvEntry.source).concat([zoneEvEntry]);
 
         // Per-zone-band regional anchor citations: attach each anchor
         // whose zones include this zone, so the viewer surfaces the
