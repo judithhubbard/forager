@@ -56,11 +56,28 @@
   let activeGroup: InterestGroup | 'all' = initialFromUrl('group', 'all') as InterestGroup | 'all';
   let activeZone: string | 'all' = initialFromUrl('zone', 'all');
 
-  // Push state to the URL via history.replaceState so back-button
-  // restores the same filters but we don't spam history with every
-  // keystroke. Skip until after mount so the initial values don't
-  // trigger a redundant replace.
+  // URL state management. We use `replaceState` for incremental
+  // changes (typing into the search box, toggling pills) so the
+  // browser history isn't spammed with one entry per keystroke.
+  // But we DO call `pushState` the first time filters transition
+  // from "none active" to "any active", because:
+  //
+  //   - User lands on /species (no filters), browses, clicks a card → /species/[id]
+  //   - User lands on /species, searches "cleavers" → /species?q=cleavers
+  //     (replaceState — same history entry)
+  //   - User clicks a result → /species/[id]
+  //   - User hits Back → /species?q=cleavers (the replaced entry)
+  //
+  // Without the pushState-on-first-filter, that final Back appears
+  // to do nothing because the user is already on the filtered
+  // catalog view (which they just came from). They have to hit
+  // Back a second time to escape to the map.
+  //
+  // Heuristic: track whether the URL currently HAS any filter; when
+  // the new URL HAS a filter but the previous one DIDN'T, push.
+  // Subsequent edits of the same active-filter state replace.
   let mounted = false;
+  let hadFilterInUrl = browser && window.location.search.length > 0;
   $: if (mounted && browser) {
     const params = new URLSearchParams();
     if (searchTerm.trim()) params.set('q', searchTerm.trim());
@@ -68,8 +85,19 @@
     if (activeZone !== 'all') params.set('zone', activeZone);
     const qs = params.toString();
     const next = qs ? '?' + qs : window.location.pathname;
-    if (window.location.search.replace(/^\?/, '') !== qs) {
-      try { window.history.replaceState(null, '', next); } catch { /* no-op */ }
+    const currentQs = window.location.search.replace(/^\?/, '');
+    if (currentQs !== qs) {
+      // Transition from no-filter → first-filter creates a real
+      // history entry; subsequent edits replace.
+      const transitionToFiltered = !hadFilterInUrl && qs.length > 0;
+      try {
+        if (transitionToFiltered) {
+          window.history.pushState(null, '', next);
+        } else {
+          window.history.replaceState(null, '', next);
+        }
+      } catch { /* no-op */ }
+      hadFilterInUrl = qs.length > 0;
     }
   }
 

@@ -22,11 +22,11 @@ export interface GlobalStats {
   fetched_at: string;
 }
 
-// v5 bumped 2026-05-11 after the Phase 4 city-imports push (Indianapolis,
-// Raleigh, Riverside, Lincoln, New Orleans, Cincinnati, Mesa, Jersey City,
-// Tulsa, Saint Paul — ~1.12M new pins) — invalidates any cached v4 totals
-// that pre-date the new pin counts.
-const LS_KEY = 'forager.global-stats.v5';
+// v6 bumped 2026-05-10 after the top-untouched-metros Phase 4 batch
+// (Houston, Charlotte, Atlanta, Salt Lake City — ~151k new pins from
+// city-owned inventories; Phoenix/Dallas/Tucson/Detroit remain Phase 3
+// outreach). Invalidates v5 cached totals.
+const LS_KEY = 'forager.global-stats.v6';
 const TTL_MS = 24 * 60 * 60 * 1000;
 
 let inMemory: GlobalStats | null = null;

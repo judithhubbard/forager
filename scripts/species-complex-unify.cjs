@@ -197,20 +197,27 @@ const COMPLEXES = [
   // d/half-zone (n=5) is the steepest of any forageable species.
   // That's plausible: peach cultivars are deliberately bred for the
   // zone, so each zone effectively has a different-timing variety.
-  // Anchor at zone 7b peak Jun 3 (DOY 154); -15 d/half-zone is the
-  // conservative slope (raw was -23.6, but n=5 is low so trim).
+  // Peach (Prunus persica) — heat-driven but bounded. iNat raw slope
+  // of -24 d/half-zone over n=5 is misleadingly steep because it
+  // extrapolates a Mar-Apr peak in zones 9-10 that doesn't match
+  // commercial cultivar reality. Real shift is closer to -10 d/half-
+  // zone because low-chill cultivars in warm zones still need
+  // ~600-800 chilling hours and ripen May, not March. Revised
+  // 2026-05-11 after check-windows flagged 9b→10a +47d jump (the
+  // 10a row was stale-outlier left from earlier target_zones).
+  // Anchor 6a peak Jul 20 (DOY 201) — Cornell-area commercial peak.
   {
     name: 'Peach',
     members: ['Prunus persica'],
-    anchor_zone: '7b',
-    anchor_peak: 154,
-    shift_per_half_zone: -15,
-    half_window: 28,            // wide window: cultivar variety per zone
-    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b'],
+    anchor_zone: '6a',
+    anchor_peak: 201,           // Jul 20
+    shift_per_half_zone: -10,   // commercial-cultivar realistic
+    half_window: 32,            // wide: cultivar variety per zone
+    target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a','10b'],
     stage: 'ripe',
-    source_name: 'Peach (iNat-empirical heat-shift fit + commercial cultivar timing)',
+    source_name: 'Peach (Cornell CE + UC ANR + UF/IFAS low-chill cultivars + commercial cultivar timing)',
     source_url: 'https://www.fruit.cornell.edu/peach/',
-    summary: 'Peach (Prunus persica): heavily heat-driven, with cultivars selected per zone. Empirical iNat slope ~-24 d/half-zone (n=5); using -15 conservatively. Anchor zone 7b peak early June.'
+    summary: 'Peach (Prunus persica): heat-driven within chilling-hour constraints. Cornell zone 6 peak mid-Jul; California zone 9 commercial harvest May-Aug; Florida low-chill cultivars (UFGold, UFSun) zone 10 peak May. iNat raw slope of -24 d/half-zone over-extrapolates to a Mar-Apr peak in tropical zones that does not match cultivar reality — low-chill cultivars still need 150-300 chilling hours minimum. Conservative -10 d/half-zone tracks commercial harvest data.'
   },
 
   // Wintergreen (Gaultheria procumbens) — low evergreen with persistent
@@ -445,12 +452,17 @@ const COMPLEXES = [
     anchor_zone: '6a',
     anchor_peak: 213,           // Aug 1
     shift_per_half_zone: -2,    // mild; iNat artifact +1.9 reflects persistent fruit
-    half_window: 21,
+    half_window: 24,            // widened 21→24 to envelope late-season fruit
     target_zones: ['2b','3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b','9a'],
     stage: 'ripe',
-    source_name: 'Chokecherry (Minnesota Wildflowers + USDA Silvics + iNat)',
-    source_url: 'https://www.minnesotawildflowers.info/shrub/choke-cherry',
-    summary: 'Chokecherry (Prunus virginiana): heat-driven mid-summer to early-fall fruit. Mild gradient (-2 d/half-zone); iNat slight warmer-later signal is from persistent fruit on stem, not biological ripening. Anchor 6a peak Aug 1.'
+    source_name: 'Chokecherry (USDA Silvics + Minnesota Wildflowers + Eat The Weeds + Sam Thayer + Prairie Plants of the U.S. Northern Great Plains + iNat empirical)',
+    source_url: 'https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_2/prunus/virginiana.htm',
+    summary: 'Chokecherry (Prunus virginiana): native to most of temperate North America (zone 2 through 9a; cold-hardy iconic prairie + woodland species). Drooping racemes of small white flowers in late spring give way to pendulous clusters of small (~8 mm) drupes that turn green → red → dark-purple-black as they ripen Jul-Sep. Astringent / bitter raw — almost inedible straight off the bush — but excellent cooked for jelly, syrup, wine, and as a pemmican mixer in Plains Indigenous food tradition (Lakota, Cree, Blackfoot, Ojibwe, Cheyenne, Dakota). The single most important wild-fruit forage on the northern prairies historically. ID: shrub or small tree (3-7 m), finely-toothed elliptical leaves, smooth bark with prominent horizontal lenticels, and the diagnostic drooping flower / fruit raceme (NOT a flat-topped cluster as in elderberry, NOT singletons as in cherries). SAFETY — CYANOGENIC: like all Prunus, the seeds + leaves + bark + flowers contain cyanogenic glycosides; concentration in chokecherry is HIGHER than in most cultivated cherries. NEVER eat raw seeds; NEVER crush/grind whole drupes for jelly without straining out the pits; wilted leaves and crushed twigs are toxic to livestock and have killed cattle. To process: pit the drupes (a chokecherry pitter is faster than a sharp knife), cook the pulp, strain. Heating drives off HCN. Native and Indigenous food preparation traditionally avoided seed exposure — modern foragers should do the same.',
+    regional_anchors: [
+      { zones: ['2b','3a','3b','4a','4b'], source: 'Prairie Plants of the U.S. Northern Great Plains + USDA NRCS PRVI', url: 'https://plants.usda.gov/plant-profile/PRVI', summary: 'Northern prairies (MT, ND, MN cold-zone, SK, MB): ripens late Aug to mid-Sep, peak mid-Aug.', peak_doy: 228, half_window: 24 },
+      { zones: ['5a','5b','6a','6b'], source: 'Minnesota Wildflowers + UMN Extension', url: 'https://www.minnesotawildflowers.info/shrub/choke-cherry', summary: 'Upper Midwest / NE / Cornell-area: ripens Aug, peak early-Aug.', peak_doy: 213, half_window: 24 },
+      { zones: ['7a','7b','8a','8b','9a'], source: 'Eat The Weeds + USDA NRCS', url: 'https://www.eattheweeds.com/chokecherry/', summary: 'Mid-Atlantic / southern range: ripens mid-Jul to mid-Aug.', peak_doy: 205, half_window: 24 }
+    ]
   },
 
   // Black chokeberry (Aronia melanocarpa) — heat-driven, very mild
@@ -843,6 +855,21 @@ const COMPLEXES = [
     source_name: 'Japanese tree lilac (Missouri Botanical Garden + Forager Chef)',
     source_url: 'https://www.missouribotanicalgarden.org/PlantFinder/PlantFinderDetails.aspx?taxonid=283065',
     summary: 'Japanese tree lilac (Syringa reticulata): large creamy-white flower panicles in Jun, ~2 weeks later than common lilac. Subtle honey-lilac flavor; for syrups, infusions, sugars.'
+  },
+  {
+    name: 'Common lilac (flowers)',
+    members: ['Syringa vulgaris'],
+    // Iconic North American spring-flowering ornamental shrub.
+    // Cold-hardy zones 3-7; pale-purple to white panicles in May.
+    // Flowers are edible (strip from the rachis to lose the bitter
+    // green parts). Strong floral; small amounts in sugar/syrup/
+    // jelly/candied. 2-3 week bloom in zone 6a peaks mid-May.
+    anchor_zone: '6a', anchor_peak: 135, shift_per_half_zone: -3, half_window: 14,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    stage: 'flower_harvest',
+    source_name: 'Common lilac (USDA NRCS SYVU + Practical Self Reliance + Forager Chef)',
+    source_url: 'https://plants.usda.gov/plant-profile/SYVU',
+    summary: 'Common lilac (Syringa vulgaris): pale-purple to white panicles of strongly-fragrant flowers in May (zone 6a peak mid-May). Edible — strip florets from the rachis (the green parts are bitter), use in syrup, sugar, jelly, candied cake decoration, or infused in cream/ice cream. A little goes a long way; intense floral. Commercially abundant ornamental across cold-temperate NA city plantings.'
   },
 
   // ── Per-user review-batch 2026-05-10 ──
@@ -1777,12 +1804,24 @@ const COMPLEXES = [
   {
     name: 'Highbush cranberry',
     members: ['Viburnum trilobum'],
-    anchor_zone: '6a', anchor_peak: 270, shift_per_half_zone: -3, half_window: 35,
-    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
+    // Beefed up 2026-05-11 with frost-blet timing, regional sources,
+    // and the CRITICAL look-alike caveat. The North American native
+    // V. trilobum (sometimes Viburnum opulus var. americanum) is edible;
+    // the closely-related European Viburnum opulus is widely planted
+    // ornamentally and looks nearly identical at fruiting but its
+    // drupes are bitter-foamy and reported toxic in quantity. The
+    // SAFEST ID feature: taste a single ripe drupe. V. trilobum is
+    // tart but pleasant (cranberry-like); V. opulus is foul.
+    anchor_zone: '6a', anchor_peak: 285, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['2b','3a','3b','4a','4b','5a','5b','6a','6b','7a','7b'],
     stage: 'ripe',
-    source_name: 'Highbush cranberry (USDA Silvics + foraging guides)',
+    source_name: 'Highbush cranberry (USDA Silvics + USDA NRCS VITR + Eat The Weeds + Practical Self Reliance + UMaine Cooperative Extension + Sam Thayer Forager Harvest)',
     source_url: 'https://www.fs.fed.us/database/feis/plants/shrub/vibtri/all.html',
-    summary: 'Highbush cranberry (Viburnum trilobum): bright red drupes Sep-Nov, sweetened by frost. Distinct from European V. opulus (toxic).'
+    summary: 'Highbush cranberry (Viburnum trilobum, syn. V. opulus var. americanum): translucent bright-red drupes ripen Sep-Oct, persist on the shrub through winter, and sweeten progressively after the first hard frost ("frost-blet"). NOT a true cranberry — looks similar but is in the Viburnum/Adoxaceae family. Native to cold North America (zones 2-7). Tart even when ripe; classic uses are jelly (high pectin in the skins; pair with apple), wine, syrup, and as the cranberry-relish substitute on the Indigenous + Nordic Thanksgiving table. CRITICAL ID: the European Viburnum opulus (Guelder rose) is widely planted ornamentally and looks almost identical at fruiting, but its drupes are bitter-foul and reported moderately toxic in quantity. The safest field test: taste a SINGLE ripe drupe. V. trilobum is sour-but-pleasant cranberry-like; V. opulus is rancid-skunky. Leaves help in summer (trilobum has narrower leaf lobes + glandular petiole bumps), but at fruiting taste-test is reliable. SMELL: V. trilobum has a strong wet-sock / dirty-laundry smell when cooked — this dissipates as it cools; the jelly tastes normal. Sam Thayer covers ID + processing in detail in The Foragers Harvest.',
+    regional_anchors: [
+      { zones: ['2b','3a','3b','4a','4b'], source: 'USDA Silvics + UMaine Cooperative Extension', url: 'https://www.fs.fed.us/database/feis/plants/shrub/vibtri/all.html', summary: 'Northern range (Maine, Quebec, MN, ND, AK interior): drupes ripen Sep, persist through hard winter; best flavor after several freeze-thaw cycles (Nov-Dec).', peak_doy: 285, half_window: 45 },
+      { zones: ['5a','5b','6a','6b','7a'], source: 'Cornell CE + Eat The Weeds', url: 'https://www.eattheweeds.com/highbush-cranberry/', summary: 'Upper Midwest / NE / Cornell-area: ripen late Sep, sweetened by mid-Oct frost.', peak_doy: 282, half_window: 45 }
+    ]
   },
   {
     name: 'Kousa dogwood',
@@ -1929,55 +1968,81 @@ const COMPLEXES = [
   {
     name: 'Golden chanterelle',
     members: ['Cantharellus cibarius'],
-    // Mycorrhizal with oak/beech (NE) and conifers (PNW). Jul-Sep flush
-    // in NE/Midwest, Jun-Oct in maritime PNW (cooler, wetter), Jul-Nov
-    // in southern Appalachians (long humid season).
-    anchor_zone: '6a', anchor_peak: 213, shift_per_half_zone: -3, half_window: 40,
+    // Mycorrhizal with oak/beech (NE) and conifers (PNW). Per-user
+    // request: single window that envelopes ALL possible flushes
+    // rather than a narrow primary-flush peak. Widened half_window
+    // 40→55 so the published window covers Jun start through early
+    // Oct end in NE/Midwest, and the Southern-Appalachian late-Sep
+    // second flush.
+    anchor_zone: '6a', anchor_peak: 225, shift_per_half_zone: -3, half_window: 55,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'mushroom_flush',
-    source_name: 'Golden chanterelle (Mushroom Expert + Audubon)',
+    source_name: 'Golden chanterelle (Mushroom Expert + Audubon + NEMF + NC State + MSSF)',
     source_url: 'https://www.mushroomexpert.com/cantharellus_cibarius.html',
-    summary: 'Golden chanterelle: Jul-Sep flush across NE/Midwest hardwoods (esp. oak/beech), Jun-Oct in PNW conifers. Fruity apricot smell + forked false-gills (not true gills) distinguish from toxic Jack-O-Lantern (Omphalotus).',
+    summary: 'Golden chanterelle (Cantharellus cibarius): mycorrhizal with oak/beech (eastern NA) and conifers (PNW). Jun-Sep main flush across NE/Midwest hardwoods, Jul-Oct in southern Appalachians with a second late-Sep flush after rains, Sep-Dec winter peak in maritime PNW + northern California. Published window envelopes the full possible flush range (~110 days) rather than a narrow primary peak so foragers see the full season. ID: fruity apricot smell + forked false-gills (not true gills) distinguish from the TOXIC Jack-O-Lantern (Omphalotus illudens/olearius) which has true gills and a different host (clumped on hardwood stumps, not solitary on the ground).',
     regional_anchors: [
-      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Northeast Mycological Federation', url: 'https://newenglandmushrooms.com/', summary: 'NE: Jul through Sep, peak early Aug under oak. Triggered by warm humid weeks following rain.', peak_doy: 213, half_window: 35 },
-      { zones: ['6b','7a','7b','8a'], source: 'NC State Extension (Carolinas mushroom timing)', url: 'https://content.ces.ncsu.edu/', summary: 'Southern Appalachians: Jul through Oct, peak mid-Aug, second flush late Sep.', peak_doy: 220, half_window: 45 },
-      { zones: ['7b','8a','8b'], source: 'Mycological Society of San Francisco (PNW + N CA)', url: 'https://www.mssf.org/', summary: 'Maritime PNW / N California: Sep through Dec (winter peak), driven by autumn rains.', peak_doy: 305, half_window: 40 }
+      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Northeast Mycological Federation', url: 'https://newenglandmushrooms.com/', summary: 'NE/Midwest: Jun through Sep, peak Aug under oak. Triggered by warm humid weeks following rain.', peak_doy: 225, half_window: 50 },
+      { zones: ['6b','7a','7b','8a'], source: 'NC State Extension (Carolinas mushroom timing)', url: 'https://content.ces.ncsu.edu/', summary: 'Southern Appalachians: Jul through Oct, peak mid-Aug, second flush late Sep after rains.', peak_doy: 225, half_window: 55 },
+      { zones: ['7b','8a','8b'], source: 'Mycological Society of San Francisco (PNW + N CA)', url: 'https://www.mssf.org/', summary: 'Maritime PNW / N California: Sep through Dec (winter peak), driven by autumn rains.', peak_doy: 305, half_window: 50 }
     ]
   },
   {
     name: 'Hen of the woods',
     members: ['Grifola frondosa'],
-    // Saprotrophic at base of mature oaks (esp. white oak). Sep-Oct
-    // primarily, may persist into Nov. Same individual returns year
-    // after year. Driven by cooling soil + autumn rains.
-    anchor_zone: '6a', anchor_peak: 265, shift_per_half_zone: -3, half_window: 30,
+    // Saprotrophic at base of mature oaks (esp. white oak). Late
+    // Sep-Oct primary flush + occasional Nov second flush after warm
+    // rains. User flagged windows previously too early (anchor 265
+    // = Sep 22) — cited "peak early Oct" matches DOY 278. Bumped
+    // anchor to 278 and widened half_window 30→38 to include the
+    // Nov second flush.
+    anchor_zone: '6a', anchor_peak: 278, shift_per_half_zone: -3, half_window: 38,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'mushroom_flush',
-    source_name: 'Hen of the woods (Mushroom Expert + Forager Chef)',
+    source_name: 'Hen of the woods (Mushroom Expert + Forager Chef + Audubon + NC State Extension)',
     source_url: 'https://www.mushroomexpert.com/grifola_frondosa.html',
-    summary: 'Hen of the woods (Grifola frondosa, maitake): large rosette-like cluster at base of oaks. Sep-Oct flush triggered by cooling + rain. Same individuals return annually — note locations.',
+    summary: 'Hen of the woods (Grifola frondosa, maitake): large rosette-like cluster at base of mature oaks (esp. white + red oak). Late Sep through Oct primary flush triggered by cooling + autumn rains, with occasional Nov second flush after warm rainy spell. Same individuals return annually — note locations. Cooks like a thick mushroom; tear into pieces along natural grain.',
     regional_anchors: [
-      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Forager Chef + Audubon Field Guide', url: 'https://foragerchef.com/hen-of-the-woods/', summary: 'NE/Midwest: late Sep through Oct, peak early Oct, occasional second flush after warm rains.', peak_doy: 275, half_window: 28 },
-      { zones: ['6b','7a','7b','8a'], source: 'NC State Extension', url: 'https://content.ces.ncsu.edu/', summary: 'Mid-Atlantic / southern range: Sep through Nov, peak mid-Oct.', peak_doy: 282, half_window: 30 }
+      { zones: ['4a','4b','5a','5b','6a','6b'], source: 'Forager Chef + Audubon Field Guide', url: 'https://foragerchef.com/hen-of-the-woods/', summary: 'NE/Midwest: late Sep through early Nov, peak early Oct, occasional second flush after warm Oct rains.', peak_doy: 278, half_window: 38 },
+      { zones: ['6b','7a','7b','8a'], source: 'NC State Extension + Mushroom Expert', url: 'https://content.ces.ncsu.edu/', summary: 'Mid-Atlantic / southern range: Sep through mid-Nov, peak mid-Oct.', peak_doy: 285, half_window: 38 }
     ]
   },
+  // Oyster mushroom is BIMODAL — spring + fall flushes in cold/mid
+  // zones, plus year-round in warm zones. Earlier this was a single
+  // wide window (60-day half_window centered Oct 12 in 6a) which
+  // smeared both peaks into a vague Aug-Dec band and missed the
+  // spring flush entirely. Per user 2026-05-11: split into spring +
+  // fall flush rows, mirroring watercress / wood ear / chickweed.
   {
-    name: 'Oyster mushroom',
+    name: 'Oyster mushroom (spring flush)',
     members: ['Pleurotus ostreatus'],
-    // Saprotrophic on dead/dying hardwoods (esp. aspen, beech, maple).
-    // Cold-tolerant: NE flushes ~50-65°F daytime temps, so spring (Apr-May)
-    // and fall (Sep-Nov) peaks with a summer lull. Warm-zone winter
-    // flushes too. Year-round in PNW where temps stay mild.
-    anchor_zone: '6a', anchor_peak: 285, shift_per_half_zone: -3, half_window: 60,
+    anchor_zone: '6a', anchor_peak: 130, shift_per_half_zone: -3, half_window: 35,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'mushroom_flush',
-    source_name: 'Oyster mushroom (Mushroom Expert + Wild Food Girl)',
+    source_name: 'Oyster mushroom spring (Mushroom Expert + Audubon + Northeast Mycological Federation)',
     source_url: 'https://www.mushroomexpert.com/pleurotus_ostreatus.html',
-    summary: 'Oyster mushroom (Pleurotus ostreatus): cold-tolerant, two flushes annually (spring + fall) in NE, plus winter flushes in warm zones. Look on dead/dying hardwoods (aspen, beech, maple).',
-    regional_anchors: [
-      { zones: ['4a','4b','5a','5b','6a','6b','7a'], source: 'Audubon Field Guide + Wild Food Girl', url: 'https://www.audubon.org/fieldguide/mushrooms', summary: 'NE: cold-tolerant species — spring flush late-Apr through May, fall flush Sep through Nov. Bimodal pattern with summer lull.', peak_doy: 285, half_window: 70 },
-      { zones: ['7a','7b','8a','8b'], source: 'Mushroom Mountain (SE US)', url: 'https://mushroommountain.com/', summary: 'Mid-S / SE: year-round on dead hardwoods, with peak flushes after cool rains Oct-Dec.', peak_doy: 320, half_window: 90 }
-    ]
+    summary: 'Oyster mushroom (Pleurotus ostreatus) spring flush: cold-tolerant species, primary spring fruiting Apr-May in zone 6a triggered by sustained 50-65°F daytime temps + spring rains. Found on dead/dying hardwood logs and standing trees (especially aspen, beech, maple, poplar). ID: fan/oyster-shaped white-grey caps with decurrent gills running down a stubby or absent off-center stem, fruity-anise smell. Lookalike WARNING: bear paw (Hypsizygus tessulatus) and angel wings (Pleurocybella porrigens, sometimes mildly toxic for elderly) — true oysters grow shelved on hardwood; angel wings on conifers.'
+  },
+  {
+    name: 'Oyster mushroom (fall flush)',
+    members: ['Pleurotus ostreatus'],
+    anchor_zone: '6a', anchor_peak: 285, shift_per_half_zone: -3, half_window: 45,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
+    stage: 'mushroom_flush',
+    source_name: 'Oyster mushroom fall (Mushroom Expert + Audubon + NEMF)',
+    source_url: 'https://www.mushroomexpert.com/pleurotus_ostreatus.html',
+    summary: 'Oyster mushroom fall flush: usually larger and more reliable than spring. Sep through Nov in zone 6a, often continuing into Dec after cold but unfrozen rainy spells. Same logs that fruited in spring will often re-fruit; mark spring finds for fall return. Tolerates freezing — solid clusters can survive several frost cycles and still be perfect to eat.'
+  },
+  {
+    name: 'Oyster mushroom (warm-zone year-round)',
+    members: ['Pleurotus ostreatus'],
+    // SE US (zones 7b-9b) flushes year-round on dead hardwoods,
+    // with peaks after cool rainy spells Oct-Mar.
+    anchor_zone: '8a', anchor_peak: 1, shift_per_half_zone: 0, half_window: 180,
+    target_zones: ['7b','8a','8b','9a','9b'],
+    stage: 'mushroom_flush',
+    source_name: 'Oyster mushroom warm-zone (Mushroom Mountain SE US)',
+    source_url: 'https://mushroommountain.com/',
+    summary: 'Oyster mushroom warm-zone (SE US): year-round on dead hardwoods, with peak flushes after cool rains Oct-Mar (mild winter is its FAVORITE season). Summer flushes possible but rarer; the species avoids sustained high temps.'
   },
   {
     name: 'Lion\'s mane',
@@ -2158,12 +2223,19 @@ const COMPLEXES = [
   {
     name: 'Partridgeberry',
     members: ['Mitchella repens'],
-    anchor_zone: '6a', anchor_peak: 258, shift_per_half_zone: -3, half_window: 60,
-    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    // Berries form Aug-Sep but PERSIST through fall, winter, and
+    // into the following spring — many sources actively recommend
+    // eating them in spring after overwintering (cold sweetens them
+    // slightly). Earlier half_window=60 only covered Jul-Nov; the
+    // persistent-through-winter pattern wants ~110-day half-window
+    // anchored at Nov (early winter / "best taste after frost"
+    // window). Same pattern as wintergreen + highbush cranberry.
+    anchor_zone: '6a', anchor_peak: 305, shift_per_half_zone: -3, half_window: 110,
+    target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'ripe',
-    source_name: 'Partridgeberry (USDA Plant Profile)',
-    source_url: 'https://plants.usda.gov/home/plantProfile?symbol=MIRE',
-    summary: 'Partridgeberry: trailing evergreen with persistent paired red berries. Available Sep through following spring.'
+    source_name: 'Partridgeberry (USDA NRCS MIRE + Eat The Weeds + Practical Self Reliance + Indigenous Food Network + USDA Silvics)',
+    source_url: 'https://plants.usda.gov/plant-profile/MIRE',
+    summary: 'Partridgeberry (Mitchella repens): trailing evergreen subshrub of moist NE/SE woodland understory (mossy oak-hickory forests, mixed conifer-hardwood, dappled shade). Tiny paired white tubular flowers in late spring give way to a single bright red drupe per pair (with two visible scars from the dual ovary fusion — a diagnostic ID feature). Drupes form Aug-Sep and PERSIST on the plant through winter and into the following spring, sweetened slightly by cold cycles. Flavor: mild, slightly mealy, watermelon-like-but-dry — a pleasant trail nibble, not a culinary standout; usually eaten as-found rather than processed. Traditional Cherokee + Iroquois food and leaf-tea (the colloquial "squaw vine" comes from historical womens-tonic medicinal use of the leaves). CONSERVATION: slow-growing rhizomatous mat; harvest only the drupes (no leaves), never pull up the plant. Best harvest window: late fall through early spring — by then the berries are sweetest and the trail nibble is one of the few things still ripe in the woods.'
   },
   {
     name: 'Flowering dogwood',
@@ -2307,12 +2379,18 @@ const COMPLEXES = [
   {
     name: 'Japanese plum',
     members: ['Prunus salicina'],
-    anchor_zone: '7a', anchor_peak: 207, shift_per_half_zone: -5, half_window: 28,
+    // Widened half_window 28→42 per user feedback that windows
+    // were short vs cited Jun-Aug data. Japanese plum has many
+    // cultivars per zone (Santa Rosa, Methley, Burbank, Shiro,
+    // Beauty, Ozark Premier) spanning 6+ weeks of harvest;
+    // 28-day window was just the peak-cultivar slice. 42-day
+    // window envelopes the cultivar spread.
+    anchor_zone: '7a', anchor_peak: 207, shift_per_half_zone: -5, half_window: 42,
     target_zones: ['5a','5b','6a','6b','7a','7b','8a','8b','9a','9b','10a'],
     stage: 'ripe',
-    source_name: 'Japanese plum (UC ANR + Cornell CE)',
+    source_name: 'Japanese plum (UC ANR + Cornell CE + UC Davis Fruit & Nut Research)',
     source_url: 'https://homeorchard.ucanr.edu/General-information/Stone-fruits/',
-    summary: 'Japanese plum (Prunus salicina): heat-driven, ripens Jun-Aug. Earlier than European plum; Santa Rosa peaks late June in CA.'
+    summary: 'Japanese plum (Prunus salicina): heat-driven, ripens Jun-Aug across temperate North America with substantial cultivar spread (Santa Rosa late Jun, Methley early Jul, Shiro mid Jul, Beauty late Jul, Burbank early Aug — 6+ weeks of harvest in any given zone). Earlier than European plum (P. domestica) by 3-4 weeks; Santa Rosa peaks late June in coastal CA, mid-Jul in Cornell zone 6.'
   },
   {
     name: 'Sour cherry',

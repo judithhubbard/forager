@@ -139,11 +139,35 @@ export async function listPublicPins(
   includeInvasives: boolean = false
 ): Promise<PinEffective[]> {
   const [west, south, east, north] = bbox;
-  // p_zoom drives the spatial decimation grid in the RPC. PostgREST
-  // has a hidden 1000-row response cap on Supabase (db-max-rows) —
-  // .range() doesn't bypass it. Paginate explicitly so the marker-
-  // sized grid can return >1000 cells in dense urban areas without
-  // silently truncating.
+  const z = Math.round(zoom);
+  // z13-precalc fast path. Migration 26 built pin_grid_z13 — a
+  // pre-decimated 84m grid that lets the z13 query be O(K visible
+  // cells) instead of O(N pins in bbox). For Indianapolis-scale
+  // metros (300k+ pins) this turns a 1-3s server query into ~700ms
+  // warm. p_include_invasives=true still falls back to the runtime
+  // path because the precalc filters to is_forageable=true.
+  if (z === 13 && !includeInvasives) {
+    const { data, error } = await supabase
+      .rpc('public_pins_bbox_z13' as never, {
+        p_min_lng: west,
+        p_min_lat: south,
+        p_max_lng: east,
+        p_max_lat: north,
+        p_max_rows: maxRows,
+        p_include_invasives: false
+      } as never)
+      .range(0, maxRows - 1);
+    if (error) {
+      console.error('[pinService] listPublicPins (z13 precalc) error:', error);
+      throw error;
+    }
+    return (data ?? []) as unknown as PinEffective[];
+  }
+  // p_zoom drives the spatial decimation grid in the runtime RPC.
+  // PostgREST has a hidden 1000-row response cap on Supabase
+  // (db-max-rows) — .range() doesn't bypass it. Paginate explicitly
+  // so the marker-sized grid can return >1000 cells in dense urban
+  // areas without silently truncating.
   const PAGE = 1000;
   const all: PinEffective[] = [];
   for (let offset = 0; offset < maxRows; offset += PAGE) {
@@ -157,7 +181,7 @@ export async function listPublicPins(
           p_max_lng: east,
           p_max_lat: north,
           p_max_rows: maxRows,
-          p_zoom: Math.round(zoom),
+          p_zoom: z,
           p_include_invasives: includeInvasives
         } as never
       )

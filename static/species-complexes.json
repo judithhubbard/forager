@@ -832,6 +832,15 @@
       "stage": "flower_harvest"
     }
   ],
+  "Syringa vulgaris": [
+    {
+      "name": "Common lilac (flowers)",
+      "members": [
+        "Syringa vulgaris"
+      ],
+      "stage": "flower_harvest"
+    }
+  ],
   "Yucca filamentosa": [
     {
       "name": "Adam's needle (flowers)",
@@ -1954,7 +1963,21 @@
   ],
   "Pleurotus ostreatus": [
     {
-      "name": "Oyster mushroom",
+      "name": "Oyster mushroom (spring flush)",
+      "members": [
+        "Pleurotus ostreatus"
+      ],
+      "stage": "mushroom_flush"
+    },
+    {
+      "name": "Oyster mushroom (fall flush)",
+      "members": [
+        "Pleurotus ostreatus"
+      ],
+      "stage": "mushroom_flush"
+    },
+    {
+      "name": "Oyster mushroom (warm-zone year-round)",
       "members": [
         "Pleurotus ostreatus"
       ],
