@@ -1634,7 +1634,14 @@ const COMPLEXES = [
   {
     name: 'Wood ear (fall flush)',
     members: ['Auricularia auricula-judae'],
-    anchor_zone: '6a', anchor_peak: 274, shift_per_half_zone: -3, half_window: 40,
+    // MECHANISM CORRECTION 2026-05-11: cool-rain trigger ("after
+    // autumn rains and before killing frost"). Flipped slope -3
+    // → +2 to match the cool-night mechanism — warmer zones get
+    // cool nights later in the year, so they fruit later. The
+    // warm-zone year-round rows below already cover 8b-10a's
+    // different pattern, so this fall-flush row only needs to
+    // project the cool-temperate range.
+    anchor_zone: '6a', anchor_peak: 274, shift_per_half_zone: 2, half_window: 40,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'mushroom_flush',
     source_name: 'Wood ear fall (Mushroom Expert + Forager Chef + Northeast Mycological Federation)',
@@ -2020,7 +2027,13 @@ const COMPLEXES = [
   {
     name: 'Wood blewit',
     members: ['Lepista nuda'],
-    anchor_zone: '6a', anchor_peak: 288, shift_per_half_zone: -3, half_window: 30,
+    // MECHANISM CORRECTION 2026-05-11: Wood blewit is strongly
+    // frost-triggered — "often after first frosts" per the cited
+    // refs. Regional anchors show NE peak 288 (Oct 15), southern
+    // range peak 320 (Nov 16). That's a +32 day shift across ~4
+    // half-zones = +8 per half-zone. Slope was -3 (inverted);
+    // corrected to +8 to match the observed regional delta.
+    anchor_zone: '6a', anchor_peak: 288, shift_per_half_zone: 8, half_window: 30,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'mushroom_flush',
     source_name: 'Wood blewit (Mushroom Expert)',
@@ -2057,12 +2070,20 @@ const COMPLEXES = [
     members: ['Grifola frondosa'],
     // Saprotrophic at base of mature oaks (esp. white oak). Late
     // Sep-Oct primary flush + occasional Nov second flush after warm
-    // rains. User flagged windows previously too early (anchor 265
-    // = Sep 22) — cited "peak early Oct" matches DOY 278. Bumped
-    // anchor to 278 and widened half_window 30→38 to include the
-    // Nov second flush.
-    anchor_zone: '6a', anchor_peak: 278, shift_per_half_zone: -3, half_window: 38,
-    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
+    // rains.
+    //
+    // MECHANISM CORRECTION 2026-05-11: Hen of the woods is
+    // cool-night-triggered, not heat-driven. Regional anchors below
+    // record peak_doy 278 in NE (zones 4a-6b) and peak_doy 285 in
+    // Mid-Atlantic/South (6b-8a) — i.e., southern zones fruit
+    // LATER, not earlier. The previous slope -3 (warmer=earlier,
+    // standard apple/peach pattern) was inverted; corrected to +2
+    // to match the ~7-day NE→south delta. Also narrowed target_zones
+    // from 4a-8a to 4a-7b since the species is genuinely uncommon
+    // south of zone 7b (no reliable fruiting in 8a in the cited
+    // references).
+    anchor_zone: '6a', anchor_peak: 278, shift_per_half_zone: 2, half_window: 38,
+    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b'],
     stage: 'mushroom_flush',
     source_name: 'Hen of the woods (Mushroom Expert + Forager Chef + Audubon + NC State Extension)',
     source_url: 'https://www.mushroomexpert.com/grifola_frondosa.html',
@@ -2091,7 +2112,17 @@ const COMPLEXES = [
   {
     name: 'Oyster mushroom (fall flush)',
     members: ['Pleurotus ostreatus'],
-    anchor_zone: '6a', anchor_peak: 285, shift_per_half_zone: -3, half_window: 45,
+    // MECHANISM CORRECTION 2026-05-11: Cool-rain triggered (same
+    // family of mechanism as hen of the woods / lion's mane / wood
+    // blewit / shaggy mane). No regional anchor split in this entry
+    // to size the flip empirically, but the mechanism description
+    // ("often continuing into Dec after cold but unfrozen rainy
+    // spells") confirms warmer-zones fruit slightly later. Flipping
+    // slope from -3 to +2 — milder than the species above because
+    // the warm-zone year-round entry below already covers the
+    // farthest-south fruiting, so this fall-flush row only needs
+    // to project the cool-temperate range.
+    anchor_zone: '6a', anchor_peak: 285, shift_per_half_zone: 2, half_window: 45,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'mushroom_flush',
     source_name: 'Oyster mushroom fall (Mushroom Expert + Audubon + NEMF)',
@@ -2116,7 +2147,12 @@ const COMPLEXES = [
     // Saprotrophic on dead/wounded hardwoods (esp. beech, oak, maple).
     // Aug-Nov in NE, single annual flush per fruiting body. Cold-tolerant
     // — often produced after first cool nights.
-    anchor_zone: '6a', anchor_peak: 275, shift_per_half_zone: -3, half_window: 40,
+    //
+    // MECHANISM CORRECTION 2026-05-11: Cool-temperature trigger,
+    // not heat-driven. Regional anchors: NE peak 285 (Oct 12),
+    // Mid-Atlantic/SE peak 305 (Nov 1) = +20 days over ~4 half-
+    // zones = +5/half-zone. Slope was -3 (inverted); corrected to +5.
+    anchor_zone: '6a', anchor_peak: 275, shift_per_half_zone: 5, half_window: 40,
     target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
     stage: 'mushroom_flush',
     source_name: 'Lion\'s mane (Mushroom Expert + Forager Chef)',
@@ -2152,7 +2188,12 @@ const COMPLEXES = [
     // Cool-temperature fall flush primarily (Sep-Nov), occasional spring.
     // Auto-digests into black "ink" within 48hr of opening — must
     // harvest day-of.
-    anchor_zone: '6a', anchor_peak: 275, shift_per_half_zone: -3, half_window: 35,
+    //
+    // MECHANISM CORRECTION 2026-05-11: Cool-night-triggered.
+    // Regional anchors: NE peak 280 (Oct 7), Mid-Atlantic/SE peak
+    // 295 (Oct 22) = +15 days over ~4 half-zones = +4/half-zone.
+    // Slope was -3 (inverted); corrected to +4.
+    anchor_zone: '6a', anchor_peak: 275, shift_per_half_zone: 4, half_window: 35,
     target_zones: ['3a','3b','4a','4b','5a','5b','6a','6b','7a','7b','8a','8b'],
     stage: 'mushroom_flush',
     source_name: 'Shaggy mane (Mushroom Expert + Audubon)',

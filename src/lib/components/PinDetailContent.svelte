@@ -847,16 +847,22 @@
   $: todayInRange = todayDoy >= miniRange.start && todayDoy <= miniRange.end;
 
   const MINI_MONTH_TICKS = [
-    { label: 'J', doy: 1 },   { label: 'F', doy: 32 },
-    { label: 'M', doy: 60 },  { label: 'A', doy: 91 },
-    { label: 'M', doy: 121 }, { label: 'J', doy: 152 },
-    { label: 'J', doy: 182 }, { label: 'A', doy: 213 },
-    { label: 'S', doy: 244 }, { label: 'O', doy: 274 },
-    { label: 'N', doy: 305 }, { label: 'D', doy: 335 }
+    { label: 'Jan', doy: 1 },   { label: 'Feb', doy: 32 },
+    { label: 'Mar', doy: 60 },  { label: 'Apr', doy: 91 },
+    { label: 'May', doy: 121 }, { label: 'Jun', doy: 152 },
+    { label: 'Jul', doy: 182 }, { label: 'Aug', doy: 213 },
+    { label: 'Sep', doy: 244 }, { label: 'Oct', doy: 274 },
+    { label: 'Nov', doy: 305 }, { label: 'Dec', doy: 335 }
   ];
   $: miniMonthTicks = MINI_MONTH_TICKS.filter(
     (t) => t.doy >= miniRange.start && t.doy <= miniRange.end
   );
+  /** Today's date formatted as "May 11" for the red today-line label. */
+  $: todayLabel = (() => {
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const d = new Date();
+    return `${m[d.getMonth()]} ${d.getDate()}`;
+  })();
 
   /** Sort windows in canonical stage order so flowering renders first
    *  and past last (matches the /windows page). */
@@ -1045,13 +1051,45 @@
             {/each}
           </div>
           <div class="mini-track">
+            <!-- Faint month-boundary ticks behind the bars so the
+                 reader can see month breaks at a glance. Skip
+                 January (left edge of the view often is January
+                 itself; a tick on the edge is noise). -->
+            {#each miniMonthTicks as t}
+              {#if t.doy > miniRange.start + 5}
+                <span class="mini-month-tick" style={`left: ${miniPct(t.doy)}%`}></span>
+              {/if}
+            {/each}
             {#each sortedWindows as w}
+              {@const bufStart = Math.max(miniRange.start, w.start_doy - 14)}
+              {@const bufEnd = Math.min(miniRange.end, w.end_doy + 14)}
+              {@const bg = STAGE_COLORS[w.stage] ?? '#888'}
+              <!-- 2-week uncertainty buffer before the start of the
+                   solid bar. Hash-mark striped overlay against the
+                   stage color so the visual reads "this MIGHT be ripe,
+                   but the curated window starts later." -->
+              {#if bufStart < w.start_doy}
+                <div
+                  class="mini-bar-buffer"
+                  style={`left: ${miniPct(bufStart)}%; width: ${miniPct(w.start_doy) - miniPct(bufStart)}%; --bar-color: ${bg};`}
+                  title="{w.stage}: 2-week early-uncertainty buffer before DOY {w.start_doy}"
+                ></div>
+              {/if}
               <div
                 class="mini-bar"
                 class:mini-bar-confirmed={w.is_confirmed}
-                style={`left: ${miniPct(w.start_doy)}%; width: ${miniPct(w.end_doy) - miniPct(w.start_doy)}%; background: ${STAGE_COLORS[w.stage] ?? '#888'};`}
+                style={`left: ${miniPct(w.start_doy)}%; width: ${miniPct(w.end_doy) - miniPct(w.start_doy)}%; background: ${bg};`}
                 title={`${w.stage}: DOY ${w.start_doy}–${w.end_doy}${w.is_confirmed ? ' · confirmed' : ''}${w.confidence ? ` · ${w.confidence}` : ''}`}
               >{#if w.is_confirmed}<span class="mini-confirmed-mark" title="Confirmed harvest window">✓</span>{/if}</div>
+              <!-- 2-week uncertainty buffer after the end of the
+                   solid bar — symmetric to the pre-buffer above. -->
+              {#if bufEnd > w.end_doy}
+                <div
+                  class="mini-bar-buffer"
+                  style={`left: ${miniPct(w.end_doy)}%; width: ${miniPct(bufEnd) - miniPct(w.end_doy)}%; --bar-color: ${bg};`}
+                  title="{w.stage}: 2-week late-uncertainty buffer after DOY {w.end_doy}"
+                ></div>
+              {/if}
             {/each}
             <!-- Faded ticks for observations on OTHER pins of the same
                  species — gives context without competing visually. -->
@@ -1071,7 +1109,8 @@
               ></span>
             {/each}
             {#if todayInRange}
-              <div class="mini-today" style={`left: ${miniPct(todayDoy)}%`}></div>
+              <div class="mini-today" style={`left: ${miniPct(todayDoy)}%`} title="Today: {todayLabel}"></div>
+              <span class="mini-today-label" style={`left: ${miniPct(todayDoy)}%`}>{todayLabel}</span>
             {/if}
           </div>
         </div>
@@ -1626,6 +1665,27 @@
     bottom: 0;
     border-radius: 1px;
   }
+  /* 2-week uncertainty buffer flanking each ripe-period bar.
+     Diagonal hash-marks against the stage color so it reads
+     as "this MIGHT be ripe but we're less certain." The
+     --bar-color custom property is set inline per bar so the
+     buffer matches its window's stage. */
+  .mini-bar-buffer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-color: var(--bar-color);
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.55) 0px,
+      rgba(255, 255, 255, 0.55) 2px,
+      rgba(255, 255, 255, 0) 2px,
+      rgba(255, 255, 255, 0) 5px
+    );
+    opacity: 0.55;
+    border-radius: 1px;
+    pointer-events: auto;
+  }
   /* Confirmed windows (is_confirmed=true; user-verified via
      confirm-species.cjs). Subtle dark outline + check mark — needs
      to read as "vetted" without overpowering the stage color. */
@@ -1678,6 +1738,32 @@
     width: 1.5px;
     background: #b03030;
     border-radius: 1px;
+    pointer-events: none;
+  }
+  /* Today's date written above the red today-line (e.g. "May 11").
+     Centered on the line; small dark-red so it reads as related
+     without distracting from the bars. */
+  .mini-today-label {
+    position: absolute;
+    top: -0.95rem;
+    transform: translateX(-50%);
+    color: #b03030;
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  /* Thin vertical month-boundary ticks inside the bar track. Sit
+     behind the bars (z-index 0; bars default to higher in DOM
+     order) but on top of the track background. Faint so they
+     don't compete with the colored bars. */
+  .mini-month-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(0, 0, 0, 0.13);
     pointer-events: none;
   }
 
