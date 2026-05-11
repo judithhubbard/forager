@@ -136,10 +136,49 @@
     return list;
   })();
 
-  /** Group counts so the filter pills show the size. */
+  $: speciesById = new Map(species.map((s) => [s.id, s] as const));
+
+  /** Interest-group pill counts reflect the active zone filter (faceted
+   *  search): selecting zone 5b updates "Tree fruit (N)" to mean
+   *  "tree-fruit species present in zone 5b", not the global total.
+   *  Search input intentionally does NOT feed in — re-counting on
+   *  every keystroke is jumpy and the pills already gate categorical
+   *  choices, not text matches. */
   $: groupCounts = (() => {
+    const zoneSet = activeZone === 'all' ? null : speciesByZone.get(activeZone as string);
     const out = new Map<string, number>();
-    for (const s of species) for (const t of s.interest_tags) out.set(t, (out.get(t) ?? 0) + 1);
+    for (const s of species) {
+      if (zoneSet && !zoneSet.has(s.id)) continue;
+      for (const t of s.interest_tags) out.set(t, (out.get(t) ?? 0) + 1);
+    }
+    return out;
+  })();
+
+  /** Total species available with current zone filter (drives "All (N)").
+   *  Same exclusion rule as groupCounts — zone applied, search excluded. */
+  $: zoneFilteredCount = (() => {
+    if (activeZone === 'all') return species.length;
+    const zoneSet = speciesByZone.get(activeZone as string);
+    return zoneSet ? zoneSet.size : 0;
+  })();
+
+  /** Zone-dropdown counts reflect the active interest-group filter so
+   *  the dropdown numbers mirror the pill numbers. With no group
+   *  selected, this is the same as speciesByZone.get(z).size. With a
+   *  group selected, it's the intersection. */
+  $: zoneCounts = (() => {
+    const out = new Map<string, number>();
+    const allowedTag = activeGroup === 'all' ? null : (activeGroup as string);
+    for (const z of zoneOptions) {
+      const ids = speciesByZone.get(z) ?? new Set<string>();
+      if (!allowedTag) { out.set(z, ids.size); continue; }
+      let n = 0;
+      for (const id of ids) {
+        const s = speciesById.get(id);
+        if (s && s.interest_tags.includes(allowedTag)) n++;
+      }
+      out.set(z, n);
+    }
     return out;
   })();
 </script>
@@ -176,12 +215,12 @@
         placeholder="Search by name or forage part (fruit, leaf, mushroom, sap…)"
       />
       {#if zoneOptions.length > 0}
-        <label class="zone-pick" title="Filter to species with public pins or calibration data in this USDA hardiness zone.">
+        <label class="zone-pick" title="Filter to species with public pins or calibration data in this USDA hardiness zone. Counts reflect the active interest-group pill.">
           <span class="zp-label">USDA zone</span>
           <select bind:value={activeZone}>
             <option value="all">all</option>
             {#each zoneOptions as z}
-              <option value={z}>{z} ({(speciesByZone.get(z) ?? new Set()).size})</option>
+              <option value={z}>{z} ({zoneCounts.get(z) ?? 0})</option>
             {/each}
           </select>
         </label>
@@ -190,20 +229,20 @@
 
     <div class="group-filters">
       <button class="gf" class:active={activeGroup === 'all'} on:click={() => (activeGroup = 'all')}>
-        All <span class="gf-count">{species.length}</span>
+        All <span class="gf-count">{zoneFilteredCount}</span>
       </button>
       {#each INTEREST_GROUPS as g}
         {@const n = groupCounts.get(g.id) ?? 0}
-        {#if n > 0}
-          <button
-            class="gf"
-            class:active={activeGroup === g.id}
-            on:click={() => (activeGroup = g.id)}
-            title={g.examples}
-          >
-            {g.label} <span class="gf-count">{n}</span>
-          </button>
-        {/if}
+        <button
+          class="gf"
+          class:active={activeGroup === g.id}
+          class:empty={n === 0}
+          disabled={n === 0 && activeGroup !== g.id}
+          on:click={() => (activeGroup = g.id)}
+          title={n === 0 ? `No ${g.label.toLowerCase()} species in this zone` : g.examples}
+        >
+          {g.label} <span class="gf-count">{n}</span>
+        </button>
       {/each}
     </div>
 
@@ -329,14 +368,21 @@
     color: #4a554a;
     cursor: pointer;
   }
-  .gf:hover { background: #f0f5ef; }
+  .gf:hover:not(:disabled) { background: #f0f5ef; }
   .gf.active { background: #3a5a3a; color: white; border-color: #3a5a3a; }
+  .gf.empty {
+    color: #b0b8b0;
+    border-color: #e2e6e2;
+    background: #fafbfa;
+  }
+  .gf:disabled { cursor: not-allowed; }
   .gf-count {
     color: #8a948a;
     font-size: 0.72rem;
     margin-left: 0.15rem;
   }
   .gf.active .gf-count { color: rgba(255,255,255,0.7); }
+  .gf.empty .gf-count { color: #c4ccc4; }
 
   .species-grid {
     list-style: none;

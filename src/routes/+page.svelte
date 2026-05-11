@@ -397,7 +397,13 @@
    *  ("Edible flowers & aromatics") instead of by Latin genus. */
   const INTEREST_TAG_LABEL: Record<string, string> = {
     tree_fruit: 'Tree fruit',
-    mediterranean_tropical_fruit: 'Mediterranean & tropical fruit',
+    // Backwards-compat: any species still carrying the old
+    // 'mediterranean_tropical_fruit' tag (e.g. pre-migration cache)
+    // falls back to its Tree-fruit label rather than rendering as
+    // a separate group. Tag is removed from species rows by
+    // migration 20260511000025; this entry can be deleted after a
+    // full cache cycle.
+    mediterranean_tropical_fruit: 'Tree fruit',
     bramble_berry: 'Berries & brambles',
     nut_easy: 'Nuts — easy',
     nut_intensive: 'Nuts — intensive',
@@ -413,7 +419,6 @@
    *  to the bottom under 'Other'. */
   const INTEREST_TAG_ORDER = [
     'tree_fruit',
-    'mediterranean_tropical_fruit',
     'bramble_berry',
     'nut_easy',
     'nut_intensive',

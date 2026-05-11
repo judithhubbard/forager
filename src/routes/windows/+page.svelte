@@ -353,7 +353,9 @@
    *  grouping has 8. */
   const GROUP_PRIORITY: Array<{ tag: string; label: string }> = [
     { tag: 'tree_fruit',                   label: 'Tree fruit' },
-    { tag: 'mediterranean_tropical_fruit', label: 'Mediterranean & tropical fruit' },
+    // Backwards-compat: collapses old 'mediterranean_tropical_fruit' tag
+    // into Tree fruit (migration 20260511000025).
+    { tag: 'mediterranean_tropical_fruit', label: 'Tree fruit' },
     { tag: 'bramble_berry',                label: 'Berries & brambles' },
     { tag: 'nut_easy',                     label: 'Nuts' },
     { tag: 'nut_intensive',                label: 'Nuts' },
