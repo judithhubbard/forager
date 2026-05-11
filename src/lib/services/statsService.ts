@@ -22,18 +22,30 @@ export interface GlobalStats {
   fetched_at: string;
 }
 
-// v7 bumped 2026-05-10 after the Round C college-town batch finished
-// (Ann Arbor + Berkeley + Boulder + Knoxville-via-Dryad from the
-// earlier sub-run, plus this round's New Haven, Portland-ME,
-// State College, East Lansing, and Eugene — Eugene contributed
-// ~29k pins from City of Eugene's Parks & Open Space inventory).
-// Princeton / Hanover / Northampton / Amherst MA / Chapel Hill /
-// Athens GA / Gainesville FL / Davis CA / Logan UT all checked and
-// either have no public point inventory or are gated (Amherst MA's
-// gis.amherstma.gov is Cloudflare-protected) — Phase 3 outreach.
-// Champaign-Urbana already covered by opentrees, Bloomington IN by
-// the Indiana DNR aggregator. Invalidates v6 cached totals.
-const LS_KEY = 'forager.global-stats.v7';
+// v8 bumped 2026-05-11 after the Round D deep crawl finished. Round D
+// added ~107k pins across 20 new sources covering: Richmond VA (28.1k),
+// Austin PARD (11.5k), Arlington MA (9.2k), Lawrence KS (6.8k),
+// Wellesley MA (5.8k), Watertown WI (5.9k), Gaithersburg MD (5.7k),
+// Tallahassee (5.7k), Duke University (5.0k), Yale University (5.0k),
+// Stanford edible trees (1.1k), Allen TX (2.6k), Richardson TX (2.0k),
+// Sarasota County FL (480), Leon County canopy roads (350), Smith
+// College Botanic Garden (395), Bates College (380), Wichita KS (368),
+// Hillsborough County FL (225), Newport News VA (216), Weaverville NC
+// (511). New regions: 'Richmond public', 'Tallahassee public',
+// 'Sarasota County public', 'Hillsborough County public', 'Austin
+// public', 'Newport News public', 'Northampton public', 'Durham NC
+// public', 'Stanford public', 'Weaverville public', 'Leon County
+// public', 'Gaithersburg public', 'Wellesley public', 'Arlington MA
+// public', 'Watertown WI public', 'Lewiston public', 'Wichita public',
+// 'Richardson public', 'Allen TX public', 'Lawrence KS public'.
+// Investigated and skipped/gated: Asheville NC (no point feed),
+// Norfolk VA (no point feed), Roanoke VA (3D viz only, no species),
+// Pinellas County FL (USDA codes, no Latin), Harrisburg PA (codes
+// with no domain), Manchester NH (token-gated), Lowell MA (token-
+// gated), CRTI/Morton Arb (canopy polygons only). Texas A&M MyCity-
+// Trees and ArborScope both flagged for Phase 3 outreach. Invalidates
+// v7 cached totals.
+const LS_KEY = 'forager.global-stats.v8';
 const TTL_MS = 24 * 60 * 60 * 1000;
 
 let inMemory: GlobalStats | null = null;

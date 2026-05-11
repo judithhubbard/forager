@@ -1,0 +1,34 @@
+{
+  "source": "USFS Urban FIA active inventory projects (2024)",
+  "source_url": "https://services1.arcgis.com/gGHDlz6USftL5Pau/ArcGIS/rest/services/Active_UFIA_Projects_2024/FeatureServer/26",
+  "discovered_via": "Texas A&M 'My City's Trees' (mct.tfs.tamu.edu) is a Nuxt SPA frontend; the actual data is from the federal Urban FIA program. Texas A&M's stats page (texasforestinfo.tamu.edu/urbanforeststats) loads the program boundaries from an openly-readable Esri FeatureServer — the source_url above.",
+  "rationale": "Cities participating in the federal Urban FIA program nearly always have their own municipal point-level tree inventory. The FIA data itself is plot-sample statistical and not point-level; we don't import it. But the city list is a strong discovery seed — for each city, look on its own AGOL org / open-data portal for a separate FeatureServer with point geometry.",
+  "fetched_at": "2026-05-11",
+  "cross_reference_summary": {
+    "total_fia_cities": 45,
+    "already_imported_to_forager": 30,
+    "marked_absent_or_no_public_inventory": 7,
+    "tracked_unknown_status_priority_targets": 5,
+    "not_yet_in_tracker": 3
+  },
+  "discovery_targets": {
+    "tracked_unknown_status": [
+      {"name": "Bridgeport, CT", "zone_estimate": "7a"},
+      {"name": "Fargo, ND", "zone_estimate": "4a"},
+      {"name": "Manchester, NH", "zone_estimate": "6a"},
+      {"name": "San Antonio, TX", "zone_estimate": "8b", "known_state": "tracker entry says license_status=gated, TreesSA FeatureServer requires token"},
+      {"name": "Springfield, MO", "zone_estimate": "6b"}
+    ],
+    "not_in_tracker": [
+      {"name": "Dover, DE", "zone_estimate": "7b"},
+      {"name": "Morgantown, WV", "zone_estimate": "6b"},
+      {"name": "Trenton, NJ", "zone_estimate": "7a"}
+    ]
+  },
+  "investigation_workflow_per_city": [
+    "1. ArcGIS Online search: owner:CityOf<X> OR 'City of <X>' trees",
+    "2. Verify a FeatureServer with point geometry + species field",
+    "3. If found and clean license: write scripts/import/<slug>-trees.ts",
+    "4. If gated (token required, Cloudflare-protected, login-required): flag as Phase-3 outreach"
+  ]
+}
