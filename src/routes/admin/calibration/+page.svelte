@@ -390,6 +390,22 @@
     indeterminate: 'Mechanism unknown; uses linear slope as a fallback.'
   };
   let complexesByScientific: Record<string, ComplexEntry[]> = {};
+
+  /** Per-species mechanism warnings written by species-complex-unify.cjs
+   *  validation pass to static/mechanism-warnings.json. Empty when
+   *  the file is missing OR no warnings. */
+  type MechWarning = { complex: string; kind: string; message: string };
+  let mechanismWarnings: Record<string, MechWarning[]> = {};
+  async function loadMechanismWarnings() {
+    try {
+      const res = await fetch(`${base}/mechanism-warnings.json`);
+      if (!res.ok) return;
+      const json = await res.json();
+      mechanismWarnings = json.by_scientific_name ?? {};
+    } catch (err) {
+      console.warn('[calibration] could not load mechanism-warnings.json', err);
+    }
+  }
   async function loadComplexMembership() {
     try {
       // Use $app/paths.base so the URL works under a non-root deploy
@@ -543,6 +559,7 @@
       await loadSpeciesSummaries();
       await loadComplexMembership();
       await loadDriftReport();
+      await loadMechanismWarnings();
 
       const speciesWithData = new Set(dbWindows.map((w) => w.species_id));
       currentSpeciesId =
@@ -1309,6 +1326,51 @@
     if (c === 'empirical_community') return 'community sightings';
     return c ?? '';
   }
+  /** Render mechanism_meta from an evidence entry as a short string
+   *  for the per-zone tooltip. mechanism_meta is written by the unify
+   *  pipeline alongside each row's primary evidence entry and tells
+   *  the user HOW the synthesized DOY was projected for this zone.
+   *  Format examples:
+   *    {kind:'frost',anchor:'fff',offset_days:7}     → "frost-anchored (FFF + 7 d)"
+   *    {kind:'frost',anchor:'lsf',offset_days:-65}   → "frost-anchored (LSF − 65 d)"
+   *    {kind:'linear',shift:-3}                      → "linear (−3 d/half-zone)"
+   *    {kind:'flat'}                                 → "flat (constant DOY)"
+   *    {kind:'regional_anchor',source:'UCANR ...'}   → "regional anchor: UCANR ..."
+   */
+  function mechanismMetaLabel(meta: unknown): string | null {
+    if (!meta || typeof meta !== 'object') return null;
+    const m = meta as { kind?: string; anchor?: string; offset_days?: number; shift?: number; source?: string };
+    if (m.kind === 'frost') {
+      const sign = (m.offset_days ?? 0) >= 0 ? '+' : '−';
+      const abs = Math.abs(m.offset_days ?? 0);
+      const anchor = m.anchor === 'fff' ? 'FFF' : m.anchor === 'lsf' ? 'LSF' : (m.anchor ?? '');
+      return `frost-anchored (${anchor} ${sign} ${abs} d)`;
+    }
+    if (m.kind === 'linear') {
+      const s = m.shift ?? 0;
+      const sign = s > 0 ? '+' : s < 0 ? '−' : '';
+      return `linear (${sign}${Math.abs(s)} d/half-zone)`;
+    }
+    if (m.kind === 'flat') return 'flat (constant DOY across zones)';
+    if (m.kind === 'regional_anchor') {
+      return `regional anchor: ${m.source ?? '(unnamed)'}`;
+    }
+    return null;
+  }
+
+  /** Find the mechanism_meta on a DBWindow's evidence array. The unify
+   *  pipeline attaches mechanism + mechanism_meta to the row's primary
+   *  evidence entry (the one whose source matches cx.source_name).
+   *  Returns the formatted label or null when no mechanism_meta is
+   *  present (older rows that haven't been re-unified). */
+  function mechanismMetaFor(w: DBWindow): string | null {
+    const ev = (w.evidence ?? []) as Array<{ mechanism?: string; mechanism_meta?: unknown }>;
+    for (const e of ev) {
+      if (e.mechanism_meta) return mechanismMetaLabel(e.mechanism_meta);
+    }
+    return null;
+  }
+
   function confidenceTitle(c: string | null | undefined): string {
     if (c === 'curated') return 'Provenance: data/species/ithaca.json — AI-generated in an earlier session, not verified against a primary source. Zone 6a values are literal copies of 5b.';
     if (c === 'frost_offset') return 'Provenance: heuristic shift of the 5b values by per-zone frost-date offset (migration #47). Inherits 5b uncertainty.';
@@ -1529,6 +1591,12 @@
             return `${MECHANISM_HELP[mech]}${sh != null ? ` Slope: ${sh > 0 ? '+' : ''}${sh} d/half-zone.` : ''}`;
           })()}
         >{MECHANISM_LABEL[mechanismOf(currentSpecies.scientific_name)]}</span>
+        {#if mechanismWarnings[currentSpecies.scientific_name]?.length}
+          <span
+            class="mech-warn-chip"
+            title={mechanismWarnings[currentSpecies.scientific_name].map(w => `${w.complex}: ${w.message}`).join('\n')}
+          >⚠ mechanism</span>
+        {/if}
         <div class="stage-tag" title="Forage parts: {(currentSpecies.forage_parts ?? []).join(', ') || 'none'}">
           harvest stage: <strong>{stageLabel(primaryStage)}</strong>
         </div>
@@ -1790,7 +1858,7 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
                         stroke-width={cs.tier === 'substantial' ? 0 : 1}
                         stroke-dasharray={cs.dash}
                       >
-                        <title>DB · {w.stage} · DOY {w.start_doy}–{w.end_doy}{w.confidence ? ` · ${w.confidence}` : ''}</title>
+                        <title>DB · {w.stage} · DOY {w.start_doy}–{w.end_doy}{w.confidence ? ` · ${w.confidence}` : ''}{(() => { const m = mechanismMetaFor(w); return m ? `\nModeled as ${m}` : ''; })()}</title>
                       </rect>
                       {#if w.peak_doy != null}
                         <circle cx={doyX(w.peak_doy)} cy={6 + STAGE_H / 2} r="3" fill="#1f2a1f" opacity={cs.opacity}>
@@ -2364,6 +2432,20 @@ Tight dots, faded: ad-hoc shifted estimate (agent took a generic fact and applie
   .mech-chip.mech-rain_flush     { background: #d8ecdc; color: #1f4a2c; border-color: #4e8c5f; }
   .mech-chip.mech-dormancy_break { background: #e6d8c2; color: #5c3b15; border-color: #a8825a; }
   .mech-chip.mech-indeterminate  { background: #e4e4e4; color: #444; border-color: #999; }
+  /* Mechanism-warning chip: surfaces species whose mechanism field
+     disagrees with shift_per_half_zone (or otherwise fails validation
+     in species-complex-unify.cjs). Surfaces what would otherwise be
+     a buried console warning so JK can act on it. */
+  .mech-warn-chip {
+    font-size: 0.75rem;
+    border-radius: 1rem;
+    padding: 0.15rem 0.65rem;
+    border: 1px solid #d99f3c;
+    background: #fdf2dc;
+    color: #8a4500;
+    cursor: help;
+    font-weight: 500;
+  }
   /* Mechanism filter dropdown in the picker bar. Matches the
      stepper button styling so it sits cleanly next to the search. */
   .mech-filter {

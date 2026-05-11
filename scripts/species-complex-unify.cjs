@@ -3201,11 +3201,16 @@ if (require.main !== module) return;
   // disagrees with its shift_per_half_zone, OR whose mechanism value
   // isn't in the recognized set. Surface ALL warnings before the
   // pipeline does any DB work so JK sees them in one block.
+  // Also collect each warning as a JSON record so the calibration
+  // viewer can show a ⚠ chip on affected species.
   let validationWarnings = 0;
+  const mechanismWarnings = [];   // {complex, members[], kind, message}
   for (const cx of COMPLEXES) {
     const mechanism = cx.mechanism ?? MECHANISMS.HEAT_DRIVEN;
     if (cx.mechanism != null && !ALL_MECHANISMS.has(cx.mechanism)) {
-      console.warn(`⚠ ${cx.name}: unknown mechanism '${cx.mechanism}' (expected one of: ${[...ALL_MECHANISMS].join(', ')})`);
+      const msg = `unknown mechanism '${cx.mechanism}' (expected one of: ${[...ALL_MECHANISMS].join(', ')})`;
+      console.warn(`⚠ ${cx.name}: ${msg}`);
+      mechanismWarnings.push({ complex: cx.name, members: cx.members ?? [], kind: 'unknown-mechanism', message: msg });
       validationWarnings++;
       continue;
     }
@@ -3213,12 +3218,16 @@ if (require.main !== module) return;
     if (expectedSign != null && cx.shift_per_half_zone !== 0
         && Math.sign(cx.shift_per_half_zone) !== expectedSign) {
       const want = expectedSign < 0 ? 'negative' : 'positive';
-      console.warn(`⚠ ${cx.name}: mechanism=${mechanism} expects ${want} slope, got ${cx.shift_per_half_zone}`);
+      const msg = `mechanism=${mechanism} expects ${want} slope, got ${cx.shift_per_half_zone}`;
+      console.warn(`⚠ ${cx.name}: ${msg}`);
+      mechanismWarnings.push({ complex: cx.name, members: cx.members ?? [], kind: 'slope-sign-mismatch', message: msg });
       validationWarnings++;
     }
     if ((mechanism === MECHANISMS.PHOTOPERIOD || mechanism === MECHANISMS.RAIN_FLUSH || mechanism === MECHANISMS.FROST_ANCHORED)
         && cx.shift_per_half_zone !== 0) {
-      console.warn(`⚠ ${cx.name}: mechanism=${mechanism} ignores slope but shift_per_half_zone=${cx.shift_per_half_zone} — set to 0 to silence`);
+      const msg = `mechanism=${mechanism} ignores slope but shift_per_half_zone=${cx.shift_per_half_zone} — set to 0 to silence`;
+      console.warn(`⚠ ${cx.name}: ${msg}`);
+      mechanismWarnings.push({ complex: cx.name, members: cx.members ?? [], kind: 'slope-ignored', message: msg });
       validationWarnings++;
     }
   }
@@ -3414,6 +3423,25 @@ if (require.main !== module) return;
   const outPath = path.join('/Users/jk/Dropbox/Claude/forager/static/species-complexes.json');
   fs.writeFileSync(outPath, JSON.stringify(memberToComplex, null, 2));
   console.log(`Wrote complex-membership JSON: ${outPath} (${Object.keys(memberToComplex).length} species)`);
+
+  // Static mechanism-warnings report so the calibration viewer can
+  // surface a ⚠ chip on affected species without re-running the
+  // validation logic in the browser. Keyed by scientific_name so the
+  // viewer can look up a species directly.
+  const warningsByScientific = {};
+  for (const w of mechanismWarnings) {
+    for (const sci of w.members) {
+      if (!warningsByScientific[sci]) warningsByScientific[sci] = [];
+      warningsByScientific[sci].push({ complex: w.complex, kind: w.kind, message: w.message });
+    }
+  }
+  const warnPath = path.join('/Users/jk/Dropbox/Claude/forager/static/mechanism-warnings.json');
+  fs.writeFileSync(warnPath, JSON.stringify({
+    generated_at: new Date().toISOString(),
+    warning_count: mechanismWarnings.length,
+    by_scientific_name: warningsByScientific
+  }, null, 2));
+  console.log(`Wrote mechanism-warnings JSON: ${warnPath} (${mechanismWarnings.length} warning(s))`);
 
   await sql.end();
 

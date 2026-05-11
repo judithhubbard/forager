@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-05-11T21:59:43.941Z",
+  "warning_count": 5,
+  "by_scientific_name": {
+    "Hemerocallis fulva": [
+      {
+        "complex": "Common daylily (tubers)",
+        "kind": "slope-sign-mismatch",
+        "message": "mechanism=dormancy_break expects negative slope, got 5"
+      }
+    ],
+    "Acca sellowiana": [
+      {
+        "complex": "Pineapple guava",
+        "kind": "slope-ignored",
+        "message": "mechanism=frost_anchored ignores slope but shift_per_half_zone=4 — set to 0 to silence"
+      }
+    ],
+    "Feijoa sellowiana": [
+      {
+        "complex": "Pineapple guava",
+        "kind": "slope-ignored",
+        "message": "mechanism=frost_anchored ignores slope but shift_per_half_zone=4 — set to 0 to silence"
+      }
+    ],
+    "Betula lenta": [
+      {
+        "complex": "Sweet birch (sap)",
+        "kind": "slope-ignored",
+        "message": "mechanism=frost_anchored ignores slope but shift_per_half_zone=3 — set to 0 to silence"
+      }
+    ],
+    "Betula alleghaniensis": [
+      {
+        "complex": "Sweet birch (sap)",
+        "kind": "slope-ignored",
+        "message": "mechanism=frost_anchored ignores slope but shift_per_half_zone=3 — set to 0 to silence"
+      }
+    ],
+    "Rosa rugosa": [
+      {
+        "complex": "Rugosa rose hips",
+        "kind": "slope-ignored",
+        "message": "mechanism=frost_anchored ignores slope but shift_per_half_zone=2 — set to 0 to silence"
+      }
+    ],
+    "Carya sp.": [
+      {
+        "complex": "Hickory (unspecified)",
+        "kind": "slope-ignored",
+        "message": "mechanism=frost_anchored ignores slope but shift_per_half_zone=3 — set to 0 to silence"
+      }
+    ]
+  }
+}
