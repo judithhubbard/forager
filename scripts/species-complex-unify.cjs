@@ -1116,19 +1116,16 @@ const COMPLEXES = [
     source_url: 'https://plants.usda.gov/plant-profile/ALCA3',
     summary: 'Wild onion (Allium canadense, meadow garlic): native onion, leaves Apr-Jun, small bulbs ready Aug-Oct. ALWAYS confirm onion smell — death-camas + false-garlic are toxic lookalikes without the onion smell.'
   },
-  {
-    name: 'Bracken fern (fiddleheads)',
-    members: ['Pteridium aquilinum'],
-    // Tightly-coiled young fronds, eaten before they unfurl. Heat-driven,
-    // brief 1-2 week window. NOTE: contains ptaquiloside (carcinogenic);
-    // many sources discourage regular consumption — eat sparingly.
-    anchor_zone: '6a', anchor_peak: 130, shift_per_half_zone: -3, half_window: 14,
-    target_zones: ['4a','4b','5a','5b','6a','6b','7a','7b','8a'],
-    stage: 'shoot',
-    source_name: 'Bracken fern (Forager Chef + USDA Silvics — caution)',
-    source_url: 'https://foragerchef.com/foraging-bracken-fern-fiddleheads-pteridium-aquilinum/',
-    summary: 'Bracken fern (Pteridium aquilinum) fiddleheads: tightly-coiled young fronds before unfurling, brief late-Apr through May. WARNING: ptaquiloside is a known carcinogen — eat sparingly if at all; blanching reduces but does not eliminate it.'
-  },
+  // Bracken fern (Pteridium aquilinum) — REMOVED 2026-05-10.
+  // Ptaquiloside is IARC Group 2B (possibly carcinogenic to humans);
+  // traditional multi-blanching prep reduces but does not eliminate
+  // the compound. Forager is a "go forage this" recommendation list,
+  // not a comprehensive ID app — listing a known carcinogen as edible
+  // even with a strong warning sends the wrong implicit signal. Other
+  // spring shoots (ostrich fern fiddleheads, daylily, knotweed) are
+  // non-carcinogenic alternatives. Species is soft-deleted via
+  // is_forageable=false; the unify complex entry is intentionally
+  // removed so the windows don't regenerate.
   {
     name: 'Greenbrier (spring shoots)',
     members: ['Smilax sp.', 'Smilax rotundifolia', 'Smilax bona-nox'],
