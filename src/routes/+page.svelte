@@ -1670,15 +1670,20 @@
           <div class="layer-section-head">Overlays</div>
           <!-- Tracks at top of overlays: it's the most user-personal
                non-pin content. Edible-now is the foraging-specific
-               decoration; zones + rainfall are reference data. -->
-          <label class="layer-row">
-            <input
-              type="checkbox"
-              checked={$settings.mapLayers.tracks}
-              on:change={(e) => onLayerToggle('tracks', e)}
-            />
-            <span class="layer-name">Tracks</span>
-          </label>
+               decoration; zones + rainfall are reference data.
+               Hidden for signed-out viewers since tracks are
+               always per-user — anon visitors have no tracks to
+               toggle on/off. -->
+          {#if $session}
+            <label class="layer-row">
+              <input
+                type="checkbox"
+                checked={$settings.mapLayers.tracks}
+                on:change={(e) => onLayerToggle('tracks', e)}
+              />
+              <span class="layer-name">Tracks</span>
+            </label>
+          {/if}
           <label class="layer-row">
             <input
               type="checkbox"
