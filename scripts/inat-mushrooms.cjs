@@ -49,6 +49,10 @@ const TIME_CONSULTED = new Date().toISOString();
 const MIN_OBS_PER_ZONE = 10;
 const MAX_PAGES = 30;
 const STAGE = 'mushroom_flush';
+// iNat's API requires a contact email in the User-Agent for polite
+// pacing. Pulled from env so the actual address isn't committed.
+const INAT_USER_AGENT =
+  'forager-research/1.0 (' + (process.env.FORAGER_CONTACT_EMAIL || 'forager-research@example.invalid') + ')';
 
 async function pickAllMushrooms() {
   const rows = await sql`
@@ -64,7 +68,7 @@ async function pickAllMushrooms() {
  *  to Fungi. Returns null if not found. */
 async function inatFungusTaxonId(scientificName) {
   const url = `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(scientificName)}&is_active=true&rank=species`;
-  const r = await fetch(url, { headers: { 'User-Agent': 'forager-research/1.0 (judith.a.hubbard@gmail.com)' } });
+  const r = await fetch(url, { headers: { 'User-Agent': INAT_USER_AGENT } });
   if (!r.ok) throw new Error(`iNat taxa lookup ${r.status}`);
   const j = await r.json();
   const fungi = (j.results || []).filter(t => t.iconic_taxon_name === 'Fungi');
@@ -79,7 +83,7 @@ async function inatMushroomObservations(taxonId) {
   for (let page = 1; page <= MAX_PAGES; page++) {
     const url = `https://api.inaturalist.org/v1/observations?taxon_id=${taxonId}` +
                 `&quality_grade=research&geo=true&per_page=200&page=${page}`;
-    const r = await fetch(url, { headers: { 'User-Agent': 'forager-research/1.0 (judith.a.hubbard@gmail.com)' } });
+    const r = await fetch(url, { headers: { 'User-Agent': INAT_USER_AGENT } });
     if (!r.ok) {
       if (r.status === 429) { await new Promise(s => setTimeout(s, 2000)); page--; continue; }
       throw new Error(`iNat observations ${r.status}`);

@@ -10,7 +10,11 @@ const path = require('node:path');
 const { config } = require('dotenv');
 config({ path: path.resolve(__dirname, '..', '.env.local') });
 
-const SEEDER_EMAIL = 'judith.a.hubbard@gmail.com';
+// Email of the admin user who owns the seeded entries. Read from env
+// so the actual address isn't committed; set FORAGER_SEEDER_EMAIL
+// when running. Falls back to a placeholder that will fail the
+// user-lookup query if missing — surfaces the misconfigured env.
+const SEEDER_EMAIL = process.env.FORAGER_SEEDER_EMAIL || 'seed-admin@example.invalid';
 
 // Each entry: scientific_name, common_name, identification,
 // management, impact summary. The species table doesn't have a

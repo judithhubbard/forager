@@ -20,7 +20,11 @@ const SEEDS = [
   'Morus alba'               // White mulberry — outcompetes native red mulberry
 ];
 
-const SEEDER_EMAIL = 'judith.a.hubbard@gmail.com';
+// Email of the admin user who owns the seeded flags. Read from env so
+// the actual address isn't committed; set FORAGER_SEEDER_EMAIL when
+// running. Falls back to a placeholder (which will fail the user-lookup
+// query if used, surfacing the missing env clearly).
+const SEEDER_EMAIL = process.env.FORAGER_SEEDER_EMAIL || 'seed-admin@example.invalid';
 
 (async () => {
   const sql = postgres(process.env.SUPABASE_DB_URL, { ssl: 'require', onnotice: () => undefined });

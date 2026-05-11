@@ -18,8 +18,16 @@ const config = {
       strict: true
     }),
     paths: {
-      // GitHub Pages serves at /<repo-name>/. Override at build time
-      // via BASE_PATH=/forager (or set to '' for a custom domain).
+      // Deployment-target-aware base path:
+      //   GitHub Pages (current):  BASE_PATH=/forager (set in deploy.yml)
+      //   Cloudflare Pages:        BASE_PATH=''       (serves at domain root)
+      //   Custom domain:           BASE_PATH=''       (CNAME → either host)
+      //   Local dev:               base = ''          (dev override below)
+      //
+      // The whole app uses SvelteKit's $app/paths.base + the goto() helper
+      // in src/lib/utils/nav.ts, so flipping BASE_PATH is the only change
+      // needed on platform migration — no hardcoded `/forager` paths in
+      // source. See PLAN §11 / tasks #84-88 for the migration plan.
       base: dev ? '' : (process.env.BASE_PATH ?? '')
     }
   }

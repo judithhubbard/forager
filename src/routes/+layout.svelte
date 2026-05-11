@@ -27,6 +27,7 @@
     '/',
     '/about',
     '/how-to-use',
+    '/data-policy',
     '/accept',
     '/species',
     '/pins',

@@ -38,6 +38,12 @@ const MIN_OBS_PER_ZONE = 10;        // need at least this many fruiting obs in a
 const MAX_PAGES = 30;                // 30 × 200 = 6000 obs cap per species
 const PHENOLOGY_TERM_ID = 12;
 const PHENOLOGY_FRUITING = 14;
+// iNat's API requires a contact email in the User-Agent so they can
+// reach out if our script is misbehaving. Pulled from env so the
+// actual address isn't committed to the public repo. Default is a
+// placeholder; set FORAGER_CONTACT_EMAIL when running.
+const INAT_USER_AGENT =
+  'forager-research/1.0 (' + (process.env.FORAGER_CONTACT_EMAIL || 'forager-research@example.invalid') + ')';
 
 const DEFAULT_SPECIES = [
   'Sambucus canadensis',  // already calibrated — sanity check
@@ -90,7 +96,7 @@ async function pickAllForageable(skipCited) {
  *  is shared across kingdoms; we filter to Plantae. */
 async function inatTaxonId(scientificName) {
   const url = `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(scientificName)}&is_active=true&rank=species`;
-  const r = await fetch(url, { headers: { 'User-Agent': 'forager-research/1.0 (judith.a.hubbard@gmail.com)' } });
+  const r = await fetch(url, { headers: { 'User-Agent': INAT_USER_AGENT } });
   if (!r.ok) throw new Error(`iNat taxa lookup ${r.status}`);
   const j = await r.json();
   const plant = (j.results || []).filter(t => t.iconic_taxon_name === 'Plantae');
@@ -106,7 +112,7 @@ async function inatFruitingObservations(taxonId) {
     const url = `https://api.inaturalist.org/v1/observations?taxon_id=${taxonId}` +
                 `&term_id=${PHENOLOGY_TERM_ID}&term_value_id=${PHENOLOGY_FRUITING}` +
                 `&quality_grade=research&geo=true&per_page=200&page=${page}`;
-    const r = await fetch(url, { headers: { 'User-Agent': 'forager-research/1.0 (judith.a.hubbard@gmail.com)' } });
+    const r = await fetch(url, { headers: { 'User-Agent': INAT_USER_AGENT } });
     if (!r.ok) {
       if (r.status === 429) { await new Promise(s => setTimeout(s, 2000)); page--; continue; }
       throw new Error(`iNat observations ${r.status}`);
