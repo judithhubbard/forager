@@ -2,6 +2,7 @@
   import { onMount, createEventDispatcher } from 'svelte';
   import { listAll, search, type Species } from '$lib/services/speciesService';
   import { create as createPin, type Visibility } from '$lib/services/pinService';
+  import { create as createObservation, STAGES, type Stage as ObsStage } from '$lib/services/observationService';
   import { activeRegion } from '$lib/stores/activeRegion';
 
   export let regionId: string;
@@ -11,9 +12,9 @@
 
   const dispatch = createEventDispatcher<{ close: void; saved: { id: string } }>();
 
-  type Stage = 'capturing' | 'form' | 'saving' | 'error';
+  type FormStage = 'capturing' | 'form' | 'saving' | 'error';
 
-  let stage: Stage = initialLng != null && initialLat != null ? 'form' : 'capturing';
+  let stage: FormStage = initialLng != null && initialLat != null ? 'form' : 'capturing';
   let errorMessage = '';
 
   // Location capture
@@ -29,6 +30,14 @@
   // Default visibility comes from the active region's preference. The
   // user can flip per-pin without changing the region default.
   let visibility: Visibility = ($activeRegion?.default_pin_visibility as Visibility) ?? 'shared';
+
+  // Inline observation. Most foragers know the stage when they drop
+  // the pin (they're standing in front of the plant) so save them the
+  // extra round-trip of pin -> save -> reopen -> log observation. If
+  // they don't want to add one, leave the toggle off; pin saves alone.
+  let logObservation = false;
+  let obsStage: ObsStage = 'ripe';
+  let obsQuality: number | null = null;
 
   $: filtered = search(species, speciesQuery).slice(0, 10);
 
@@ -85,6 +94,21 @@
         notes: notes.trim() || null,
         visibility
       });
+      // Optional inline observation. The pin already wrote, so a
+      // failure here is logged but doesn't roll back the pin —
+      // user can add it manually from the pin detail panel.
+      if (logObservation) {
+        try {
+          await createObservation({
+            pinId: id,
+            stage: obsStage,
+            qualityRating: obsQuality,
+            visibility: visibility === 'private' ? 'private' : 'shared'
+          });
+        } catch (obsErr) {
+          console.error('[DropPinModal] inline observation failed (pin saved):', obsErr);
+        }
+      }
       dispatch('saved', { id });
     } catch (err) {
       // Supabase PostgrestError is a plain object, not an Error
@@ -176,6 +200,43 @@
           <input type="radio" bind:group={visibility} value="private" />
           <span><strong>Private</strong> 🔒 — only you</span>
         </label>
+      </fieldset>
+
+      <!-- Inline observation: most foragers know the stage at the
+           moment they drop the pin, so save them the round-trip of
+           pin -> save -> reopen -> log. -->
+      <fieldset class="observe">
+        <legend>
+          <label class="obs-toggle">
+            <input type="checkbox" bind:checked={logObservation} />
+            <span>Also log an observation right now</span>
+          </label>
+        </legend>
+        {#if logObservation}
+          <label class="obs-field">
+            <span>Stage</span>
+            <select bind:value={obsStage}>
+              {#each STAGES as s}<option value={s}>{s}</option>{/each}
+            </select>
+          </label>
+          <label class="obs-field">
+            <span>Quality (optional)</span>
+            <div class="stars">
+              {#each [1, 2, 3, 4, 5] as n}
+                <button
+                  type="button"
+                  class="star"
+                  class:on={obsQuality !== null && n <= obsQuality}
+                  on:click={() => (obsQuality = obsQuality === n ? null : n)}
+                  aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                >★</button>
+              {/each}
+              {#if obsQuality !== null}
+                <button type="button" class="clear-rating" on:click={() => (obsQuality = null)}>clear</button>
+              {/if}
+            </div>
+          </label>
+        {/if}
       </fieldset>
 
       {#if errorMessage}
@@ -321,6 +382,65 @@
     cursor: pointer;
   }
   .vis-opt input { margin: 0; }
+  .observe {
+    border: 1px solid #d0d8d0;
+    border-radius: 0.4rem;
+    padding: 0.4rem 0.75rem 0.7rem;
+    margin: 0 0 0.85rem;
+  }
+  .observe legend {
+    padding: 0 0.3rem;
+  }
+  .obs-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-size: 0.88rem;
+    cursor: pointer;
+    color: #2c3a2c;
+  }
+  .obs-toggle input { margin: 0; }
+  .obs-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.85rem;
+  }
+  .obs-field span { color: #4a554a; flex-shrink: 0; }
+  .obs-field select {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.9rem;
+    border: 1px solid #c7d0c7;
+    border-radius: 0.35rem;
+  }
+  .stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.05rem;
+  }
+  .star {
+    background: transparent;
+    border: 0;
+    color: #d0d4d0;
+    font-size: 1.25rem;
+    padding: 0 0.1rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .star.on { color: #d4a017; }
+  .star:hover { color: #b8901a; }
+  .clear-rating {
+    background: transparent;
+    border: 0;
+    color: #8a948a;
+    font-size: 0.72rem;
+    margin-left: 0.4rem;
+    cursor: pointer;
+    text-decoration: underline;
+  }
   .actions {
     display: flex;
     gap: 0.75rem;

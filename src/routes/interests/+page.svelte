@@ -27,6 +27,20 @@
     setDefaultPhotoLicense,
     type PhotoLicense
   } from '$lib/stores/settings';
+  import SpeciesPreviewModal from '$lib/components/SpeciesPreviewModal.svelte';
+
+  // Drawer/modal that surfaces species detail without leaving the
+  // picker. Clicking the species name (rather than the checkbox)
+  // opens it; the picker scroll position is preserved underneath.
+  let previewSpeciesId: string | null = null;
+  let previewOpen = false;
+  function openPreview(id: string): void {
+    previewSpeciesId = id;
+    previewOpen = true;
+  }
+  function closePreview(): void {
+    previewOpen = false;
+  }
 
   function onInvasiveOptin(e: Event) {
     setShowInvasives((e.currentTarget as HTMLInputElement).checked);
@@ -248,16 +262,24 @@
           {#if isOpen}
             <ul class="species-list">
               {#each list as s (s.id)}
-                <li>
-                  <label>
+                <li class="species-row">
+                  <label class="cb-wrap">
                     <input
                       type="checkbox"
                       checked={enabledById.get(s.id) ?? true}
                       on:change={(e) => onSpeciesChange(s.id, e)}
                     />
+                  </label>
+                  <button
+                    type="button"
+                    class="sp-name-btn"
+                    on:click={() => openPreview(s.id)}
+                    title="View details"
+                  >
                     <span class="sp-common">{s.common_name}</span>
                     <span class="sp-sci">{s.scientific_name}</span>
-                  </label>
+                    <span class="info-hint" aria-hidden="true">ⓘ</span>
+                  </button>
                 </li>
               {/each}
             </ul>
@@ -311,6 +333,12 @@
     </div>
   {/if}
 </main>
+
+<SpeciesPreviewModal
+  speciesId={previewSpeciesId}
+  open={previewOpen}
+  on:close={closePreview}
+/>
 
 <style>
   header {
@@ -451,21 +479,63 @@
     border-top: 1px solid #ebefeb;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.2rem;
   }
-  ul.species-list label {
+  .species-row {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.5rem;
-    cursor: pointer;
-    font-size: 0.88rem;
   }
-  ul.species-list input[type='checkbox'] {
+  .cb-wrap {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.2rem;
+    margin: -0.2rem 0;
+  }
+  .cb-wrap input[type='checkbox'] {
     width: 1rem;
     height: 1rem;
+    margin: 0;
   }
+  .sp-name-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    background: transparent;
+    border: 0;
+    padding: 0.25rem 0.4rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+    font-size: 0.88rem;
+    min-width: 0;
+  }
+  .sp-name-btn:hover { background: #f0f5ef; }
+  .sp-name-btn:focus-visible {
+    outline: 2px solid #3a5a3a;
+    outline-offset: 1px;
+  }
+  .info-hint {
+    margin-left: auto;
+    color: #95a395;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .sp-name-btn:hover .info-hint { color: #3a5a3a; }
   .sp-common { color: #1f2a1f; }
-  .sp-sci { color: #6b7a6b; font-style: italic; font-size: 0.82rem; }
+  .sp-sci {
+    color: #6b7a6b;
+    font-style: italic;
+    font-size: 0.82rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
 
   .actions {
     display: flex;
