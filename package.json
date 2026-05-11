@@ -52,6 +52,7 @@
     "import:atlanta-trees": "tsx scripts/import/atlanta-trees.ts",
     "import:slc-trees": "tsx scripts/import/slc-trees.ts",
     "import:boulder-trees": "tsx scripts/import/boulder-trees.ts",
+    "import:inaturalist": "tsx scripts/import/inat-observations.ts",
     "import:ann-arbor-trees": "tsx scripts/import/ann-arbor-trees.ts",
     "import:berkeley-trees": "tsx scripts/import/berkeley-trees.ts",
     "import:portland-me-trees": "tsx scripts/import/portland-me-trees.ts",
