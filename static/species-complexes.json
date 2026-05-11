@@ -950,7 +950,6 @@
         "Picea sp.",
         "Pinus contorta",
         "Pinus sylvestris",
-        "Pinus sp.",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -965,7 +964,6 @@
         "Picea sp.",
         "Pinus contorta",
         "Pinus sylvestris",
-        "Pinus sp.",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -992,7 +990,6 @@
         "Picea sp.",
         "Pinus contorta",
         "Pinus sylvestris",
-        "Pinus sp.",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1019,7 +1016,6 @@
         "Picea sp.",
         "Pinus contorta",
         "Pinus sylvestris",
-        "Pinus sp.",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1046,34 +1042,6 @@
         "Picea sp.",
         "Pinus contorta",
         "Pinus sylvestris",
-        "Pinus sp.",
-        "Larix sibirica"
-      ],
-      "stage": "shoot"
-    },
-    {
-      "name": "Conifer tips (multi-species)",
-      "members": [
-        "Picea pungens",
-        "Pinus contorta",
-        "Pinus sylvestris",
-        "Larix sibirica",
-        "Pinus sp.",
-        "Picea sp."
-      ],
-      "stage": "shoot"
-    }
-  ],
-  "Pinus sp.": [
-    {
-      "name": "Spruce tips (multi-species)",
-      "members": [
-        "Picea glauca",
-        "Picea pungens",
-        "Picea sp.",
-        "Pinus contorta",
-        "Pinus sylvestris",
-        "Pinus sp.",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1100,7 +1068,6 @@
         "Picea sp.",
         "Pinus contorta",
         "Pinus sylvestris",
-        "Pinus sp.",
         "Larix sibirica"
       ],
       "stage": "shoot"
@@ -1261,6 +1228,20 @@
         "Smilax sp.",
         "Smilax rotundifolia",
         "Smilax bona-nox"
+      ],
+      "stage": "shoot"
+    }
+  ],
+  "Pinus sp.": [
+    {
+      "name": "Conifer tips (multi-species)",
+      "members": [
+        "Picea pungens",
+        "Pinus contorta",
+        "Pinus sylvestris",
+        "Larix sibirica",
+        "Pinus sp.",
+        "Picea sp."
       ],
       "stage": "shoot"
     }

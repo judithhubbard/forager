@@ -12,6 +12,7 @@
   // Keyboard: ← → arrows step through species. / focuses search.
 
   import { onMount } from 'svelte';
+  import { base } from '$app/paths';
   import { goto } from '$lib/utils/nav';
   import { supabase } from '$lib/supabase';
   import { activeRegion } from '$lib/stores/activeRegion';
@@ -364,8 +365,16 @@
   let complexesByScientific: Record<string, ComplexEntry[]> = {};
   async function loadComplexMembership() {
     try {
-      const res = await fetch('/species-complexes.json');
-      if (!res.ok) return;
+      // Use $app/paths.base so the URL works under a non-root deploy
+      // BASE_PATH (Cloudflare/Pages can prefix the app path). The
+      // earlier `/species-complexes.json` absolute URL 404'd whenever
+      // BASE_PATH was set and made the sidebar Complex mode show
+      // every species in "Solo".
+      const res = await fetch(`${base}/species-complexes.json`);
+      if (!res.ok) {
+        console.warn('[calibration] species-complexes.json fetch returned', res.status);
+        return;
+      }
       complexesByScientific = await res.json();
     } catch (err) {
       console.warn('[calibration] could not load species-complexes.json', err);
