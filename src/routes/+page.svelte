@@ -501,8 +501,13 @@
   type PinSource = 'mine' | 'friends' | 'group' | 'public';
   $: myUserId = $profile?.id ?? null;
   function sourceOf(p: PinEffective): PinSource {
-    if (myUserId && p.created_by === myUserId) return 'mine';
+    // Public visibility wins over created_by: imported city-tree pins
+    // are attributed to the admin who ran the import script, so without
+    // this branch they all show as "mine" to the admin (and only to the
+    // admin) — confusing because they're plainly part of the public
+    // dataset, not the admin's personal pins.
     if (p.visibility === 'public') return 'public';
+    if (myUserId && p.created_by === myUserId) return 'mine';
     return 'group';
   }
   let layersPanelOpen = false;
@@ -940,10 +945,15 @@
       parts.push(`make: ${cookbookFilter.replace(/_/g, ' ')}`);
     }
     const layers = $settings.mapLayers;
-    const layersOff = (['mine', 'friends', 'group', 'public', 'tracks'] as const)
-      .filter((k) => !layers[k]).length;
-    if (layersOff > 0) {
-      parts.push(`${5 - layersOff}/5 layers`);
+    // Only count layers that actually affect pin visibility. `tracks`
+    // controls the GPS-track polylines, not pins — it should never
+    // make a pin appear in the "hidden" count. `friends` is also
+    // excluded because the friend-graph isn't built yet, so the
+    // toggle is a no-op (only mine + group + public can hide pins).
+    const PIN_LAYERS = ['mine', 'group', 'public'] as const;
+    const offNames: string[] = PIN_LAYERS.filter((k) => !layers[k]);
+    if (offNames.length > 0) {
+      parts.push(`hidden: ${offNames.join(' + ')} layer${offNames.length > 1 ? 's' : ''}`);
     }
     // Cap-hit is NOT a user filter — it's the server returning the
     // first N pins because the bbox is too big. Don't include it in
