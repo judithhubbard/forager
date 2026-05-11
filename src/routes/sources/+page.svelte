@@ -48,34 +48,52 @@
     map adds new cities over time as more inventories are scraped.
   </p>
 
-  <h2>Imported datasets</h2>
-  {#if loading}
-    <p class="hint">Loading…</p>
-  {:else if error}
-    <p class="error">{error}</p>
-  {:else if sources.length === 0}
-    <p class="hint">No imported datasets yet.</p>
-  {:else}
-    <ul class="sources">
-      {#each sources as s}
-        <li>
-          <strong>
-            {#if s.url}
-              <a href={s.url} target="_blank" rel="noopener">{s.name}</a>
-            {:else}
-              {s.name}
-            {/if}
-          </strong>
-          {#if s.license}<span class="license"> · {s.license}</span>{/if}
-          {#if s.description}
-            <p class="desc">{s.description}</p>
-          {/if}
-        </li>
-      {/each}
-    </ul>
-  {/if}
+  <!-- Section jump-links so users can see at a glance which kinds
+       of data feed the app. The long "Imported datasets" list
+       (one row per municipal tree inventory) used to dominate the
+       page and bury the other categories below. -->
+  <nav class="toc" aria-label="Sections on this page">
+    <a href="#imported">Tree inventories{#if !loading && sources.length}<span class="toc-count">({sources.length})</span>{/if}</a>
+    <a href="#map">Map &amp; geocoding</a>
+    <a href="#weather">Weather</a>
+    <a href="#zones">Hardiness zones</a>
+    <a href="#phenology">Phenology</a>
+    <a href="#species">Species data</a>
+  </nav>
 
-  <h2>Map &amp; geocoding</h2>
+  <details class="ds-section" id="imported">
+    <summary>
+      <h2>Tree inventories</h2>
+      {#if !loading && sources.length > 0}<span class="hint"> · {sources.length} sources</span>{/if}
+    </summary>
+    {#if loading}
+      <p class="hint">Loading…</p>
+    {:else if error}
+      <p class="error">{error}</p>
+    {:else if sources.length === 0}
+      <p class="hint">No imported datasets yet.</p>
+    {:else}
+      <ul class="sources">
+        {#each sources as s}
+          <li>
+            <strong>
+              {#if s.url}
+                <a href={s.url} target="_blank" rel="noopener">{s.name}</a>
+              {:else}
+                {s.name}
+              {/if}
+            </strong>
+            {#if s.license}<span class="license"> · {s.license}</span>{/if}
+            {#if s.description}
+              <p class="desc">{s.description}</p>
+            {/if}
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </details>
+
+  <h2 id="map">Map &amp; geocoding</h2>
   <ul class="sources">
     <li>
       <strong>Map tiles</strong> — © OpenStreetMap contributors, served
@@ -90,7 +108,7 @@
     </li>
   </ul>
 
-  <h2>Weather</h2>
+  <h2 id="weather">Weather</h2>
   <ul class="sources">
     <li>
       <strong>Recent rainfall + historical daily weather</strong> —
@@ -104,7 +122,7 @@
     </li>
   </ul>
 
-  <h2>Plant Hardiness Zones</h2>
+  <h2 id="zones">Plant Hardiness Zones</h2>
   <ul class="sources">
     <li>
       <strong>USDA Plant Hardiness Zone polygons</strong> — currently
@@ -120,7 +138,7 @@
     </li>
   </ul>
 
-  <h2>Phenology</h2>
+  <h2 id="phenology">Phenology</h2>
   <ul class="sources">
     <li>
       <strong>Default harvest windows</strong> — per-species
@@ -142,7 +160,7 @@
     </li>
   </ul>
 
-  <h2>Species data</h2>
+  <h2 id="species">Species data</h2>
   <ul class="sources">
     <li>
       <strong>Taxonomy &amp; range</strong> — partly drawn from
@@ -196,4 +214,63 @@
   .license { color: #6b7a6b; font-size: 0.85rem; }
   .desc { margin: 0.25rem 0 0; font-size: 0.9rem; color: #4a554a; }
   a { color: #3a5a3a; }
+  /* Section TOC — pill-button row at the top so the user sees every
+     data-type category before being buried in the long tree-inventory
+     list. */
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0 0 1.25rem;
+  }
+  .toc a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem 0.65rem;
+    background: #ebf2e7;
+    border: 1px solid #cfdcc6;
+    border-radius: 999px;
+    color: #3a5a3a;
+    text-decoration: none;
+    font-size: 0.85rem;
+  }
+  .toc a:hover { background: #dde8d4; }
+  .toc-count {
+    color: #6b7a6b;
+    font-size: 0.78rem;
+  }
+  /* Collapsible "Tree inventories" section. With 200+ entries it
+     used to dominate the page; collapsed by default + a count badge
+     gives users a clear preview without forcing them past it. */
+  details.ds-section {
+    margin: 1rem 0;
+    border: 1px solid #e1e8e1;
+    border-radius: 0.4rem;
+    background: white;
+  }
+  details.ds-section > summary {
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+  details.ds-section > summary::-webkit-details-marker { display: none; }
+  details.ds-section > summary::before {
+    content: '▸';
+    color: #6b7a6b;
+    margin-right: 0.25rem;
+    transition: transform 0.15s ease;
+    display: inline-block;
+  }
+  details.ds-section[open] > summary::before { transform: rotate(90deg); }
+  details.ds-section > summary h2 {
+    display: inline;
+    margin: 0;
+  }
+  details.ds-section > :not(summary) {
+    padding: 0 0.75rem 0.75rem;
+  }
 </style>
